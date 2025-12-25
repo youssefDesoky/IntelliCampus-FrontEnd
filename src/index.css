@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  /* ===============================
+    Brand & Actions
+  =============================== */
+  --color-primary-light: #4A90E2;
+  --color-accent-light: #4A90E2;
+  --color-secondary-light: #E5E7EB;
+  --color-hover-light: #ECEEF1;
+  --color-active-light: #2C5AA0;
+  --color-disabled-light: #A1A1A1;
+
+  --color-primary-dark: #4A90E2;
+  --color-accent-dark: #4A90E2;
+  --color-secondary-dark: #E5E7EB;
+  --color-hover-dark: #1F2937;
+  --color-active-dark: #2C5AA0;
+  --color-disabled-dark: #6B7280;
+
+  /* ===============================
+    Backgrounds
+  =============================== */
+  --color-page-bg-light: #F5F7FA;
+  --color-surface-bg-light: #FFFFFF;
+  --color-muted-bg-light: #EEF2F6;
+
+  --color-page-bg-dark: #0F172A;
+  --color-surface-bg-dark: #020617;
+  --color-muted-bg-dark: #020617;
+
+  /* ===============================
+    Text
+  =============================== */
+  --color-primary-text-light: #111827;
+  --color-secondary-text-light: #4b5563;
+  --color-muted-text-light: #9CA3AF;
+  --color-accent-text-light: #FFFFFF;
+
+  --color-primary-text-dark: #E5E7EB;
+  --color-secondary-text-dark: #9CA3AF;
+  --color-muted-text-dark: #6B7280;
+  --color-accent-text-dark: #FFFFFF;
+
+  /* ===============================
+    Borders & Dividers
+  =============================== */
+  --color-default-border-light: #E5E7EB;
+  --color-focus-border-light: var(--color-accent);
+  --color-muted-border-light: #D1D5DB;
+  --color-hover-border-light: #9CA3AF;
+  --color-muted-hover-light: #E5E7EB;
+
+  --color-default-border-dark: #1F2937;
+  --color-focus-border-dark: var(--color-accent);
+  --color-muted-border-dark: #374151;
+  --color-hover-border-dark: #6B7280;
+  --color-muted-hover-dark: #1F2937;
+
+  /* ===============================
+    Status Colors
+  =============================== */
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --error: #DC2626;
+  --info: #2563EB;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+.no-scrollbar {
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.no-scrollbar::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+
+.text-hidden > span {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.text-visible > span {
+  opacity: 1;
+  width: auto;
+}
+
+.logo-title .typewriter{
+  display:inline-block;
+  overflow:hidden;
+  white-space:nowrap;
+  width:0;
+  animation: typing var(--d,1s) steps(var(--steps,10)) var(--delay,0s) forwards;
+  will-change: width;
+}
+
+@media screen and (max-width: 600px) {
+  body {
+    cursor: default;
+  }
+}
+
+@keyframes typing{
+  from { width: 0; }
+  to   { width: var(--w); }
+}
