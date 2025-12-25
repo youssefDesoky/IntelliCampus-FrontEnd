@@ -31,6 +31,7 @@ import StickyNoteIcon from "./components/icons/StickyNoteIcon";
 import BookIcon from "./components/icons/BookIcon";
 import UsersIcon from "./components/icons/UsersIcon";
 import SignOutIcon from "./components/icons/SignOutIcon";
+import CourseMaterials from "./pages/student/courses/courseDetail/CourseDetailPages/courseMatreials/CourseMaterials.jsx";
 
 export default function App() {
   const currStudentData = studentData[1]; // Assuming we are using the first student's data
@@ -119,8 +120,7 @@ export default function App() {
                 <Route path="/reminders" element={<Reminders studentReminders={currStudentData.reminders} />} />
                 <Route path="/smart-notes" element={<SmartNotes studentNotes={currStudentData.notes} />} />
                 <Route path="/community" element={<Community community={communitiesData[0]} />} />
-                {/* <Route path="/Schedule" element={<Schedule />} /> */}
-
+                <Route path="/Schedule" element={<>{currStudentData.courses[0].weeks.map(week => <CourseMaterials key={week.topic} weekData={week} />)}</>} />
                 <Route path="/login" element={<LoginPage />} />
               </Routes>
 

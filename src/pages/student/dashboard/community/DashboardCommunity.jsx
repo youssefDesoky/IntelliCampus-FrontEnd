@@ -7,7 +7,7 @@ import ArrowRightIcon from "../../../../components/icons/ArrowRightIcon";
 // Data
 import communitiesData from "../../../../data/communities";
 
-export default function DashboardCommunity({className, }){
+export default function DashboardCommunity({className}){
     return (
         <div className={`p-6 bg-surface-bg-light dark:bg-surface-bg-dark border border-default-border-light dark:border-default-border-dark rounded-lg ${className}`}>
             <div id="today-reminders-header" className="flex items-center justify-between mb-4">
