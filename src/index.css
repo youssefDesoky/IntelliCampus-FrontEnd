@@ -61,14 +61,16 @@
   /* ===============================
     Status Colors
   =============================== */
-  --success: #16A34A;
-  --warning: #F59E0B;
-  --error: #DC2626;
-  --info: #2563EB;
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-error: #DC2626;
+  --color-info: #2563EB;
 }
 
 * {
   box-sizing: border-box;
+  cursor: none !important;
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
 }
 
 html, body, #root {
@@ -114,14 +116,8 @@ body::-webkit-scrollbar,
   overflow:hidden;
   white-space:nowrap;
   width:0;
-  animation: typing var(--d,1s) steps(var(--steps,10)) var(--delay,0s) forwards;
+  animation: typing var(--d,5s) steps(var(--steps,10)) var(--delay,0s) forwards;
   will-change: width;
-}
-
-@media screen and (max-width: 600px) {
-  body {
-    cursor: default;
-  }
 }
 
 @keyframes typing{

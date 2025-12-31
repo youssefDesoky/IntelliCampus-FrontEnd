@@ -91,7 +91,7 @@ const coursesData = {
                         }
                     ]
                 }
-            ]
+            ],
         },
         {
             id: "CS-200",

@@ -1,4 +1,4 @@
-import studentsData from "./student";
+import studentsData from "./students";
 import instructorsData from "./instructors";
 
 const communitiesData = [

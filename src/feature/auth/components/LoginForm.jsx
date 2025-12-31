@@ -1,4 +1,4 @@
-import InputGroup from "../../../components/ui/InputGroup";
+import InputGroup from "../../../ui/Input";
 
 export default function LoginForm() {
     return (
