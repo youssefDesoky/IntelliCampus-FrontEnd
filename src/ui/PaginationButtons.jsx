@@ -3,31 +3,55 @@ import Button from "./Button";
 // Icons
 import { AngleDownIcon } from "./icons";
 
-export default function PaginationButtons ({ buttonsNumber }) {
-    const buttonStyle = "px-4 py-2 rounded-md bg-surface-bg-light dark:bg-surface-bg-dark border border-default-border-light dark:border-default-border-dark text-primary-text-light dark:text-primary-text-dark hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200";
+export default function PaginationButtons ({ buttonsNumber, currentPage, setCurrentPage }) {
+    const buttonStyle = `p-2 rounded-md border border-default-border-light dark:border-default-border-dark 
+        bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark 
+        hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark disabled:opacity-50 disabled:bg-red-100
+    `;
+
+    const showEllipsis = buttonsNumber > 4;
 
     return (
-        <div id="smart-notes-pagination" className="flex justify-center gap-4 mt-8">
-            <Button className={buttonStyle}>
+        <div className="flex justify-center gap-4">
+            <button 
+                className={buttonStyle} 
+                onClick={() => setCurrentPage(prev => prev - 1)} 
+                disabled={currentPage === 1}
+            >
                 <AngleDownIcon className="rotate-90 w-5 h-5" />
-            </Button>
+            </button>
             
-            {[...Array(buttonsNumber)].map((_, index) => (
-                <Button 
-                    key={index} 
-                    className={`px-4 py-2 rounded-md ${
-                        index === 0 
-                        ? "bg-accent-light text-accent-text-light dark:bg-accent-dark dark:text-accent-text-dark" 
-                        : buttonStyle
-                    }`}
-                >
-                    {index + 1}
-                </Button>
-            ))}
+            {Array.from({ length: buttonsNumber }, (_, i) => i + 1).map((pageNum) => {
+                if (showEllipsis) {
+                    if (pageNum === 2 && currentPage > 3) {
+                        return <span key="start-ellipsis" className="self-center">...</span>;
+                    }
+                    if (pageNum === buttonsNumber - 1 && currentPage < buttonsNumber - 2) {
+                        return <span key="end-ellipsis" className="self-center">...</span>;
+                    }
+                    if (pageNum !== 1 && pageNum !== buttonsNumber && Math.abs(pageNum - currentPage) > 1) {
+                        return null;
+                    }
+                }
 
-            <Button className={buttonStyle}>
+                return (
+                    <button 
+                        key={pageNum}
+                        className={`${buttonStyle} ${pageNum === currentPage ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}`}
+                        onClick={() => setCurrentPage(pageNum)}
+                    >
+                        {pageNum}
+                    </button>
+                );
+            })}
+
+            <button 
+                className={buttonStyle} 
+                onClick={() => setCurrentPage(prev => prev + 1)} 
+                disabled={currentPage === buttonsNumber}
+            >
                 <AngleDownIcon className="-rotate-90 w-5 h-5" />
-            </Button>
+            </button>
         </div>
     );
 }

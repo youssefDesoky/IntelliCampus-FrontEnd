@@ -802,6 +802,79 @@ const studentsData = [
                 course: coursesData["Artificial Intelligence"][0],
                 tags: ["AI", "Lecture"],
                 content: `Introduction to neural networks, including architecture, activation functions, and training algorithms.`
+            },
+            {
+                title: "Database Normalization",
+                modified: "1 day ago",
+                creationDate: "2024-06-09",
+                course: coursesData["Information Systems"][0],
+                tags: ["Database", "Lecture"],
+                content: `Detailed explanation of normalization forms (1NF, 2NF, 3NF) with examples and benefits for database design.`
+            },
+            {
+                id: 8,
+                title: "Web Development Basics",
+                modified: "1 month ago",
+                creationDate: "2024-05-15",
+                course: coursesData["Information Systems"][1],
+                tags: ["Web Development", "Assignment"],
+                content: `Introduction to HTML, CSS, and JavaScript for building responsive and interactive web applications.`
+            },
+            {
+                title: "Operating System Concepts",
+                modified: "1 week ago",
+                creationDate: "2024-06-05",
+                course: coursesData["Computer Science"][0],
+                tags: ["Operating Systems", "Assignment"],
+                content: `Notes on process management, memory allocation, and file systems in modern operating systems.`
+            },
+            {
+                title: "Software Engineering Principles",
+                modified: "3 days ago",
+                creationDate: "2024-06-08",
+                course: coursesData["Computer Science"][1],
+                tags: ["Software Engineering", "Exam"],
+                content: `Key principles of software engineering including SDLC, Agile methodologies, and best practices for project management.`
+            },
+            {
+                title: "Binary Search Trees Implementation",
+                modified: "2 hours ago",
+                creationDate: "2024-06-10",
+                course: coursesData["Computer Science"][2],
+                tags: ["Data Structures", "Lecture"],
+                content: `Comprehensive notes on BST operations including insertion, deletion, and traversal methods with complexity analysis.`
+            },
+            {
+                title: "Algorithm Analysis Techniques",
+                modified: "5 days ago",
+                creationDate: "2024-06-06",
+                course: coursesData["Computer Science"][3],
+                tags: ["Algorithms", "Lecture"],
+                content: `Overview of Big O notation, time and space complexity analysis, and common algorithmic strategies.`
+            },
+            {
+                title: "Object-Oriented Programming Concepts",
+                modified: "3 weeks ago",
+                creationDate: "2024-05-25",
+                course: coursesData["Information Technology"][0],
+                tags: ["Programming", "Lecture"],
+                content: `Fundamental concepts of OOP such as classes, objects, inheritance, polymorphism, and encapsulation.`
+            },
+            {
+                title: "Network Protocols Overview",
+                modified: "2 weeks ago",
+                creationDate: "2024-05-30",
+                course: coursesData["Information Technology"][0],
+                tags: ["Networking", "Lecture"],
+                content: `Summary of key network protocols including TCP/IP, HTTP, FTP, and their roles in data communication.`
+            },
+            {
+                title: "Data Mining Techniques",
+                modified: "1 month ago",
+                creationDate: "2024-05-10",
+                course: coursesData["Data Science"][0],
+                tags: ["Data Science", "Lecture"],
+                content: `Exploration of data mining methods including clustering, classification, and association rule mining.`
             }
         ],
         reminders: {

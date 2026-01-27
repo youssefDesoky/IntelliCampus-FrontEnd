@@ -2,6 +2,8 @@ import { useLayoutEffect, useState } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
+import SidebarProvider from "./context/SidebarProvider";
+
 import StudentLayout from "./layout/StudentLayout";
 import InstructorLayout from "./layout/InstructorLayout";
 import AdminLayout from "./layout/AdminLayout";
@@ -15,14 +17,22 @@ import StudentReminders from "./pages/student/StudentReminders";
 import StudentSmartNotes from "./pages/student/StudentSmartNotes";
 import StudentCommunity from "./pages/student/StudentCommunity";
 import FahimAI from "./pages/student/FahimAI";
+import StudentCoursePrerequisites from "./pages/student/StudentCoursePrerequisites";
 
 import CourseLayout from "./components/student/courses/courseDetail/CourseLayout";
 import CourseMaterials from "./components/student/courses/courseDetail/CourseMaterials";
 import CourseAttendance from "./components/student/courses/courseDetail/CourseAttendance";
 
+
 // Data
 import studentData from "./data/students";
+import CreateStudent from "./components/admin/CreateStudent";
+import StudentCoursesRegistration from "./pages/student/StudentCoursesRegistration";
+import StudentSchedule from "./pages/student/StudentSchedule";
 
+import LoginPage from "./feature/pages/LoginPage";
+import ForgetPassword from "./feature/pages/ForgetPassword";
+import Attendance from "./components/instructor/attendance/Attendance";
 
 
 export default function App() {
@@ -89,6 +99,14 @@ export default function App() {
           ]
         },
         {
+          path: "courses/registration",
+          element: <StudentCoursesRegistration />
+        },
+        {
+          path: "courses/prerequisites",
+          element: <StudentCoursePrerequisites />
+        },
+        {
           path: "reminders",
           element: <StudentReminders studentReminders={currStudentData.reminders} />
         },
@@ -98,9 +116,32 @@ export default function App() {
         },
         {
           path: "schedule",
-          element: <div>Student Schedule Page</div>
+          element: <StudentSchedule />
+        },
+      ]
+    },
+    {
+      path: "/instructor",
+      element: <InstructorLayout />,
+      children: [
+        {
+          path: "/instructor/attendance",
+          element: <Attendance />
         }
       ]
+    },
+    {
+      path: "/admin",
+      element: <AdminLayout />,
+      children: []
+    },
+    {
+      path:"/login",
+      element: <LoginPage />
+    },
+    {
+      path: "/forgot-password",
+      element: <ForgetPassword />
     }
   ]);
 
@@ -125,7 +166,9 @@ export default function App() {
   return (
     <>
       <CustomCursor />
-      <RouterProvider router={router} />
+      <SidebarProvider>
+        <RouterProvider router={router} />
+      </SidebarProvider>
     </>
   );
 }

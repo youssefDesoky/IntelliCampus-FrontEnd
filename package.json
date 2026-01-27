@@ -12,6 +12,7 @@
   "dependencies": {
     "@jitsi/react-sdk": "^1.4.4",
     "@tailwindcss/vite": "^4.1.18",
+    "date-fns": "^4.1.0",
     "firebase": "^12.7.0",
     "i18next": "^25.7.3",
     "react": "^19.2.0",

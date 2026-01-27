@@ -1,6 +1,7 @@
 import Section from "../../../../ui/Section";
 import ReminderItem from "./ReminderItem";
 import SideReminders from "./remindersAside/SideReminders";
+import SelectBox from "../../../../ui/SelectBox";
 
 export default function MainReminders({studentReminders}) {
     const sectionOrder = [
@@ -10,20 +11,22 @@ export default function MainReminders({studentReminders}) {
     ];
 
     return (
-        <Section id="main-reminders" className="flex-1 flex overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-6">
+        <Section id="main-reminders" className="grid grid-cols-5">
+            <div className="col-span-3 p-6">
                 <div className="flex items-start justify-between mb-6">
                     <h2 className="text-xl font-semibold">Timeline</h2>
 
-                    <div className="flex items-center gap-3">
-                        <select className="bg-white border border-gray-200 text-sm rounded-lg px-3 py-2 shadow-sm cursor-pointer">
-                            <option>All Categories</option>
-                            <option>Classes</option>
-                            <option>Exams</option>
-                            <option>Assignments</option>
-                            <option>Personal</option>
-                        </select>
-                    </div>
+                    <SelectBox
+                        options={[
+                            { value: 'all', label: 'All Categories' },
+                            { value: 'classes', label: 'Classes' },
+                            { value: 'exams', label: 'Exams' },
+                            { value: 'assignments', label: 'Assignments' },
+                            { value: 'personal', label: 'Personal'}
+                        ]}
+
+                        selectedOption='all'
+                    />
                 </div>
 
                 <div className="space-y-8">
@@ -45,7 +48,7 @@ export default function MainReminders({studentReminders}) {
                 </div>
             </div>
 
-            <SideReminders />
+            <SideReminders className="col-span-2" />
         </Section>
     );
 }

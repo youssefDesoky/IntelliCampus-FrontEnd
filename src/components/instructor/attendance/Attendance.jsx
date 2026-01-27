@@ -1,6 +1,7 @@
-import Header from "../../../components/layout/Header";
-import Section from "../../../components/ui/Section";
-import BoxData from "../../../components/ui/BoxData";
+import PageHeader from "../../../ui/PageHeader";
+import Section from "../../../ui/Section";
+import BoxData from "../../../ui/BoxData";
+import SelectBox from "../../../ui/SelectBox";
 
 const students = [
     { id: "2021-CS-001", name: "Alice Johnson", email: "alice.johnson@example.com", status: "Present", present: 23, absent: 2, image: "/images/alice.jpg" },
@@ -62,16 +63,20 @@ const boxesData = [
 export default function Attendance() {
     return (
         <Section className="w-[100vw] bg-gray-50">
-            <Header headerTitle="Attendance Management" />
+            <PageHeader title="Attendance Management" subtitle="Manage and track student attendance"/>
 
             <Section className="bg-white p-6 rounded-lg shadow-sm mb-6 flex items-end gap-4">
                 <div className="flex-1">
                     <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-2">Select Course</label>
-                    <select name="course" id="course" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
-                        <option value="">CSE 101 - Introduction to Programming</option>
-                        <option value="">CSE 102 - Data Structures</option>
-                        <option value="">CSE 103 - Algorithms</option>
-                    </select>
+                    <SelectBox
+                        id="course"
+                        options={[
+                            { value: 'cse101', label: 'CSE 101 - Introduction to Programming' },
+                            { value: 'cse102', label: 'CSE 102 - Data Structures' },
+                            { value: 'cse103', label: 'CSE 103 - Algorithms' },
+                        ]} 
+                        selectedOption="cse101"
+                    />
                 </div>
                 <div className="flex-1">
                     <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">Select Date</label>

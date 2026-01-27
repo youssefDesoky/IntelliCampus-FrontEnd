@@ -1,5 +1,4 @@
 import Button from "../../../../ui/Button";
-import InputGroup from "../../../../ui/Input";
 
 export default function FahimAIFooter({sendQuestionIcon, voiceInputIcon}) {
     const inputStyles = "w-full border border-gray-300 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500";
@@ -18,11 +17,14 @@ export default function FahimAIFooter({sendQuestionIcon, voiceInputIcon}) {
                     </button>
 
                     <div className="flex-1">
-                        <InputGroup
-                            placeholder="Ask Fahim anything about your studies..."
-                            inputId="fahim-ai-input"
-                            inputStyles={inputStyles}
-                        />
+                        <div>
+                            <input
+                                type="text"
+                                placeholder="Type your question here..."
+                                className={inputStyles}
+                            />
+                        </div>
+
                     </div>
 
                     <div className="flex items-center gap-2">

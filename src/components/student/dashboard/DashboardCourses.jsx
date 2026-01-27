@@ -4,7 +4,7 @@ import DashboardCourse from "./courses/DashboardCourse.jsx";
 import Button from "../../../ui/Button.jsx";
 
 // Icons
-import { ListIcon, GridIcon, ArrowRightIcon } from "../../../ui/icons";
+import { ListIcon, Grid3ColIcon, ArrowRightIcon } from "../../../ui/icons";
 
 export default function DashboardCourses({ studentCourses, className = "" }) {
     return (
@@ -15,7 +15,7 @@ export default function DashboardCourses({ studentCourses, className = "" }) {
                 <div className="flex items-center gap-4">
                     <div className="flex flex-row items-center gap-1 bg-gray-50 p-1 border border-gray-200 rounded-md">
                         <Button className="px-2 py-1 flex items-center gap-2 bg-blue-500 rounded-md text-sm font-medium text-white" test="active">
-                            <GridIcon className="w-5 h-5" />
+                            <Grid3ColIcon className="w-5 h-5" />
                         </Button>
 
                         <Button className="px-2 py-1 flex items-center gap-2 hover:bg-gray-300 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900">

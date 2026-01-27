@@ -1,5 +1,4 @@
 import Button from "../../../../ui/Button";
-import CircleSpan from "../../../../ui/CircleSpan";
 
 // Icons
 import {ClockIcon, UsersIcon} from "../../../../ui/icons";
@@ -17,7 +16,7 @@ export default function ClassItem({classInfo}) {
 
                 <div className="flex flex-row gap-0 text-sm text-muted-text-light dark:text-muted-text-dark">
                     <p>{classInfo.id}</p>
-                    <CircleSpan />
+                    <span className="w-1 h-1 rounded-full my-auto mx-1 bg-bg-surface-secondary-hover-light dark:bg-bg-surface-secondary-hover-dark"></span>
                     <p>{classInfo.room}</p>
                 </div>
             </div>

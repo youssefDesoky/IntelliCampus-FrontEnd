@@ -1,62 +1,42 @@
 // Translations
-import { useTranslation } from 'react-i18next';
-
-import React, {  useLayoutEffect, useState } from "react";
-
+import { useTranslation } from "react-i18next";
 import Button from "../../ui/Button";
-
-// Icons
 import { SidebarIcon, SignOutIcon } from "../../ui/icons";
+import React from "react";
+import useSidebar from "../../hooks/useSidebar";
 
-export default function Aside({ children, height, minWidth = 75, maxWidth = 256 }) {
+export default function Aside({ children, height }) {
   const { t } = useTranslation('common/aside');
+  const { width, isCompact, toggleSidebar } = useSidebar();
 
-  const [width, setWidth] = useState(() => {
-    const savedWidth = localStorage.getItem('sidebar-width');
-    return savedWidth ? parseInt(savedWidth) : maxWidth;
-  });
-
-  useLayoutEffect(() => {
-    localStorage.setItem('sidebar-width', width);
-    document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
-  }, [width]);
-
-  const toggleSidebar = () => {
-    setWidth((w) => (w === maxWidth ? minWidth : maxWidth));
-  }
+  const effectiveCompact = isCompact;
 
   return (
     <aside 
       id="sidebar" 
-      className={`fixed p-4 flex flex-col w-64 left-0 border-r border-default-border-light bg-surface-bg-light dark:border-default-border-dark dark:bg-surface-bg-dark dark:text-primary-text-dark`}
-      style={{ height: `calc(100vh - ${height || 80}px)`,  top: `${height || 80}px`, width: `${width}px` }}
+      className={`${localStorage.getItem('lang') === 'ar' ? 'lg:right-0' : 'lg:left-0'} lg:flex-col lg:border-r fixed z-50 p-4 flex border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark bottom-0 lg:bottom-auto border-t lg:border-t-0`}
+      style={{ 
+        height: `calc(100vh - ${ height }px)`,  
+        top: `${ height }px`, 
+        width: `${width}%`
+      }}
     >
-
-      <nav className="flex-1 space-y-2">
-        {/* Need To Change Color using variables */}
-        <div id="toggle-sidebar" className="flex flex-row-reverse z-50 mb-8 pb-2 border-b border-default-border-light dark:border-default-border-dark">
+      <nav className="flex-1 space-y-2 flex flex-col justify-start">
+        <div
+          id="toggle-sidebar"
+          className="flex flex-row justify-end z-60 mb-8 pb-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark"
+        >
           <Button 
-            className="p-2 hover:text-accent-light dark:hover:text-accent-dark transition-colors duration-200 ease-in-out"
-            onClick={() => { toggleSidebar(); }}
+            className="p-2 hover:text-text-accent-hover-light dark:hover:text-text-accent-hover-dark"
+            onClick={toggleSidebar}
           >
             <SidebarIcon className="w-5 h-5" />
           </Button>
         </div>
 
+
         {React.Children.map(children, (child) => {
           if (!React.isValidElement(child)) return child;
-
-          const compact = width < 175;
-          const childChildren = React.Children.toArray(child.props.children);
-
-          const safeIcon =
-            React.isValidElement(childChildren[0])
-              ? childChildren[0]
-              : React.createElement(
-                  "span",
-                  { className: "flex items-center justify-center" },
-                  childChildren[0]
-                );
 
           const origClass = child.props.className;
 
@@ -64,47 +44,46 @@ export default function Aside({ children, height, minWidth = 75, maxWidth = 256 
             typeof origClass === "function"
               ? (state) => {
                   let res = origClass(state) || "";
-                  if (!compact) {
-                    // Restore translate-x-2 if active-link and not present
+                  if (!effectiveCompact) {
                     if (res.includes("active-link") && !res.includes("translate-x-2")) {
-                      res = (res.replace(/translate-x-0 justify-center/g, "") + " translate-x-2").trim();
+                      res = (res.replace(/translate-x-0/g, "") + " translate-x-2").trim();
                     } else {
-                      res = res.replace(/translate-x-0 justify-center/g, "").trim();
+                      res = res.replace(/translate-x-0/g, "").trim();
                     }
                     return res;
                   }
-                  // Compact: remove translate-x-2, add center classes
-                  return (res.replace(/translate-x-2/g, "") + " translate-x-0 justify-center").trim();
+                  return (res.replace(/translate-x-2/g, "") + " translate-x-0").trim();
                 }
               : (() => {
                   const base = origClass || "";
-                  if (compact) {
-                    // Compact: remove translate-x-2, add center classes
-                    return (base.replace(/translate-x-2/g, "") + " translate-x-0 justify-center").trim();
+                  if (effectiveCompact) {
+                    return (base.replace(/translate-x-2/g, "") + " translate-x-0").trim();
                   }
-                  // Maximized: restore translate-x-2 if active-link and not present
                   if (base.includes("active-link") && !base.includes("translate-x-2")) {
-                    return (base.replace(/translate-x-0 justify-center/g, "") + " translate-x-2").trim();
+                    return (base.replace(/translate-x-0/g, "") + " translate-x-2").trim();
                   }
-                  return base.replace(/translate-x-0 justify-center/g, "").trim();
+                  return base.replace(/translate-x-0 /g, "").trim();
                 })();
 
           return React.cloneElement(
             child,
-            { className: newClass },
-            compact ? safeIcon : child.props.children
+            { 
+              className: newClass,
+              'data-compact': effectiveCompact ? 'true' : 'false'
+            }
           );
         })}
 
-        <div className="border-t border-default-border-light dark:border-default-border-dark mt-8" />
-
-        <Button
-          id="sidebar-logout"
-          className="mt-2 p-2 w-full flex items-center gap-3 border border-transparent rounded-md hover:border-muted-border-light dark:hover:border-muted-border-dark text-red-400 dark:text-red-600 hover:bg-muted-bg-light dark:hover:bg-muted-bg-dark transition-all duration-200 ease-in-out"
-        >
-          <SignOutIcon className="w-5 h-5" />
-          {! (width < 175) && <span className="text-base font-semibold">{t('logout')}</span>}
-        </Button>
+        <div className="z-60 mt-8 pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
+          <Button
+            id="sidebar-logout"
+            data-compact={effectiveCompact ? 'true' : 'false'}
+            className={`w-full p-2 flex items-center gap-3 border border-transparent rounded-md hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark text-red-400 dark:text-red-600 hover:text-red-500 dark:hover:text-red-700 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ${effectiveCompact ? 'justify-center' : ''}`}
+          >
+            <SignOutIcon className="w-5 h-5 shrink-0" />
+            <span className="text-base font-semibold whitespace-nowrap overflow-hidden">{t('logout')}</span>
+          </Button>
+        </div>
       </nav>
     </aside>
   );

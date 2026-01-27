@@ -1,6 +1,7 @@
 import SmartNotesHeader from "../../components/student/smartNotes/SmartNotesHeader";
 import SmartNotesBody from "../../components/student/smartNotes/SmartNotesBody";
-
+import useDeviceType from "../../hooks/useDeviceType";
+import { useState } from "react";
 
 /*
                     <Section className="border-b border-gray-200 pb-2 mb-4">
@@ -67,11 +68,15 @@ import SmartNotesBody from "../../components/student/smartNotes/SmartNotesBody";
 */
 
 export default function StudentSmartNotes({ studentNotes }) {
+    const {isPhone, isTablet} = useDeviceType();
+    const [viewMode, setViewMode] = useState(
+        localStorage.getItem('notesViewMode') === 'grid-3' ? 'grid-3' : 'grid-2'
+    );
     return (
         <>
-            <SmartNotesHeader title="Smart Notes" subtitle="Organize, manage, and enhance your study notes with AI-powered tools" notes={studentNotes} />
+            <SmartNotesHeader notes={studentNotes} isPhone={isPhone} isTablet={isTablet} viewMode={viewMode} setViewMode={setViewMode} />
             
-            <SmartNotesBody notes={studentNotes} />
+            <SmartNotesBody notes={studentNotes} isPhone={isPhone} isTablet={isTablet} viewMode={viewMode} />
         </>
     );
 }

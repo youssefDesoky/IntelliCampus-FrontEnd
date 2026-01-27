@@ -1,17 +1,22 @@
+import { useState } from "react";
 import Section from "../../../ui/Section";
-import SmartNote from "./smartNotesBody/SmartNote";
 import PaginationButtons from "../../../ui/PaginationButtons";
+import SmartNote from "./SmartNote";
 
-export default function SmartNotesBody({ notes }) {
+export default function SmartNotesBody({ notes, isPhone, isTablet, viewMode }) {
+    const itemsPerPage = isPhone ? 6 : isTablet ? 8 : 12;
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(notes.length / itemsPerPage);
+
     return (
-        <Section className="mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {notes.map((note) => (
-                    <SmartNote key={note.id} note={note} />
+        <Section>
+            <div className={`grid ${isPhone ? "grid-cols-1" : isTablet ? (viewMode === 'list' ? "grid-cols-1" : "grid-cols-2") : (viewMode === 'grid-3' ? "grid-cols-3" : "grid-cols-2")} gap-6 mb-4`}>
+                {notes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((note) => (
+                    <SmartNote key={note.id} note={note} viewMode={viewMode} isTablet={isTablet} />
                 ))}
             </div>
 
-            <PaginationButtons buttonsNumber={5} />
+            <PaginationButtons buttonsNumber={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />
         </Section>  
     );
 }

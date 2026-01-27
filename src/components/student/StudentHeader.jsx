@@ -1,7 +1,10 @@
+import useDeviceType from "../../hooks/useDeviceType";
 import Header from "../common/Header";
 
-export default function StudentHeader({height, userData}) {
+export default function StudentHeader({ userData }) {
+    const { isMobile } = useDeviceType();
+
     return (
-        <Header height={height} userData={userData} />
+        <Header userData={userData} isMobile={isMobile} />
     );
 }

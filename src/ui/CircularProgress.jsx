@@ -2,9 +2,9 @@ export default function CircularProgress({
     size = 192, 
     progress = 0, 
     strokeWidth = 10, 
-    circleColor = "text-gray-300 dark:text-gray-700",
-    progressColor = "text-accent-light dark:text-accent-dark",
-    textColor = "text-gray-900 dark:text-white",
+    circleColor = "text-bg-fill-secondary-default-light dark:text-bg-fill-secondary-default-dark",
+    progressColor = "text-text-accent-default-light dark:text-text-accent-default-dark",
+    textColor = "text-text-primary-default-light dark:text-text-primary-default-dark",
     children
 }) 
 {    

@@ -1,66 +1,69 @@
 import PageHeader from "../../../ui/PageHeader";
 import Button from "../../../ui/Button";
 import Section from "../../../ui/Section";
-import Input from "../../../ui/Input";
-import Label from "../../../ui/Label";
+import SelectBox from "../../../ui/SelectBox";
+import SearchBar from "../../../ui/SearchBar";
 
 // Icons
-import { PlusIcon, ListIcon, GridIcon } from "../../../ui/icons";
+import { PlusIcon, Grid3ColIcon, Grid2ColIcon, ListIcon } from "../../../ui/icons";
 import ToggleViewMode from "../../../ui/ToggleViewMode";
 
-export default function SmartNotesHeader({title, subtitle, notes}) {
+export default function SmartNotesHeader({notes, isPhone, isTablet, viewMode, setViewMode}) {
     const uniqueCourses = [...new Set(notes.map(note => note.course))];
-    const uniqueTags = [...new Set(notes.flatMap(note => note.tags))];
 
     return (
         <>
-            <PageHeader title={title} subtitle={subtitle}>
-                <Button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:scale-[1.02] transition-transform duration-200 ease-in-out cursor-none">
+            <PageHeader title="Smart Notes" subtitle="Organize and enhance your notes with AI">
+                <Button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:scale-[1.02]">
                     <PlusIcon className="w-5 h-5" />
-                    <span className="font-semibold">Add New Note</span>
+                    {!isPhone && <span className="font-semibold">Add New Note</span>}
                 </Button>
             </PageHeader>
 
-            <Section className="p-6 mb-6 bg-surface-bg-light dark:bg-surface-bg-dark rounded border border-default-border-light dark:border-default-border-dark">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Input type="text" className="w-full p-2 border border-gray-300 rounded" placeholder="Search notes..." />
+            <Section className="p-4 lg:p-6 mb-6 bg-surface-bg-light dark:bg-surface-bg-dark rounded-xl border border-default-border-light dark:border-default-border-dark">
+                <div className="flex flex-col lg:flex-row lg:justify-between gap-4">
+                    {/* Search Bar - Full width on all screens */}
+                    <div className="w-full lg:w-fit flex items-center justify-between gap-4">
+                        <SearchBar placeholder="Search notes..." />
 
-                        <select name="" id="">
-                            <option value="">All Courses</option>
-                            {uniqueCourses.map((course) => (
-                                <option key={course.id} value={course.id}>{course.title}</option>
-                            ))}
-                        </select>
-
-                        <select name="" id="">
-                            <option value="">All Tags</option>
-                            {uniqueTags.map((tag, index) => (
-                                <option key={index} value={tag}>{tag}</option>
-                            ))}
-                        </select>
+                        {!isPhone && (
+                            <div className="flex items-center">
+                                <ToggleViewMode
+                                    id="notes-view-mode-toggle"
+                                    isVertical={false}
+                                    isFirstMode={viewMode === (isTablet ? 'list' : 'grid-3')}
+                                    onFirstModeSelect={() => {
+                                        const mode = isTablet ? 'list' : 'grid-3';
+                                        setViewMode(mode);
+                                        localStorage.setItem('notesViewMode', mode);
+                                    }}
+                                    onSecondModeSelect={() => {
+                                        setViewMode('grid-2');
+                                        localStorage.setItem('notesViewMode', 'grid-2');
+                                    }}
+                                    firstModeLabel={isTablet ? <ListIcon className="w-5 h-5" /> : <Grid3ColIcon className="w-5 h-5" />}
+                                    secondModeLabel={<Grid2ColIcon className="w-5 h-5" />}
+                                />
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex items-center justify-around gap-4">
-                        <div>
-                            <Label htmlFor="sort">Sort By:</Label>
-                            <select name="" id="">
-                                <option value="">Recent</option>
-                                <option value="">Title A-Z</option>
-                                <option value="">Course</option>
-                                <option value="">Creation Date</option>
-                            </select>
-                        </div>
+                    {/* Filter & Sort Group */}
+                    <div className={`flex ${isPhone ? 'flex-col w-full' : 'flex-row justify-between'} gap-3`}>
+                        <SelectBox
+                            options={uniqueCourses.map(course => ({ label: course.title, value: course.id }))}
+                            label="Filter"
+                            className={isPhone ? 'w-full' : ''}
+                        />
 
-                        <ToggleViewMode
-                            id="notes-view-mode-toggle"
-                            isVertical={false}
-                            firstMode={true}
-                            secondMode={false}
-                            onFirstModeSelect={() => {}}
-                            onSecondModeSelect={() => {}}
-                            firstModeLabel={<GridIcon className="w-5 h-5" />}
-                            secondModeLabel={<ListIcon className="w-5 h-5" />}
+                        <SelectBox
+                            label="Sort"
+                            options={[
+                                { label: 'Date', value: 'date' },
+                                { label: 'Title', value: 'title' },
+                                { label: 'Course', value: 'course' },
+                            ]}
+                            className={isPhone ? 'w-full' : ''}
                         />
                     </div>
                 </div>
