@@ -117,14 +117,14 @@ export default function Dialog({
                                 <Button 
                                     variant="secondary"
                                     onClick={handleClose}
-                                    width="w-full"
+                                    width="flex-1"
                                 >
                                     {cancelText}
                                 </Button>
                                 <Button 
                                     variant={config.buttonVariant}
                                     onClick={handleConfirm}
-                                    width="w-full"
+                                    width="flex-1"
                                 >
                                     {confirmText}
                                 </Button>

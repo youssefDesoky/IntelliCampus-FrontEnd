@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { DownloadIcon, EyeIcon, FileLinesIcon, PlayIcon, TrashIcon, VoiceIcon, ImageIcon, FileIcon } from "../../../../components/ui/icons";
+import { DownloadIcon, EyeIcon, FileLinesIcon, PlayIcon, TrashIcon, VoiceIcon, ImageIcon, FileIcon, XIcon } from "../../../../components/ui/icons";
 import Dialog from "../../../../components/ui/Dialog";
+import ModelOverlay from "../../../../components/ui/ModelOverlay";
+import MaterialPreview from "../../../../components/ui/MaterialPreview";
 import { getMaterialDownloadUrl } from "../../../course/services/materialsApi";
 
 // Normalise the material type coming from the backend
@@ -23,6 +25,7 @@ function getTypeLabel(type) {
 
 export default function InstructorWeekMaterialContent({ material, isFirst, onDelete }) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showViewer, setShowViewer] = useState(false);
     const type = getMaterialType(material);
     const downloadUrl = material.materialId ? getMaterialDownloadUrl(material.materialId) : "#";
     const viewUrl = material.fileUrl || downloadUrl;
@@ -76,7 +79,7 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                             </div>
                             {/* Mobile action buttons */}
                             <div className="flex items-center gap-1 md:hidden">
-                                <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
+                                <button onClick={() => setShowViewer(true)} className="p-2 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
                                     {
                                         type === 1 ? (
                                             <PlayIcon size={18} />
@@ -90,7 +93,7 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                                             <EyeIcon size={18} />
                                         )
                                     }
-                                </a>
+                                </button>
                                 <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
                                     <DownloadIcon size={18} />
                                 </a>
@@ -108,7 +111,7 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
 
                 {/* Desktop action buttons */}
                 <div className="hidden md:flex items-center gap-2 md:ml-4">
-                    <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="p-3 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
+                    <button onClick={() => setShowViewer(true)} className="p-3 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
                         {
                             type === 1 ? (
                                 <PlayIcon size={20} />
@@ -122,7 +125,7 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                                 <EyeIcon size={20} />
                             )
                         }
-                    </a>
+                    </button>
                     <a href={downloadUrl} download className="p-3 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
                         <DownloadIcon size={20} />
                     </a>
@@ -135,6 +138,28 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                     </button>
                 </div>
             </li>
+
+            {/* Material Viewer Overlay */}
+            {showViewer && (
+                <ModelOverlay onClose={() => setShowViewer(false)} maxWidth="max-w-5xl">
+                    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+                            <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate pr-4">{material.title}</h3>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
+                                    <DownloadIcon size={20} />
+                                </a>
+                                <button onClick={() => setShowViewer(false)} className="p-2 rounded-lg hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 transition-all duration-200" aria-label="Close">
+                                    <XIcon size={20} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 min-h-0 p-1">
+                            <MaterialPreview type={type} title={material.title} viewUrl={viewUrl} downloadUrl={downloadUrl} />
+                        </div>
+                    </div>
+                </ModelOverlay>
+            )}
 
             {/* Delete Confirmation Dialog */}
             <Dialog

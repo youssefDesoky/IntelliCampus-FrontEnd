@@ -10,10 +10,15 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    https: false,
+    https: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5122',
+        target: 'https://192.168.1.15:5123',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/materials': {
+        target: 'https://192.168.1.15:5123',
         changeOrigin: true,
         secure: false,
       },

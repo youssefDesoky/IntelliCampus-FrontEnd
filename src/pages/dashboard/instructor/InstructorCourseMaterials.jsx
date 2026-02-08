@@ -6,16 +6,6 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import { PlusIcon, XIcon } from "../../../components/ui/icons";
 import { createFolder, createMaterial, deleteMaterial, deleteFolder, updateFolder } from "../../../feature/course/services/materialsApi";
 
-// Must match backend MaterialType enum: 0=Document, 1=Video, 2=Presentation, 3=Link, 4=Other
-function guessFileType(filename) {
-    const ext = (filename.split(".").pop() || "").toLowerCase();
-    if (["pdf","doc","docx","txt","rtf","xls","xlsx"].includes(ext)) return 0;
-    if (["mp4","mkv","avi","mov","webm","mp3","wav","ogg","flac","aac"].includes(ext)) return 1;
-    if (["ppt","pptx","key","odp"].includes(ext)) return 2;
-    if (["jpg","jpeg","png","gif","svg","webp","bmp"].includes(ext)) return 4;
-    return 4;
-}
-
 export default function InstructorCourseMaterials() {
     const { course, courseId, refreshMaterials } = useOutletContext();
     const [showAddFolder, setShowAddFolder] = useState(false);
@@ -32,7 +22,6 @@ export default function InstructorCourseMaterials() {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("Title", file.name);
-                formData.append("Type", guessFileType(file.name));
                 if (folderId != null) {
                     formData.append("FolderId", folderId);
                 }

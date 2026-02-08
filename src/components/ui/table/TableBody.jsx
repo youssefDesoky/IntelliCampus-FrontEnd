@@ -8,7 +8,7 @@ import StudentForm from "../../../feature/admin/components/StudentForm";
 
 const buttonStyle = "w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
 
-export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit }) {
+export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, actions }) {
     const [editingRow, setEditingRow] = useState(null);
     const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
     const [actionButtonClicked, setActionButtonClicked] = useState(null);
@@ -149,26 +149,43 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
                     style={dropdownStyle}
                     className="action-dropdown"
                 >
-                    <button className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}>
-                        View Details
-                    </button>
-                    <button 
-                        className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
-                        onClick={() => handleEditClick(actionButtonClicked)}
-                    >
-                        Edit
-                    </button>
-                    <button 
-                        className={`${buttonStyle} text-text-danger-default-light dark:text-text-danger-default-dark hover:text-text-danger-hover-light dark:hover:text-text-danger-hover-dark`}
-                        onClick={() => handleDeleteClick(actionButtonClicked)}
-                    >
-                        Delete
-                    </button>
+                    {actions ? (
+                        actions(rowData[actionButtonClicked], actionButtonClicked).map((action, i) => (
+                            <button
+                                key={i}
+                                className={`${buttonStyle} ${action.className || ""}`}
+                                onClick={() => {
+                                    action.onClick();
+                                    setActionButtonClicked(null);
+                                }}
+                            >
+                                {action.label}
+                            </button>
+                        ))
+                    ) : (
+                        <>
+                            <button className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}>
+                                View Details
+                            </button>
+                            <button 
+                                className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
+                                onClick={() => handleEditClick(actionButtonClicked)}
+                            >
+                                Edit
+                            </button>
+                            <button 
+                                className={`${buttonStyle} text-text-danger-default-light dark:text-text-danger-default-dark hover:text-text-danger-hover-light dark:hover:text-text-danger-hover-dark`}
+                                onClick={() => handleDeleteClick(actionButtonClicked)}
+                            >
+                                Delete
+                            </button>
+                        </>
+                    )}
                 </DropdownMenu>
             }
         </tbody>    
 
-        {deleteButtonClicked !== false && (
+        {!actions && deleteButtonClicked !== false && (
             <Dialog
                 isOpen={deleteButtonClicked !== false}
                 variant="error"
@@ -191,7 +208,7 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
             </Dialog>
         )}
 
-        {editingRow !== null && getEditComponent()}
+        {!actions && editingRow !== null && getEditComponent()}
     </>    
     );
 }

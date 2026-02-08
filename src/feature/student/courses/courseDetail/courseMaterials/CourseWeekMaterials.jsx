@@ -2,6 +2,21 @@ import Button from "../../../../../components/ui/Button";
 import CourseWeekMaterialContent from "./CourseWeekMaterialContent";
 import { getMaterialDownloadUrl } from "../../../../course/services/materialsApi";
 
+function downloadAllMaterials(materials) {
+    materials.forEach((material, idx) => {
+        const url = material.materialId ? getMaterialDownloadUrl(material.materialId) : material.fileUrl;
+        if (url) {
+            // Create a temporary link and click it
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = material.title || `material-${idx+1}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    });
+}
+
 export default function CourseWeekMaterials({ folder }) {
     const materials = folder.materials || [];
 
@@ -60,7 +75,7 @@ export default function CourseWeekMaterials({ folder }) {
                         <p className="text-sm text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                             {materials.length} {materials.length === 1 ? 'file' : 'files'}
                         </p>
-                        <Button variant="primary" >
+                        <Button variant="primary" onClick={() => downloadAllMaterials(materials)}>
                             Download All
                         </Button>
                     </div>

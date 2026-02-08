@@ -8,7 +8,7 @@ export default function Button({
     className = "",
     ...props
 }) {
-    const base = "px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 h-10";
+    const base = "px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 h-10 whitespace-nowrap shrink-0";
     const loadingDot = "mx-1 bg-current rounded-full inline-block w-1.5 h-1.5";
     
     const variants = {

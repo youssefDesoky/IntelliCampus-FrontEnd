@@ -4,6 +4,21 @@ import Dialog from "../../../../components/ui/Dialog";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import InstructorWeekMaterialContent from "./InstructorWeekMaterialContent";
 import { CloudUploadIcon, DownloadIcon, FileLinesIcon, FilePenIcon, PlusIcon, TrashIcon, XIcon } from "../../../../components/ui/icons";
+import { getMaterialDownloadUrl } from "../../../course/services/materialsApi";
+    // Download all materials logic
+    function downloadAllMaterials(materials) {
+        materials.forEach((material, idx) => {
+            const url = material.materialId ? getMaterialDownloadUrl(material.materialId) : material.fileUrl;
+            if (url) {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = material.title || `material-${idx+1}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+    }
 
 export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMaterial, onDeleteFolder, onEditFolder }) {
     const [isDragOver, setIsDragOver] = useState(false);
@@ -183,7 +198,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                         <p className="text-sm text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                             {materials.length} {materials.length === 1 ? 'file' : 'files'}
                         </p>
-                        <Button variant="primary">
+                        <Button variant="primary" onClick={() => downloadAllMaterials(materials)}>
                             <DownloadIcon size={18} />
                             Download All
                         </Button>

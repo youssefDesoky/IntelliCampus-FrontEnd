@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../../../components/ui/PageHeader";
 import Section from "../../../components/ui/Section";
@@ -7,7 +7,7 @@ import SearchBar from "../../../components/ui/SearchBar";
 import Dialog from "../../../components/ui/Dialog";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
 import ToggleViewMode from "../../../components/ui/ToggleViewMode";
-import DropdownMenu from "../../../components/ui/DropdownMenu";
+import Table from "../../../components/ui/Table";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import CourseForm from "../../../feature/admin/components/CourseForm";
 import ActivateCourseDialog from "../../../feature/admin/components/ActivateCourseDialog";
@@ -22,7 +22,6 @@ import {
     UserTieIcon,
     ClipboardCheckIcon,
     ArrowRightIcon,
-    EllipsisVerticalIcon,
     Grid3ColIcon,
     TableIcon
 } from "../../../components/ui/icons";
@@ -50,6 +49,32 @@ function StatusBadge({ isActive }) {
             {isActive ? "Active" : "Inactive"}
         </span>
     );
+}
+
+const courseTableHeaders = ["Course", "Course ID", "Department", "Credit Hours", "Professor", "Status"];
+
+function buildCourseRow(course) {
+    return {
+        course: (
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
+                    {(course.title || "?").charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col text-left">
+                    <p className="font-medium">{course.title}</p>
+                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-50 truncate">{course.description}</p>
+                </div>
+            </div>
+        ),
+        courseId: (
+            <span className="px-2 py-1 rounded-full border text-xs font-semibold">{course.id}</span>
+        ),
+        department: course.department || "—",
+        creditHours: course.creditHours || "—",
+        professor: course.professor || "—",
+        status: <StatusBadge isActive={!!course.isActive} />,
+        _raw: course,
+    };
 }
 
 function CourseCard({ course, onEdit, onDelete, onActivate, onDeactivate, onManage }) {
@@ -173,46 +198,16 @@ export default function ManageCourses() {
     // View mode
     const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminCoursesViewMode") || "grid");
 
+    // Table selection
+    const [selectedRows, setSelectedRows] = useState([]);
+    const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
+
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
-
-    // Table action dropdown
-    const [actionButtonClicked, setActionButtonClicked] = useState(null);
-    const [dropdownStyle, setDropdownStyle] = useState({});
-    const buttonRefs = useRef({});
 
     useEffect(() => {
         localStorage.setItem("adminCoursesViewMode", viewMode);
     }, [viewMode]);
-
-    // Close dropdown on outside click
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (!event.target.closest('.action-dropdown') && !event.target.closest('.action-btn')) {
-                setActionButtonClicked(null);
-            }
-        };
-        document.addEventListener('click', handleClickOutside);
-        return () => document.removeEventListener('click', handleClickOutside);
-    }, []);
-
-    const handleActionClick = (e, courseId) => {
-        e.stopPropagation();
-        if (courseId === actionButtonClicked) {
-            setActionButtonClicked(null);
-            return;
-        }
-        const buttonEl = buttonRefs.current[courseId];
-        if (buttonEl) {
-            const rect = buttonEl.getBoundingClientRect();
-            setDropdownStyle({
-                top: rect.bottom + 8,
-                left: rect.left + rect.width / 2,
-                transform: 'translateX(-50%)',
-            });
-        }
-        setActionButtonClicked(courseId);
-    };
 
     const loadCourses = useCallback(async () => {
         try {
@@ -305,6 +300,18 @@ export default function ManageCourses() {
         navigate(`/admin/courses/${course.id}`);
     };
 
+    const handleDeleteSelected = async () => {
+        for (const idx of selectedRows) {
+            const row = paginatedCourses[idx];
+            if (row) {
+                try { await deleteCourse(row.id); } catch (err) { console.error(err); }
+            }
+        }
+        setSelectedRows([]);
+        setIsDeleteSelectedOpen(false);
+        await loadCourses();
+    };
+
     return (
         <>
             {/* Header */}
@@ -355,8 +362,28 @@ export default function ManageCourses() {
                                 firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
                                 secondModeLabel={<TableIcon className="w-5 h-5" />}
                             />
+                            {viewMode === "list" && selectedRows.length > 0 && (
+                                <Button variant="danger" className="whitespace-nowrap shrink-0" onClick={() => setIsDeleteSelectedOpen(true)}>
+                                    <TrashIcon size={20} />
+                                    Delete ({selectedRows.length})
+                                </Button>
+                            )}
                         </div>
                     </div>
+
+                    {/* Delete Selected Confirmation */}
+                    <Dialog
+                        isOpen={isDeleteSelectedOpen}
+                        variant="warning"
+                        title="Delete Selected Courses"
+                        onClose={() => setIsDeleteSelectedOpen(false)}
+                        onConfirm={() => { handleDeleteSelected(); return true; }}
+                        confirmText="Yes, Delete"
+                        cancelText="No, Keep"
+                        showCloseButton={true}
+                    >
+                        Are you sure you want to delete {selectedRows.length} selected course{selectedRows.length > 1 ? "s" : ""}? This action cannot be undone.
+                    </Dialog>
 
                     {paginatedCourses.length > 0 ? (
                         viewMode === "grid" ? (
@@ -376,134 +403,46 @@ export default function ManageCourses() {
                             </div>
                         ) : (
                             /* ─── Table View ─── */
-                            <>
-                            <div className="flex flex-col gap-4 overflow-x-auto mb-6">
-                                <table className="min-w-full table-auto border-collapse border border-border-primary-default-light dark:border-border-primary-default-dark">
-                                    <thead className="bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                                        <tr>
-                                            {["Course", "Course ID", "Department", "Credit Hours", "Professor", "Status", "Actions"].map((h, i) => (
-                                                <th key={i} className="p-3 text-sm font-semibold">{h}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {paginatedCourses.map((course) => (
-                                            <tr
-                                                key={course.id}
-                                                className="text-center hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark
-                                                    divide-x divide-border-primary-default-light dark:divide-border-primary-default-dark
-                                                    border border-border-primary-default-light dark:border-border-primary-default-dark"
-                                            >
-                                                {/* Course Title */}
-                                                <td className="p-3">
-                                                    <div className="flex items-center justify-center gap-3">
-                                                        <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                                                            {(course.title || "?").charAt(0).toUpperCase()}
-                                                        </div>
-                                                        <div className="flex flex-col text-left">
-                                                            <p className="font-medium">{course.title}</p>
-                                                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-50 truncate">{course.description}</p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                {/* Course ID */}
-                                                <td className="p-3">
-                                                    <span className="px-2 py-1 rounded-full border text-xs font-semibold">{course.id}</span>
-                                                </td>
-                                                {/* Department */}
-                                                <td className="p-3 text-sm">{course.department || "—"}</td>
-                                                {/* Credit Hours */}
-                                                <td className="p-3 text-sm">{course.creditHours || "—"}</td>
-                                                {/* Professor */}
-                                                <td className="p-3 text-sm">{course.professor || "—"}</td>
-                                                {/* Status */}
-                                                <td className="p-3">
-                                                    <StatusBadge isActive={!!course.isActive} />
-                                                </td>
-                                                {/* Actions */}
-                                                <td className="p-3">
-                                                    <button
-                                                        ref={(el) => (buttonRefs.current[course.id] = el)}
-                                                        onClick={(e) => handleActionClick(e, course.id)}
-                                                        className="action-btn p-2 rounded-full hover:bg-bg-fill-tertiary-hover-light dark:hover:bg-bg-fill-tertiary-hover-dark"
-                                                    >
-                                                        <EllipsisVerticalIcon size={24} className="rotate-90" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className="mb-6">
+                                <Table
+                                    role="course"
+                                    roleLabel="Courses"
+                                    headers={courseTableHeaders}
+                                    data={paginatedCourses.map(buildCourseRow)}
+                                    wrapInSection={false}
+                                    showHeaderActions={false}
+                                    showPagination={false}
+                                    onSelectionChange={setSelectedRows}
+                                    actions={(row) => [
+                                        {
+                                            label: "Manage Course",
+                                            onClick: () => handleManage(row._raw),
+                                            className: "text-text-accent-active-light dark:text-text-accent-active-dark font-medium",
+                                        },
+                                        {
+                                            label: "Edit",
+                                            onClick: () => setEditingCourse(row._raw),
+                                            className: "text-text-primary-default-light dark:text-text-primary-default-dark",
+                                        },
+                                        row._raw.isActive
+                                            ? {
+                                                  label: "Deactivate",
+                                                  onClick: () => handleDeactivate(row._raw),
+                                                  className: "text-text-warning-default-light dark:text-text-warning-default-dark",
+                                              }
+                                            : {
+                                                  label: "Activate",
+                                                  onClick: () => setActivatingCourse(row._raw),
+                                                  className: "text-text-success-default-light dark:text-text-success-default-dark",
+                                              },
+                                        {
+                                            label: "Delete",
+                                            onClick: () => setDeleteTarget(row._raw),
+                                            className: "text-text-danger-default-light dark:text-text-danger-default-dark",
+                                        },
+                                    ]}
+                                />
                             </div>
-
-                            {/* Action Dropdown (portaled outside the table container) */}
-                            {actionButtonClicked !== null && (
-                                <DropdownMenu
-                                    direction="bottom"
-                                    position="middle"
-                                    portal={true}
-                                    style={dropdownStyle}
-                                    className="action-dropdown"
-                                >
-                                    <button
-                                        className="w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-accent-active-light dark:text-text-accent-active-dark font-medium"
-                                        onClick={() => {
-                                            const c = paginatedCourses.find(x => x.id === actionButtonClicked);
-                                            if (c) handleManage(c);
-                                            setActionButtonClicked(null);
-                                        }}
-                                    >
-                                        Manage Course
-                                    </button>
-
-                                    <button
-                                        className="w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-primary-default-light dark:text-text-primary-default-dark"
-                                        onClick={() => {
-                                            const c = paginatedCourses.find(x => x.id === actionButtonClicked);
-                                            if (c) setEditingCourse(c);
-                                            setActionButtonClicked(null);
-                                        }}
-                                    >
-                                        Edit
-                                    </button>
-
-                                    {paginatedCourses.find(x => x.id === actionButtonClicked)?.isActive ? (
-                                        <button
-                                            className="w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-warning-default-light dark:text-text-warning-default-dark"
-                                            onClick={() => {
-                                                const c = paginatedCourses.find(x => x.id === actionButtonClicked);
-                                                if (c) handleDeactivate(c);
-                                                setActionButtonClicked(null);
-                                            }}
-                                        >
-                                            Deactivate
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-success-default-light dark:text-text-success-default-dark"
-                                            onClick={() => {
-                                                const c = paginatedCourses.find(x => x.id === actionButtonClicked);
-                                                if (c) setActivatingCourse(c);
-                                                setActionButtonClicked(null);
-                                            }}
-                                        >
-                                            Activate
-                                        </button>
-                                    )}
-
-                                    <button
-                                        className="w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-danger-default-light dark:text-text-danger-default-dark"
-                                        onClick={() => {
-                                            const c = paginatedCourses.find(x => x.id === actionButtonClicked);
-                                            if (c) setDeleteTarget(c);
-                                            setActionButtonClicked(null);
-                                        }}
-                                    >
-                                        Delete
-                                    </button>
-                                </DropdownMenu>
-                            )}
-                        </>
                         )
                     ) : (
                         <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">
