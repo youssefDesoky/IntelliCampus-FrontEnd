@@ -1,0 +1,113 @@
+import { DownloadIcon, EyeIcon, FileLinesIcon, PlayIcon, VoiceIcon, ImageIcon, FileIcon } from "../../../../../components/ui/icons";
+import { getMaterialDownloadUrl } from "../../../../course/services/materialsApi";
+
+// Normalise the material type coming from the backend (could be a string or number)
+function getMaterialType(material) {
+    const t = material.type ?? material.materialType;
+    if (typeof t === "number") return t;
+    if (typeof t === "string") {
+        const lower = t.toLowerCase();
+        if (lower === "document" || lower === "pdf" || lower === "doc") return 0;
+        if (lower === "video") return 1;
+        if (lower === "audio") return 2;
+        if (lower === "image") return 3;
+    }
+    return 4; // Other
+}
+
+function getTypeLabel(type) {
+    return type === 0 ? "Document" : type === 1 ? "Video" : type === 2 ? "Audio" : type === 3 ? "Image" : "Other";
+}
+
+export default function CourseWeekMaterialContent({ material, isFirst }) {
+    const type = getMaterialType(material);
+    const downloadUrl = material.materialId ? getMaterialDownloadUrl(material.materialId) : "#";
+    const viewUrl = material.fileUrl || downloadUrl;
+    return (
+        <li className={`flex flex-col md:flex-row md:items-center justify-between p-4 ${!isFirst ? 'border-t' : ''} border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-all duration-200 group`}>
+            <div className="flex items-start md:items-center gap-3 w-full md:w-auto">
+                <div className={`p-3 rounded-lg shrink-0 ${
+                    type === 0 ? 
+                        "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark" :
+                    type === 1 ? 
+                        "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark" : 
+                    type === 2 ? 
+                        "bg-bg-surface-green-default-light dark:bg-bg-surface-green-default-dark" : 
+                    type === 3 ? 
+                        "bg-bg-surface-amber-default-light dark:bg-bg-surface-amber-default-dark" :
+                    "bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
+                }`}>
+                    {
+                        type === 0 ? (
+                            <FileLinesIcon size={20} className="text-text-purple-accent-light dark:text-text-purple-accent-dark" />
+                        ) :
+                        type === 1 ? (
+                            <PlayIcon size={20} className="text-text-blue-accent-light dark:text-text-blue-accent-dark" />
+                        ) : 
+                        type === 2 ? (
+                            <VoiceIcon size={20} className="text-text-green-accent-light dark:text-text-green-accent-dark" />
+                        ) : 
+                        type === 3 ? (
+                            <ImageIcon size={20} className="text-text-amber-accent-light dark:text-text-amber-accent-dark" />
+                        ) : (
+                            <FileIcon size={20} className="text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark" />
+                        )
+                    }
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h4 className="text-[16px] font-semibold truncate text-text-primary-default-light dark:text-text-primary-default-dark group-hover:text-text-accent-default-light dark:group-hover:text-text-accent-default-dark transition-colors">
+                        {material.title}
+                    </h4>
+                    <div className="flex items-center justify-between mt-1">
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium px-2 py-1 rounded bg-bg-surface-tertiary-default-light dark:bg-bg-surface-tertiary-default-dark text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                                {getTypeLabel(type)}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 md:hidden">
+                            <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
+                                {
+                                    type === 1 ? (
+                                        <PlayIcon size={18} />
+                                    ) : 
+                                    type === 2 ? (
+                                        <VoiceIcon size={18} />
+                                    ) : 
+                                    type === 3 ? (
+                                        <ImageIcon size={18} />
+                                    ) : (
+                                        <EyeIcon size={18} />
+                                    )
+                                }
+                            </a>
+                            <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
+                                <DownloadIcon size={18} />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="hidden md:flex items-center gap-2 md:ml-4">
+                <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="p-3 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
+                    {
+                        type === 1 ? (
+                            <PlayIcon size={20} />
+                        ) : 
+                        type === 2 ? (
+                            <VoiceIcon size={20} />
+                        ) : 
+                        type === 3 ? (
+                            <ImageIcon size={20} />
+                        ) : (
+                            <EyeIcon size={20} />
+                        )
+                    }
+                </a>
+                <a href={downloadUrl} download className="p-3 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
+                    <DownloadIcon size={20} />
+                </a>
+            </div>
+        </li>
+    );
+}

@@ -1,0 +1,10 @@
+export { default as Profile } from "./Profile";
+export { default as Schedule } from "./Schedule";
+export { default as Dashboard } from "./Dashboard";
+export { default as Community } from "./Community";
+export { default as Reminders } from "./Reminders";
+export { default as MyCourses } from "./MyCourses";
+export { default as SmartNotes } from "./SmartNotes";
+export { default as CourseMaterials } from "./CourseMaterials";
+export { default as CoursePrerequisites } from "./CoursePrerequisites";
+export { default as CoursesRegistration } from "./CoursesRegistration";
