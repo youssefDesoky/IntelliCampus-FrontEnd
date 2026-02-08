@@ -1,0 +1,10 @@
+{
+    "dashboard": "Dashboard",
+    "analytics": "Analytics",
+    "admins": "Manage Admins",
+    "students": "Manage Students",
+    "instructors": "Manage Instructors",
+    "courses": "Manage Courses",
+    "rooms": "Manage Rooms",
+    "departments": "Manage Departments"
+}

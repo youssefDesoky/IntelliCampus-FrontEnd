@@ -1,0 +1,12 @@
+{
+    "dashboard": "Dashboard",
+    "reminders": "Reminders",
+    "courses": "Courses",
+    "allCourses": "My Courses",
+    "courseRegistration": "Registration",
+    "coursePrerequisites": "Prerequisites",
+    "courseRemarkingRequest": "Remarking Request",
+    "community": "Community",
+    "smartNotes": "Smart Notes",
+    "schedule" : "Schedule"
+}
