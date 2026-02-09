@@ -17,15 +17,17 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
     const isEdit = method === "put";
 
     const [selectedDepartment, setSelectedDepartment] = useState(() => {
-        if (initialData.department) {
-            return departments.find(d => d.value === initialData.department) || departments[0];
+        const dept = initialData.departmentName || initialData.department;
+        if (dept) {
+            return departments.find(d => d.value === dept || d.label === dept) || departments[0];
         }
         return departments[0];
     });
 
     const [formData, setFormData] = useState({
-        title: initialData.title || "",
-        id: initialData.id || "",
+        title: initialData.courseName || initialData.title || "",
+        titleArabic: initialData.courseNameAr || initialData.titleArabic || "",
+        id: initialData.courseCode || initialData.id || "",
         creditHours: initialData.creditHours || 3,
         description: initialData.description || "",
         prerequisites: initialData.prerequisites?.join(", ") || "",
@@ -43,15 +45,16 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             .filter(Boolean);
 
         const courseData = {
-            title: formData.title,
-            id: formData.id,
+            courseName: formData.title,
+            courseNameAr: formData.titleArabic || undefined,
+            courseId: formData.id,
             creditHours: Number(formData.creditHours),
-            department: selectedDepartment.value,
+            departmentId: selectedDepartment.value,
             description: formData.description,
             prerequisites: prereqs,
-            weeks: initialData.weeks || [],
         };
 
+        console.log("[CourseForm] Submitting:", JSON.stringify(courseData, null, 2));
         if (onSubmit) onSubmit(courseData);
     };
 
@@ -90,6 +93,18 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                         />
 
                         <InputItem
+                            label="Course Title Arabic"
+                            type="text"
+                            name="titleArabic"
+                            placeholder="e.g. مقدمة في علوم الحاسوب"
+                            value={formData.titleArabic}
+                            onChange={handleChange("titleArabic")}
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <InputItem
                             label="Course ID"
                             type="text"
                             name="id"
@@ -99,18 +114,19 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                             isDisabled={isEdit}
                             required
                         />
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-6">
                         <SelectBox
                             className="w-full"
                             label="Department"
+                            name="department"
                             labelDirection="flex-col"
                             options={departments}
                             selectedOption={selectedDepartment}
                             onChange={setSelectedDepartment}
                         />
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-6">
                         <InputItem
                             label="Credit Hours"
                             type="number"
@@ -122,9 +138,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                             max="6"
                             required
                         />
-                    </div>
 
-                    <div className="grid grid-cols-1 gap-6">
                         <InputItem
                             label="Prerequisites (comma-separated IDs)"
                             type="text"
@@ -132,22 +146,6 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                             placeholder="e.g. CS-100, CS-201"
                             value={formData.prerequisites}
                             onChange={handleChange("prerequisites")}
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="description" className="block mb-2 font-bold text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
-                            Description
-                        </label>
-                        <textarea
-                            id="description"
-                            name="description"
-                            rows="4"
-                            className="mt-1 block w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark rounded-md focus:outline-none"
-                            placeholder="Enter course description"
-                            value={formData.description}
-                            onChange={handleChange("description")}
-                            required
                         />
                     </div>
                 </div>

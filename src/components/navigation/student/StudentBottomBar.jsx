@@ -46,13 +46,13 @@ export default function StudentBottomBar() {
     return (
         <BottomBar links={getNavigationLinks(t)}>
             <div className="relative">
-                <Button 
+                <button 
                     ref={buttonRef}
                     onClick={() => setShowCoursesPopup(!showCoursesPopup)}
                     className={`w-full flex items-center gap-3 p-2 rounded border border-transparent text-text-secondary-active-light dark:text-text-secondary-active-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark hover:text-text-accent-hover-light dark:hover:text-text-accent-hover-dark hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark`}
                 >
                     <BookIcon className="w-5 h-5" />
-                </Button>
+                </button>
               
                 {showCoursesPopup && (
                     <DropdownMenu 

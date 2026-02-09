@@ -14,7 +14,8 @@ export function getHeader(isMobile, profileImage, notifications) {
 
 export function getAside(role, height) {
     switch (role?.toLowerCase()) {
-        case "admin": return <AdminAside height={height} />;
+        case "admin":
+        case "superadmin": return <AdminAside height={height} />;
         case "instructor": return <InstructorAside height={height} />;
         case "student": return <StudentAside height={height} />;
         default: return null;
@@ -23,7 +24,8 @@ export function getAside(role, height) {
 
 export function getBottomBar(role) {
     switch (role?.toLowerCase()) {
-        case "admin": return <AdminBottomBar />;
+        case "admin":
+        case "superadmin": return <AdminBottomBar />;
         case "instructor": return <InstructorBottomBar />;
         case "student": return <StudentBottomBar />;
         default: return null;

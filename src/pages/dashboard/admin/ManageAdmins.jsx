@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import UserHeader from "../../../components/ui/UserHeader";
 import Section from "../../../components/ui/Section";
 import SearchBar from "../../../components/ui/SearchBar";
@@ -17,39 +17,12 @@ import {
     Grid3ColIcon,
     TableIcon,
 } from "../../../components/ui/icons";
+import { fetchAdmins, createAdmin, deleteAdmin } from "../../../feature/admin/services/adminApi";
 
 const ITEMS_PER_PAGE = 9;
 const adminTableHeaders = ["Admin", "Admin ID", "Role", "Department", "Hire Date"];
 
-// Static mock data (raw)
-const rawAdminData = [
-    {
-        fullName: "Alice Brown",
-        adminId: "A3001",
-        role: "System Admin",
-        department: "IT Services",
-        hireDate: "2015-03-20",
-        email: "alice.brown@example.com",
-        nationalID: "12345678",
-        nationality: "us",
-        phone: "+1234567890",
-        address: "123 Admin St, Tech City",
-        avatar: "https://tse4.mm.bing.net/th/id/OIP.IGNf7GuQaCqz_RPq5wCkPgHaLH?rs=1&pid=ImgDetMain&o=7&rm=3",
-    },
-    {
-        fullName: "David Wilson",
-        adminId: "A3002",
-        role: "HR Manager",
-        department: "Human Resources",
-        hireDate: "2017-11-05",
-        email: "david.wilson@example.com",
-        nationalID: "87654321",
-        nationality: "uk",
-        phone: "+1987654321",
-        address: "456 HR Ave, Business Park",
-        avatar: "https://tse4.mm.bing.net/th/id/OIP.IGNf7GuQaCqz_RPq5wCkPgHaLH?rs=1&pid=ImgDetMain&o=7&rm=3",
-    },
-];
+
 
 function buildAdminRow(a) {
     return {
@@ -72,7 +45,7 @@ function buildAdminRow(a) {
         role: a.role || "—",
         department: a.department || "—",
         hireDate: a.hireDate || "—",
-        _id: a.adminId,
+        _id: a.userId,
         _raw: a,
     };
 }
@@ -147,6 +120,10 @@ function AdminCard({ admin, onEdit, onDelete }) {
 }
 
 export default function ManageAdmins() {
+    const [rawAdmins, setRawAdmins] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
     const [isAddAdminFormOpen, setIsAddAdminFormOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -158,12 +135,29 @@ export default function ManageAdmins() {
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
 
-    const filteredAdmins = rawAdminData.filter((a) => {
+    useEffect(() => { localStorage.setItem("adminAdminsViewMode", viewMode); }, [viewMode]);
+
+    const loadAdmins = useCallback(async () => {
+        try {
+            setError(null);
+            const data = await fetchAdmins();
+            setRawAdmins(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error("Failed to load admins:", err);
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { loadAdmins(); }, [loadAdmins]);
+
+    const filteredAdmins = rawAdmins.filter((a) => {
         if (!searchQuery) return true;
         const q = searchQuery.toLowerCase();
         return (
             a.fullName?.toLowerCase().includes(q) ||
-            a.adminId?.toLowerCase().includes(q) ||
+            String(a.adminId)?.toLowerCase().includes(q) ||
             a.email?.toLowerCase().includes(q) ||
             a.department?.toLowerCase().includes(q) ||
             a.role?.toLowerCase().includes(q)
@@ -174,22 +168,49 @@ export default function ManageAdmins() {
     const paginatedAdmins = filteredAdmins.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
     const paginatedRows = paginatedAdmins.map(buildAdminRow);
 
-    const handleDeleteConfirm = () => {
+    const handleCreate = async (formData) => {
+        try {
+            console.log("[ManageAdmins] Creating admin:", JSON.stringify(formData, null, 2));
+            await createAdmin(formData);
+            setIsAddAdminFormOpen(false);
+            await loadAdmins();
+        } catch (err) {
+            console.error("Failed to create admin:", err);
+        }
+    };
+
+    const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
-        console.log("Deleting admin:", deleteTarget.adminId);
+        try {
+            await deleteAdmin(deleteTarget.userId);
+            await loadAdmins();
+        } catch (err) {
+            console.error("Failed to delete admin:", err);
+        }
         setDeleteTarget(null);
     };
 
-    const handleDeleteSelected = () => {
-        console.log("Deleting admins at indexes:", selectedRows);
+    const handleDeleteSelected = async () => {
+        for (const idx of selectedRows) {
+            const row = paginatedRows[idx];
+            if (row?._id) {
+                try { await deleteAdmin(row._id); } catch (err) { console.error(err); }
+            }
+        }
         setSelectedRows([]);
         setIsDeleteSelectedOpen(false);
+        await loadAdmins();
     };
 
     return (
         <>
             <UserHeader role="admin" setIsUserFormOpen={setIsAddAdminFormOpen} />
 
+            {isLoading ? (
+                <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading admins...</p>
+            ) : error ? (
+                <p className="text-center py-10 text-red-500">Error: {error}</p>
+            ) : (
             <Section>
                 <div className="flex items-center justify-between gap-4 mb-6">
                     <h2 className="text-xl font-semibold">
@@ -269,8 +290,9 @@ export default function ManageAdmins() {
 
                 <PaginationButtons totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />
             </Section>
+            )}
 
-            {isAddAdminFormOpen && <AdminForm method="post" onClose={() => setIsAddAdminFormOpen(false)} />}
+            {isAddAdminFormOpen && <AdminForm method="post" onClose={() => setIsAddAdminFormOpen(false)} onSubmit={handleCreate} />}
 
             {editingAdmin && <AdminForm method="put" initialData={editingAdmin} onClose={() => setEditingAdmin(null)} />}
 

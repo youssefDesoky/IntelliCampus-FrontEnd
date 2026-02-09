@@ -10,7 +10,6 @@ import ToggleViewMode from "../../../components/ui/ToggleViewMode";
 import Table from "../../../components/ui/Table";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import CourseForm from "../../../feature/admin/components/CourseForm";
-import ActivateCourseDialog from "../../../feature/admin/components/ActivateCourseDialog";
 import {
     PlusIcon,
     ImportIcon,
@@ -58,18 +57,18 @@ function buildCourseRow(course) {
         course: (
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                    {(course.title || "?").charAt(0).toUpperCase()}
+                    {(course.courseName || "?").charAt(0).toUpperCase()}
                 </div>
                 <div className="flex flex-col text-left">
-                    <p className="font-medium">{course.title}</p>
+                    <p className="font-medium">{course.courseName}</p>
                     <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-50 truncate">{course.description}</p>
                 </div>
             </div>
         ),
         courseId: (
-            <span className="px-2 py-1 rounded-full border text-xs font-semibold">{course.id}</span>
+            <span className="px-2 py-1 rounded-full border text-xs font-semibold">{course.courseCode || course.courseId}</span>
         ),
-        department: course.department || "—",
+        department: course.departmentName || "—",
         creditHours: course.creditHours || "—",
         professor: course.professor || "—",
         status: <StatusBadge isActive={!!course.isActive} />,
@@ -91,12 +90,12 @@ function CourseCard({ course, onEdit, onDelete, onActivate, onDeactivate, onMana
                 <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                            {(course.title || "?").charAt(0).toUpperCase()}
+                            {(course.courseName || "?").charAt(0).toUpperCase()}
                         </div>
                         <div>
-                            <h3 className="font-semibold text-base leading-tight">{course.title}</h3>
+                            <h3 className="font-semibold text-base leading-tight">{course.courseName}</h3>
                             <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                                {course.id}
+                                {course.courseCode || course.courseId}
                             </span>
                         </div>
                     </div>
@@ -107,7 +106,7 @@ function CourseCard({ course, onEdit, onDelete, onActivate, onDeactivate, onMana
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mb-3">
                     <div className="flex items-center gap-1.5">
                         <BookIcon className="w-4 h-4" />
-                        <span>{course.department || "—"}</span>
+                        <span>{course.departmentName || "—"}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <ClipboardCheckIcon className="w-4 h-4" />
@@ -131,13 +130,15 @@ function CourseCard({ course, onEdit, onDelete, onActivate, onDeactivate, onMana
             {/* Actions */}
             <div className="flex flex-col gap-2 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
                 {/* Manage Course button */}
-                <Button
-                    variant="primary"
-                    className="w-full justify-center"
-                    onClick={() => onManage(course)}
-                >
-                    Manage Course <ArrowRightIcon className="w-4 h-4" />
-                </Button>
+                {course.isActive && (
+                    <Button
+                        variant="primary"
+                        className="w-full justify-center"
+                        onClick={() => onManage(course)}
+                    >
+                        Manage Course <ArrowRightIcon className="w-4 h-4" />
+                    </Button>
+                )}
 
                 {/* Quick actions row */}
                 <div className="flex items-center gap-2">
@@ -192,8 +193,9 @@ export default function ManageCourses() {
     const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [editingCourse, setEditingCourse] = useState(null);
-    const [activatingCourse, setActivatingCourse] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
+
+    const [successMessage, setSuccessMessage] = useState(null);
 
     // View mode
     const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminCoursesViewMode") || "grid");
@@ -213,7 +215,14 @@ export default function ManageCourses() {
         try {
             setError(null);
             const data = await fetchCourses();
-            setCourses(Array.isArray(data) ? data : []);
+            const mapped = (Array.isArray(data) ? data : []).map((c) => ({
+                ...c,
+                isActive:
+                    c.statusName?.toLowerCase() === "active" ||
+                    (typeof c.status === "string" && c.status.toLowerCase() === "active") ||
+                    c.status === 0,
+            }));
+            setCourses(mapped);
         } catch (err) {
             console.error("Failed to load courses:", err);
             setError(err.message);
@@ -231,9 +240,10 @@ export default function ManageCourses() {
         if (!searchQuery) return true;
         const q = searchQuery.toLowerCase();
         return (
-            c.title?.toLowerCase().includes(q) ||
-            c.id?.toLowerCase().includes(q) ||
-            c.department?.toLowerCase().includes(q) ||
+            c.courseName?.toLowerCase().includes(q) ||
+            String(c.courseId)?.toLowerCase().includes(q) ||
+            c.courseCode?.toLowerCase().includes(q) ||
+            c.departmentName?.toLowerCase().includes(q) ||
             c.professor?.toLowerCase().includes(q)
         );
     });
@@ -248,6 +258,7 @@ export default function ManageCourses() {
     // ─── Handlers ──────────────────────────────────────────────
     const handleCreate = async (formData) => {
         try {
+            console.log("[ManageCourses] Creating course:", JSON.stringify(formData, null, 2));
             await createCourse(formData);
             setIsCreateFormOpen(false);
             await loadCourses();
@@ -258,7 +269,8 @@ export default function ManageCourses() {
 
     const handleEditSubmit = async (formData) => {
         try {
-            await updateCourse(editingCourse.id, formData);
+            console.log("[ManageCourses] Editing course:", editingCourse.courseId, JSON.stringify(formData, null, 2));
+            await updateCourse(editingCourse.courseId, formData);
             setEditingCourse(null);
             await loadCourses();
         } catch (err) {
@@ -269,7 +281,7 @@ export default function ManageCourses() {
     const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
         try {
-            await deleteCourse(deleteTarget.id);
+            await deleteCourse(deleteTarget.courseId);
             await loadCourses();
         } catch (err) {
             console.error("Failed to delete course:", err);
@@ -277,11 +289,11 @@ export default function ManageCourses() {
         setDeleteTarget(null);
     };
 
-    const handleActivateSubmit = async (activationData) => {
+    const handleActivate = async (course) => {
         try {
-            await activateCourse(activatingCourse.id, activationData);
-            setActivatingCourse(null);
+            await activateCourse(course.courseId);
             await loadCourses();
+            setSuccessMessage(`Course "${course.courseName}" has been activated successfully!`);
         } catch (err) {
             console.error("Failed to activate course:", err);
         }
@@ -289,28 +301,58 @@ export default function ManageCourses() {
 
     const handleDeactivate = async (course) => {
         try {
-            await deactivateCourse(course.id);
+            await deactivateCourse(course.courseId);
             await loadCourses();
+            setSuccessMessage(`Course "${course.courseName}" has been deactivated successfully.`);
         } catch (err) {
             console.error("Failed to deactivate course:", err);
         }
     };
 
     const handleManage = (course) => {
-        navigate(`/admin/courses/${course.id}`);
+        navigate(`/admin/courses/${course.courseId}`);
     };
 
     const handleDeleteSelected = async () => {
         for (const idx of selectedRows) {
             const row = paginatedCourses[idx];
             if (row) {
-                try { await deleteCourse(row.id); } catch (err) { console.error(err); }
+                try { await deleteCourse(row.courseId); } catch (err) { console.error(err); }
             }
         }
         setSelectedRows([]);
         setIsDeleteSelectedOpen(false);
         await loadCourses();
     };
+
+    const handleActivateSelected = async () => {
+        for (const idx of selectedRows) {
+            const course = paginatedCourses[idx];
+            if (course && !course.isActive) {
+                try { await activateCourse(course.courseId); } catch (err) { console.error(err); }
+            }
+        }
+        setSelectedRows([]);
+        await loadCourses();
+        setSuccessMessage(`${selectedRows.length} course(s) activated successfully!`);
+    };
+
+    const handleDeactivateSelected = async () => {
+        for (const idx of selectedRows) {
+            const course = paginatedCourses[idx];
+            if (course && course.isActive) {
+                try { await deactivateCourse(course.courseId); } catch (err) { console.error(err); }
+            }
+        }
+        setSelectedRows([]);
+        await loadCourses();
+        setSuccessMessage(`${selectedRows.length} course(s) deactivated successfully.`);
+    };
+
+    // Determine selection status for bulk action buttons
+    const selectedCourses = selectedRows.map((idx) => paginatedCourses[idx]).filter(Boolean);
+    const allSelectedActive = selectedCourses.length > 0 && selectedCourses.every((c) => c.isActive);
+    const allSelectedInactive = selectedCourses.length > 0 && selectedCourses.every((c) => !c.isActive);
 
     return (
         <>
@@ -363,10 +405,24 @@ export default function ManageCourses() {
                                 secondModeLabel={<TableIcon className="w-5 h-5" />}
                             />
                             {viewMode === "list" && selectedRows.length > 0 && (
-                                <Button variant="danger" className="whitespace-nowrap shrink-0" onClick={() => setIsDeleteSelectedOpen(true)}>
-                                    <TrashIcon size={20} />
-                                    Delete ({selectedRows.length})
-                                </Button>
+                                <>
+                                    {allSelectedInactive && (
+                                        <Button variant="success" className="whitespace-nowrap shrink-0" onClick={handleActivateSelected}>
+                                            <CheckIcon size={20} />
+                                            Activate ({selectedRows.length})
+                                        </Button>
+                                    )}
+                                    {allSelectedActive && (
+                                        <Button variant="warning" className="whitespace-nowrap shrink-0" onClick={handleDeactivateSelected}>
+                                            <XIcon size={20} />
+                                            Deactivate ({selectedRows.length})
+                                        </Button>
+                                    )}
+                                    <Button variant="danger" className="whitespace-nowrap shrink-0" onClick={() => setIsDeleteSelectedOpen(true)}>
+                                        <TrashIcon size={20} />
+                                        Delete ({selectedRows.length})
+                                    </Button>
+                                </>
                             )}
                         </div>
                     </div>
@@ -391,11 +447,11 @@ export default function ManageCourses() {
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
                                 {paginatedCourses.map((course) => (
                                     <CourseCard
-                                        key={course.id}
+                                        key={course.courseId}
                                         course={course}
                                         onEdit={setEditingCourse}
                                         onDelete={setDeleteTarget}
-                                        onActivate={setActivatingCourse}
+                                        onActivate={handleActivate}
                                         onDeactivate={handleDeactivate}
                                         onManage={handleManage}
                                     />
@@ -414,11 +470,11 @@ export default function ManageCourses() {
                                     showPagination={false}
                                     onSelectionChange={setSelectedRows}
                                     actions={(row) => [
-                                        {
+                                        ...(row._raw.isActive ? [{
                                             label: "Manage Course",
                                             onClick: () => handleManage(row._raw),
                                             className: "text-text-accent-active-light dark:text-text-accent-active-dark font-medium",
-                                        },
+                                        }] : []),
                                         {
                                             label: "Edit",
                                             onClick: () => setEditingCourse(row._raw),
@@ -432,7 +488,7 @@ export default function ManageCourses() {
                                               }
                                             : {
                                                   label: "Activate",
-                                                  onClick: () => setActivatingCourse(row._raw),
+                                                  onClick: () => handleActivate(row._raw),
                                                   className: "text-text-success-default-light dark:text-text-success-default-dark",
                                               },
                                         {
@@ -478,15 +534,6 @@ export default function ManageCourses() {
                 />
             )}
 
-            {/* Activate Course Dialog */}
-            {activatingCourse && (
-                <ActivateCourseDialog
-                    course={activatingCourse}
-                    onClose={() => setActivatingCourse(null)}
-                    onActivate={handleActivateSubmit}
-                />
-            )}
-
             {/* Import Dialog */}
             {isImportOpen && (
                 <ImportDialog
@@ -514,8 +561,20 @@ export default function ManageCourses() {
                 cancelText="Cancel"
                 showCloseButton={true}
             >
-                Are you sure you want to delete <strong>{deleteTarget?.title}</strong> ({deleteTarget?.id})?
+                Are you sure you want to delete <strong>{deleteTarget?.courseName}</strong> ({deleteTarget?.courseCode || deleteTarget?.courseId})?
                 This action cannot be undone.
+            </Dialog>
+
+            {/* Success Dialog */}
+            <Dialog
+                isOpen={successMessage !== null}
+                variant="success"
+                title="Success"
+                onClose={() => setSuccessMessage(null)}
+                confirmText="OK"
+                showCloseButton={true}
+            >
+                {successMessage}
             </Dialog>
         </>
     );

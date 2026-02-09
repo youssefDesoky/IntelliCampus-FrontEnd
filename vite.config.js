@@ -13,12 +13,12 @@ export default defineConfig({
     https: true,
     proxy: {
       '/api': {
-        target: 'https://192.168.1.15:5123',
+        target: 'http://localhost:5122',
         changeOrigin: true,
         secure: false,
       },
       '/materials': {
-        target: 'https://192.168.1.15:5123',
+        target: 'http://localhost:5122',
         changeOrigin: true,
         secure: false,
       },

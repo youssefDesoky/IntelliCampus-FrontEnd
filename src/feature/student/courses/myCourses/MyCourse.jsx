@@ -39,6 +39,8 @@ function getCourseTypeStyles(isElective) {
 }
 
 export default function MyCourse({course, viewMode, isMobile}) {
+console.log(course);
+
     const typeStyles = getCourseTypeStyles(course.isElective);
 
     return(
@@ -59,9 +61,9 @@ export default function MyCourse({course, viewMode, isMobile}) {
                 <div className={`flex flex-row gap-4 text-center text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mb-4`}>
                     <div className="flex gap-1">
                         {!isMobile && <UserTieIcon className={`w-5 h-5 place-self-center`} />}
-                        {course.professor != null
-                            ? <span className={`text-sm`}>{course.professor}</span>
-                            : <MissingLabel field="professor" />
+                        {course.professorName != null
+                            ? <span className={`text-sm`}>{course.professorName}</span>
+                            : <MissingLabel field="professorName" />
                         }
                     </div>
                     
@@ -82,17 +84,17 @@ export default function MyCourse({course, viewMode, isMobile}) {
                     </div>
                 </div>
 
-                {course.progress != null
-                    ? (
-                        <ProgressBox progress={course.progress} backgroundColor={typeStyles.bg} height={isMobile || viewMode === "grid" ? "h-2" : "h-2.5"}>
+                {(() => {
+                    const progress = course.progress ?? (course.weeks > 0 ? Math.round((course.weeksCompleted / course.weeks) * 100) : null);
+                    return progress != null ? (
+                        <ProgressBox progress={progress} backgroundColor={typeStyles.bg} height={isMobile || viewMode === "grid" ? "h-2" : "h-2.5"}>
                             <p className={`text-sm font-medium ${typeStyles.text}`} >Course Progress</p>
-                            <span className={`text-sm font-semibold ${typeStyles.text}`}>{course.progress}%</span>
+                            <span className={`text-sm font-semibold ${typeStyles.text}`}>{progress}%</span>
                         </ProgressBox>
-                    )
-                    : <MissingLabel field="progress" />
-                }
+                    ) : <MissingLabel field="progress" />;
+                })()}
 
-                <div className={`flex flex-row ${isMobile || viewMode === "grid" ? "gap-3" : "gap-6"} text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mt-6`}>
+                {/* <div className={`flex flex-row ${isMobile || viewMode === "grid" ? "gap-3" : "gap-6"} text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mt-6`}>
                     <div className="flex items-center gap-2">
                         {course.attendance != null ? (
                             <>
@@ -153,7 +155,7 @@ export default function MyCourse({course, viewMode, isMobile}) {
                             </div>
                         )}
                     </div>
-                </div>
+                </div> */}
 
                 {course.isElective == null && (
                     <div className="mt-3">

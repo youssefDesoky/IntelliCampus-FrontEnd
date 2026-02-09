@@ -1,4 +1,3 @@
-import { Form } from "react-router-dom";
 import { useState } from "react";
 import Button from "../../../components/ui/Button";
 import { PlusIcon, FilePenIcon, XIcon } from "../../../components/ui/icons";
@@ -14,10 +13,10 @@ const nationalities = [
     { value: 'in', label: 'India' },
 ];
 
-export default function UserForm({ role, method = "post", action, onClose, initialData = {}, children }) {
+export default function UserForm({ role, method = "post", onClose, onSubmit, initialData = {}, children }) {
     const roleLabel = role === "admin" ? "Admin" : role === "student" ? "Student" : "Instructor";
     const isEdit = method === "put";
-    const roleIdField = `${role}ID`;
+    const roleIdField = `${role}Id`;
 
     const [selectedNationality, setSelectedNationality] = useState(() => {
         if (initialData.nationality) {
@@ -30,9 +29,19 @@ export default function UserForm({ role, method = "post", action, onClose, initi
         setSelectedNationality(option);
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = Object.fromEntries(new FormData(form));
+        // Convert numeric-looking fields to numbers
+        if (formData.level) formData.level = Number(formData.level);
+        console.log(`[UserForm] Submitting ${roleLabel}:`, JSON.stringify(formData, null, 2));
+        if (onSubmit) onSubmit(formData);
+    };
+
     return (
         <ModelOverlay onClose={onClose}>
-            <Form className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark w-full p-6 rounded-lg shadow-md" method={method} action={action}>
+            <form className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark w-full p-6 rounded-lg shadow-md" onSubmit={handleSubmit}>
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-1 mb-6">
                         <h2 className="text-2xl font-semibold">{isEdit ? "Edit" : "Create New"} {roleLabel}</h2>
@@ -57,11 +66,12 @@ export default function UserForm({ role, method = "post", action, onClose, initi
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
-                        <InputItem label="National ID" type="text" id="nationalID" name="nationalID" placeholder="Enter national ID" defaultValue={initialData.nationalID || ""} required />
+                        <InputItem label="National ID" type="text" id="nationalId" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
 
                         <SelectBox
                             className="w-full"
                             label="Nationality"
+                            name="nationality"
                             labelDirection="flex-col"
                             options={nationalities}
                             selectedOption={selectedNationality}
@@ -72,7 +82,7 @@ export default function UserForm({ role, method = "post", action, onClose, initi
                     <div className="grid grid-cols-2 gap-6">
                         <InputItem label="Email Address" type="email" id="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
 
-                        <InputItem label="Phone Number" type="tel" id="phone" name="phone" placeholder="Enter phone number" defaultValue={initialData.phone || ""} required />
+                        <InputItem label="Phone Number" type="tel" id="phoneNumber" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
                     </div>
 
                     {children}
@@ -109,7 +119,7 @@ export default function UserForm({ role, method = "post", action, onClose, initi
                         }
                     </Button>
                 </div>
-            </Form>
+            </form>
         </ModelOverlay>
     );
 }

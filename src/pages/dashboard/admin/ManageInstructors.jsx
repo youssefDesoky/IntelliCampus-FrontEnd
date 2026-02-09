@@ -39,7 +39,7 @@ function buildInstructorRow(i) {
         department: i.departmentName || "—",
         role: i.role || "—",
         specialization: i.specialization || "—",
-        _id: i.instructorId,
+        _id: i.userId,
         _raw: i,
     };
 }
@@ -166,7 +166,7 @@ export default function ManageInstructors() {
 
     const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
-        try { await deleteInstructor(deleteTarget.instructorId); await loadInstructors(); }
+        try { await deleteInstructor(deleteTarget.userId); await loadInstructors(); }
         catch (err) { console.error("Failed to delete instructor:", err); }
         setDeleteTarget(null);
     };
@@ -184,7 +184,7 @@ export default function ManageInstructors() {
     };
 
     const handleCreate = async (formData) => {
-        try { await createInstructor(formData); setIsAddInstructorFormOpen(false); await loadInstructors(); }
+        try { console.log("[ManageInstructors] Creating instructor:", JSON.stringify(formData, null, 2)); await createInstructor(formData); setIsAddInstructorFormOpen(false); await loadInstructors(); }
         catch (err) { console.error("Failed to create instructor:", err); }
     };
 

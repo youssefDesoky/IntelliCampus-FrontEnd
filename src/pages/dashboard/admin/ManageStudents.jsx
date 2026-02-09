@@ -39,7 +39,7 @@ function buildStudentRow(s) {
         nationalId: s.nationalId || "—",
         faculty: s.faculty || "—",
         level: s.level ?? "—",
-        _id: s.studentId,
+        _id: s.userId,
         _raw: s,
     };
 }
@@ -160,7 +160,7 @@ export default function ManageStudents() {
 
     const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
-        try { await deleteStudent(deleteTarget.studentId); await loadStudents(); }
+        try { await deleteStudent(deleteTarget.userId); await loadStudents(); }
         catch (err) { console.error("Failed to delete student:", err); }
         setDeleteTarget(null);
     };
@@ -178,7 +178,7 @@ export default function ManageStudents() {
     };
 
     const handleCreate = async (formData) => {
-        try { await createStudent(formData); setIsAddStudentFormOpen(false); await loadStudents(); }
+        try { console.log("[ManageStudents] Creating student:", JSON.stringify(formData, null, 2)); await createStudent(formData); setIsAddStudentFormOpen(false); await loadStudents(); }
         catch (err) { console.error("Failed to create student:", err); }
     };
 

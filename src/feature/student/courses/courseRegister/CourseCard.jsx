@@ -10,10 +10,23 @@ import {
 } from "../../../../components/ui/icons";
 
 
-export default function CourseCard({course, cardType = "disabled"}) {
+export default function CourseCard({
+    course,
+    cardType = "disabled",
+    onAction,
+    sectionOptions = [],
+    selectedSection,
+    onSectionChange,
+    isPendingRemoval = false,
+}) {
     return(
-        <div className="min-w-90 h-55 course-card relative flex flex-col justify-between gap-4 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-sm shadow-shadow-light hover:shadow-md dark:shadow-shadow-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-            <button className={`absolute top-0 left-full transform -translate-x-full p-4 font-extrabold text-text-accent-active-light dark:text-text-accent-active-dark`}>
+        <div className={`min-w-90 h-55 course-card relative flex flex-col justify-between gap-4 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-sm shadow-shadow-light hover:shadow-md dark:shadow-shadow-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark ${isPendingRemoval ? "opacity-60" : ""}`}>
+            {isPendingRemoval && (
+                <span className="absolute top-2 left-2 text-xs px-2 py-1 rounded-full bg-bg-surface-danger-hover-light dark:bg-bg-surface-danger-hover-dark text-text-danger-active-light dark:text-text-danger-active-dark">
+                    Pending removal
+                </span>
+            )}
+            <button onClick={onAction} className={`absolute top-0 left-full transform -translate-x-full p-4 font-extrabold text-text-accent-active-light dark:text-text-accent-active-dark`}>
                 { cardType === "disabled" ? 
                     <LockIconDark className="w-8 h-8 rounded-full p-1.5 bg-bg-fill-primary-active-light dark:bg-bg-fill-primary-active-dark"/> :
                     cardType === "available" ? <PlusIcon className="w-8 h-8 rounded-full p-1.5 bg-bg-fill-primary-active-light dark:bg-bg-fill-primary-active-dark"/> :
@@ -50,27 +63,29 @@ export default function CourseCard({course, cardType = "disabled"}) {
                         <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark whitespace-nowrap">
                             Select Section:
                         </p>
-                        <SelectBox
-                            className="shrink-0 w-40 md:w-50"
-                            label=""
-                            options={[
-                                { value: 's01', label: 'Section 01' },
-                                { value: 's02', label: 'Section 02' },
-                                { value: 's03', label: 'Section 03' },
-                                { value: 's04', label: 'Section 04' },
-                            ]}
-                            selectedOption={{ value: 's01', label: 'Section 01' }}
-                            yPadding="py-1.5"
-                            compact={true}
-                            showLabel={false}
-                        />
+                        {sectionOptions.length > 0 ? (
+                            <SelectBox
+                                className="shrink-0 w-40 md:w-50"
+                                label=""
+                                options={sectionOptions}
+                                selectedOption={selectedSection}
+                                onChange={onSectionChange}
+                                yPadding="py-1.5"
+                                compact={true}
+                                showLabel={false}
+                            />
+                        ) : (
+                            <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                                No sections available
+                            </span>
+                        )}
                     </>
                 ) : (
                     <p className="text-sm">
-                        {course.preRequisites 
+                        {course.preRequisites && course.preRequisites.length > 0
                             ? course.preRequisites.map((coursePreReq, index) => (
-                                <span key={coursePreReq.id}>
-                                    {coursePreReq.id}{index < course.preRequisites.length - 1 && " - "}
+                                <span key={coursePreReq.id ?? coursePreReq.courseId ?? index}>
+                                    {coursePreReq.id ?? coursePreReq.courseCode ?? coursePreReq.courseName}{index < course.preRequisites.length - 1 && " - "}
                                 </span>
                             ))
                             : "No prerequisites are needed"}

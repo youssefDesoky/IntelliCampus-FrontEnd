@@ -17,11 +17,11 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 
     useEffect(() => {
         if (selectAll) {
-            setSelectedRows(rowData.map((_, index) => index));
-        } else if (selectedRows.length === rowData.length) {
+            setSelectedRows(prev => prev.length === rowData.length ? prev : rowData.map((_, index) => index));
+        } else if (selectedRows.length === rowData.length && rowData.length > 0) {
             setSelectedRows([]);
         }
-    }, [selectAll, rowData.length, setSelectedRows, rowData, selectedRows.length]);
+    }, [selectAll]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {

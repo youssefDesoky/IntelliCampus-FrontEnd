@@ -29,10 +29,22 @@ export default function PaginationButtons ({ totalPages, currentPage, setCurrent
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
                 if (showEllipsis) {
                     if (pageNum === 2 && currentPage > 3) {
-                        return <EllipsisVerticalIcon size={20} className="self-center rotate-90 text-text-primary-default-light dark:text-text-primary-default-dark" />;
+                        return (
+                            <EllipsisVerticalIcon
+                                key={`ellipsis-start-${pageNum}`}
+                                size={20}
+                                className="self-center rotate-90 text-text-primary-default-light dark:text-text-primary-default-dark"
+                            />
+                        );
                     }
                     if (pageNum === totalPages - 1 && currentPage < totalPages - 2) {
-                        return <EllipsisVerticalIcon size={20} className="self-center rotate-90 text-text-primary-default-light dark:text-text-primary-default-dark" />;
+                        return (
+                            <EllipsisVerticalIcon
+                                key={`ellipsis-end-${pageNum}`}
+                                size={20}
+                                className="self-center rotate-90 text-text-primary-default-light dark:text-text-primary-default-dark"
+                            />
+                        );
                     }
                     if (pageNum !== 1 && pageNum !== totalPages && Math.abs(pageNum - currentPage) > 1) {
                         return null;
