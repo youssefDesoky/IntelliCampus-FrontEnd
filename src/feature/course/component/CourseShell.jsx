@@ -14,9 +14,9 @@ import {
     FolderOpenIconDark, 
     UserCheckIcon, 
     ChartBarIcon, 
-    CommentsIcon, 
     FilePenIcon, 
-    BrainIcon 
+    BrainIcon,
+    StickyNoteIcon
 } from "../../../components/ui/icons";
 import { fetchCourseMaterialsOrganized } from "../services/materialsApi";
 
@@ -27,8 +27,8 @@ const links = [
     { to: "quizzes", icon: <BrainIcon className="w-5 h-5" />, label: "Quizzes" },
     { to: "attendance", icon: <UserCheckIcon className="w-5 h-5" />, label: "Attendance" },
     { to: "grades", icon: <ChartBarIcon className="w-5 h-5" />, label: "Grades" },
-    { to: "community", icon: <UsersIcon className="w-5 h-5" />, label: "Community" },
-    { to: "study-group", icon: <CommentsIcon className="w-5 h-5" />, label: "Study Group" },
+    { to: "community", icon: <UsersIcon className="w-5 h-5" />, label: "Study Group" },
+    { to: "smart-notes", icon: <StickyNoteIcon className="w-5 h-5" />, label: "Smart Notes" },
 ];
 
 export default function CourseShell() {

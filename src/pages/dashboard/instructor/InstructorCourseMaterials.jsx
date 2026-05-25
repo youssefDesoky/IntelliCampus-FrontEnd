@@ -76,7 +76,7 @@ export default function InstructorCourseMaterials() {
             await createFolder({
                 name: newFolderName.trim(),
                 description: newFolderDescription.trim() || null,
-                courseId: Number(courseId),
+                courseId,
             });
             setNewFolderName("");
             setNewFolderDescription("");

@@ -21,38 +21,38 @@ import {
 } from "../../../feature/student/courses/courseRegister/registrationApi";
 
 
-// const sampleSchedule = [
-//     {
-//         id: 1,
-//         title: "Data Structures",
-//         day: "sat",
-//         startTime: "8:00 AM",
-//         endTime: "10:00 AM",
-//         type: "lecture",
-//         location: "Room 101",
-//         instructor: "Dr. Ahmed"
-//     },
-//     {
-//         id: 2,
-//         title: "Database Lab",
-//         day: "sat",
-//         startTime: "11:00 AM",
-//         endTime: "1:00 PM",
-//         type: "lab",
-//         location: "Lab 3",
-//         instructor: "Eng. Sara"
-//     },
-//     {
-//         id: 3,
-//         title: "Web Development",
-//         day: "sun",
-//         startTime: "9:00 AM",
-//         endTime: "11:00 AM",
-//         type: "lecture",
-//         location: "Room 205",
-//         instructor: "Dr. Mohamed"
-//     }
-// ];
+const sampleSchedule = [
+    {
+        id: 1,
+        title: "Data Structures",
+        day: "sat",
+        startTime: "8:00 AM",
+        endTime: "10:00 AM",
+        type: "lecture",
+        location: "Room 101",
+        instructor: "Dr. Ahmed"
+    },
+    {
+        id: 2,
+        title: "Database Lab",
+        day: "sat",
+        startTime: "11:00 AM",
+        endTime: "1:00 PM",
+        type: "lab",
+        location: "Lab 3",
+        instructor: "Eng. Sara"
+    },
+    {
+        id: 3,
+        title: "Web Development",
+        day: "sun",
+        startTime: "9:00 AM",
+        endTime: "11:00 AM",
+        type: "lecture",
+        location: "Room 205",
+        instructor: "Dr. Mohamed"
+    }
+];
 
 /**
  * Maps a StudentRegistrationDto (from GET /api/registration/my-courses)
@@ -292,7 +292,7 @@ export default function CoursesRegistration() {
 
     return (
         <>
-            <CourseRegistrationHeader deviceType={isDesktop ? "desktop" : "mobile"} selectedCourses={selectedCourses} availableCourses={availableCourses} />
+            <CourseRegistrationHeader deviceType={isDesktop ? "desktop" : "mobile"} selectedCourses={selectedCourses} />
 
             {error && (
                 <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
@@ -359,14 +359,14 @@ export default function CoursesRegistration() {
                     </div>
                 </Section>
 
-                {/* <Section className="md:col-span-2">
+                <Section className="md:col-span-2">
                     <div>
                         <h3 className="text-md font-semibold">Weekly Schedule Preview</h3>
 
                         <WeeklySchedule schedule={sampleSchedule} />
                     </div>
                     
-                </Section> */}
+                </Section>
 
                 <div className="md:col-span-2 flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-t-2 border-border-primary-default-light dark:border-border-primary-default-dark pt-6">
                     <CoursesRegistrationActionButtons onConfirm={handleConfirmRegistration} />

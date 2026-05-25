@@ -3,3 +3,5 @@ export { default as ManageInstructors } from './ManageInstructors';
 export { default as ManageAdmins } from './ManageAdmins';
 export { default as ManageCourses } from './ManageCourses';
 export { default as ManageCourseClasses } from './ManageCourseClasses';
+export { default as ManageRooms } from './ManageRooms';
+export { default as ManageDepartments } from './ManageDepartments';

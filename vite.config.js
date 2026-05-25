@@ -22,6 +22,22 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/images': {
+        target: 'http://localhost:5122',
+        changeOrigin: true,
+        secure: false,
+        bypass(req) {
+          if (req.url.match(/\.(png|jpg|jpeg|svg|gif|webp)$/)) {
+            return req.url;
+          }
+        }
+      },
+      '/hubs': {
+        target: 'http://localhost:5122',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
     },
   }
 })

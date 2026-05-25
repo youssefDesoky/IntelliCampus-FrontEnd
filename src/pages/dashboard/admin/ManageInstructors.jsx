@@ -7,6 +7,7 @@ import Dialog from "../../../components/ui/Dialog";
 import Table from "../../../components/ui/Table";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
 import ToggleViewMode from "../../../components/ui/ToggleViewMode";
+import ModelOverlay from "../../../components/ui/ModelOverlay";
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 import {
     FilePenIcon,
@@ -16,11 +17,12 @@ import {
     UserIcon,
     Grid3ColIcon,
     TableIcon,
+    XIcon,
 } from "../../../components/ui/icons";
 import { fetchInstructors, createInstructor, deleteInstructor } from "../../../feature/admin/services/adminApi";
 
 const ITEMS_PER_PAGE = 9;
-const instructorTableHeaders = ["Instructor", "Instructor ID", "Department", "Role", "Specialization"];
+const instructorTableHeaders = ["Instructor", "Instructor ID", "Department", "Role", "Specialization", "Status"];
 
 function buildInstructorRow(i) {
     return {
@@ -39,72 +41,47 @@ function buildInstructorRow(i) {
         department: i.departmentName || "—",
         role: i.role || "—",
         specialization: i.specialization || "—",
+        status: i.role === "Professor" ? (i.employmentStatus || i.professorStatus || "—") : "—",
         _id: i.userId,
         _raw: i,
     };
 }
 
-function InstructorCard({ instructor, onEdit, onDelete }) {
+import AdminCard from "../../../components/ui/AdminCard";
+
+function InstructorCard({ instructor, onEdit, onDelete, onPreview }) {
+    const meta = [];
+    if (instructor.departmentName) meta.push({ icon: BookIcon, label: instructor.departmentName });
+    if (instructor.specialization) meta.push({ icon: StarIcon, label: instructor.specialization });
+    if (instructor.phone) meta.push({ icon: UserIcon, label: instructor.phone });
+    if (instructor.office) meta.push({ icon: BookIcon, label: instructor.office });
+
+    const actions = [
+        { label: 'Edit', variant: 'secondary', icon: FilePenIcon, onClick: (e) => { e?.stopPropagation?.(); onEdit(instructor); } },
+        { label: 'Delete', variant: 'danger', icon: TrashIcon, onClick: (e) => { e?.stopPropagation?.(); onDelete(instructor); } },
+    ];
+
+    const stats = [
+        { label: "Courses", value: instructor.coursesTaught?.length ?? 0 },
+        { label: "Office Hours", value: instructor.officeHours ? "Set" : "—" },
+    ];
+
     return (
-        <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg border-l-4 border-l-border-accent-default-light dark:border-l-border-accent-default-dark shadow-sm shadow-shadow-light hover:shadow-lg dark:hover:shadow-shadow-dark transition-shadow p-5 flex flex-col justify-between gap-4">
-            <div>
-                <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                            {(instructor.fullName || "?").charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-base leading-tight">{instructor.fullName}</h3>
-                            <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                                {instructor.instructorId}
-                            </span>
-                        </div>
-                    </div>
-                    {instructor.role && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                            {instructor.role}
-                        </span>
-                    )}
+        <div className="cursor-pointer" onClick={() => onPreview?.(instructor)}>
+            <AdminCard
+                avatar={instructor.avatar}
+                title={instructor.fullName || instructor.name}
+                subtitle={instructor.email}
+                idLabel={instructor.instructorId}
+                status={{ label: instructor.employmentStatus || instructor.role || "Instructor", tone: instructor.employmentStatus === "Permanent" ? "success" : "warning" }}
+                stats={stats}
+                meta={meta}
+                footerActions={actions}
+            >
+                <div className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                    {instructor.role === "Professor" ? `Professor • ${instructor.departmentName || "No department"}` : `Support staff • ${instructor.departmentName || "No department"}`}
                 </div>
-
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mb-3">
-                    {instructor.email && (
-                        <div className="flex items-center gap-1.5">
-                            <UserIcon className="w-4 h-4" />
-                            <span className="truncate max-w-40">{instructor.email}</span>
-                        </div>
-                    )}
-                    {instructor.departmentName && (
-                        <div className="flex items-center gap-1.5">
-                            <BookIcon className="w-4 h-4" />
-                            <span>{instructor.departmentName}</span>
-                        </div>
-                    )}
-                    {instructor.specialization && (
-                        <div className="flex items-center gap-1.5">
-                            <StarIcon className="w-4 h-4" />
-                            <span>{instructor.specialization}</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="flex items-center gap-2 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                <Button
-                    variant="secondary"
-                    className="flex-1 justify-center text-xs px-2 py-1.5"
-                    onClick={() => onEdit(instructor)}
-                >
-                    <FilePenIcon className="w-4 h-4" /> Edit
-                </Button>
-                <Button
-                    variant="danger"
-                    className="flex-1 justify-center text-xs px-2 py-1.5"
-                    onClick={() => onDelete(instructor)}
-                >
-                    <TrashIcon className="w-4 h-4" /> Delete
-                </Button>
-            </div>
+            </AdminCard>
         </div>
     );
 }
@@ -118,6 +95,7 @@ export default function ManageInstructors() {
 
     const [editingInstructor, setEditingInstructor] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [previewInstructor, setPreviewInstructor] = useState(null);
 
     const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminInstructorsViewMode") || "grid");
     const [selectedRows, setSelectedRows] = useState([]);
@@ -252,6 +230,7 @@ export default function ManageInstructors() {
                                         instructor={i}
                                         onEdit={setEditingInstructor}
                                         onDelete={setDeleteTarget}
+                                        onPreview={setPreviewInstructor}
                                     />
                                 ))}
                             </div>
@@ -299,6 +278,178 @@ export default function ManageInstructors() {
             >
                 Are you sure you want to delete <strong>{deleteTarget?.fullName}</strong> ({deleteTarget?.instructorId})? This action cannot be undone.
             </Dialog>
+
+            {previewInstructor && (
+                <ModelOverlay
+                    onClose={() => setPreviewInstructor(null)}
+                    maxWidth="max-w-5xl"
+                >
+                    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
+                        <div className="sticky top-0 z-10 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark p-4 px-6 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                    Instructor Profile Explorer
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setPreviewInstructor(null)}
+                                className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark transition-all"
+                            >
+                                <XIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6 overflow-y-auto">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="lg:col-span-1 h-full flex flex-col items-center text-center p-5 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                    <div className="w-28 h-28 rounded-2xl overflow-hidden bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark ring-4 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shadow-md shrink-0 mb-4">
+                                        {previewInstructor.avatar ? (
+                                            <img
+                                                src={previewInstructor.avatar}
+                                                alt={previewInstructor.fullName || previewInstructor.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                {(previewInstructor.fullName || previewInstructor.name || "?").charAt(0)}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <h2 className="text-xl font-bold tracking-tight text-text-primary-default-light dark:text-text-primary-default-dark line-clamp-2 px-2">
+                                        {previewInstructor.fullName || previewInstructor.name}
+                                    </h2>
+                                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 font-mono">
+                                        ID: {previewInstructor.instructorId || "—"}
+                                    </p>
+                                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark break-all max-w-full px-2 mt-0.5">
+                                        {previewInstructor.email || "—"}
+                                    </p>
+
+                                    <div className="w-full mt-auto pt-6">
+                                        <div className="w-3/4 mx-auto border-t border-border-primary-default-light dark:border-border-primary-default-dark mb-6"></div>
+
+                                        <div className="grid grid-cols-2 gap-2 w-full">
+                                            <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark">
+                                                <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Courses</span>
+                                                <span className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                    {(previewInstructor.coursesTaught || []).length}
+                                                </span>
+                                            </div>
+                                            <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark">
+                                                <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Status</span>
+                                                <span className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                    {previewInstructor.employmentStatus || previewInstructor.professorStatus || "—"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="lg:col-span-2 h-full flex flex-col border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark mb-4 pb-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+                                        Administrative Information
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm mt-2">
+                                        <div className="space-y-0.5">
+                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Department</span>
+                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewInstructor.departmentName || previewInstructor.department || "—"}</span>
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Role</span>
+                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewInstructor.role || "—"}</span>
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Specialization</span>
+                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewInstructor.specialization || "—"}</span>
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Office</span>
+                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewInstructor.office || "—"}</span>
+                                        </div>
+
+                                        <div className="sm:col-span-2 my-1 border-t border-dashed border-border-primary-default-light dark:border-border-primary-default-dark pt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                                            <div className="space-y-0.5">
+                                                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Phone Number</span>
+                                                <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewInstructor.phone || "—"}</span>
+                                            </div>
+                                            <div className="space-y-0.5">
+                                                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Office Hours</span>
+                                                <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewInstructor.officeHours || "—"}</span>
+                                            </div>
+
+                                            <div className="sm:col-span-2 space-y-0.5">
+                                                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">About</span>
+                                                <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark wrap-break-word line-clamp-3" title={previewInstructor.bio || "No bio available."}>
+                                                    {previewInstructor.bio || "No bio available."}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark w-full">
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark mb-4">
+                                    Courses Taught
+                                </h3>
+
+                                {(previewInstructor.coursesTaught || []).length > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {(previewInstructor.coursesTaught || []).map((course, index) => (
+                                            <span key={index} className="px-3 py-1 rounded-full text-xs bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                                                {course}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 rounded-lg border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                        No courses listed for this instructor.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="sticky bottom-0 mt-auto bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-t border-border-primary-default-light dark:border-border-primary-default-dark p-4 px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full sm:w-auto order-2 sm:order-1"
+                                onClick={() => console.log("Message", previewInstructor)}
+                            >
+                                Send Message
+                            </Button>
+
+                            <div className="flex items-center gap-2 w-full sm:w-auto order-1 sm:order-2">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="flex-1 sm:flex-initial"
+                                    onClick={() => {
+                                        setEditingInstructor(previewInstructor);
+                                        setPreviewInstructor(null);
+                                    }}
+                                >
+                                    Edit Profile
+                                </Button>
+                                <Button
+                                    variant="danger"
+                                    size="sm"
+                                    className="flex-1 sm:flex-initial"
+                                    onClick={() => {
+                                        setDeleteTarget(previewInstructor);
+                                        setPreviewInstructor(null);
+                                    }}
+                                >
+                                    Delete Record
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </ModelOverlay>
+            )}
         </>
     );
 }

@@ -119,7 +119,7 @@ export default function CourseWeekMaterialContent({ material, isFirst }) {
         {showViewer && (
             <ModelOverlay onClose={() => setShowViewer(false)} maxWidth="max-w-5xl">
                 <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-                    <div className="flex items-center justify-between px-5 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+                    <div className="flex items-center justify-between p-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
                         <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate pr-4">{material.title}</h3>
                         <div className="flex items-center gap-2 shrink-0">
                             <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">

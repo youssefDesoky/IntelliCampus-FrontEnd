@@ -1,12 +1,14 @@
+import { useState } from "react";
 import useDeviceType from "../hooks/useDeviceType";
+import ToggleTheme from "../components/ui/ToggleTheme";
 
 export default function AuthLayout({title, subtitle, children}) {
     const { isDesktop } = useDeviceType();
-    const currTheme = localStorage.getItem('theme') || 'light';
+    const [currTheme, setCurrTheme] = useState(localStorage.getItem('theme') || 'light');
 
     return (
         <div className="min-h-screen flex items-center justify-center overflow-hidden bg-linear-to-r/shorter from-bg-surface-primary-default-light dark:from-bg-surface-primary-default-dark to-blue-50 dark:to-blue-950 px-4">
-            <div className={`grid grid-cols-100 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-2xl shadow-2xl w-full h-full lg:w-3/4 lg:h-[80vh]`}>
+            <div className={`relative grid grid-cols-100 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-2xl shadow-2xl w-full h-full lg:w-3/4 lg:h-[80vh]`}>
                 {/* Left Side - Image or Illustration */}
                 {isDesktop &&                 
                     <div 
@@ -46,6 +48,8 @@ export default function AuthLayout({title, subtitle, children}) {
                         </div>
                     </div>
                 </div>
+
+                <ToggleTheme className="absolute top-2.5 right-2.5" onChange={setCurrTheme} />
             </div>
         </div>
     );

@@ -1,7 +1,13 @@
 import { useState } from "react";
 import InputItem from "../../../components/form/InputItem";
 import SelectBox from "../../../components/ui/SelectBox";
+import RadioToggle from "../../../components/form/RadioToggle";
 import UserForm from "./UserForm";
+
+const programs = [
+    { value: 'General', label: 'General' },
+    { value: 'Credit', label: 'Credit' },
+];
 
 const departments = [
     { value: 'CS', label: 'Computer Science' },
@@ -18,6 +24,13 @@ const levels = [
 ];
 
 export default function StudentForm({ onClose, method = "post", onSubmit, initialData = {} }) {
+    const [selectedProgram, setSelectedProgram] = useState(() => {
+        if (initialData.program) {
+            return programs.find(p => p.value === initialData.program || p.label === initialData.program) || programs[0];
+        }
+        return programs[0];
+    });
+
     const [selectedDepartment, setSelectedDepartment] = useState(() => {
         if (initialData.department) {
             return departments.find(d => d.value === initialData.department || d.label === initialData.department) || departments[0];
@@ -43,7 +56,19 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
     return (
         <UserForm role="student" method={method} onClose={onClose} onSubmit={onSubmit} initialData={initialData}>
             <div className="grid grid-cols-2 gap-6">
-                <InputItem label="Faculty" type="text" id="faculty" name="faculty" placeholder="Enter faculty" defaultValue={initialData.faculty || ""} required />
+                <div className="flex flex-col">
+                    <label className="block mb-2">Program</label>
+
+                    <RadioToggle
+                        name="program"
+                        options={programs}
+                        value={selectedProgram.value}
+                        onChange={(value) => {
+                            const selected = programs.find((program) => program.value === value) || programs[0];
+                            setSelectedProgram(selected);
+                        }}
+                    />
+                </div>
                 
                 <SelectBox
                     className="w-full"

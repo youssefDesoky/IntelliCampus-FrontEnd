@@ -35,7 +35,7 @@ import {
 
 const ITEMS_PER_PAGE = 9;
 
-function StatusBadge({ isActive }) {
+function StatusBadge({ isActive, displaySemester }) {
     return (
         <span
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -45,7 +45,7 @@ function StatusBadge({ isActive }) {
             }`}
         >
             {isActive ? <CheckIcon className="w-3 h-3" /> : <XIcon className="w-3 h-3" />}
-            {isActive ? "Active" : "Inactive"}
+            {isActive ? displaySemester : "Inactive"}
         </span>
     );
 }
@@ -57,7 +57,7 @@ function buildCourseRow(course) {
         course: (
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                    {(course.courseName || "?").charAt(0).toUpperCase()}
+                            {((course.courseName || course.title || course.name || course.id || "?") + "").charAt(0).toUpperCase()}
                 </div>
                 <div className="flex flex-col text-left">
                     <p className="font-medium">{course.courseName}</p>
@@ -71,109 +71,139 @@ function buildCourseRow(course) {
         department: course.departmentName || "—",
         creditHours: course.creditHours || "—",
         professor: course.professor || "—",
-        status: <StatusBadge isActive={!!course.isActive} />,
+        status: <StatusBadge isActive={course.isActive} displaySemester={course.semester} />,
         _raw: course,
     };
 }
 
-function CourseCard({ course, onEdit, onDelete, onActivate, onDeactivate, onManage }) {
+function CourseCard({ course, onEdit, onDelete, onActivate, onDeactivate, onManage, onView }) {
     const borderColor = course.isActive
         ? "border-l-border-success-default-light dark:border-l-border-success-default-dark"
         : "border-l-border-accent-default-light dark:border-l-border-accent-default-dark";
 
+    const formatSemester = (s) => {
+        if (!s) return null;
+        // If already like "Spring 2024" return as-is
+        if (/^[A-Za-z]+\s+\d{4}$/.test(s)) return s;
+        // Convert hyphenated like "spring-2024" or "spring_2024"
+        const cleaned = s.replace(/[-_]/g, ' ').trim();
+        const parts = cleaned.split(/\s+/);
+        if (parts.length === 2 && /\d{4}/.test(parts[1])) {
+            return parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase() + ' ' + parts[1];
+        }
+        return s;
+    };
+
+    const displaySemester = formatSemester(course.semester || course.level || course.term || `${course.term || ''} ${course.year || ''}`.trim());
+
     return (
         <div
-            className={`bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg border-l-4 ${borderColor} shadow-sm shadow-shadow-light hover:shadow-lg dark:hover:shadow-shadow-dark transition-shadow p-5 flex flex-col justify-between gap-4`}
+            className={`relative bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg border-l-4 ${borderColor} shadow-sm hover:shadow-lg transition-shadow p-4 flex flex-col justify-between gap-4 cursor-pointer`}
+            onClick={() => onView(course)}
         >
-            {/* Top: Title + Status */}
+            {/* Top-right status + semester */}
+            <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
+                <StatusBadge isActive={course.isActive} displaySemester={displaySemester} />
+                {course.isActive && displaySemester && (
+                    <span className="text-xs px-2 py-0.5 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark">{displaySemester}</span>
+                )}
+            </div>
+
+            {/* Top: Avatar + Name + Code */}
             <div>
-                <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                            {(course.courseName || "?").charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-base leading-tight">{course.courseName}</h3>
-                            <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                                {course.courseCode || course.courseId}
-                            </span>
-                        </div>
+                <div className="flex items-start gap-3 mb-3">
+                    <div className="w-12 h-12 shrink-0 rounded-lg bg-linear-to-br from-bg-surface-accent-default-light to-bg-surface-primary-default-light dark:from-bg-surface-accent-default-dark dark:to-bg-surface-primary-default-dark flex items-center justify-center text-lg font-extrabold text-text-accent-active-light dark:text-text-accent-active-dark">
+                        {(course.courseName || "?").charAt(0).toUpperCase()}
                     </div>
-                    <StatusBadge isActive={!!course.isActive} />
+
+                    <div className="min-w-0 flex flex-col justify-center">
+                        <h3 className="text-sm font-semibold line-clamp-1">{course.courseName || course.title || course.name || "Untitled"}</h3>
+                        <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">{course.courseCode || course.id || course.courseId || "—"}</span>
+                    </div>
                 </div>
 
-                {/* Info pills */}
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mb-3">
-                    <div className="flex items-center gap-1.5">
+                {/* Metadata chips */}
+                <div className="grid grid-cols-2 gap-2 text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mb-3">
+                    <div className="flex items-center gap-2">
                         <BookIcon className="w-4 h-4" />
-                        <span>{course.departmentName || "—"}</span>
+                        <span className="truncate">{course.departmentName || "—"}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
                         <ClipboardCheckIcon className="w-4 h-4" />
-                        <span>{course.creditHours || "—"} Credit Hrs</span>
+                        <span>{course.creditHours ?? course.credits ?? "—"} Credit Hrs</span>
                     </div>
-                    {course.professor && (
-                        <div className="flex items-center gap-1.5">
-                            <UserTieIcon className="w-4 h-4" />
-                            <span>{course.professor}</span>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                        <UserTieIcon className="w-4 h-4" />
+                        <span className="truncate">{course.professor || course.instructor || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-0.5 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark">{displaySemester ?? 'N/A'}</span>
+                    </div>
                 </div>
 
                 {course.description && (
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">
+                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-3">
                         {course.description}
                     </p>
                 )}
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-2 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                {/* Manage Course button */}
-                {course.isActive && (
-                    <Button
-                        variant="primary"
-                        className="w-full justify-center"
-                        onClick={() => onManage(course)}
-                    >
-                        Manage Course <ArrowRightIcon className="w-4 h-4" />
-                    </Button>
-                )}
+            {/* Footer: stats + actions */}
+            <div className="flex items-center justify-between gap-3 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <span className="font-semibold">{course.numOfStudents ?? course.enrolledCount ?? "—"}</span>
+                        <span>students</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <span className="font-semibold">{course.capacity ?? course.maxStudents ?? "—"}</span>
+                        <span>capacity</span>
+                    </div>
+                </div>
 
-                {/* Quick actions row */}
                 <div className="flex items-center gap-2">
+                    {course.isActive && (
+                        <Button
+                            variant="primary"
+                            className="text-xs px-3 py-1"
+                            onClick={() => onManage(course)}
+                        >
+                            Manage
+                        </Button>
+                    )}
+
                     <Button
                         variant="secondary"
-                        className="flex-1 justify-center text-xs px-2 py-1.5"
+                        className="text-xs px-3 py-1"
                         onClick={() => onEdit(course)}
                     >
-                        <FilePenIcon className="w-4 h-4" /> Edit
+                        Edit
                     </Button>
 
                     {course.isActive ? (
                         <Button
                             variant="warning"
-                            className="flex-1 justify-center text-xs px-2 py-1.5"
+                            className="text-xs px-3 py-1"
                             onClick={() => onDeactivate(course)}
                         >
-                            <XIcon className="w-4 h-4" /> Deactivate
+                            Deactivate
                         </Button>
                     ) : (
                         <Button
                             variant="success"
-                            className="flex-1 justify-center text-xs px-2 py-1.5"
+                            className="text-xs px-3 py-1"
                             onClick={() => onActivate(course)}
                         >
-                            <CheckIcon className="w-4 h-4" /> Activate
+                            Activate
                         </Button>
                     )}
 
                     <Button
                         variant="danger"
-                        className="flex-1 justify-center text-xs px-2 py-1.5"
+                        className="text-xs px-3 py-1"
                         onClick={() => onDelete(course)}
                     >
-                        <TrashIcon className="w-4 h-4" /> Delete
+                        Delete
                     </Button>
                 </div>
             </div>
@@ -194,6 +224,7 @@ export default function ManageCourses() {
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [editingCourse, setEditingCourse] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [viewingCourse, setViewingCourse] = useState(null);
 
     const [successMessage, setSuccessMessage] = useState(null);
 
@@ -454,6 +485,7 @@ export default function ManageCourses() {
                                         onActivate={handleActivate}
                                         onDeactivate={handleDeactivate}
                                         onManage={handleManage}
+                                        onView={setViewingCourse}
                                     />
                                 ))}
                             </div>
@@ -473,7 +505,7 @@ export default function ManageCourses() {
                                         ...(row._raw.isActive ? [{
                                             label: "Manage Course",
                                             onClick: () => handleManage(row._raw),
-                                            className: "text-text-accent-active-light dark:text-text-accent-active-dark font-medium",
+                                            className: "text-text-secondary-default-light dark:text-text-accent-active-dark font-medium",
                                         }] : []),
                                         {
                                             label: "Edit",
@@ -576,6 +608,148 @@ export default function ManageCourses() {
             >
                 {successMessage}
             </Dialog>
+
+            {/* Course Details Modal */}
+            {viewingCourse && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark p-6 flex items-center justify-between">
+                            <h2 className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                {viewingCourse.courseName || viewingCourse.title || "Course Details"}
+                            </h2>
+                            <button
+                                onClick={() => setViewingCourse(null)}
+                                className="text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark transition-colors"
+                            >
+                                <XIcon className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {/* Course Code & Status */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Course Code</p>
+                                    <p className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                        {viewingCourse.courseCode || viewingCourse.id || viewingCourse.courseId || "—"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Status</p>
+                                    <StatusBadge isActive={!!viewingCourse.isActive} />
+                                </div>
+                            </div>
+
+                            {/* Description */}
+                            {viewingCourse.description && (
+                                <div>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Description</p>
+                                    <p className="text-text-primary-default-light dark:text-text-primary-default-dark">
+                                        {viewingCourse.description}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Academic Details */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Department</p>
+                                    <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">
+                                        {viewingCourse.departmentName || viewingCourse.department || "—"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Credit Hours</p>
+                                    <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">
+                                        {viewingCourse.creditHours ?? viewingCourse.credits ?? "—"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Semester</p>
+                                    <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">
+                                        {viewingCourse.semester || viewingCourse.level || viewingCourse.term || "—"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Professor</p>
+                                    <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">
+                                        {viewingCourse.professor || viewingCourse.instructor || "—"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Enrollment Details */}
+                            <div className="grid grid-cols-2 gap-4 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg p-4">
+                                <div>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Enrolled Students</p>
+                                    <p className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                        {viewingCourse.numOfStudents ?? viewingCourse.enrolledCount ?? viewingCourse.enrolled ?? "0"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Capacity</p>
+                                    <p className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                        {viewingCourse.capacity ?? viewingCourse.maxStudents ?? "—"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Schedule & Room (if available) */}
+                            {(viewingCourse.schedule || viewingCourse.room) && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    {viewingCourse.schedule && (
+                                        <div>
+                                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Schedule</p>
+                                            <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">
+                                                {viewingCourse.schedule}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {viewingCourse.room && (
+                                        <div>
+                                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Room</p>
+                                            <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">
+                                                {viewingCourse.room}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-3 pt-4 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => {
+                                        setViewingCourse(null);
+                                        setEditingCourse(viewingCourse);
+                                    }}
+                                >
+                                    Edit Course
+                                </Button>
+                                {viewingCourse.isActive && (
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => {
+                                            setViewingCourse(null);
+                                            handleManage(viewingCourse);
+                                        }}
+                                    >
+                                        Manage Course
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="tertiary"
+                                    onClick={() => setViewingCourse(null)}
+                                >
+                                    Close
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
+

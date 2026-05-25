@@ -85,14 +85,6 @@ export default function StudentBottomBar() {
                                 <span className="text-sm font-semibold whitespace-nowrap">{t('coursePrerequisites')}</span>
                             </NavLink>
                         </li>
-                        <li>
-                            <NavLink 
-                                to="/courses/remarking-request" 
-                                className={({ isActive }) => linkCls(isActive)}
-                            >
-                                <span className="text-sm font-semibold whitespace-nowrap">{t('courseRemarkingRequest')}</span>
-                            </NavLink>
-                        </li>
                     </DropdownMenu>
                 )}
             </div>

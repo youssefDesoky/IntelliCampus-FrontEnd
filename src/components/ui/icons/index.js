@@ -71,6 +71,10 @@ export { default as OpenInNewTabIcon } from './OpenInNewTabIcon.jsx';
 
 export { default as PlayIcon } from './PlayIcon.jsx';
 export { default as PlusIcon } from './PlusIcon.jsx';
+export { default as PaperclipIcon } from './PaperclipIcon.jsx';
+export { default as PaperPlaneIcon } from './PaperPlaneIcon.jsx';
+export { default as PinIcon } from './PinIcon.jsx';
+export { default as UnPinIcon } from './UnPinIcon.jsx';
 
 export { default as QRCodeIcon } from './QRCodeIcon.jsx';
 
@@ -82,6 +86,7 @@ export { default as StickyNoteIcon } from './StickyNoteIcon.jsx';
 export { default as SunIcon } from './SunIcon.jsx';
 export { default as SearchIcon } from './SearchIcon.jsx';
 export { default as StrikeThoughtIcon } from './StrikeThoughtIcon.jsx';
+export { default as SandClockIcon } from './SandClockIcon.jsx';
 
 export {default as TranslateIcon } from './TranslateIcon.jsx';
 export { default as TrashIcon } from './TrashIcon.jsx';

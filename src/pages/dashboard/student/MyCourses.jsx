@@ -95,7 +95,7 @@ export default function MyCourses() {
             {!loading && !error && courses.length > 0 && (
                 <Section className={`mb-6 ${viewMode === "grid" ? "grid grid-cols-2 gap-4" : "flex flex-col gap-4"}`}>
                     {courses.map((course) => (
-                        <MyCourse key={course.courseId} course={course} viewMode={viewMode} isMobile={isMobile} />
+                        <MyCourse key={course.courseId} course={course} role="student" viewMode={viewMode} isMobile={isMobile} />
                     ))}
                 </Section>
             )}

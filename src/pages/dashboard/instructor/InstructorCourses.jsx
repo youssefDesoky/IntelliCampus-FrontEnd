@@ -4,7 +4,7 @@ import Section from "../../../components/ui/Section";
 import DataBanner from "../../../components/ui/DataBanner";
 import useDeviceType from "../../../hooks/useDeviceType";
 
-import InstructorCourse from "../../../feature/instructor/components/courses/InstructorCourse";
+import MyCourse from "../../../feature/student/courses/myCourses/MyCourse";
 import InstructorCoursesHeader from "../../../feature/instructor/components/courses/InstructorCoursesHeader";
 import { fetchMyTeachingCourses } from "../../../feature/course/services/coursesApi";
 
@@ -47,8 +47,8 @@ export default function InstructorCourses() {
     const stats = [
         { label: "Assigned Courses", value: courses.length },
         { label: "Total Hours", value: totalHours },
-        { label: "Total Students", value: "⚠ missing from backend" },
-        { label: "Average Attendance", value: "⚠ missing from backend" },
+        // { label: "Total Students", value: "⚠ missing from backend" },
+        // { label: "Average Attendance", value: "⚠ missing from backend" },
     ];
 
     return (
@@ -92,7 +92,7 @@ export default function InstructorCourses() {
             {!loading && !error && courses.length > 0 && (
                 <Section className={`mb-6 ${viewMode === "grid" ? "grid grid-cols-2 gap-4" : "flex flex-col gap-4"}`}>
                     {courses.map((course) => (
-                        <InstructorCourse key={course.courseId} course={course} viewMode={viewMode} isMobile={isMobile} />
+                        <MyCourse key={course.courseId} course={course} role="instructor" viewMode={viewMode} isMobile={isMobile} />
                     ))}
                 </Section>
             )}

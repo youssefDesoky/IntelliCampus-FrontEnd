@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { Outlet, useRouteLoaderData } from 'react-router-dom';
 import { useSidebar, useDeviceType } from '../hooks';
 import { getAside, getBottomBar, getHeader } from '../utils/layoutHelper';
+import Chat from '../feature/chat/components/Chat';
 
 export default function AppLayout() {
     const ASIDEHEIGHT = 80;
     const { width } = useSidebar();
     const { isMobile } = useDeviceType();
     const user = useRouteLoaderData("root");
+    const [isChatOpen, setIsChatOpen] = useState(false);
     // const { isFetching, fetchedData: appLayoutData, userRole } = useFetch('api/me', {credentials: 'include'}, true);
     
     // console.log("AppLayout userRole:", userRole);
@@ -26,8 +29,10 @@ export default function AppLayout() {
                             maxWidth: !isMobile ? `calc(100% - ${width}%)` : '100%'
                         }}
                     >
-                        {console.log("AppLayout user:", user)}
                         <Outlet context={{ user }} />
+                        
+                        {/* Chatting interface */}
+                        <Chat isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} currentUser={user} />
                     </main>
 
                     {isMobile && getBottomBar(user.role)}

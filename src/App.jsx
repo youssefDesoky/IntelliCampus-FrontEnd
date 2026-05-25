@@ -13,7 +13,7 @@ import SidebarProvider from "./contexts/SidebarProvider";
 import CourseShell from "./feature/course/component/CourseShell";
 
 // Auth Pages
-import { LoginPage, ForgetPassword } from "./pages/auth";
+import { LoginPage, ForgetPassword, UnauthorizedPage } from "./pages/auth";
 
 // Student Pages
 import { 
@@ -22,19 +22,28 @@ import {
     MyCourses as StudentCourses,
     Dashboard as StudentDashboard, 
     Reminders as StudentReminders,
-    Community as StudentCommunity, 
+    StudyGroup as StudentStudyGroup, 
     SmartNotes as StudentSmartNotes, 
     CourseMaterials as StudentCourseMaterials, 
     CoursePrerequisites as StudentCoursePrerequisites, 
-    CoursesRegistration as StudentCoursesRegistration, 
+    CoursesRegistration as StudentCoursesRegistration,
 } from "./pages/dashboard/student";
 
+import CourseAttendance from "./feature/student/courses/courseDetail/courseAttendance/CourseAttendance";
+import CourseAssignments from "./feature/student/courses/courseDetail/assignments/CourseAssignments";
+import CourseGrade from "./feature/student/courses/courseDetail/grade/CourseGrade";
+import CourseQuizzes from "./feature/student/courses/courseDetail/quizzes/CourseQuizzes";
+import CourseQuizPractice from "./feature/student/courses/courseDetail/quizzes/CourseQuizPractice";
+import CourseAnnouncements from "./feature/student/courses/courseDetail/announcements/CourseAnnouncements";
+
 // Admin Pages
-import { ManageInstructors, ManageStudents, ManageAdmins, ManageCourses, ManageCourseClasses } from "./pages/dashboard/admin";
+import { ManageInstructors, ManageStudents, ManageAdmins, ManageCourses, ManageCourseClasses, ManageRooms, ManageDepartments } from "./pages/dashboard/admin";
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
-import { InstructorCourses, InstructorCourseMaterials } from "./pages/dashboard/instructor"
+import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes } from "./pages/dashboard/instructor"
+import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
+
 
 export default function App() {    
     const { i18n } = useTranslation();
@@ -67,8 +76,7 @@ export default function App() {
             {
                 element: <RoleGuard allow={["student"]} />,
                 children: [
-                    // { index: true, element: <StudentDashboard /> },
-                    { index: true, element: <div>Student Dashboard Content</div> },
+                    { index: true, element: <StudentDashboard /> },
                     { path: "profile", element: <StudentProfile /> },
                     { path: "fahim", element: <div>Fahim AI Content</div> },
                     { path: "courses", element: <StudentCourses /> },
@@ -77,14 +85,15 @@ export default function App() {
                         path: "courses/:courseId/*",
                         element: <CourseShell />,
                         children: [
-                            { index: true, element: <div>Course Announcements Content</div> },
+                            { index: true, element: <CourseAnnouncements /> },
                             { path: "materials", element: <StudentCourseMaterials /> },
-                            { path: "assignments", element: <div>Course Assignments Content</div> },
-                            { path: "quizzes", element: <div>Course Quizzes Content</div> },
-                            { path: "attendance", element: <div>Course Attendance Content</div> },
-                            { path: "grades", element: <div>Course Grades Content</div> },
-                            { path: "community", element: <StudentCommunity /> },
-                            { path: "study-group", element: <div>Course Study Group Content</div> },
+                            { path: "assignments", element: <CourseAssignments /> },
+                            { path: "quizzes", element: <CourseQuizzes /> },
+                            { path: "quizzes/practice", element: <CourseQuizPractice /> },
+                            { path: "attendance", element: <CourseAttendance /> },
+                            { path: "grades", element: <CourseGrade /> },
+                            { path: "community", element: <StudentStudyGroup /> },
+                            { path: "smart-notes", element: <StudentSmartNotes /> },
                         ],
                     },
 
@@ -108,13 +117,14 @@ export default function App() {
                         path: "courses/:courseId/*", 
                         element: <CourseShell />,
                         children: [
-                            { index: true, element: <div>Course Announcements Content</div> },
+                            { index: true, element: <InstructorCourseAnnouncements /> },
                             { path: "materials", element: <InstructorCourseMaterials /> },
-                            { path: "assignments", element: <div>Course Assignments Content</div> },
-                            { path: "quizzes", element: <div>Course Quizzes Content</div> },
-                            { path: "attendance", element: <div>Course Attendance Content</div> },
+                            { path: "assignments", element: <InstructorCourseAssignments /> },
+                            { path: "quizzes", element: <InstructorCourseQuizzes /> },
+                            { path: "attendance", element: <InstructorCourseAttendance /> },
                             { path: "grades", element: <div>Course Grades Content</div> },
                             { path: "community", element: <div>Course Community Content</div> },
+                            { path: "smart-notes", element: <StudentSmartNotes /> },
                         ],
                     },
                 ],
@@ -130,9 +140,10 @@ export default function App() {
                     { path: "admins", element: <ManageAdmins /> },
                     { path: "students", element: <ManageStudents /> },
                     { path: "instructors", element: <ManageInstructors /> },
+                    { path: "departments", element: <ManageDepartments /> },
                     { path: "courses", element: <ManageCourses /> },
                     { path: "courses/:courseId", element: <ManageCourseClasses /> },
-                    { path: "rooms", element: <div>Manage Rooms Content</div> },
+                    { path: "rooms", element: <ManageRooms /> },
                 ],
             },
         ],
@@ -141,7 +152,7 @@ export default function App() {
     // ================= PUBLIC =================
     { path: "/login", element: <LoginPage />, action: authAction },
     { path: "/forgot-password", element: <ForgetPassword /> },
-    { path: "/unauthorized", element: <div>Unauthorized Access</div> },
+    { path: "/unauthorized", element: <UnauthorizedPage /> },
     { path: "/logout", action: logoutAction },
     ]);
 

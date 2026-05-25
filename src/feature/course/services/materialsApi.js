@@ -1,11 +1,15 @@
 import { API_URL } from "../../../config/api";
 
+function getBaseUrl() {
+    return API_URL;
+}
+
 /**
  * Fetch organized course materials (folders with materials)
  * GET /api/materials/course/:courseId/organized
  */
 export async function fetchCourseMaterialsOrganized(courseId) {
-    const res = await fetch(`${API_URL}/api/materials/course/${courseId}/organized`, {
+    const res = await fetch(`${getBaseUrl()}/api/materials/course/${courseId}/organized`, {
         credentials: "include",
     });
     if (!res.ok) throw new Error(`Failed to fetch materials: ${res.status}`);
@@ -17,7 +21,7 @@ export async function fetchCourseMaterialsOrganized(courseId) {
  * GET /api/materials/course/:courseId
  */
 export async function fetchCourseMaterials(courseId) {
-    const res = await fetch(`${API_URL}/api/materials/course/${courseId}`, {
+    const res = await fetch(`${getBaseUrl()}/api/materials/course/${courseId}`, {
         credentials: "include",
     });
     if (!res.ok) throw new Error(`Failed to fetch materials: ${res.status}`);
@@ -29,7 +33,7 @@ export async function fetchCourseMaterials(courseId) {
  * GET /api/materials/course/:courseId/folders
  */
 export async function fetchCourseFolders(courseId) {
-    const res = await fetch(`${API_URL}/api/materials/course/${courseId}/folders`, {
+    const res = await fetch(`${getBaseUrl()}/api/materials/course/${courseId}/folders`, {
         credentials: "include",
     });
     if (!res.ok) throw new Error(`Failed to fetch folders: ${res.status}`);
@@ -41,7 +45,7 @@ export async function fetchCourseFolders(courseId) {
  * POST /api/materials (multipart/form-data)
  */
 export async function createMaterial(formData) {
-    const res = await fetch(`${API_URL}/api/materials`, {
+    const res = await fetch(`${getBaseUrl()}/api/materials`, {
         method: "POST",
         credentials: "include",
         body: formData, // FormData — browser sets Content-Type automatically
@@ -70,7 +74,7 @@ export async function createMaterial(formData) {
  * DELETE /api/materials/:id
  */
 export async function deleteMaterial(materialId) {
-    const res = await fetch(`${API_URL}/api/materials/${materialId}`, {
+    const res = await fetch(`${getBaseUrl()}/api/materials/${materialId}`, {
         method: "DELETE",
         credentials: "include",
     });
@@ -86,7 +90,7 @@ export async function deleteMaterial(materialId) {
  * GET /api/materials/:id/download
  */
 export function getMaterialDownloadUrl(materialId) {
-    return `${API_URL}/api/materials/${materialId}/download`;
+    return `${getBaseUrl()}/api/materials/${materialId}/download`;
 }
 
 /**
@@ -94,7 +98,7 @@ export function getMaterialDownloadUrl(materialId) {
  * POST /api/materials/folders
  */
 export async function createFolder({ name, description, courseId }) {
-    const res = await fetch(`${API_URL}/api/materials/folders`, {
+    const res = await fetch(`${getBaseUrl()}/api/materials/folders`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -112,7 +116,7 @@ export async function createFolder({ name, description, courseId }) {
  * PUT /api/materials/folders/:folderId
  */
 export async function updateFolder(folderId, { name, description }) {
-    const res = await fetch(`${API_URL}/api/materials/folders/${folderId}`, {
+    const res = await fetch(`${getBaseUrl()}/api/materials/folders/${folderId}`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -130,7 +134,7 @@ export async function updateFolder(folderId, { name, description }) {
  * DELETE /api/materials/folders/:folderId
  */
 export async function deleteFolder(folderId) {
-    const res = await fetch(`${API_URL}/api/materials/folders/${folderId}`, {
+    const res = await fetch(`${getBaseUrl()}/api/materials/folders/${folderId}`, {
         method: "DELETE",
         credentials: "include",
     });

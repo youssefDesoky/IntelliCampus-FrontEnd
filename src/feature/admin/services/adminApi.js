@@ -132,6 +132,66 @@ export async function deleteAdmin(id) {
     return true;
 }
 
+// ─── Departments ────────────────────────────────────────────
+
+export async function fetchDepartments() {
+    const res = await fetch(`${API_URL}/api/departments`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch departments: ${res.status}`);
+    return res.json();
+}
+
+export async function fetchDepartmentById(id) {
+    const res = await fetch(`${API_URL}/api/departments/${id}`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch department: ${res.status}`);
+    return res.json();
+}
+
+export async function createDepartment(data) {
+    console.log("[API] POST /api/departments →", JSON.stringify(data, null, 2));
+    const res = await fetch(`${API_URL}/api/departments`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to create department: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function updateDepartment(id, data) {
+    console.log(`[API] PUT /api/departments/${id} →`, JSON.stringify(data, null, 2));
+    const res = await fetch(`${API_URL}/api/departments/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to update department: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function deleteDepartment(id) {
+    const res = await fetch(`${API_URL}/api/departments/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to delete department: ${res.status}`);
+    }
+    return true;
+}
+
 // ─── Courses ────────────────────────────────────────────────
 
 export async function fetchCourses() {
@@ -150,13 +210,27 @@ export async function fetchCourseById(id) {
     return res.json();
 }
 
+/** Maps frontend course fields to the backend CreateCourseDto JSON property names */
+function toCoursePayload(data) {
+    return {
+        title: data.courseName,
+        courseNameAr: data.courseNameAr,
+        id: data.courseId,
+        creditHours: data.creditHours,
+        department: data.departmentId,
+        description: data.description,
+        prerequisites: data.prerequisites,
+    };
+}
+
 export async function createCourse(data) {
-    console.log("[API] POST /api/courses →", JSON.stringify(data, null, 2));
+    const payload = toCoursePayload(data);
+    console.log("[API] POST /api/courses →", JSON.stringify(payload, null, 2));
     const res = await fetch(`${API_URL}/api/courses`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -170,12 +244,13 @@ export async function createCourse(data) {
 }
 
 export async function updateCourse(id, data) {
-    console.log(`[API] PUT /api/courses/${id} →`, JSON.stringify(data, null, 2));
+    const payload = toCoursePayload(data);
+    console.log(`[API] PUT /api/courses/${id} →`, JSON.stringify(payload, null, 2));
     const res = await fetch(`${API_URL}/api/courses/${id}`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -235,7 +310,7 @@ export async function fetchCourseClasses(courseId) {
 }
 
 export async function addClassToCourse(courseId, data) {
-    const payload = { ...data, courseId: Number(courseId) };
+    const payload = { ...data, courseId: String(courseId) };
     console.log("[API] POST /api/classes →", JSON.stringify(payload, null, 2));
     const res = await fetch(`${API_URL}/api/classes`, {
         method: "POST",
@@ -244,11 +319,13 @@ export async function addClassToCourse(courseId, data) {
         body: JSON.stringify(payload),
     });
     if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("[API] POST /api/classes error response:", JSON.stringify(err, null, 2));
+        let err = {};
+        const text = await res.text().catch(() => "");
+        try { err = JSON.parse(text); } catch { /* not JSON */ }
+        console.error(`[API] POST /api/classes ${res.status} response:`, text || "(empty)");
         const msg = err.errors
             ? Object.entries(err.errors).map(([k, v]) => `${k}: ${v.join(", ")}`).join("; ")
-            : err.message || err.title || `Failed to add class: ${res.status}`;
+            : err.message || err.title || text || `Failed to add class: ${res.status}`;
         throw new Error(msg);
     }
     return res.json();
@@ -264,5 +341,69 @@ export async function deleteClassFromCourse(courseId, classId) {
         throw new Error(err.message || `Failed to delete class: ${res.status}`);
     }
     if (res.status === 204) return true;
+    return true;
+}
+
+// ─── Rooms ──────────────────────────────────────────────────
+
+export async function fetchRooms() {
+    const res = await fetch(`${API_URL}/api/rooms`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch rooms: ${res.status}`);
+    return res.json();
+}
+
+export async function fetchRoomById(id) {
+    const res = await fetch(`${API_URL}/api/rooms/${id}`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch room: ${res.status}`);
+    return res.json();
+}
+
+export async function createRoom(data) {
+    console.log("[API] POST /api/rooms →", JSON.stringify(data, null, 2));
+    const res = await fetch(`${API_URL}/api/rooms`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("[API] POST /api/rooms error response:", JSON.stringify(err, null, 2));
+        const msg = err.errors
+            ? Object.entries(err.errors).map(([k, v]) => `${k}: ${v.join(", ")}`).join("; ")
+            : err.message || err.title || `Failed to create room: ${res.status}`;
+        throw new Error(msg);
+    }
+    return res.json();
+}
+
+export async function updateRoom(id, data) {
+    console.log(`[API] PUT /api/rooms/${id} →`, JSON.stringify(data, null, 2));
+    const res = await fetch(`${API_URL}/api/rooms/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to update room: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function deleteRoom(id) {
+    const res = await fetch(`${API_URL}/api/rooms/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to delete room: ${res.status}`);
+    }
     return true;
 }

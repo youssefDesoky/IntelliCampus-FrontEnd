@@ -2,7 +2,7 @@ import { PlusIcon } from "../../../components/ui/icons";
 import PageHeader from "../../../components/ui/PageHeader";
 import Button from "../../../components/ui/Button";
 
-export default function RemindersHeader() {
+export default function RemindersHeader({ setIsFormOpen }) {
     return (
         <PageHeader 
             title="Reminders" 
@@ -10,6 +10,7 @@ export default function RemindersHeader() {
         >
             <Button
                 variant="primary"
+                onClick={() => setIsFormOpen(true)}
             >
                 <PlusIcon size={16}/>
                 Add Reminder

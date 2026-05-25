@@ -29,15 +29,12 @@ const eventColors = {
     section: "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark border-border-purple-default-light dark:border-border-purple-default-dark text-text-purple-default-light dark:text-text-purple-default-dark",
     default: "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark",
 };
-
-
-export default function WeeklyScheduleEvent({ event }) {
+export default function WeeklyScheduleEvent({ event, rangeStart = 0, totalDuration = 12 }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-
     const startIndex = getTimeIndex(event.startTime);
     const colSpan = getColSpan(event.startTime, event.endTime);
-    const leftPercent = (startIndex / 12) * 100;
-    const widthPercent = (colSpan / 12) * 100;
+    const leftPercent = totalDuration > 0 ? ((startIndex - rangeStart) / totalDuration) * 100 : 0;
+    const widthPercent = totalDuration > 0 ? (colSpan / totalDuration) * 100 : 0;
     const colorClass = eventColors[event.type] || eventColors.default;
 
     return (
@@ -45,7 +42,7 @@ export default function WeeklyScheduleEvent({ event }) {
             <div
                 className={`absolute top-1 bottom-1 rounded-lg border-l-4 p-2 transition-all hover:shadow-md hover:scale-[1.02] ${colorClass}`}
                 style={{
-                    left: `${leftPercent}%`,
+                    left: `calc(${leftPercent}% + 2px)`,
                     width: `calc(${widthPercent}% - 4px)`,
                 }}
                 onClick={() => setIsModalOpen(true)}

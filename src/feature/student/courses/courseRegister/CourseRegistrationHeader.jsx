@@ -8,8 +8,7 @@ import { FilterIcon, StarIcon, BookIcon, ClockIcon } from "../../../../component
 
 const MAX_CREDITS = 18;
 
-export default function CourseRegistrationHeader({deviceType, selectedCourses = [], availableCourses = []}) {
-    const totalCourses = selectedCourses.length + availableCourses.length;
+export default function CourseRegistrationHeader({deviceType, selectedCourses = []}) {
     const selectedCount = selectedCourses.length;
     const selectedCredits = selectedCourses.reduce((sum, c) => sum + (typeof c.creditHours === 'number' ? c.creditHours : 0), 0);
     const remainingCredits = Math.max(0, MAX_CREDITS - selectedCredits);

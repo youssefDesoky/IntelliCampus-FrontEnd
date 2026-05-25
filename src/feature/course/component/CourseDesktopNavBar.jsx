@@ -8,7 +8,7 @@ const desktopLinkStyles = (isActive) => `block px-4 py-2 border-b-2 font-medium 
 
 export default function CourseDesktopNavBar({ links }) {
     return (
-        <menu className="flex flex-row gap-4 overflow-x-auto border-b border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
+        <menu className="flex flex-row gap-4 overflow-x-auto border-b border-border-tertiary-default-light dark:border-border-tertiary-default-dark mb-4">
             {links.map((link) => (
                 <NavLink key={link.to} to={link.to} end={link.end} className={({ isActive }) => desktopLinkStyles(isActive)}>
                     {link.label}

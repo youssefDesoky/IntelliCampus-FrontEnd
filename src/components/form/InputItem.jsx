@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "../ui/icons";
 
-export default function InputItem({ label, type = "text", name, placeholder = "", className = "", children, value, isDisabled = false, ...props }) {
+export default function InputItem({ 
+    label,
+    type = "text", 
+    name,
+    errorMessage = "",
+    placeholder = "", 
+    className = "", 
+    children, 
+    value, 
+    isDisabled = false, 
+    ...props 
+}) {
     const [showPassword, setShowPassword] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
     const [hasValue, setHasValue] = useState(false);
@@ -49,6 +60,7 @@ export default function InputItem({ label, type = "text", name, placeholder = ""
                     </button>
                 )}
             </div>
+            {errorMessage && <p className="mt-1 text-xs text-red-500">{errorMessage}</p>}
         </div>
     );
 }

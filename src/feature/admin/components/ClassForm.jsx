@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Button from "../../../components/ui/Button";
 import InputItem from "../../../components/form/InputItem";
 import SelectBox from "../../../components/ui/SelectBox";
-import ModelOverlay from "../../../components/ui/ModelOverlay";
+import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import { CheckIcon, XIcon } from "../../../components/ui/icons";
 import { fetchInstructors } from "../services/adminApi";
 
@@ -32,7 +32,7 @@ function parseSchedule(schedule) {
     }).filter((s) => s.day);
 }
 
-export default function ClassForm({ onClose, onSubmit, initialData = null }) {
+export default function ClassForm({ onClose, onSubmit, initialData = null, isOpen = true }) {
     const isEdit = !!initialData;
 
     const [instructorOptions, setInstructorOptions] = useState([]);
@@ -114,133 +114,103 @@ export default function ClassForm({ onClose, onSubmit, initialData = null }) {
     };
 
     return (
-        <ModelOverlay onClose={onClose}>
-            <form
-                className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark w-full p-6 rounded-lg shadow-md overflow-hidden"
-                onSubmit={handleSubmit}
-            >
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex flex-col gap-1">
-                        <h2 className="text-2xl font-semibold">
-                            {isEdit ? "Edit Class" : "Add Class"}
-                        </h2>
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            {isEdit
-                                ? "Update this class details."
-                                : "Add a new lecture or section to this course."}
-                        </p>
-                    </div>
+        <BaseFormComponent
+            isOpen={isOpen}
+            title={isEdit ? "Edit Class" : "Add Class"}
+            description={isEdit ? "Update this class details." : "Add a new lecture or section to this course."}
+            onClose={onClose}
+            onSubmit={handleSubmit}
+            submitText={isEdit ? "Save Changes" : "Add Class"}
+        >
+            <div className="space-y-5 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Class Type */}
+                    <SelectBox
+                        className="w-full"
+                        label="Class Type"
+                        labelDirection="flex-col"
+                        options={classTypeOptions}
+                        selectedOption={selectedType}
+                        onChange={handleTypeChange}
+                    />
 
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="p-2 place-self-start rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 hover:text-gray-800"
-                    >
-                        <XIcon className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <div className="space-y-5 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Class Type */}
+                    {/* Instructor */}
+                    {instructorOptions.length > 0 && (
                         <SelectBox
                             className="w-full"
-                            label="Class Type"
+                            label="Instructor"
                             labelDirection="flex-col"
-                            options={classTypeOptions}
-                            selectedOption={selectedType}
-                            onChange={handleTypeChange}
+                            options={instructorOptions}
+                            selectedOption={selectedInstructor}
+                            onChange={setSelectedInstructor}
                         />
+                    )}
+                </div>
 
-                        {/* Instructor */}
-                        {instructorOptions.length > 0 && (
-                            <SelectBox
-                                className="w-full"
-                                label="Instructor"
-                                labelDirection="flex-col"
-                                options={instructorOptions}
-                                selectedOption={selectedInstructor}
-                                onChange={setSelectedInstructor}
-                            />
+                {/* Schedule */}
+                <div>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block mb-2 font-bold text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
+                            Schedule
+                        </label>
+
+                        {scheduleSlots.length < maxSlots && (
+                            <button
+                                type="button"
+                                onClick={addSlot}
+                                className="text-sm text-black dark:text-text-accent-active-dark hover:underline"
+                            >
+                                + Add another day
+                            </button>
                         )}
                     </div>
-
-                    {/* Schedule */}
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="block mb-2 font-bold text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Schedule
-                            </label>
-
-                            {scheduleSlots.length < maxSlots && (
-                                <button
-                                    type="button"
-                                    onClick={addSlot}
-                                    className="text-sm text-text-accent-active-light dark:text-text-accent-active-dark hover:underline"
+                    <div className="space-y-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {scheduleSlots.map((slot, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                                <select
+                                    value={slot.day}
+                                    onChange={(e) => updateSlot(idx, "day", e.target.value)}
+                                    className="px-3 py-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark focus:outline-none text-sm"
                                 >
-                                    + Add another day
-                                </button>
-                            )}
-                        </div>
-                        <div className="space-y-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {scheduleSlots.map((slot, idx) => (
-                                <div key={idx} className="flex items-center gap-3">
-                                    <select
-                                        value={slot.day}
-                                        onChange={(e) => updateSlot(idx, "day", e.target.value)}
-                                        className="px-3 py-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark focus:outline-none text-sm"
+                                    {dayOptions.map((d) => (
+                                        <option key={d.value} value={d.value}>{d.label}</option>
+                                    ))}
+                                </select>
+
+                                <input
+                                    type="time"
+                                    value={slot.time}
+                                    onChange={(e) => updateSlot(idx, "time", e.target.value)}
+                                    className="flex-1 px-3 py-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark focus:outline-none text-sm"
+                                    required
+                                />
+
+                                {scheduleSlots.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeSlot(idx)}
+                                        className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+                                        title="Remove slot"
                                     >
-                                        {dayOptions.map((d) => (
-                                            <option key={d.value} value={d.value}>{d.label}</option>
-                                        ))}
-                                    </select>
-
-                                    <input
-                                        type="time"
-                                        value={slot.time}
-                                        onChange={(e) => updateSlot(idx, "time", e.target.value)}
-                                        className="flex-1 px-3 py-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark focus:outline-none text-sm"
-                                        required
-                                    />
-
-                                    {scheduleSlots.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeSlot(idx)}
-                                            className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
-                                            title="Remove slot"
-                                        >
-                                            <XIcon className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                                        <XIcon className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
                     </div>
-
-                    {/* Room */}
-                    <InputItem
-                        label="Room"
-                        type="text"
-                        name="room"
-                        placeholder="e.g. Hall A-201"
-                        value={room}
-                        onChange={(e) => setRoom(e.target.value)}
-                        required
-                    />
                 </div>
 
-                <div className="flex items-center justify-end gap-4">
-                    <Button variant="secondary" type="button" onClick={onClose}>
-                        Cancel
-                    </Button>
-
-                    <Button variant="primary" type="submit">
-                        <CheckIcon className="w-5 h-5" />{" "}
-                        {isEdit ? "Save Changes" : "Add Class"}
-                    </Button>
-                </div>
-            </form>
-        </ModelOverlay>
+                {/* Room */}
+                <InputItem
+                    label="Room"
+                    type="text"
+                    name="room"
+                    placeholder="e.g. Hall A-201"
+                    value={room}
+                    onChange={(e) => setRoom(e.target.value)}
+                    required
+                />
+            </div>
+        </BaseFormComponent>
     );
 }

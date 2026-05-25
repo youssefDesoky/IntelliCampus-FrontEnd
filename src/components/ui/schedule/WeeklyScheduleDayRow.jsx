@@ -16,8 +16,13 @@ const getTimeIndex = (time) => {
     return (hour - 8) + minuteDecimal; // 8 AM is index 0
 };
 
-export default function WeeklyScheduleDayRow({ isPhone, slots, days = [], schedule = [] }) {
+export default function WeeklyScheduleDayRow({ isMobile, slots, days = [], schedule = [] }) {
     const totalSlots = slots.length;
+    const firstSlotIndex = slots.length > 0 ? getTimeIndex(slots[0]) : 0;
+    const slotStep = slots.length > 1 ? getTimeIndex(slots[1]) - firstSlotIndex : 1;
+    const totalDuration = slots.length > 1
+        ? (getTimeIndex(slots[slots.length - 1]) - firstSlotIndex) + slotStep
+        : slotStep;
 
     return (
         <>
@@ -25,15 +30,21 @@ export default function WeeklyScheduleDayRow({ isPhone, slots, days = [], schedu
                 <div 
                     key={day.key} 
                     className={`
-                        grid min-h-17.5 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors
+                        grid min-h-20 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors
                         ${ dayIndex < days.length - 1 ? "border-b border-border-primary-default-light dark:border-border-primary-default-dark" : "" } 
                     `}
-                    style={{ gridTemplateColumns: `${isPhone ? "50px" : "100px"} repeat(${totalSlots}, 1fr)` }}
+                    style={{ gridTemplateColumns: `${isMobile ? "50px" : "100px"} repeat(${totalSlots}, 1fr)` }}
                 >
                     {/* Day Label */}
-                    <div className="p-3 flex items-center justify-center font-medium text-text-primary-default-light dark:text-text-primary-default-dark border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                        <span className="hidden lg:inline">{day.label}</span>
-                        <span className="lg:hidden">{day.short}</span>
+                    <div className="p-3 flex items-center justify-center border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                        <div className="text-center">
+                            <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary-default-light dark:text-text-tertiary-default-dark lg:hidden">
+                                {day.short}
+                            </span>
+                            <span className="hidden lg:block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                {day.label}
+                            </span>
+                        </div>
                     </div>
 
                     {/* Time Slots Container */}
@@ -44,7 +55,9 @@ export default function WeeklyScheduleDayRow({ isPhone, slots, days = [], schedu
                         {/* Grid lines - positioned absolutely for accurate alignment */}
                         {slots.map((time, index) => {
                             const timeIndex = getTimeIndex(time);
-                            const leftPercent = (timeIndex / 12) * 100;
+                            const leftPercent = totalDuration > 0
+                                ? ((timeIndex - firstSlotIndex) / totalDuration) * 100
+                                : 0;
                             return (
                                 <div
                                     key={index}
@@ -55,7 +68,13 @@ export default function WeeklyScheduleDayRow({ isPhone, slots, days = [], schedu
                         })}
 
                         {/* Events */}
-                        <WeeklyScheduleEvents days={days} day={day} schedule={schedule} />
+                        <WeeklyScheduleEvents
+                            days={days}
+                            day={day}
+                            schedule={schedule}
+                            rangeStart={firstSlotIndex}
+                            totalDuration={totalDuration}
+                        />
                     </div>
                 </div>
             ))}

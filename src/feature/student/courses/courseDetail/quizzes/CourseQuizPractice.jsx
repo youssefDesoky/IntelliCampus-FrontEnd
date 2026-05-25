@@ -1,0 +1,235 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useOutletContext, useSearchParams } from "react-router-dom";
+
+import PaginationButtons from "../../../../../components/ui/PaginationButtons";
+import QuestionCard from "./QuestionCard";
+import QuizHeader from "./QuizHeader";
+import QuizSummary from "./QuizSummary";
+import { fetchPracticeQuiz, submitPracticeQuiz } from "../../quizzesApi";
+
+const PAGE_SIZE = 3;
+
+export default function CourseQuizPractice() {
+	const { course } = useOutletContext();
+	const courseId = course?.id;
+	const [searchParams] = useSearchParams();
+	const reviewMode = searchParams.get("review") || null;
+	const selectedQuizId = searchParams.get("quizId");
+	const [practiceQuizData, setPracticeQuizData] = useState(null);
+	const [isQuizLoading, setIsQuizLoading] = useState(true);
+	const [quizError, setQuizError] = useState(null);
+	const submissionLockRef = useRef(false);
+
+	const [currentPage, setCurrentPage] = useState(1);
+	const [answers, setAnswers] = useState({});
+	const [isSubmitted, setIsSubmitted] = useState(Boolean(reviewMode));
+	const [submissionResult, setSubmissionResult] = useState(null);
+	const [timeLeft, setTimeLeft] = useState(720);
+
+	const loadPracticeQuiz = useCallback(async () => {
+		if (!courseId) return;
+		try {
+			setIsQuizLoading(true);
+			setQuizError(null);
+			const data = await fetchPracticeQuiz(courseId, selectedQuizId);
+			setPracticeQuizData(data);
+		} catch (err) {
+			setQuizError(err.message || "Failed to load quiz");
+		} finally {
+			setIsQuizLoading(false);
+		}
+	}, [courseId, selectedQuizId]);
+
+	useEffect(() => {
+		loadPracticeQuiz();
+	}, [loadPracticeQuiz]);
+
+	useEffect(() => {
+		if (practiceQuizData?.durationSeconds) {
+			setTimeLeft(practiceQuizData.durationSeconds);
+		}
+	}, [practiceQuizData?.durationSeconds]);
+
+	const quizQuestions = (practiceQuizData?.questions || []).map((q) => ({
+		...q,
+		type: q.type === "Written" ? "Written Question" : q.type,
+	}));
+	const quizTitle = practiceQuizData?.title || "Practice Quiz";
+	const courseName = practiceQuizData?.courseName || course?.title || course?.name;
+	const isBackendSubmitted = Boolean(practiceQuizData?.previousSubmission) || Boolean(reviewMode);
+	const quizSummary = practiceQuizData?.questionsSummary || practiceQuizData?.questionSummary || { total: 0, tf: 0, mcq: 0, written: 0 };
+
+	const answeredCount = quizQuestions.filter((q) => {
+		const answer = answers[q.id];
+		if (q.type === "Written Question") return typeof answer === "string" && answer.trim().length > 0;
+		return answer !== undefined && answer !== null && String(answer).length > 0;
+	}).length;
+
+	const writtenQuestion = quizQuestions.find((q) => q.type === "Written Question" || q.type === "Written");
+	const writtenWordCount = writtenQuestion && answers[writtenQuestion.id] ? answers[writtenQuestion.id].trim().split(/\s+/).length : 0;
+	const progressPercent = quizSummary.total ? Math.round((answeredCount / quizSummary.total) * 100) : 0;
+	const pageSize = practiceQuizData?.pageSize || PAGE_SIZE;
+	const totalPages = Math.max(1, Math.ceil(quizSummary.total / pageSize));
+	const visibleQuestions = quizQuestions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const currentQuestionStart = (currentPage - 1) * pageSize + 1;
+	const currentQuestionEnd = Math.min(currentPage * pageSize, quizSummary.total);
+	const currentQuestionLabel = totalPages > 1 ? `${currentQuestionStart}-${currentQuestionEnd}` : String(currentQuestionStart);
+
+	const tfAnswered = quizQuestions.filter((q) => q.type === "TF" && answers[q.id] !== undefined && answers[q.id] !== null).length;
+	const mcqAnswered = quizQuestions.filter((q) => q.type === "MCQ" && answers[q.id] !== undefined && answers[q.id] !== null).length;
+	const writtenAnswered = quizQuestions.filter((q) => (q.type === "Written Question" || q.type === "Written") && answers[q.id] && answers[q.id].trim().length > 0).length;
+
+	const tfPercent = quizSummary.tf ? Math.round((tfAnswered / quizSummary.tf) * 100) : 0;
+	const mcqPercent = quizSummary.mcq ? Math.round((mcqAnswered / quizSummary.mcq) * 100) : 0;
+	const writtenPercent = quizSummary.written ? Math.round((writtenAnswered / quizSummary.written) * 100) : 0;
+
+	const backendResult = submissionResult || practiceQuizData?.previousSubmission || null;
+	const tfSummary = backendResult?.byType?.TF || { answered: tfAnswered, total: quizSummary.tf };
+	const mcqSummary = backendResult?.byType?.MCQ || { answered: mcqAnswered, total: quizSummary.mcq };
+	const writtenSummary = backendResult?.byType?.["Written Question"] || backendResult?.byType?.["Written"] || { answered: writtenAnswered, total: quizSummary.written };
+
+	const questionResultsMap = {};
+	if (backendResult?.questionResults) {
+		for (const r of backendResult.questionResults) {
+			questionResultsMap[r.questionId] = r;
+		}
+	}
+
+	useEffect(() => {
+		if (reviewMode && practiceQuizData?.previousSubmission?.answers) {
+			setAnswers(practiceQuizData.previousSubmission.answers);
+		}
+	}, [reviewMode, practiceQuizData]);
+
+	const handleSubmitQuiz = useCallback(async () => {
+		if (submissionLockRef.current) return;
+		submissionLockRef.current = true;
+		setIsSubmitted(true);
+
+		try {
+			if (!courseId) return;
+			const payload = await submitPracticeQuiz(courseId, {
+				quizId: practiceQuizData?.quizId,
+				answers,
+			});
+			setSubmissionResult(payload);
+		} catch {
+			// submission failed — user will see the error via quizError or a UI notification
+		}
+	}, [answers, courseId, practiceQuizData?.quizId]);
+
+	useEffect(() => {
+		if (isSubmitted || isBackendSubmitted || reviewMode) return;
+		const timerId = setInterval(() => {
+			setTimeLeft((remaining) => {
+				if (remaining <= 1) {
+					clearInterval(timerId);
+					void handleSubmitQuiz();
+					return 0;
+				}
+				return remaining - 1;
+			});
+		}, 1000);
+
+		return () => clearInterval(timerId);
+	}, [handleSubmitQuiz, isBackendSubmitted, isSubmitted, reviewMode]);
+
+	function formatTime(seconds) {
+		const minutes = Math.floor(seconds / 60);
+		const remainingSeconds = seconds % 60;
+		return minutes + ":" + String(remainingSeconds).padStart(2, "0");
+	}
+
+	function handlePageChange(page) {
+		setCurrentPage(Math.max(1, Math.min(totalPages, page)));
+	}
+
+	return (
+		<div className="relative overflow-hidden">
+			<div className="absolute -top-24 right-0 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl dark:bg-amber-900/20" />
+			<div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-sky-200/30 blur-3xl dark:bg-sky-900/20" />
+
+			{(isQuizLoading || quizError) && (
+				<div className="relative mb-4 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark px-4 py-3 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+					{isQuizLoading ? "Loading practice quiz..." : "Quiz service unavailable right now."}
+				</div>
+			)}
+
+			<div className="relative">
+				<QuizHeader
+					title={quizTitle}
+					courseName={courseName}
+					timeLeft={timeLeft}
+					formatTime={formatTime}
+					progressPercent={progressPercent}
+					answeredCount={answeredCount}
+					totalCount={quizSummary.total}
+					currentQuestion={currentQuestionLabel}
+					onSubmit={handleSubmitQuiz}
+					hideControls={Boolean(reviewMode)}
+					score={backendResult}
+				/>
+			</div>
+
+			<div className="relative grid grid-cols-1 xl:grid-cols-3 gap-6">
+				<div className="xl:col-span-2 space-y-6">
+					{visibleQuestions.map((question, index) => {
+						const questionNumber = (currentPage - 1) * pageSize + index + 1;
+						const result = questionResultsMap[question.id];
+						return (
+							<QuestionCard
+								key={question.id}
+								question={question}
+								questionType={question.type}
+								answer={answers[question.id]}
+								onAnswerChange={reviewMode ? null : (value) => setAnswers((state) => ({ ...state, [question.id]: value }))}
+								writtenWordCount={writtenWordCount}
+								showCorrectAnswer={reviewMode === "graded"}
+								correctAnswer={question.correctAnswer}
+								feedback={result?.feedback}
+								scoreState={reviewMode && result ? (
+									<div className="flex items-center gap-2">
+										<span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+											result.isCorrect
+												? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+												: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+										}`}>
+											{result.isCorrect ? "Correct" : "Incorrect"}
+										</span>
+										<span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+											{result.earnedPoints}/{result.points} pts
+										</span>
+									</div>
+								) : (
+									<span className="text-xs font-semibold uppercase tracking-wide text-text-secondary-default-light dark:text-text-secondary-default-dark">
+										Question {questionNumber}
+									</span>
+								)}
+							/>
+						);
+					})}
+
+					<div className="mt-4 flex items-center justify-center">
+						<PaginationButtons totalPages={totalPages} currentPage={currentPage} setCurrentPage={handlePageChange} />
+					</div>
+				</div>
+
+				<div className="space-y-6">
+					<QuizSummary
+						backendResult={backendResult}
+						attemptLimit={practiceQuizData?.maxAttempts || 1}
+						isLocked={Boolean(practiceQuizData?.previousSubmission)}
+						totalCount={quizSummary.total}
+						progressPercent={progressPercent}
+						tfSummary={tfSummary}
+						mcqSummary={mcqSummary}
+						writtenSummary={writtenSummary}
+						tfPercent={tfPercent}
+						mcqPercent={mcqPercent}
+						writtenPercent={writtenPercent}
+					/>
+				</div>
+			</div>
+		</div>
+	);
+}

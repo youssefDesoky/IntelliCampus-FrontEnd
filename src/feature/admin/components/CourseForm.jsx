@@ -1,8 +1,8 @@
 import { useState } from "react";
 import Button from "../../../components/ui/Button";
-import { PlusIcon, FilePenIcon, XIcon } from "../../../components/ui/icons";
+import { PlusIcon, FilePenIcon } from "../../../components/ui/icons";
 import InputItem from "../../../components/form/InputItem";
-import ModelOverlay from "../../../components/ui/ModelOverlay";
+import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
 
 const departments = [
@@ -13,7 +13,7 @@ const departments = [
     { value: "Data Science", label: "Data Science" },
 ];
 
-export default function CourseForm({ onClose, method = "post", onSubmit, initialData = {} }) {
+export default function CourseForm({ onClose, method = "post", onSubmit, initialData = {}, isOpen = true }) {
     const isEdit = method === "put";
 
     const [selectedDepartment, setSelectedDepartment] = useState(() => {
@@ -59,117 +59,83 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
     };
 
     return (
-        <ModelOverlay onClose={onClose}>
-            <form
-                className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark w-full p-6 rounded-lg shadow-md"
-                onSubmit={handleSubmit}
-            >
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-1 mb-6">
-                        <h2 className="text-2xl font-semibold">{isEdit ? "Edit" : "Create New"} Course</h2>
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            {isEdit
-                                ? "Update the details below to edit this course."
-                                : "Fill in the details below to add a new course to the system."
-                            }
-                        </p>
-                    </div>
+        <BaseFormComponent
+            isOpen={isOpen}
+            title={`${isEdit ? "Edit" : "Create New"} Course`}
+            description={isEdit ? "Update the details below to edit this course." : "Fill in the details below to add a new course to the system."}
+            onClose={onClose}
+            onSubmit={handleSubmit}
+            submitText={isEdit ? "Update Course" : "Create Course"}
+        >
+            <div className="space-y-6 mb-6">
+                <div className="grid grid-cols-2 gap-6">
+                    <InputItem
+                        label="Course Title"
+                        type="text"
+                        name="title"
+                        placeholder="e.g. Introduction to Computer Science"
+                        value={formData.title}
+                        onChange={handleChange("title")}
+                        required
+                    />
 
-                    <button type="button" onClick={onClose} className="p-2 place-self-start rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 hover:text-gray-800">
-                        <XIcon className="w-6 h-6" />
-                    </button>
+                    <InputItem
+                        label="Course Title Arabic"
+                        type="text"
+                        name="titleArabic"
+                        placeholder="e.g. مقدمة في علوم الحاسوب"
+                        value={formData.titleArabic}
+                        onChange={handleChange("titleArabic")}
+                        required
+                    />
                 </div>
 
-                <div className="space-y-6 mb-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <InputItem
-                            label="Course Title"
-                            type="text"
-                            name="title"
-                            placeholder="e.g. Introduction to Computer Science"
-                            value={formData.title}
-                            onChange={handleChange("title")}
-                            required
-                        />
+                <div className="grid grid-cols-2 gap-6">
+                    <InputItem
+                        label="Course ID"
+                        type="text"
+                        name="id"
+                        placeholder="e.g. CS-100"
+                        value={formData.id}
+                        onChange={handleChange("id")}
+                        isDisabled={isEdit}
+                        required
+                    />
 
-                        <InputItem
-                            label="Course Title Arabic"
-                            type="text"
-                            name="titleArabic"
-                            placeholder="e.g. مقدمة في علوم الحاسوب"
-                            value={formData.titleArabic}
-                            onChange={handleChange("titleArabic")}
-                            required
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <InputItem
-                            label="Course ID"
-                            type="text"
-                            name="id"
-                            placeholder="e.g. CS-100"
-                            value={formData.id}
-                            onChange={handleChange("id")}
-                            isDisabled={isEdit}
-                            required
-                        />
-
-                        <SelectBox
-                            className="w-full"
-                            label="Department"
-                            name="department"
-                            labelDirection="flex-col"
-                            options={departments}
-                            selectedOption={selectedDepartment}
-                            onChange={setSelectedDepartment}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <InputItem
-                            label="Credit Hours"
-                            type="number"
-                            name="creditHours"
-                            placeholder="3"
-                            value={formData.creditHours}
-                            onChange={handleChange("creditHours")}
-                            min="1"
-                            max="6"
-                            required
-                        />
-
-                        <InputItem
-                            label="Prerequisites (comma-separated IDs)"
-                            type="text"
-                            name="prerequisites"
-                            placeholder="e.g. CS-100, CS-201"
-                            value={formData.prerequisites}
-                            onChange={handleChange("prerequisites")}
-                        />
-                    </div>
+                    <SelectBox
+                        className="w-full"
+                        label="Department"
+                        name="department"
+                        labelDirection="flex-col"
+                        options={departments}
+                        selectedOption={selectedDepartment}
+                        onChange={setSelectedDepartment}
+                    />
                 </div>
 
-                <div className="flex items-center justify-end gap-4">
-                    <Button
-                        variant="secondary"
-                        type="button"
-                        onClick={() => setFormData({ title: "", id: "", creditHours: 3, description: "", prerequisites: "" })}
-                    >
-                        Reset Form
-                    </Button>
+                <div className="grid grid-cols-2 gap-6">
+                    <InputItem
+                        label="Credit Hours"
+                        type="number"
+                        name="creditHours"
+                        placeholder="3"
+                        value={formData.creditHours}
+                        onChange={handleChange("creditHours")}
+                        min="1"
+                        max="6"
+                        required
+                    />
 
-                    <Button
-                        variant="primary"
-                        type="submit"
-                    >
-                        {isEdit
-                            ? <><FilePenIcon className="w-5 h-5" /> Update Course</>
-                            : <><PlusIcon className="w-6 h-6" /> Create Course</>
-                        }
-                    </Button>
+                    <InputItem
+                        label="Prerequisites (comma-separated IDs)"
+                        type="text"
+                        name="prerequisites"
+                        placeholder="e.g. CS-100, CS-201"
+                        value={formData.prerequisites}
+                        onChange={handleChange("prerequisites")}
+                    />
                 </div>
-            </form>
-        </ModelOverlay>
+            </div>
+        </BaseFormComponent>
     );
 }
