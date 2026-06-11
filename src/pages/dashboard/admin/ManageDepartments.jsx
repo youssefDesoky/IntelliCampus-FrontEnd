@@ -119,7 +119,7 @@ export default function ManageDepartments() {
     const [editingDepartment, setEditingDepartment] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminDepartmentsViewMode") || "grid");
-    const [selectedRows, setSelectedRows] = useState([]);
+    const [selectedRowIds, setSelectedRowIds] = useState([]);
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [formIsLoading, setFormIsLoading] = useState(false);
@@ -165,6 +165,7 @@ export default function ManageDepartments() {
 
     const totalPages = Math.max(1, Math.ceil(filteredDepartments.length / ITEMS_PER_PAGE));
     const paginatedDepartments = filteredDepartments.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const selectedIndices = paginatedDepartments.map((d, i) => selectedRowIds.includes(d.id) ? i : -1).filter(i => i !== -1);
 
     const handleEdit = (department) => {
         setEditingDepartment(department);
@@ -207,11 +208,8 @@ export default function ManageDepartments() {
 
     const handleDeleteSelected = async () => {
         try {
-            const idsToDelete = selectedRows
-                .map((index) => paginatedDepartments[index]?._id)
-                .filter(Boolean);
-            await Promise.all(idsToDelete.map((id) => deleteDepartment(id)));
-            setSelectedRows([]);
+            await Promise.all(selectedRowIds.map((id) => deleteDepartment(id)));
+            setSelectedRowIds([]);
             setIsDeleteSelectedOpen(false);
             await loadDepartments();
         } catch (err) {
@@ -252,15 +250,15 @@ export default function ManageDepartments() {
                         />
                         <ToggleViewMode
                             isFirstMode={viewMode === "grid"}
-                            onFirstModeSelect={() => { setViewMode("grid"); setSelectedRows([]); }}
-                            onSecondModeSelect={() => { setViewMode("list"); setSelectedRows([]); }}
+                            onFirstModeSelect={() => { setViewMode("grid"); setSelectedRowIds([]); }}
+                            onSecondModeSelect={() => { setViewMode("list"); setSelectedRowIds([]); }}
                             firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
                             secondModeLabel={<TableIcon className="w-5 h-5" />}
                         />
-                        {viewMode === "list" && selectedRows.length > 0 && (
+                        {viewMode === "list" && selectedRowIds.length > 0 && (
                             <Button variant="danger" onClick={() => setIsDeleteSelectedOpen(true)}>
                                 <TrashIcon size={20} />
-                                Delete ({selectedRows.length})
+                                Delete ({selectedRowIds.length})
                             </Button>
                         )}
                     </div>
@@ -276,7 +274,7 @@ export default function ManageDepartments() {
                     cancelText="No, Keep"
                     showCloseButton={true}
                 >
-                    Are you sure you want to delete {selectedRows.length} selected department{selectedRows.length > 1 ? "s" : ""}? This action cannot be undone.
+                    Are you sure you want to delete {selectedRowIds.length} selected department{selectedRowIds.length > 1 ? "s" : ""}? This action cannot be undone.
                 </Dialog>
 
                 {isLoading ? (
@@ -306,7 +304,11 @@ export default function ManageDepartments() {
                                     wrapInSection={false}
                                     showHeaderActions={false}
                                     showPagination={false}
-                                    onSelectionChange={setSelectedRows}
+                                    selectedRows={selectedIndices}
+                                    onSelectionChange={(indices) => {
+                                        const visibleIds = new Set(paginatedDepartments.map(d => d.id).filter(Boolean));
+                                        setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedDepartments[i]?.id).filter(Boolean)]);
+                                    }}
                                     actions={(row) => ([
                                         { label: "Edit", onClick: () => { setEditingDepartment(row._raw); setIsAddDepartmentFormOpen(true); } },
                                         { label: "Delete", onClick: () => setDeleteTarget(row._raw) },
@@ -320,7 +322,7 @@ export default function ManageDepartments() {
                                 <PaginationButtons
                                     currentPage={currentPage}
                                     totalPages={totalPages}
-                                    onPageChange={setCurrentPage}
+                                    setCurrentPage={setCurrentPage}
                                 />
                             </Section>
                         )}

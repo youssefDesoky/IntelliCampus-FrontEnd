@@ -94,7 +94,7 @@ export default function ManageAdmins() {
     const [previewAdmin, setPreviewAdmin] = useState(null);
 
     const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminAdminsViewMode") || "grid");
-    const [selectedRows, setSelectedRows] = useState([]);
+    const [selectedRowIds, setSelectedRowIds] = useState([]);
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -130,6 +130,7 @@ export default function ManageAdmins() {
     const totalPages = Math.max(1, Math.ceil(filteredAdmins.length / ITEMS_PER_PAGE));
     const paginatedAdmins = filteredAdmins.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
     const paginatedRows = paginatedAdmins.map(buildAdminRow);
+    const selectedIndices = paginatedRows.map((row, i) => selectedRowIds.includes(row._id) ? i : -1).filter(i => i !== -1);
 
     const handleCreate = async (formData) => {
         try {
@@ -154,13 +155,10 @@ export default function ManageAdmins() {
     };
 
     const handleDeleteSelected = async () => {
-        for (const idx of selectedRows) {
-            const row = paginatedRows[idx];
-            if (row?._id) {
-                try { await deleteAdmin(row._id); } catch (err) { console.error(err); }
-            }
+        for (const id of selectedRowIds) {
+            try { await deleteAdmin(id); } catch (err) { console.error(err); }
         }
-        setSelectedRows([]);
+        setSelectedRowIds([]);
         setIsDeleteSelectedOpen(false);
         await loadAdmins();
     };
@@ -190,18 +188,18 @@ export default function ManageAdmins() {
                         />
                         <ToggleViewMode
                             isFirstMode={viewMode === "grid"}
-                            onFirstModeSelect={() => setViewMode("grid")}
-                            onSecondModeSelect={() => setViewMode("list")}
+                            onFirstModeSelect={() => { setViewMode("grid"); setSelectedRowIds([]); }}
+                            onSecondModeSelect={() => { setViewMode("list"); setSelectedRowIds([]); }}
                             firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
                             secondModeLabel={<TableIcon className="w-5 h-5" />}
                         />
-                        {viewMode === "list" && selectedRows.length > 0 && (
+                        {viewMode === "list" && selectedRowIds.length > 0 && (
                             <Button 
                                 variant="danger" 
                                 onClick={() => setIsDeleteSelectedOpen(true)}
                             >
                                 <TrashIcon size={20} />
-                                Delete ({selectedRows.length})
+                                Delete ({selectedRowIds.length})
                             </Button>
                         )}
                     </div>
@@ -217,7 +215,7 @@ export default function ManageAdmins() {
                     cancelText="No, Keep"
                     showCloseButton={true}
                 >
-                    Are you sure you want to delete {selectedRows.length} selected admin{selectedRows.length > 1 ? "s" : ""}? This action cannot be undone.
+                    Are you sure you want to delete {selectedRowIds.length} selected admin{selectedRowIds.length > 1 ? "s" : ""}? This action cannot be undone.
                 </Dialog>
 
                 {paginatedAdmins.length > 0 ? (
@@ -242,7 +240,11 @@ export default function ManageAdmins() {
                                 wrapInSection={false}
                                 showHeaderActions={false}
                                 showPagination={false}
-                                onSelectionChange={setSelectedRows}
+                                selectedRows={selectedIndices}
+                                    onSelectionChange={(indices) => {
+                                        const visibleIds = new Set(paginatedRows.map(r => r._id).filter(Boolean));
+                                        setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedRows[i]?._id).filter(Boolean)]);
+                                    }}
                             />
                         </div>
                     )

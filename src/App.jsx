@@ -13,7 +13,7 @@ import SidebarProvider from "./contexts/SidebarProvider";
 import CourseShell from "./feature/course/component/CourseShell";
 
 // Auth Pages
-import { LoginPage, ForgetPassword, UnauthorizedPage } from "./pages/auth";
+import { LoginPage, ForgetPassword, ResetPassword, UnauthorizedPage } from "./pages/auth";
 
 // Student Pages
 import { 
@@ -37,7 +37,7 @@ import CourseQuizPractice from "./feature/student/courses/courseDetail/quizzes/C
 import CourseAnnouncements from "./feature/student/courses/courseDetail/announcements/CourseAnnouncements";
 
 // Admin Pages
-import { ManageInstructors, ManageStudents, ManageAdmins, ManageCourses, ManageCourseClasses, ManageRooms, ManageDepartments } from "./pages/dashboard/admin";
+import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, ManageAdmins, ManageCourses, ManageCourseClasses, ManageRooms, ManageDepartments, ManageBylaws, ManageExams } from "./pages/dashboard/admin";
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
@@ -135,7 +135,7 @@ export default function App() {
                 path: "admin",
                 element: <RoleGuard allow={["admin", "superadmin"]} />,
                 children: [
-                    { index: true, element: <div>Admin Dashboard Content</div> },
+                    { index: true, element: <AdminDashboard /> },
                     { path: "analytics", element: <Attendance /> },
                     { path: "admins", element: <ManageAdmins /> },
                     { path: "students", element: <ManageStudents /> },
@@ -144,6 +144,8 @@ export default function App() {
                     { path: "courses", element: <ManageCourses /> },
                     { path: "courses/:courseId", element: <ManageCourseClasses /> },
                     { path: "rooms", element: <ManageRooms /> },
+                    { path: "bylaws", element: <ManageBylaws /> },
+                    { path: "exams", element: <ManageExams /> },
                 ],
             },
         ],
@@ -152,6 +154,7 @@ export default function App() {
     // ================= PUBLIC =================
     { path: "/login", element: <LoginPage />, action: authAction },
     { path: "/forgot-password", element: <ForgetPassword /> },
+    { path: "/reset-password", element: <ResetPassword /> },
     { path: "/unauthorized", element: <UnauthorizedPage /> },
     { path: "/logout", action: logoutAction },
     ]);

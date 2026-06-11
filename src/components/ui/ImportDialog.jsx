@@ -23,6 +23,7 @@ export default function ImportDialog({
     acceptedFormats = ACCEPTED_EXTENSIONS,
     onClose,
     onImport,
+    children,
 }) {
     const [file, setFile] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -83,6 +84,7 @@ export default function ImportDialog({
             contentClassName="py-2"
         >
             <div className="ic-dialog-enter w-full overflow-hidden rounded-2xl bg-bg-surface-secondary-default-light shadow-2xl dark:bg-bg-surface-secondary-default-dark">
+                {children && <div className="px-7 pt-5">{children}</div>}
                 <div className="p-7">
                     <div
                         onDragOver={handleDragOver}

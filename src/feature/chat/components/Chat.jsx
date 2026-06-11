@@ -1,105 +1,221 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Section from "../../../components/ui/Section";
+import Dialog from "../../../components/ui/Dialog";
+import CommentsIcon from "../../../components/ui/icons/CommentsIcon";
 import ChatUsers from "./ChatUsers";
 import Messaging from "./Messaging";
+import DefaultChatPanel from "./DefaultChatPanel";
+import AddFriendPanel from "./AddFriendPanel";
+import CreateGroupPanel from "./CreateGroupPanel";
 import {
   createHubConnection,
-  getChatPartner,
   fetchChatHistory,
+  fetchGroupChatHistory,
   toDateKey,
   formatTime,
+  sendFriendRequest,
+  acceptFriendRequest,
+  declineFriendRequest,
+  fetchPendingRequests,
+  fetchFriends,
+  createGroup,
+  fetchMyGroups,
 } from "../services/chatService";
 
 export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
+  // "default" | "messaging" | "addFriend" | "createGroup"
+  const [activePanel, setActivePanel] = useState("default");
+  const [friendId, setFriendId] = useState("");
+  const [friendRequests, setFriendRequests] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [messages, setMessages] = useState([]);
   const [chatPartner, setChatPartner] = useState(null);
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [unreadCounts, setUnreadCounts] = useState({});
   const [isAlreadyTyping, setIsAlreadyTyping] = useState(false);
   const [partnerTyping, setPartnerTyping] = useState(false);
+  const [pinnedMessage, setPinnedMessage] = useState(null);
+  const [pendingPinMessageId, setPendingPinMessageId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchMembers, setSearchMembers] = useState("");
   const connectionRef = useRef(null);
+  const chatPartnerRef = useRef(null);
   const msgIdsRef = useRef(new Set());
   const typingTimeoutRef = useRef(null);
+  const pinnedMessageRef = useRef(null);
 
+  // Keep refs in sync with state so SignalR handlers always have latest value
+  useEffect(() => { chatPartnerRef.current = chatPartner; }, [chatPartner]);
+  useEffect(() => { pinnedMessageRef.current = pinnedMessage; }, [pinnedMessage]);
+
+  // Fetch friends and pending requests
   useEffect(() => {
     if (!currentUser) return;
-    const partner = getChatPartner(currentUser.userId);
-    setChatPartner(partner);
+
+    const loadFriends = async () => {
+      try {
+        const data = await fetchFriends();
+        setFriends(data);
+      } catch {
+        // not critical
+      }
+    };
+
+    const loadRequests = async () => {
+      try {
+        const data = await fetchPendingRequests();
+        setFriendRequests(
+          data.map((r) => ({
+            id: r.friendRequestId,
+            senderId: r.senderId,
+            name: r.senderName,
+            avatar: r.senderProfileImage,
+            recipientId: r.recipientId,
+            recipientName: r.recipientName,
+          }))
+        );
+      } catch {
+        // not critical
+      }
+    };
+
+    const loadGroups = async () => {
+      try {
+        const data = await fetchMyGroups();
+        setGroups(data);
+      } catch {
+        // not critical
+      }
+    };
+
+    loadFriends();
+    loadRequests();
+    loadGroups();
   }, [currentUser]);
 
+  // SignalR connection — always active when chat is open
   useEffect(() => {
-    const prevConn = connectionRef.current;
+    if (!isChatOpen || !currentUser) return;
 
-    if (!isChatOpen || !currentUser || !chatPartner) {
-      if (prevConn) {
-        prevConn.stop();
-        connectionRef.current = null;
-      }
-      return;
-    }
+    const conn = createHubConnection();
 
-    const init = async () => {
-      const conn = createHubConnection();
+    conn.on("ReceivePrivateMessage", (msg) => {
+      const senderId = String(msg.senderId);
+      const isOwn = senderId === String(currentUser.userId);
+      const partner = chatPartnerRef.current;
 
-      conn.on("ReceivePrivateMessage", (senderId, content) => {
-        const isOwn = String(senderId) === String(currentUser.userId);
-        const now = new Date();
-        const tempId = `temp-${now.getTime()}-${Math.random()}`;
-        const msg = {
-          messageId: tempId,
-          content,
-          timestamp: now.toISOString(),
-          senderId: String(senderId),
-          senderName: isOwn ? currentUser.fullName : chatPartner.fullName,
-          recipientId: isOwn ? chatPartner.userId : String(currentUser.userId),
-          recipientName: isOwn ? chatPartner.fullName : currentUser.fullName,
-        };
-        msgIdsRef.current.add(tempId);
-        setMessages((prev) => {
-          const exists = prev.some((m) => m.messageId === tempId);
-          return exists ? prev : [...prev, msg];
-        });
-      });
-
-      // Listen for typing status from partner
-      conn.on("ReceiveTypingStatus", (senderId, isTyping) => {
-        // Only show if it's the partner
-        if (String(senderId) === String(chatPartner.userId)) {
-          setPartnerTyping(isTyping);
-        }
-      });
-
-      conn.onreconnected(() => {
-        loadHistory(conn, currentUser.userId, chatPartner.userId);
-      });
-
-      try {
-        await conn.start();
-        if (connectionRef.current && connectionRef.current !== conn) {
-          await conn.stop();
+      if (!isOwn) {
+        if (!partner || partner.type === "group" || senderId !== String(partner.userId)) {
+          setUnreadCounts((prev) => ({ ...prev, [senderId]: (prev[senderId] || 0) + 1 }));
           return;
         }
-        connectionRef.current = conn;
-        await loadHistory(conn, currentUser.userId, chatPartner.userId);
-      } catch (err) {
-        console.error("SignalR connection failed:", err);
       }
-    };
 
-    if (prevConn) {
-      prevConn.stop();
-      connectionRef.current = null;
-    }
+      if (!partner || partner.type === "group") return;
 
-    init();
+      setPartnerTyping(false);
+      msgIdsRef.current.add(msg.messageId);
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.messageId === msg.messageId);
+        return exists ? prev : [...prev, msg];
+      });
+    });
+
+    conn.on("ReceiveGroupMessage", (msg) => {
+      const partner = chatPartnerRef.current;
+      if (!partner || partner.type !== "group" || partner.groupName !== msg.groupName) return;
+
+      msgIdsRef.current.add(msg.messageId);
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.messageId === msg.messageId);
+        return exists ? prev : [...prev, msg];
+      });
+    });
+
+    conn.on("UserOnline", (userId) => {
+      setOnlineUsers(prev => new Set(prev).add(String(userId)));
+    });
+
+    conn.on("UserOffline", (userId) => {
+      setOnlineUsers(prev => {
+        const next = new Set(prev);
+        next.delete(String(userId));
+        return next;
+      });
+    });
+
+    conn.on("ReceiveTypingStatus", (senderId, isTyping) => {
+      const partner = chatPartnerRef.current;
+      if (partner && String(senderId) === String(partner.userId)) {
+        setPartnerTyping(isTyping);
+      }
+    });
+
+    conn.on("MessageDeleted", (messageId) => {
+      setMessages((prev) => prev.filter((m) => m.messageId !== messageId));
+    });
+
+    conn.on("MessageEdited", (messageId, newContent, isEdited) => {
+      setMessages((prev) =>
+        prev.map((m) => (m.messageId === messageId ? { ...m, content: newContent, isEdited: isEdited ?? true } : m))
+      );
+    });
+
+    conn.on("MessagePinned", (messageId, content) => {
+      setPinnedMessage(content);
+      setMessages((prev) =>
+        prev.map((m) => ({ ...m, isPinned: m.messageId === messageId }))
+      );
+    });
+
+    conn.on("MessageUnpinned", (messageId) => {
+      setPinnedMessage(null);
+      setMessages((prev) =>
+        prev.map((m) => (m.messageId === messageId ? { ...m, isPinned: false } : m))
+      );
+    });
+
+    conn.onreconnected(async () => {
+      const partner = chatPartnerRef.current;
+      if (partner) {
+        if (partner.type === "group") {
+          await conn.invoke("JoinGroup", partner.groupName);
+        }
+        await loadHistory(conn, partner);
+      }
+    });
+
+    conn.start().catch((err) => console.error("SignalR connection failed:", err));
+    connectionRef.current = conn;
 
     return () => {
-      if (connectionRef.current) {
-        connectionRef.current.stop();
-        connectionRef.current = null;
+      conn.stop();
+      if (connectionRef.current === conn) connectionRef.current = null;
+    };
+  }, [isChatOpen, currentUser]);
+
+  // Load history & join group when partner changes
+  useEffect(() => {
+    const conn = connectionRef.current;
+    if (!chatPartner || !conn) return;
+
+    const load = async () => {
+      if (chatPartner.type === "group") {
+        await conn.invoke("JoinGroup", chatPartner.groupName);
+      }
+      await loadHistory(conn, chatPartner);
+    };
+    load();
+
+    // Leave previous group on cleanup (track via ref)
+    return () => {
+      if (chatPartner.type === "group") {
+        conn.invoke("LeaveGroup", chatPartner.groupName).catch(() => {});
       }
     };
-  }, [isChatOpen, currentUser, chatPartner]);
+  }, [chatPartner]);
 
-  // Cleanup typing timeout on unmount
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
@@ -108,33 +224,33 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     };
   }, []);
 
-  const loadHistory = useCallback(async (conn, uid, partnerId) => {
+  const loadHistory = useCallback(async (conn, partner) => {
     try {
-      const history = await fetchChatHistory(uid, partnerId);
+      const history = partner.type === "group"
+        ? await fetchGroupChatHistory(partner.groupName)
+        : await fetchChatHistory(currentUser.userId, partner.userId);
       setMessages(history.reverse());
+      const pinned = history.find(m => m.isPinned);
+      setPinnedMessage(pinned ? pinned.content : null);
       history.forEach((m) => msgIdsRef.current.add(m.messageId));
     } catch {
       // no history yet
     }
-  }, []);
+  }, [currentUser]);
 
   const handleInputChange = useCallback(() => {
     const conn = connectionRef.current;
-    if (!conn || !chatPartner) return;
+    if (!conn || !chatPartner || chatPartner.type === "group") return;
 
-    // 1. When user starts typing, send typing status = true (only once at the beginning)
     if (!isAlreadyTyping) {
       conn.invoke("BroadcastTypingStatus", chatPartner.userId, true);
       setIsAlreadyTyping(true);
     }
 
-    // 2. Clear the old timeout if user is still typing continuously
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // 3. Set a new timeout: if user stops typing for 2 seconds (2000 milliseconds),
-    //    send typing status = false to the server
     typingTimeoutRef.current = setTimeout(() => {
       conn.invoke("BroadcastTypingStatus", chatPartner.userId, false);
       setIsAlreadyTyping(false);
@@ -147,7 +263,11 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
       if (!conn || !chatPartner) return;
 
       try {
-        await conn.invoke("SendPrivateMessage", chatPartner.userId, content);
+        if (chatPartner.type === "group") {
+          await conn.invoke("SendGroupMessage", chatPartner.groupName, content);
+        } else {
+          await conn.invoke("SendPrivateMessage", chatPartner.userId, content);
+        }
       } catch (err) {
         console.error("Failed to send message:", err);
       }
@@ -155,8 +275,71 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     [chatPartner]
   );
 
+  const deleteMessage = useCallback(async (messageId) => {
+    const conn = connectionRef.current;
+    if (!conn) return;
+    try {
+      await conn.invoke("DeleteMessage", String(messageId));
+    } catch (err) {
+      console.error("Failed to delete message:", err);
+    }
+  }, []);
+
+  const editMessage = useCallback(async (messageId, newContent) => {
+    const conn = connectionRef.current;
+    if (!conn) return;
+    try {
+      await conn.invoke("EditMessage", String(messageId), newContent);
+    } catch (err) {
+      console.error("Failed to edit message:", err);
+    }
+  }, []);
+
+  const pinMessage = useCallback(async (messageId) => {
+    if (pinnedMessageRef.current) {
+      setPendingPinMessageId(messageId);
+      return;
+    }
+    const conn = connectionRef.current;
+    if (!conn) return;
+    try {
+      await conn.invoke("PinMessage", String(messageId));
+    } catch (err) {
+      console.error("Failed to pin message:", err);
+    }
+  }, []);
+
+  const handleConfirmPin = useCallback(async () => {
+    const messageId = pendingPinMessageId;
+    setPendingPinMessageId(null);
+    if (!messageId) return;
+    const conn = connectionRef.current;
+    if (!conn) return;
+    try {
+      await conn.invoke("PinMessage", String(messageId));
+    } catch (err) {
+      console.error("Failed to pin message:", err);
+    }
+  }, [pendingPinMessageId]);
+
+  const handleCancelPin = useCallback(() => {
+    setPendingPinMessageId(null);
+  }, []);
+
+  const unpinMessage = useCallback(async (messageId) => {
+    const conn = connectionRef.current;
+    if (!conn) return;
+    try {
+      await conn.invoke("UnpinMessage", String(messageId));
+    } catch (err) {
+      console.error("Failed to unpin message:", err);
+    }
+  }, []);
+
   const formattedMessages = {};
+  const q = searchQuery.toLowerCase().trim();
   for (const msg of messages) {
+    if (q && !msg.content?.toLowerCase().includes(q)) continue;
     const key = toDateKey(msg.timestamp);
     const isOwn = currentUser
       ? String(msg.senderId) === String(currentUser.userId)
@@ -170,33 +353,182 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
           (isOwn
             ? currentUser?.fullName
             : chatPartner?.fullName || "Unknown"),
-        avatar: null,
+        avatar: isOwn ? (currentUser?.avatar || null) : (chatPartner?.avatar || null),
         isOwnMessage: isOwn,
       },
       message: msg.content,
       sendTime: formatTime(msg.timestamp),
+      isEdited: msg.isEdited,
+      isPinned: msg.isPinned,
     });
   }
 
+  const friendsList = friends.map((f) => ({
+    id: f.userId,
+    name: f.fullName,
+  }));
+
+  const handleSendInvite = async () => {
+    if (!friendId.trim()) return;
+    try {
+      await sendFriendRequest(Number(friendId));
+      setFriendId("");
+      const data = await fetchPendingRequests();
+      setFriendRequests(
+        data.map((r) => ({
+          id: r.friendRequestId,
+          senderId: r.senderId,
+          name: r.senderName,
+          avatar: r.senderProfileImage,
+          recipientId: r.recipientId,
+          recipientName: r.recipientName,
+        }))
+      );
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleAcceptRequest = async (requestId) => {
+    try {
+      await acceptFriendRequest(requestId);
+      setFriendRequests((reqs) => reqs.filter((r) => r.id !== requestId));
+      const data = await fetchFriends();
+      setFriends(data);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeclineRequest = async (requestId) => {
+    try {
+      await declineFriendRequest(requestId);
+      setFriendRequests((reqs) => reqs.filter((r) => r.id !== requestId));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleCreateGroup = async ({ title, description, members, profileImage }) => {
+    try {
+      await createGroup(title, description, members, profileImage);
+      const data = await fetchMyGroups();
+      setGroups(data);
+      setActivePanel("default");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleSelectUser = (user) => {
+    setMessages([]);
+    setPinnedMessage(null);
+    setUnreadCounts((prev) => ({ ...prev, [String(user.id)]: 0 }));
+    setChatPartner({
+      type: "user",
+      userId: String(user.id),
+      fullName: user.name,
+      role: user.role ?? "",
+      avatar: user.avatar || null,
+    });
+    setActivePanel("messaging");
+  };
+
+  const handleSelectGroup = (group) => {
+    setMessages([]);
+    setPinnedMessage(null);
+    setChatPartner({
+      type: "group",
+      groupName: `group_${group.id}`,
+      fullName: group.name,
+      role: "Group",
+      avatar: null,
+    });
+    setActivePanel("messaging");
+  };
+
   return (
-    <Section className="fixed bottom-0 right-100 m-4 w-full max-w-[750px] bg-bg-surface-default-light dark:bg-bg-surface-default-dark rounded-lg shadow-lg p-4 z-50">
+    <>
       {isChatOpen && (
-        <div className="mb-4 bg-white dark:bg-gray-800 rounded-lg shadow p-4 grid grid-cols-3 gap-4 w-full max-w-[750px] h-[600px] min-h-[600px] overflow-hidden">
-          <ChatUsers chatPartner={chatPartner} />
-          <Messaging 
-            messages={formattedMessages} 
-            sendMessage={sendMessage}
-            onInputChange={handleInputChange}
-            partnerTyping={partnerTyping}
-          />
-        </div>
+        <Section className="fixed bottom-0 right-100 m-4 w-full max-w-[750px] bg-bg-surface-default-light dark:bg-bg-surface-default-dark rounded-lg shadow-lg p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 grid grid-cols-3 gap-4 w-full max-w-[750px] h-[600px] min-h-[600px] overflow-hidden">
+            <ChatUsers
+              chatPartner={chatPartner}
+              friends={friends}
+              groups={groups}
+              onlineUsers={onlineUsers}
+              unreadCounts={unreadCounts}
+              onAddFriend={() => setActivePanel("addFriend")}
+              onCreateGroup={() => setActivePanel("createGroup")}
+              onSelectUser={handleSelectUser}
+              onSelectGroup={handleSelectGroup}
+              searchMembers={searchMembers}
+              onSearchMembersChange={setSearchMembers}
+            />
+            <div className="col-span-2 flex flex-col min-h-0 gap-0">
+              {activePanel === "default" ? (
+                <DefaultChatPanel
+                  onAddFriend={() => setActivePanel("addFriend")}
+                  onCreateGroup={() => setActivePanel("createGroup")}
+                />
+              ) : activePanel === "createGroup" ? (
+                <CreateGroupPanel
+                  friends={friendsList}
+                  onCreate={handleCreateGroup}
+                  onCancel={() => setActivePanel("default")}
+                />
+              ) : activePanel === "addFriend" ? (
+                <AddFriendPanel
+                  friendId={friendId}
+                  setFriendId={setFriendId}
+                  friendRequests={friendRequests}
+                  onInvite={handleSendInvite}
+                  onBack={() => setActivePanel("default")}
+                  onAcceptRequest={handleAcceptRequest}
+                  onDeclineRequest={handleDeclineRequest}
+                />
+              ) : (
+                <Messaging
+                  messages={formattedMessages}
+                  sendMessage={sendMessage}
+                  onInputChange={handleInputChange}
+                  partnerTyping={partnerTyping}
+                  chatPartner={chatPartner}
+                  deleteMessage={deleteMessage}
+                  editMessage={editMessage}
+                  pinMessage={pinMessage}
+                  unpinMessage={unpinMessage}
+                  pinnedMessage={pinnedMessage}
+                  showSenderInfo={chatPartner?.type === "group"}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                />
+              )}
+            </div>
+          </div>
+
+          <Dialog
+            isOpen={!!pendingPinMessageId}
+            variant="warning"
+            title="Pin Message"
+            onClose={handleCancelPin}
+            onConfirm={handleConfirmPin}
+            confirmText="Pin"
+            cancelText="Cancel"
+          >
+            <p>
+              There is already a pinned message in this chat. Only one message can be pinned at a time. The current pinned message will be unpinned.
+            </p>
+          </Dialog>
+        </Section>
       )}
+
       <button
         onClick={() => setIsChatOpen(!isChatOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        className="fixed bottom-6 right-6 flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all duration-200 z-50"
       >
-        Open Chat
+        <CommentsIcon size={22} />
       </button>
-    </Section>
+    </>
   );
 }

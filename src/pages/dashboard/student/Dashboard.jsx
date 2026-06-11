@@ -1,15 +1,17 @@
-
 import BoxData from "../../../components/ui/BoxData";
 import Section from "../../../components/ui/Section";
-import PageHeader from "../../../components/ui/PageHeader";
 import { NavLink } from "react-router-dom";
-import { BookIcon, FileLinesIcon, ClipboardCheckIcon, ChartLineIcon, BullHornIcon, ArrowRightIcon } from "../../../components/ui/icons";
+import { BookIcon, FileLinesIcon, ClipboardCheckIcon, ChartLineIcon, ClockIcon, BullHornIcon, ArrowRightIcon, ChartBarIcon } from "../../../components/ui/icons";
 
 import StudyTimer from "../../../feature/student/dashboard/StudyTimer";
-import TodayClasses from "../../../feature/student/dashboard/TodayClasses";
 import TodayReminders from "../../../feature/student/dashboard/TodayReminders";
-import AttendanceOverall from "../../../feature/student/dashboard/AttendanceOverall";
-import DashboardStudyGroup from "../../../feature/student/dashboard/DashboardStudyGroup";
+import {
+  AttendanceTrendChart,
+  GPATrendChart,
+  GradeDistributionChart,
+  StudyTimeChart,
+  AssignmentCompletionChart,
+} from "../../../feature/student/dashboard/charts";
 
 const statsData = [
   {
@@ -44,34 +46,50 @@ const statsData = [
 
 const studentData = {
   name: "John Doe",
-  courses: [
-    { id: 1, name: "Calculus I", time: "10:00 AM - 11:30 AM" },
-    { id: 2, name: "Introduction to Psychology", time: "12:00 PM - 1:30 PM" },
+  news: [
+    { id: 1, title: "Calculus Midterm Scope Published", time: "Posted 2 hours ago", course: "Calculus I" },
+    { id: 2, title: "Psychology Quiz moved to Thursday", time: "Posted today", course: "Introduction to Psychology" },
+    { id: 3, title: "Office hours updated this week", time: "Posted yesterday", course: "Calculus I" },
   ],
   reminders: [
     { id: 1, text: "Submit assignment for Calculus I", time: "Today at 5:00 PM" },
     { id: 2, text: "Prepare for Psychology quiz", time: "Tomorrow at 9:00 AM" },
   ],
-  announcements: [
-    { id: 1, title: "Calculus Midterm Scope Published", time: "Posted 2 hours ago", course: "Calculus I" },
-    { id: 2, title: "Psychology Quiz moved to Thursday", time: "Posted today", course: "Introduction to Psychology" },
-    { id: 3, title: "Office hours updated this week", time: "Posted yesterday", course: "Calculus I" },
-  ],
-  attendanceOverall: 80,
-  notes: [
-    { id: 1, title: "Calculus Notes", content: "Limits, Derivatives, Integrals..." },
-    { id: 2, title: "Psychology Notes", content: "Cognitive Development, Behaviorism..." },
-  ],
 };
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function getFormattedDate() {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
 
 export default function Dashboard() {
   return (
     <>
-      <PageHeader title={`${studentData.name}'s Dashboard`} subtitle="Here's what's happening with your courses today" />
-  
-      <Section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
+            {getGreeting()}, {studentData.name}
+          </h1>
+          <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 flex items-center gap-2">
+            <ClockIcon className="w-4 h-4" />
+            {getFormattedDate()}
+          </p>
+        </div>
+      </div>
+
+      <Section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {statsData.map((stat) => (
-          <BoxData 
+          <BoxData
             key={stat.id}
             title={stat.title}
             value={stat.value}
@@ -81,45 +99,53 @@ export default function Dashboard() {
         ))}
       </Section>
 
-      <Section className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 mb-6">
-        <TodayClasses className="lg:col-span-8" todayClasses={studentData.courses} columnLayout />
-
-        <div className="lg:col-span-4 p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col">
+      <Section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Announcements</h2>
+            <h2 className="text-2xl font-bold">Latest News</h2>
             <BullHornIcon className="w-6 h-6" />
           </div>
 
           <menu className="flex flex-col gap-3 mb-6">
-            {studentData.announcements.map((announcement) => (
+            {studentData.news.map((item) => (
               <li
-                key={announcement.id}
+                key={item.id}
                 className="p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
               >
-                <p className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{announcement.title}</p>
-                <p className="text-xs mt-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">{announcement.course}</p>
-                <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{announcement.time}</p>
+                <p className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{item.title}</p>
+                <p className="text-xs mt-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">{item.course}</p>
+                <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{item.time}</p>
               </li>
             ))}
           </menu>
 
           <NavLink to="/courses" className="mt-auto text-text-accent-default-light dark:text-text-accent-default-dark hover:underline flex items-center gap-2 justify-center font-medium">
-            View All Announcements
+            View All News
             <ArrowRightIcon className="w-4 h-4" />
           </NavLink>
         </div>
-      </Section>
-
-      <Section className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-        <DashboardStudyGroup className="lg:col-span-8" />
 
         <div className="lg:col-span-4 flex flex-col gap-6">
-          <TodayReminders reminders={studentData.reminders} className="min-h-72" />
-          <StudyTimer className="min-h-88" />
-          <AttendanceOverall className="min-h-88" studentAttendance={studentData.attendanceOverall} />
+          <TodayReminders reminders={studentData.reminders} />
+          <StudyTimer />
         </div>
       </Section>
 
+      <Section>
+        <div className="flex items-center gap-3 mb-6">
+          <ChartBarIcon className="w-7 h-7 text-text-accent-default-light dark:text-text-accent-default-dark" />
+          <h2 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">Analytics</h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <AttendanceTrendChart className="lg:col-span-6" />
+          <GPATrendChart className="lg:col-span-6" />
+        </div>
+
+        <div className="mt-6">
+          <AssignmentCompletionChart />
+        </div>
+      </Section>
     </>
   );
 }

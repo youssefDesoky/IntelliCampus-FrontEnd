@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import PageHeader from "./PageHeader";
 import Button from "./Button";
 import ImportDialog from "./ImportDialog";
 import { ImportIcon, PlusIcon } from "./icons";
+import { fetchBylaws, uploadStudents } from "../../feature/admin/services/adminApi";
 
 const roleLabels = {
     student: { plural: "Students", singular: "Student" },
@@ -10,14 +11,75 @@ const roleLabels = {
     admin: { plural: "Admins", singular: "Admin" },
 };
 
-export default function UserHeader({ role, setIsUserFormOpen }) {
+export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }) {
     const [isImportOpen, setIsImportOpen] = useState(false);
+    const [bylaws, setBylaws] = useState([]);
+    const [selectedBylaw, setSelectedBylaw] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isLoadingBylaws, setIsLoadingBylaws] = useState(false);
     const labels = roleLabels[role] || roleLabels.student;
 
-    const handleImport = (file) => {
-        console.log(`Importing ${labels.plural} from:`, file.name);
-        setIsImportOpen(false);
+    const openImport = useCallback(() => {
+        setIsImportOpen(true);
+        if (role === "student") {
+            setIsLoadingBylaws(true);
+            fetchBylaws()
+                .then(data => {
+                    const options = data.map(b => ({ value: b.baylawId, label: b.name }));
+                    setBylaws(options);
+                })
+                .catch(console.error)
+                .finally(() => setIsLoadingBylaws(false));
+        }
+    }, [role]);
+
+    const handleImport = async (file) => {
+        if (role !== "student") {
+            setIsImportOpen(false);
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const result = await uploadStudents(file, selectedBylaw?.value);
+            if (result.failCount > 0) {
+                const msg = [
+                    `✅ ${result.successCount} imported, ❌ ${result.failCount} failed`,
+                    ...result.errors.slice(0, 20),
+                ].join("\n");
+                alert(msg);
+            } else {
+                alert(`✅ Successfully imported ${result.successCount} students`);
+            }
+            if (onImportComplete) onImportComplete(result);
+        } catch (err) {
+            console.error("Failed to upload students:", err);
+            alert(err.message);
+        } finally {
+            setIsUploading(false);
+            setIsImportOpen(false);
+        }
     };
+
+    const bylawSelector = role === "student" && (
+        <div>
+            <label className="block text-sm font-medium mb-2">Apply Bylaw to All Imported Students</label>
+            <select
+                className="w-full rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark px-3 py-2 bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-sm"
+                value={selectedBylaw?.value || ""}
+                onChange={(e) => {
+                    const val = e.target.value;
+                    const match = bylaws.find(b => String(b.value) === val);
+                    setSelectedBylaw(match || null);
+                }}
+            >
+                <option value="">No Bylaw</option>
+                {bylaws.map(b => (
+                    <option key={b.value} value={b.value}>{b.label}</option>
+                ))}
+            </select>
+        </div>
+    );
 
     return (
         <>
@@ -25,7 +87,7 @@ export default function UserHeader({ role, setIsUserFormOpen }) {
                 <div className="flex items-center gap-2">
                     <Button 
                         variant="secondary"
-                        onClick={() => setIsImportOpen(true)}
+                        onClick={openImport}
                     >
                         <ImportIcon size={24} />
                         Import {labels.plural}
@@ -44,10 +106,16 @@ export default function UserHeader({ role, setIsUserFormOpen }) {
             {isImportOpen && (
                 <ImportDialog
                     title={`Import ${labels.plural}`}
-                    subtitle={`Upload a file to bulk-import ${labels.singular.toLowerCase()} records.`}
+                    subtitle={
+                        isLoadingBylaws
+                            ? "Loading bylaws..."
+                            : `Upload a file to bulk-import ${labels.singular.toLowerCase()} records.`
+                    }
                     onClose={() => setIsImportOpen(false)}
                     onImport={handleImport}
-                />
+                >
+                    {bylawSelector}
+                </ImportDialog>
             )}
         </>
     );

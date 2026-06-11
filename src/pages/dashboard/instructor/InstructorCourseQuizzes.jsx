@@ -1,15 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 
 import Button from "../../../components/ui/Button";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 
-import { createQuiz } from "../../../feature/instructor/components/quiz/instructorQuizApi";
+import { createQuiz, fetchQuizzesByCourse } from "../../../feature/instructor/components/quiz/instructorQuizApi";
+import ManageQuizQuestions from "../../../feature/instructor/components/quiz/ManageQuizQuestions";
 
 export default function InstructorCourseQuizzes() {
     const outlet = useOutletContext() || {};
     const params = useParams();
     const courseId = outlet.courseId || outlet.course?.id || params.courseId;
+
+    const [quizzes, setQuizzes] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const [manageQuiz, setManageQuiz] = useState(null);
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [title, setTitle] = useState("");
@@ -18,6 +24,21 @@ export default function InstructorCourseQuizzes() {
     const [dueDate, setDueDate] = useState("");
     const [durationMinutes, setDurationMinutes] = useState("");
     const [isCreating, setIsCreating] = useState(false);
+
+    const loadQuizzes = useCallback(async () => {
+        if (!courseId) return;
+        setLoading(true);
+        try {
+            const data = await fetchQuizzesByCourse(courseId);
+            setQuizzes(data);
+        } catch {
+            setQuizzes([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [courseId]);
+
+    useEffect(() => { loadQuizzes(); }, [loadQuizzes]);
 
     const handleCreate = async () => {
         if (!title.trim()) { alert("Enter quiz title."); return; }
@@ -42,7 +63,7 @@ export default function InstructorCourseQuizzes() {
             setMaxGrade("");
             setDueDate("");
             setDurationMinutes("");
-            alert("Quiz created successfully.");
+            await loadQuizzes();
         } catch (err) {
             alert(err.message || "Failed to create quiz.");
         } finally { setIsCreating(false); }
@@ -60,6 +81,35 @@ export default function InstructorCourseQuizzes() {
                     Create quizzes for your course. Student quiz progress and submissions can be viewed after students take the quizzes.
                 </p>
             </div>
+
+            {loading ? (
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading quizzes...</p>
+            ) : quizzes.length === 0 ? (
+                <div className="p-8 text-center rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">No quizzes yet. Create your first quiz above.</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {quizzes.map((quiz) => (
+                        <div key={quiz.id} className="flex items-center justify-between p-4 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                            <div>
+                                <h3 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{quiz.title}</h3>
+                                {quiz.description && (
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{quiz.description}</p>
+                                )}
+                                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1">
+                                    Due: {new Date(quiz.deadline).toLocaleDateString()} &middot; {quiz.durationMinutes} min &middot; {quiz.maxScore} pts &middot; {quiz.status}
+                                </p>
+                            </div>
+                            <Button type="button" variant="secondary" onClick={() => setManageQuiz(quiz)}>
+                                Manage Questions
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <ManageQuizQuestions isOpen={manageQuiz !== null} onClose={() => setManageQuiz(null)} courseId={courseId} quiz={manageQuiz} />
 
             <BaseFormComponent isOpen={isCreateOpen} title="Create Quiz" description="Create a new quiz for this course." onClose={() => { setIsCreateOpen(false); setTitle(""); setDescription(""); setMaxGrade(""); setDueDate(""); setDurationMinutes(""); }} onSubmit={handleCreate} submitText="Create" submitDisabled={isCreating} submitLoading={isCreating}>
                 <div className="space-y-3">

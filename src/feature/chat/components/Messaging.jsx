@@ -1,19 +1,56 @@
 import MessageSection from "./MessageSection";
 import PinnedMessage from "./PinnedMessage";
 import ChatControls from "./ChatControls";
+import ChatPartnerHeader from "./ChatPartnerHeader";
+import { useRef, useEffect } from "react";
+import Message from "./Message";
+import TypingIndicator from "./TypingIndicator";
 
-export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping }) {
+export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping, chatPartner, deleteMessage, editMessage, pinMessage, unpinMessage, pinnedMessage, showSenderInfo, searchQuery, onSearchChange }) {
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, partnerTyping]);
+
+  const isEmpty = Object.keys(messages).length === 0;
+
+  if (!chatPartner) return null;
+
   return (
-    <div className="col-span-2 flex flex-col min-h-0">
-      <PinnedMessage message="Don't forget to submit your assignments by the end of this week!" />
-      <div className="flex-1 min-h-0 overflow-y-auto pr-2 no-scrollbar">
-        {Object.entries(messages).map(([date, msgs]) => (
-          <MessageSection key={date} date={date} messages={msgs} />
-        ))}
+    <div className="col-span-2 flex flex-col h-full min-h-0 gap-0">
+      <ChatPartnerHeader chatPartner={chatPartner} partnerTyping={partnerTyping} searchQuery={searchQuery} onSearchChange={onSearchChange} />
+      {pinnedMessage && <PinnedMessage message={pinnedMessage} />}
+
+      {/* Messages area */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 no-scrollbar mt-2">
+        {searchQuery && isEmpty ? (
+          <div className="h-full flex flex-col items-center justify-center gap-2 text-center px-8">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-2xl">
+              🔍
+            </div>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">No results found</p>
+            <p className="text-xs text-[var(--text-tertiary)]">No messages match "{searchQuery}"</p>
+          </div>
+        ) : isEmpty ? (
+          <div className="h-full flex flex-col items-center justify-center gap-2 text-center px-8">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-2xl">
+              💬
+            </div>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">No messages yet</p>
+            <p className="text-xs text-[var(--text-tertiary)]">Send a message to start the conversation</p>
+          </div>
+        ) : (
+          Object.entries(messages).map(([date, msgs]) => (
+            <MessageSection key={date} date={date} messages={msgs} showSenderInfo={showSenderInfo} deleteMessage={deleteMessage} editMessage={editMessage} pinMessage={pinMessage} unpinMessage={unpinMessage} />
+          ))
+        )}
+
+        {/* Typing indicator */}
+        {partnerTyping && <TypingIndicator />}
+        <div ref={bottomRef} />
       </div>
-      {partnerTyping && (
-        <div className="px-4 py-2 text-sm text-gray-500 animate-pulse">The other user is typing...</div>
-      )}
+
       <ChatControls sendMessage={sendMessage} onInputChange={onInputChange} />
     </div>
   );

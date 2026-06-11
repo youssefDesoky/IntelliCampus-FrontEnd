@@ -232,7 +232,7 @@ export default function ManageCourses() {
     const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminCoursesViewMode") || "grid");
 
     // Table selection
-    const [selectedRows, setSelectedRows] = useState([]);
+    const [selectedRowIds, setSelectedRowIds] = useState([]);
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
 
     // Pagination
@@ -285,6 +285,7 @@ export default function ManageCourses() {
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
+    const selectedIndices = paginatedCourses.map((c, i) => selectedRowIds.includes(c.courseId) ? i : -1).filter(i => i !== -1);
 
     // ─── Handlers ──────────────────────────────────────────────
     const handleCreate = async (formData) => {
@@ -345,45 +346,42 @@ export default function ManageCourses() {
     };
 
     const handleDeleteSelected = async () => {
-        for (const idx of selectedRows) {
-            const row = paginatedCourses[idx];
-            if (row) {
-                try { await deleteCourse(row.courseId); } catch (err) { console.error(err); }
-            }
+        for (const id of selectedRowIds) {
+            try { await deleteCourse(id); } catch (err) { console.error(err); }
         }
-        setSelectedRows([]);
+        setSelectedRowIds([]);
         setIsDeleteSelectedOpen(false);
         await loadCourses();
     };
 
     const handleActivateSelected = async () => {
-        for (const idx of selectedRows) {
-            const course = paginatedCourses[idx];
+        for (const id of selectedRowIds) {
+            const course = courses.find(c => c.courseId === id);
             if (course && !course.isActive) {
-                try { await activateCourse(course.courseId); } catch (err) { console.error(err); }
+                try { await activateCourse(id); } catch (err) { console.error(err); }
             }
         }
-        setSelectedRows([]);
+        setSelectedRowIds([]);
         await loadCourses();
-        setSuccessMessage(`${selectedRows.length} course(s) activated successfully!`);
+        setSuccessMessage(`${selectedRowIds.length} course(s) activated successfully!`);
     };
 
     const handleDeactivateSelected = async () => {
-        for (const idx of selectedRows) {
-            const course = paginatedCourses[idx];
+        for (const id of selectedRowIds) {
+            const course = courses.find(c => c.courseId === id);
             if (course && course.isActive) {
-                try { await deactivateCourse(course.courseId); } catch (err) { console.error(err); }
+                try { await deactivateCourse(id); } catch (err) { console.error(err); }
             }
         }
-        setSelectedRows([]);
+        setSelectedRowIds([]);
         await loadCourses();
-        setSuccessMessage(`${selectedRows.length} course(s) deactivated successfully.`);
+        setSuccessMessage(`${selectedRowIds.length} course(s) deactivated successfully.`);
     };
 
     // Determine selection status for bulk action buttons
-    const selectedCourses = selectedRows.map((idx) => paginatedCourses[idx]).filter(Boolean);
-    const allSelectedActive = selectedCourses.length > 0 && selectedCourses.every((c) => c.isActive);
-    const allSelectedInactive = selectedCourses.length > 0 && selectedCourses.every((c) => !c.isActive);
+    const selectedCoursesData = selectedRowIds.map(id => courses.find(c => c.courseId === id)).filter(Boolean);
+    const allSelectedActive = selectedCoursesData.length > 0 && selectedCoursesData.every((c) => c.isActive);
+    const allSelectedInactive = selectedCoursesData.length > 0 && selectedCoursesData.every((c) => !c.isActive);
 
     return (
         <>
@@ -430,28 +428,28 @@ export default function ManageCourses() {
                             />
                             <ToggleViewMode
                                 isFirstMode={viewMode === "grid"}
-                                onFirstModeSelect={() => setViewMode("grid")}
-                                onSecondModeSelect={() => setViewMode("list")}
+                                onFirstModeSelect={() => { setViewMode("grid"); setSelectedRowIds([]); }}
+                                onSecondModeSelect={() => { setViewMode("list"); setSelectedRowIds([]); }}
                                 firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
                                 secondModeLabel={<TableIcon className="w-5 h-5" />}
                             />
-                            {viewMode === "list" && selectedRows.length > 0 && (
+                            {viewMode === "list" && selectedRowIds.length > 0 && (
                                 <>
                                     {allSelectedInactive && (
                                         <Button variant="success" className="whitespace-nowrap shrink-0" onClick={handleActivateSelected}>
                                             <CheckIcon size={20} />
-                                            Activate ({selectedRows.length})
+                                            Activate ({selectedRowIds.length})
                                         </Button>
                                     )}
                                     {allSelectedActive && (
                                         <Button variant="warning" className="whitespace-nowrap shrink-0" onClick={handleDeactivateSelected}>
                                             <XIcon size={20} />
-                                            Deactivate ({selectedRows.length})
+                                            Deactivate ({selectedRowIds.length})
                                         </Button>
                                     )}
                                     <Button variant="danger" className="whitespace-nowrap shrink-0" onClick={() => setIsDeleteSelectedOpen(true)}>
                                         <TrashIcon size={20} />
-                                        Delete ({selectedRows.length})
+                                        Delete ({selectedRowIds.length})
                                     </Button>
                                 </>
                             )}
@@ -469,7 +467,7 @@ export default function ManageCourses() {
                         cancelText="No, Keep"
                         showCloseButton={true}
                     >
-                        Are you sure you want to delete {selectedRows.length} selected course{selectedRows.length > 1 ? "s" : ""}? This action cannot be undone.
+                        Are you sure you want to delete {selectedRowIds.length} selected course{selectedRowIds.length > 1 ? "s" : ""}? This action cannot be undone.
                     </Dialog>
 
                     {paginatedCourses.length > 0 ? (
@@ -500,7 +498,11 @@ export default function ManageCourses() {
                                     wrapInSection={false}
                                     showHeaderActions={false}
                                     showPagination={false}
-                                    onSelectionChange={setSelectedRows}
+                                    selectedRows={selectedIndices}
+                                    onSelectionChange={(indices) => {
+                                        const visibleIds = new Set(paginatedCourses.map(c => c.courseId).filter(Boolean));
+                                        setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedCourses[i]?.courseId).filter(Boolean)]);
+                                    }}
                                     actions={(row) => [
                                         ...(row._raw.isActive ? [{
                                             label: "Manage Course",

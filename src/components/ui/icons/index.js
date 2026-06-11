@@ -3,6 +3,7 @@ export { default as ArrowRightIcon } from './ArrowRightIcon.jsx';
 export { default as ArrowUpIcon } from './ArrowUpIcon.jsx';
 export { default as AlignCenterIcon } from './AlignCenterIcon.jsx';
 export { default as AlignStartIcon } from './AlignStartIcon.jsx';
+export { default as ArrowRotateRightIcon } from './ArrowRotateRightIcon.jsx';
 
 export { default as BellIconDark } from './BellIconDark.jsx';
 export { default as BellIconLight } from './BellIconLight.jsx';
@@ -23,6 +24,7 @@ export { default as ClockIcon } from './ClockIcon.jsx';
 export { default as CommentIcon } from './CommentIcon.jsx';
 export { default as CommentsIcon } from './CommentsIcon.jsx';
 export { default as CloudUploadIcon } from './CloudUploadIcon.jsx';
+export { default as CopyIcon } from './CopyIcon.jsx';
 
 export { default as DownloadIcon } from './DownloadIcon.jsx';
 
@@ -65,6 +67,7 @@ export { default as MessageBoarderIcon } from './MessageBoarderIcon.jsx';
 export { default as MoonIcon } from './MoonIcon.jsx';
 export { default as MailIconDark } from './MailIconDark.jsx';
 export { default as MailIconLight } from './MailIconLight.jsx';
+export { default as MicIcon } from './MicIcon.jsx';
 
 export { default as OrderedListIcon } from './OrderedListIcon.jsx';
 export { default as OpenInNewTabIcon } from './OpenInNewTabIcon.jsx';
@@ -74,7 +77,8 @@ export { default as PlusIcon } from './PlusIcon.jsx';
 export { default as PaperclipIcon } from './PaperclipIcon.jsx';
 export { default as PaperPlaneIcon } from './PaperPlaneIcon.jsx';
 export { default as PinIcon } from './PinIcon.jsx';
-export { default as UnPinIcon } from './UnPinIcon.jsx';
+export { default as PenSquareIcon } from './PenSquareIcon.jsx';
+export { default as PhoneIcon } from './PhoneIcon.jsx';
 
 export { default as QRCodeIcon } from './QRCodeIcon.jsx';
 
@@ -92,13 +96,17 @@ export {default as TranslateIcon } from './TranslateIcon.jsx';
 export { default as TrashIcon } from './TrashIcon.jsx';
 export { default as TableIcon } from './TableIcon.jsx';
 
-export { default as UserCheckIcon } from './UserCheckIcon.jsx';
 export { default as UsersIcon } from './UsersIcon.jsx';
+export { default as UsersPlusIcon } from './UsersPlusIcon.jsx';
+export { default as UserCheckIcon } from './UserCheckIcon.jsx';
 export { default as UserIcon } from './UserIcon.jsx';
 export { default as UserTieIcon } from './UserTieIcon.jsx';
+export { default as UserPlusIcon } from './UserPlusIcon.jsx';
 export { default as UnorderedListIcon } from './UnorderedListIcon.jsx';
 export { default as UnderlineIcon } from './UnderlineIcon.jsx';
 export { default as UndoIcon } from './UndoIcon.jsx';
+export { default as UnPinIcon } from './UnPinIcon.jsx';
+
 
 export { default as VoiceIcon } from './VoiceIcon.jsx';
 

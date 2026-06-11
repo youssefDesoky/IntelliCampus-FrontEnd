@@ -31,20 +31,20 @@ function buildRoomRow(room) {
                     <HouseIcon className="w-5 h-5" />
                 </div>
                 <div className="flex flex-col text-left">
-                    <p className="font-medium">{room.name}</p>
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{room.type}</p>
+                    <p className="font-medium">{room.name || room.roomName || "—"}</p>
+                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{room.type || ""}</p>
                 </div>
             </div>
         ),
-        type: <span className="inline-block px-2 py-1 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark text-xs font-medium">{room.type}</span>,
-        capacity: `${room.capacity} people`,
+        type: <span className="inline-block px-2 py-1 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark text-xs font-medium">{room.type || "—"}</span>,
+        capacity: `${room.capacity ?? "?"} people`,
         location: room.location || "—",
         equipment: room.equipment ? (
             <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate max-w-xs" title={room.equipment}>
                 {room.equipment}
             </span>
         ) : "—",
-        _id: room.id,
+        _id: room.id ?? room.roomId,
         _raw: room,
     };
 }
@@ -65,9 +65,9 @@ function RoomCard({ room, onEdit, onDelete }) {
         return (
             <AdminCard
                 icon={<HouseIcon className="w-5 h-5" />}
-                title={room.name}
-                subtitle={room.type}
-                idLabel={room.id} // Assuming room.id is the correct property for room ID
+                title={room.name || room.roomName || "—"}
+                subtitle={room.type || ""}
+                idLabel={room.id ?? room.roomId}
                 meta={meta}
                 footerActions={actions}
             />
@@ -85,7 +85,7 @@ export default function ManageRooms() {
     const [deleteTarget, setDeleteTarget] = useState(null);
 
     const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminRoomsViewMode") || "grid");
-    const [selectedRows, setSelectedRows] = useState([]);
+    const [selectedRowIds, setSelectedRowIds] = useState([]);
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [formIsLoading, setFormIsLoading] = useState(false);
@@ -113,7 +113,7 @@ export default function ManageRooms() {
     const filteredRooms = useCallback(() => {
         const query = searchQuery.toLowerCase();
         return rawRooms.filter(room =>
-            room.name.toLowerCase().includes(query) ||
+            (room.name || room.roomName || "").toLowerCase().includes(query) ||
             (room.type && room.type.toLowerCase().includes(query)) ||
             (room.location && room.location.toLowerCase().includes(query))
         );
@@ -125,8 +125,7 @@ export default function ManageRooms() {
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
-
-    // View mode is controlled via ToggleViewMode handlers
+    const selectedIndices = paginatedRooms.map((r, i) => selectedRowIds.includes(r.id ?? r.roomId) ? i : -1).filter(i => i !== -1);
 
     // Edit handling
     const handleEdit = (room) => {
@@ -134,11 +133,15 @@ export default function ManageRooms() {
         setIsAddRoomFormOpen(true);
     };
 
+    const handleDelete = (room) => {
+        setDeleteTarget(room);
+    };
+
     const handleFormSubmit = async (data) => {
         try {
             setFormIsLoading(true);
-            if (editingRoom?.id) {
-                await updateRoom(editingRoom.id, data);
+            if (editingRoom?.id ?? editingRoom?.roomId) {
+                await updateRoom(editingRoom.id ?? editingRoom.roomId, data);
             } else {
                 await createRoom(data);
             }
@@ -156,15 +159,11 @@ export default function ManageRooms() {
     };
 
     // Delete handling
-    const handleDelete = (room) => {
-        setDeleteTarget(room);
-    };
-
-    const confirmDelete = async () => {
+    const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
         try {
-            await deleteRoom(deleteTarget.id);
-            setRawRooms(rawRooms.filter(r => r.id !== deleteTarget.id));
+            await deleteRoom(deleteTarget.id ?? deleteTarget.roomId);
+            setRawRooms(rawRooms.filter(r => (r.id ?? r.roomId) !== (deleteTarget.id ?? deleteTarget.roomId)));
             setDeleteTarget(null);
         } catch (err) {
             setError(err.message);
@@ -174,10 +173,13 @@ export default function ManageRooms() {
     // Bulk delete
     const handleDeleteSelected = async () => {
         try {
-            await Promise.all(selectedRows.map(id => deleteRoom(id)));
-            setRawRooms(rawRooms.filter(r => !selectedRows.includes(r.id)));
-            setSelectedRows([]);
+            for (const id of selectedRowIds) {
+                await deleteRoom(id);
+            }
+            setSelectedRowIds([]);
             setIsDeleteSelectedOpen(false);
+            const updatedRooms = await fetchRooms();
+            setRawRooms(Array.isArray(updatedRooms) ? updatedRooms : []);
         } catch (err) {
             setError(err.message);
         }
@@ -220,24 +222,22 @@ export default function ManageRooms() {
                         />
                         <ToggleViewMode
                             isFirstMode={viewMode === "grid"}
-                            onFirstModeSelect={() => { setViewMode("grid"); setSelectedRows([]); }}
-                            onSecondModeSelect={() => { setViewMode("list"); setSelectedRows([]); }}
+                            onFirstModeSelect={() => { setViewMode("grid"); setSelectedRowIds([]); }}
+                            onSecondModeSelect={() => { setViewMode("list"); setSelectedRowIds([]); }}
                             firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
                             secondModeLabel={<TableIcon className="w-5 h-5" />}
                         />
-                        {viewMode === "list" && selectedRows.length > 0 && (
+                        {viewMode === "list" && selectedRowIds.length > 0 && (
                             <Button
                                 variant="danger"
                                 onClick={() => setIsDeleteSelectedOpen(true)}
                             >
                                 <TrashIcon size={20} />
-                                Delete ({selectedRows.length})
+                                Delete ({selectedRowIds.length})
                             </Button>
                         )}
                     </div>
                 </div>
-
-                {/* inline delete button is shown in header when in list view */}
             </Section>
 
             {isLoading ? (
@@ -254,7 +254,7 @@ export default function ManageRooms() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {paginatedRooms.map(room => (
                                 <RoomCard
-                                    key={room.id}
+                                    key={room.id ?? room.roomId}
                                     room={room}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
@@ -273,7 +273,11 @@ export default function ManageRooms() {
                                         wrapInSection={false}
                                         showHeaderActions={false}
                                         showPagination={false}
-                                        onSelectionChange={setSelectedRows}
+                                        selectedRows={selectedIndices}
+                                        onSelectionChange={(indices) => {
+                                            const visibleIds = new Set(paginatedRooms.map(r => (r.id ?? r.roomId)).filter(Boolean));
+                                            setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => (paginatedRooms[i]?.id ?? paginatedRooms[i]?.roomId)).filter(Boolean)]);
+                                        }}
                                         onDelete={(index) => {
                                             const r = tableRows[index];
                                             if (r && r._raw) setDeleteTarget(r._raw);
@@ -296,7 +300,7 @@ export default function ManageRooms() {
                             <PaginationButtons
                                 currentPage={currentPage}
                                 totalPages={totalPages}
-                                onPageChange={setCurrentPage}
+                                setCurrentPage={setCurrentPage}
                             />
                         </Section>
                     )}
@@ -324,13 +328,13 @@ export default function ManageRooms() {
             >
                 <div className="space-y-4">
                     <p className="text-text-primary-default-light dark:text-text-primary-default-dark">
-                        Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
+                        Are you sure you want to delete <strong>{deleteTarget?.name || deleteTarget?.roomName}</strong>?
                     </p>
                     <div className="flex gap-3 justify-end">
                         <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
                             Cancel
                         </Button>
-                        <Button variant="danger" onClick={confirmDelete}>
+                        <Button variant="danger" onClick={handleDeleteConfirm}>
                             Delete
                         </Button>
                     </div>
@@ -345,7 +349,7 @@ export default function ManageRooms() {
             >
                 <div className="space-y-4">
                     <p className="text-text-primary-default-light dark:text-text-primary-default-dark">
-                        Are you sure you want to delete {selectedRows.length} room{selectedRows.length !== 1 ? "s" : ""}?
+                        Are you sure you want to delete {selectedRowIds.length} room{selectedRowIds.length !== 1 ? "s" : ""}?
                     </p>
                     <div className="flex gap-3 justify-end">
                         <Button variant="secondary" onClick={() => setIsDeleteSelectedOpen(false)}>

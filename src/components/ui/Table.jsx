@@ -5,24 +5,73 @@ import BaseComponent from "./BaseComponent";
 import { TableHeader, TableHeaderActions, TableBody } from "./table";
 
 
-export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit }) {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [selectedRows, setSelectedRows] = useState([]);
-    const [selectAll, setSelectAll] = useState(false);
-
-    useEffect(() => {
-        if (onSelectionChange) onSelectionChange(selectedRows);
-    }, [selectedRows, onSelectionChange]);
-
+export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows }) {
     const rawData = data || [];
     const hasPagingLimit = typeof displayRowLimit === 'number' && displayRowLimit > 0;
     const computedTotalPages = hasPagingLimit ? Math.max(1, Math.ceil(rawData.length / displayRowLimit)) : totalPages || 1;
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [internalSelectedRows, setInternalSelectedRows] = useState([]);
+    const [selectAll, setSelectAll] = useState(false);
+    const [prevDataKey, setPrevDataKey] = useState(() => {
+        if (!data?.length) return 'empty';
+        return `${data.length}-${data[0]?._id ?? data[0]?._raw?.courseId ?? data[0]?.id ?? ''}`;
+    });
+
     const displayData = hasPagingLimit ? rawData.slice((currentPage - 1) * displayRowLimit, currentPage * displayRowLimit) : rawData;
+
+    const dataKey = data?.length
+        ? `${data.length}-${data[0]?._id ?? data[0]?._raw?.courseId ?? data[0]?.id ?? ''}`
+        : 'empty';
+    if (prevDataKey !== dataKey) {
+        setPrevDataKey(dataKey);
+        setSelectAll(false);
+    }
+
+    const isControlled = controlledSelectedRows !== undefined;
+    const selectedRows = isControlled ? controlledSelectedRows : internalSelectedRows;
+
+    const allSelected = isControlled
+        ? (selectedRows.length === (displayData?.length || 0) && (displayData?.length || 0) > 0)
+        : selectAll;
+
+    const setSelectedRows = (rowsOrFn) => {
+        if (isControlled) {
+            if (typeof rowsOrFn === 'function') {
+                onSelectionChange?.(rowsOrFn(controlledSelectedRows));
+            } else {
+                onSelectionChange?.(rowsOrFn);
+            }
+        } else {
+            if (typeof rowsOrFn === 'function') {
+                setInternalSelectedRows(rowsOrFn);
+            } else {
+                setInternalSelectedRows(rowsOrFn);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (!isControlled && onSelectionChange) onSelectionChange(internalSelectedRows);
+    }, [internalSelectedRows, onSelectionChange, isControlled]);
+
+    const handleSetSelectAll = (valueOrFn) => {
+        if (isControlled) {
+            const next = typeof valueOrFn === 'function' ? valueOrFn(allSelected) : valueOrFn;
+            if (next) {
+                onSelectionChange?.(displayData.map((_, i) => i));
+            } else {
+                onSelectionChange([]);
+            }
+        } else {
+            setSelectAll(valueOrFn);
+        }
+    };
 
     const content = (
         <>
             {showHeaderActions && (
-                <TableHeaderActions 
+                <TableHeaderActions
                     role={role}
                     roleLabel={roleLabel}
                     selectedRows={selectedRows}
@@ -38,20 +87,20 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                     contentClassName="flex flex-col gap-4 overflow-x-auto"
                 >
                     <table className="min-w-full table-auto border-separate border-spacing-0">
-                    <TableHeader 
+                    <TableHeader
                         headerData={headers}
-                        selectAll={selectAll}
-                        setSelectAll={setSelectAll}
+                        selectAll={allSelected}
+                        setSelectAll={handleSetSelectAll}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
                     />
 
                     <TableBody
                         role={role}
-                        rowData={displayData} 
+                        rowData={displayData}
                         columnCount={headers.length}
-                        selectAll={selectAll} 
-                        setSelectAll={setSelectAll} 
+                        selectAll={allSelected}
+                        setSelectAll={setSelectAll}
                         selectedRows={selectedRows}
                         setSelectedRows={setSelectedRows}
                         onDelete={onDelete}
@@ -71,7 +120,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         </div>
 
                         {showPagination && (
-                            <PaginationButtons 
+                            <PaginationButtons
                                 totalPages={computedTotalPages}
                                 currentPage={currentPage}
                                 setCurrentPage={setCurrentPage}
@@ -83,20 +132,20 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
             ) : (
                 <div className="flex flex-col gap-4 overflow-x-auto">
                     <table className={`min-w-full table-auto border-separate border-spacing-0 border border-border-primary-default-light dark:border-border-primary-default-dark`}>
-                    <TableHeader 
+                    <TableHeader
                         headerData={headers}
-                        selectAll={selectAll}
-                        setSelectAll={setSelectAll}
+                        selectAll={allSelected}
+                        setSelectAll={handleSetSelectAll}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
                     />
 
                     <TableBody
                         role={role}
-                        rowData={displayData} 
+                        rowData={displayData}
                         columnCount={headers.length}
-                        selectAll={selectAll} 
-                        setSelectAll={setSelectAll} 
+                        selectAll={allSelected}
+                        setSelectAll={setSelectAll}
                         selectedRows={selectedRows}
                         setSelectedRows={setSelectedRows}
                         onDelete={onDelete}
@@ -116,7 +165,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         </div>
 
                         {showPagination && (
-                            <PaginationButtons 
+                            <PaginationButtons
                                 totalPages={computedTotalPages}
                                 currentPage={currentPage}
                                 setCurrentPage={setCurrentPage}

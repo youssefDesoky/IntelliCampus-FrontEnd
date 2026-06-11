@@ -22,7 +22,7 @@ import {
 import { fetchStudents, createStudent, deleteStudent } from "../../../feature/admin/services/adminApi";
 
 const ITEMS_PER_PAGE = 9;
-const studentTableHeaders = ["Student", "Student ID", "National ID", "Program", "Level"];
+const studentTableHeaders = ["Student", "Student ID", "National ID", "Program", "Level", "Bylaw"];
 
 function buildStudentRow(s) {
     return {
@@ -41,6 +41,7 @@ function buildStudentRow(s) {
         nationalId: s.nationalId || "—",
         program: s.program || s.faculty || "—",
         level: s.level ?? "—",
+        bylaw: s.baylawName ?? "—",
         _id: s.userId,
         _raw: s,
     };
@@ -116,7 +117,7 @@ export default function ManageStudents() {
     const [previewCoursesPage, setPreviewCoursesPage] = useState(1);
 
     const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminStudentsViewMode") || "grid");
-    const [selectedRows, setSelectedRows] = useState([]);
+    const [selectedRowIds, setSelectedRowIds] = useState([]);
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -152,6 +153,7 @@ export default function ManageStudents() {
     const totalPages = Math.max(1, Math.ceil(filteredStudents.length / ITEMS_PER_PAGE));
     const paginatedStudents = filteredStudents.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
     const paginatedRows = paginatedStudents.map(buildStudentRow);
+    const selectedIndices = paginatedRows.map((row, i) => selectedRowIds.includes(row._id) ? i : -1).filter(i => i !== -1);
 
     const handleDelete = async (rowIndex) => {
         const row = paginatedRows[rowIndex];
@@ -168,13 +170,10 @@ export default function ManageStudents() {
     };
 
     const handleDeleteSelected = async () => {
-        for (const idx of selectedRows) {
-            const row = paginatedRows[idx];
-            if (row?._id) {
-                try { await deleteStudent(row._id); } catch (err) { console.error(err); }
-            }
+        for (const id of selectedRowIds) {
+            try { await deleteStudent(id); } catch (err) { console.error(err); }
         }
-        setSelectedRows([]);
+        setSelectedRowIds([]);
         setIsDeleteSelectedOpen(false);
         await loadStudents();
     };
@@ -186,7 +185,7 @@ export default function ManageStudents() {
 
     return (
         <>
-            <UserHeader role="student" setIsUserFormOpen={setIsAddStudentFormOpen} />
+            <UserHeader role="student" setIsUserFormOpen={setIsAddStudentFormOpen} onImportComplete={loadStudents} />
 
             {isLoading ? (
                 <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading students...</p>
@@ -212,15 +211,15 @@ export default function ManageStudents() {
                             />
                             <ToggleViewMode
                                 isFirstMode={viewMode === "grid"}
-                                onFirstModeSelect={() => setViewMode("grid")}
-                                onSecondModeSelect={() => setViewMode("list")}
+                                onFirstModeSelect={() => { setViewMode("grid"); setSelectedRowIds([]); }}
+                                onSecondModeSelect={() => { setViewMode("list"); setSelectedRowIds([]); }}
                                 firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
                                 secondModeLabel={<TableIcon className="w-5 h-5" />}
                             />
-                            {viewMode === "list" && selectedRows.length > 0 && (
+                            {viewMode === "list" && selectedRowIds.length > 0 && (
                                 <Button variant="danger" onClick={() => setIsDeleteSelectedOpen(true)}>
                                     <TrashIcon size={20} />
-                                    Delete ({selectedRows.length})
+                                    Delete ({selectedRowIds.length})
                                 </Button>
                             )}
                         </div>
@@ -239,7 +238,7 @@ export default function ManageStudents() {
                         cancelText="No, Keep"
                         showCloseButton={true}
                     >
-                        Are you sure you want to delete {selectedRows.length} selected student{selectedRows.length > 1 ? "s" : ""}? This action cannot be undone.
+                        Are you sure you want to delete {selectedRowIds.length} selected student{selectedRowIds.length > 1 ? "s" : ""}? This action cannot be undone.
                     </Dialog>
 
                     {paginatedStudents.length > 0 ? (
@@ -264,7 +263,11 @@ export default function ManageStudents() {
                                     wrapInSection={false}
                                     showHeaderActions={false}
                                     showPagination={false}
-                                    onSelectionChange={setSelectedRows}
+                                    selectedRows={selectedIndices}
+                                    onSelectionChange={(indices) => {
+                                        const visibleIds = new Set(paginatedRows.map(r => r._id).filter(Boolean));
+                                        setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedRows[i]?._id).filter(Boolean)]);
+                                    }}
                                     onDelete={handleDelete}
                                 />
                             </div>
@@ -403,8 +406,8 @@ export default function ManageStudents() {
             <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewStudent.department ?? previewStudent.faculty ?? "—"}</span>
         </div>
         <div className="space-y-0.5">
-            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Bylaw Rule</span>
-            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewStudent.bylaw ?? previewStudent.status ?? previewStudent.rank ?? "—"}</span>
+            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Bylaw</span>
+            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewStudent.baylawName ?? previewStudent.bylaw ?? "—"}</span>
         </div>
         <div className="space-y-0.5">
             <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Enrollment Date</span>

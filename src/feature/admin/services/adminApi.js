@@ -132,6 +132,125 @@ export async function deleteAdmin(id) {
     return true;
 }
 
+// ─── Bylaws ─────────────────────────────────────────────────
+
+export async function fetchBylaws() {
+    const res = await fetch(`${API_URL}/api/Baylaw`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch bylaws: ${res.status}`);
+    return res.json();
+}
+
+export async function fetchBylawById(id) {
+    const res = await fetch(`${API_URL}/api/Baylaw/${id}`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch bylaw: ${res.status}`);
+    return res.json();
+}
+
+export async function createBylaw(data) {
+    const res = await fetch(`${API_URL}/api/Baylaw`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to create bylaw: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function deleteBylaw(id) {
+    const res = await fetch(`${API_URL}/api/Baylaw/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to delete bylaw: ${res.status}`);
+    return true;
+}
+
+export async function toggleBylawActive(id) {
+    const res = await fetch(`${API_URL}/api/Baylaw/${id}/toggle-active`, {
+        method: "PATCH",
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to toggle bylaw: ${res.status}`);
+    return true;
+}
+
+export async function uploadBylawDocument(id, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${API_URL}/api/Baylaw/${id}/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to upload bylaw document: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function setBylawGradeScales(id, items) {
+    const res = await fetch(`${API_URL}/api/Baylaw/${id}/grade-scales`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(items),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to set grade scales: ${res.status}`);
+    }
+    return res.json();
+}
+
+// ─── Exams ─────────────────────────────────────────────────
+
+export async function uploadExams(file, examType) {
+    const formData = new FormData();
+    formData.append("file", file);
+    let url = `${API_URL}/api/ExcelImport/exams`;
+    if (examType) url += `?examType=${examType}`;
+    const res = await fetch(url, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.message || (err.errors && err.errors.join("; ")) || `Failed to upload exams: ${res.status}`;
+        throw new Error(msg);
+    }
+    return res.json();
+}
+
+// ─── Student Upload ─────────────────────────────────────────
+
+export async function uploadStudents(file, bylawId) {
+    const formData = new FormData();
+    formData.append("file", file);
+    let url = `${API_URL}/api/ExcelImport/students`;
+    if (bylawId) url += `?baylawId=${bylawId}`;
+
+    const res = await fetch(url, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to upload students: ${res.status}`);
+    }
+    return res.json();
+}
+
 // ─── Departments ────────────────────────────────────────────
 
 export async function fetchDepartments() {

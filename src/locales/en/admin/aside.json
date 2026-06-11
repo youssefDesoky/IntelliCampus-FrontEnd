@@ -6,5 +6,7 @@
     "instructors": "Manage Instructors",
     "courses": "Manage Courses",
     "rooms": "Manage Rooms",
-    "departments": "Manage Departments"
+    "departments": "Manage Departments",
+    "bylaws": "Manage Bylaws",
+    "exams": "Manage Exams"
 }

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import InputItem from "../../../components/form/InputItem";
 import SelectBox from "../../../components/ui/SelectBox";
 import RadioToggle from "../../../components/form/RadioToggle";
 import UserForm from "./UserForm";
+import { fetchBylaws } from "../services/adminApi";
 
 const programs = [
     { value: 'General', label: 'General' },
@@ -24,6 +25,8 @@ const levels = [
 ];
 
 export default function StudentForm({ onClose, method = "post", onSubmit, initialData = {} }) {
+    const [bylaws, setBylaws] = useState([]);
+
     const [selectedProgram, setSelectedProgram] = useState(() => {
         if (initialData.program) {
             return programs.find(p => p.value === initialData.program || p.label === initialData.program) || programs[0];
@@ -45,12 +48,31 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
         return levels[0];
     });
 
+    const [selectedBylaw, setSelectedBylaw] = useState(null);
+
+    useEffect(() => {
+        fetchBylaws()
+            .then(data => {
+                const options = data.map(b => ({ value: b.baylawId, label: b.name }));
+                setBylaws(options);
+                if (initialData.baylawId) {
+                    const match = options.find(o => o.value === initialData.baylawId);
+                    if (match) setSelectedBylaw(match);
+                }
+            })
+            .catch(console.error);
+    }, [initialData.baylawId]);
+
     const handleDepartmentChange = (option) => {
         setSelectedDepartment(option);
     };
 
     const handleLevelChange = (option) => {
         setSelectedLevel(option);
+    };
+
+    const handleBylawChange = (option) => {
+        setSelectedBylaw(option);
     };
 
     return (
@@ -90,6 +112,16 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                     options={levels}
                     selectedOption={selectedLevel}
                     onChange={handleLevelChange}
+                />
+
+                <SelectBox
+                    className="w-full"
+                    label="Bylaw"
+                    name="baylawId"
+                    labelDirection="flex-col"
+                    options={bylaws}
+                    selectedOption={selectedBylaw}
+                    onChange={handleBylawChange}
                 />
 
                 <InputItem label="Enrollment Date" type="date" id="enrollmentDate" name="enrollmentDate" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split('T')[0]} required />
