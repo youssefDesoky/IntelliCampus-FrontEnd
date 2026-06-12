@@ -16,7 +16,8 @@ import {
     ChartBarIcon, 
     FilePenIcon, 
     BrainIcon,
-    StickyNoteIcon
+    StickyNoteIcon,
+    VideoIcon
 } from "../../../components/ui/icons";
 import { fetchCourseMaterialsOrganized } from "../services/materialsApi";
 
@@ -29,6 +30,7 @@ const links = [
     { to: "grades", icon: <ChartBarIcon className="w-5 h-5" />, label: "Grades" },
     { to: "community", icon: <UsersIcon className="w-5 h-5" />, label: "Study Group" },
     { to: "smart-notes", icon: <StickyNoteIcon className="w-5 h-5" />, label: "Smart Notes" },
+    { to: "meeting", icon: <VideoIcon className="w-5 h-5" />, label: "Meeting" },
 ];
 
 export default function CourseShell() {

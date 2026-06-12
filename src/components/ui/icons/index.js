@@ -23,10 +23,12 @@ export { default as ClipboardCheckIcon } from './ClipboardCheckIcon.jsx';
 export { default as ClockIcon } from './ClockIcon.jsx';
 export { default as CommentIcon } from './CommentIcon.jsx';
 export { default as CommentsIcon } from './CommentsIcon.jsx';
+export { default as CommentDotsIcon } from './CommentDotsIcon.jsx';
 export { default as CloudUploadIcon } from './CloudUploadIcon.jsx';
 export { default as CopyIcon } from './CopyIcon.jsx';
 
 export { default as DownloadIcon } from './DownloadIcon.jsx';
+export { default as DesktopIcon } from './DesktopIcon.jsx';
 
 export { default as EllipsisVerticalIcon } from './EllipsisVerticalIcon.jsx';
 export { default as ExclamationIcon } from './ExclamationIcon.jsx';
@@ -47,6 +49,7 @@ export { default as Grid3ColIcon } from './Grid3ColIcon.jsx';
 export { default as HashIcon } from './HashIcon.jsx';
 export { default as HouseIcon } from './HouseIcon.jsx';
 export { default as HighlighterIcon } from './HighlighterIcon.jsx';
+export { default as HandIcon } from './HandIcon.jsx';
 
 export { default as IntelliCampusIcon } from './IntelliCampusIcon.jsx';
 export { default as ItalicIcon } from './ItalicIcon.jsx';
@@ -68,6 +71,7 @@ export { default as MoonIcon } from './MoonIcon.jsx';
 export { default as MailIconDark } from './MailIconDark.jsx';
 export { default as MailIconLight } from './MailIconLight.jsx';
 export { default as MicIcon } from './MicIcon.jsx';
+export { default as MicSlashIcon } from './MicSlashIcon.jsx';
 
 export { default as OrderedListIcon } from './OrderedListIcon.jsx';
 export { default as OpenInNewTabIcon } from './OpenInNewTabIcon.jsx';
@@ -79,8 +83,11 @@ export { default as PaperPlaneIcon } from './PaperPlaneIcon.jsx';
 export { default as PinIcon } from './PinIcon.jsx';
 export { default as PenSquareIcon } from './PenSquareIcon.jsx';
 export { default as PhoneIcon } from './PhoneIcon.jsx';
+export { default as PhoneSlashIcon } from './PhoneSlashIcon.jsx';
 
 export { default as QRCodeIcon } from './QRCodeIcon.jsx';
+
+export { default as RecordIcon } from './RecordIcon.jsx';
 
 export { default as SaveIcon } from './SaveIcon.jsx';
 export { default as SidebarIcon } from './SidebarIcon.jsx';
@@ -92,7 +99,7 @@ export { default as SearchIcon } from './SearchIcon.jsx';
 export { default as StrikeThoughtIcon } from './StrikeThoughtIcon.jsx';
 export { default as SandClockIcon } from './SandClockIcon.jsx';
 
-export {default as TranslateIcon } from './TranslateIcon.jsx';
+export { default as TranslateIcon } from './TranslateIcon.jsx';
 export { default as TrashIcon } from './TrashIcon.jsx';
 export { default as TableIcon } from './TableIcon.jsx';
 
@@ -107,8 +114,11 @@ export { default as UnderlineIcon } from './UnderlineIcon.jsx';
 export { default as UndoIcon } from './UndoIcon.jsx';
 export { default as UnPinIcon } from './UnPinIcon.jsx';
 
-
 export { default as VoiceIcon } from './VoiceIcon.jsx';
+export {default as VideoIcon } from './VideoIcon.jsx';
+export { default as VideoSlashIcon } from './VideoSlashIcon.jsx';
+export { default as VolumeIcon } from './VolumeIcon.jsx';
+export { default as VolumeXIcon } from './VolumeXIcon.jsx';
 
 export { default as WarningIcon } from './WarningIcon.jsx';
 

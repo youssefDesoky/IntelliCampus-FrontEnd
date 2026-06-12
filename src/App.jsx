@@ -43,6 +43,7 @@ import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, ManageA
 import Attendance from "./feature/instructor/components/attendance/Attendance"
 import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes } from "./pages/dashboard/instructor"
 import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
+import { InstructorMeetingRoom } from "./pages/dashboard/instructor"
 
 
 export default function App() {    
@@ -94,6 +95,7 @@ export default function App() {
                             { path: "grades", element: <CourseGrade /> },
                             { path: "community", element: <StudentStudyGroup /> },
                             { path: "smart-notes", element: <StudentSmartNotes /> },
+                            { path: "meeting", element: <InstructorMeetingRoom /> },
                         ],
                     },
 
@@ -125,6 +127,7 @@ export default function App() {
                             { path: "grades", element: <div>Course Grades Content</div> },
                             { path: "community", element: <div>Course Community Content</div> },
                             { path: "smart-notes", element: <StudentSmartNotes /> },
+                            { path: "meeting", element: <InstructorMeetingRoom /> },
                         ],
                     },
                 ],

@@ -3,3 +3,4 @@ export { default as InstructorCourseMaterials } from "./InstructorCourseMaterial
 export { default as InstructorCourseAssignments } from "./InstructorCourseAssignments";
 export { default as InstructorCourseAttendance } from "./InstructorCourseAttendance";
 export { default as InstructorCourseQuizzes } from "./InstructorCourseQuizzes";
+export { default as InstructorMeetingRoom } from "./InstructorMeetingRoom";
