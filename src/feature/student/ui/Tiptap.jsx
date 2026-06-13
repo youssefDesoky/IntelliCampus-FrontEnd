@@ -76,7 +76,7 @@ export default function Tiptap({ content = '', onChange, className }) {
         <div className={`flex flex-col min-h-0 ${className ?? ''}`}>
             <TextEditorToolBar editor={editor} />
             <div
-                className="flex-1 cursor-text"
+                className="flex-1"
                 onMouseDown={(e) => {
                     const clickedInsideEditor = e.target.closest('.ProseMirror')
 

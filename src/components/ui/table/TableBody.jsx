@@ -111,7 +111,7 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 			{rowData.map((row, rowIndex) => (
 					<tr
 						key={rowIndex}
-						className={`${showSelectionColumn ? "text-center cursor-pointer" : "text-center"} relative z-0 no-transitions hover:z-10 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark 
+						className={`${showSelectionColumn ? "text-center" : "text-center"} relative z-0 no-transitions hover:z-10 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark 
 							divide-x divide-border-primary-default-light dark:divide-border-primary-default-dark hover:divide-border-primary-hover-light dark:hover:divide-border-primary-hover-dark                
 							border border-border-primary-default-light dark:border-border-primary-default-dark hover:ring-1 hover:ring-inset hover:ring-border-primary-hover-light dark:hover:ring-border-primary-hover-dark
 						`}

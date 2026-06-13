@@ -186,7 +186,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                             Prerequisites
                         </label>
                         <div
-                            className="flex flex-wrap items-center gap-1.5 min-h-[42px] p-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark cursor-pointer"
+                            className="flex flex-wrap items-center gap-1.5 min-h-[42px] p-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark"
                             onClick={() => setPrereqOpen(!prereqOpen)}
                         >
                             {selectedPrereqs.length === 0 ? (
@@ -236,7 +236,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                                         availablePrereqs.map(c => (
                                             <div
                                                 key={c.courseId || c.courseCode}
-                                                className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark cursor-pointer"
+                                                className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark"
                                                 onClick={() => togglePrereq(c)}
                                             >
                                                 <input

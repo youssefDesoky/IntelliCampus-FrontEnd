@@ -72,7 +72,7 @@ export default function ChatControls({ sendMessage, onInputChange }) {
             transition-all duration-200
             ${canSend
               ? "bg-[var(--primary)] text-white hover:brightness-110 active:scale-95 shadow-md"
-              : "bg-white/6 text-[var(--text-tertiary)] cursor-not-allowed"
+              : "bg-white/6 text-[var(--text-tertiary)]"
             }
           `}
           aria-label="Send message"

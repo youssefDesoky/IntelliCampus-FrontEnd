@@ -37,7 +37,7 @@ export default function AccountControlsCard({ className = "" }) {
                             <span className="text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
                                 {label}
                             </span>
-                            <label htmlFor={id} className="relative inline-flex cursor-pointer items-center">
+                            <label htmlFor={id} className="relative inline-flex items-center">
                                 <input
                                     type="checkbox"
                                     id={id}

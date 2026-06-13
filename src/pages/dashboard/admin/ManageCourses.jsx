@@ -51,14 +51,9 @@ const courseTableHeaders = ["Course", "Course Code", "Department", "Credit Hours
 function buildCourseRow(course) {
     return {
         course: (
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                            {((course.courseName || course.title || course.name || course.id || "?") + "").charAt(0).toUpperCase()}
-                </div>
-                <div className="flex flex-col text-left">
-                    <p className="font-medium">{course.courseName}</p>
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-50 truncate">{course.description}</p>
-                </div>
+            <div className="flex flex-col text-left">
+                <p className="font-medium">{course.courseName}</p>
+                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-50 truncate">{course.description}</p>
             </div>
         ),
         courseId: (
@@ -264,7 +259,7 @@ export default function ManageCourses() {
             ) : (
                 <Section>
                     {/* Toolbar: Search + Toggle */}
-                    <div className="flex items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center justify-between gap-4 mb-3">
                         <h2 className="text-xl font-semibold">
                             Courses{" "}
                             <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">

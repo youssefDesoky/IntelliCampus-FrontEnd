@@ -150,7 +150,7 @@ export default function QuickUpload({
                     onDragLeave={() => setDragOver(false)}
                     onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
                     onClick={() => inputRef.current?.click()}
-                    className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-8 cursor-pointer transition-colors ${
+                    className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-8 transition-colors ${
                         dragOver
                             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
                             : "border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:border-blue-400 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark"

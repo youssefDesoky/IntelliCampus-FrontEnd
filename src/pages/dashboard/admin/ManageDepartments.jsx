@@ -5,7 +5,6 @@ import SearchBar from "../../../components/ui/SearchBar";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import Table from "../../../components/ui/Table";
-import PaginationButtons from "../../../components/ui/PaginationButtons";
 import DepartmentForm from "../../../feature/admin/components/DepartmentForm";
 import {
     FilePenIcon,
@@ -34,7 +33,7 @@ function buildDepartmentRow(department, instructorLookup = {}) {
                 {department.description}
             </span>
         ) : "—",
-        _id: department.id,
+        _id: department.id ?? department.departmentId,
         _raw: department,
     };
 }
@@ -94,7 +93,7 @@ export default function ManageDepartments() {
 
     const totalPages = Math.max(1, Math.ceil(filteredDepartments.length / ITEMS_PER_PAGE));
     const paginatedDepartments = filteredDepartments.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-    const selectedIndices = paginatedDepartments.map((d, i) => selectedRowIds.includes(d.id) ? i : -1).filter(i => i !== -1);
+    const selectedIndices = paginatedDepartments.map((d, i) => selectedRowIds.includes(d.id ?? d.departmentId) ? i : -1).filter(i => i !== -1);
 
     const handleEdit = (department) => {
         setEditingDepartment(department);
@@ -164,7 +163,7 @@ export default function ManageDepartments() {
             )}
 
             <Section>
-                <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+                <div className="flex items-center justify-between gap-4 mb-3">
                     <h2 className="text-xl font-semibold">
                         Departments{" "}
                         <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">
@@ -204,37 +203,32 @@ export default function ManageDepartments() {
                 ) : filteredDepartments.length === 0 ? (
                     <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">No departments found.</p>
                 ) : (
-                    <>
-                        <div className="mb-6">
-                            <Table
-                                role="department"
-                                headers={departmentTableHeaders}
-                                data={tableRows}
-                                wrapInSection={false}
-                                showHeaderActions={false}
-                                showPagination={false}
-                                selectedRows={selectedIndices}
-                                onSelectionChange={(indices) => {
-                                    const visibleIds = new Set(paginatedDepartments.map(d => d.id).filter(Boolean));
-                                    setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedDepartments[i]?.id).filter(Boolean)]);
-                                }}
-                                actions={(row) => ([
-                                    { label: "Edit", onClick: () => { setEditingDepartment(row._raw); setIsAddDepartmentFormOpen(true); } },
-                                    { label: "Delete", onClick: () => setDeleteTarget(row._raw) },
-                                ])}
-                            />
-                        </div>
-
-                        {totalPages > 1 && (
-                            <Section>
-                                <PaginationButtons
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
-                                    setCurrentPage={setCurrentPage}
-                                />
-                            </Section>
-                        )}
-                    </>
+                    <div className="mb-6">
+                        <Table
+                            role="department"
+                            headers={departmentTableHeaders}
+                            data={tableRows}
+                            wrapInSection={false}
+                            showHeaderActions={false}
+                            showPagination={false}
+                            selectedRows={selectedIndices}
+                            page={currentPage}
+                            onPageChange={setCurrentPage}
+                            totalPages={totalPages}
+                            totalItems={filteredDepartments.length}
+                            itemsLabel="Departments"
+                            from={(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                            to={Math.min(currentPage * ITEMS_PER_PAGE, filteredDepartments.length)}
+                            onSelectionChange={(indices) => {
+                                const visibleIds = new Set(paginatedDepartments.map(d => d.id ?? d.departmentId).filter(Boolean));
+                                setSelectedRowIds(prev => [...prev.filter(id => !visibleIds.has(id)), ...indices.map(i => (paginatedDepartments[i]?.id ?? paginatedDepartments[i]?.departmentId)).filter(Boolean)]);
+                            }}
+                            actions={(row) => ([
+                                { label: "Edit", onClick: () => { setEditingDepartment(row._raw); setIsAddDepartmentFormOpen(true); } },
+                                { label: "Delete", onClick: () => setDeleteTarget(row._raw) },
+                            ])}
+                        />
+                    </div>
                 )}
 
                 {isAddDepartmentFormOpen && (

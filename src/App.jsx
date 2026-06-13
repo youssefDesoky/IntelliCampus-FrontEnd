@@ -166,7 +166,7 @@ export default function App() {
 
     return (
         <>
-            {/* <CustomCursor /> */}
+            <CustomCursor />
             <SidebarProvider>
                 <RouterProvider router={router} />
             </SidebarProvider>

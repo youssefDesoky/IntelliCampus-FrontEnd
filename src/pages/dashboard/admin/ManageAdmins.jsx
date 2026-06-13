@@ -135,7 +135,7 @@ export default function ManageAdmins() {
                 <p className="text-center py-10 text-red-500">Error: {error}</p>
             ) : (
             <Section>
-                <div className="flex items-center justify-between gap-4 mb-6">
+                <div className="flex items-center justify-between gap-4 mb-3">
                     <h2 className="text-xl font-semibold">
                         Admins{" "}
                         <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">

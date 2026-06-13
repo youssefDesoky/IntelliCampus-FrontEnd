@@ -190,7 +190,7 @@ export default function IdentityCard({ user, className = "" }) {
                                         type="button"
                                         onClick={generateAttendanceQr}
                                         disabled={isGeneratingQr}
-                                        className="absolute inset-0 rounded-3xl bg-white/40 dark:bg-black/40 backdrop-blur-sm flex items-center justify-center cursor-pointer transition-colors hover:bg-white/30 dark:hover:bg-black/30"
+                                        className="absolute inset-0 rounded-3xl bg-white/40 dark:bg-black/40 backdrop-blur-sm flex items-center justify-center transition-colors hover:bg-white/30 dark:hover:bg-black/30"
                                     >
                                         <ArrowRotateRightIcon size={50} className="text-white text-sm scale-x-[-1]" />
                                     </button>

@@ -74,15 +74,15 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
     useEffect(() => {
         fetchBylaws()
             .then(data => {
-                const options = data.map(b => ({ value: b.baylawId, label: b.name }));
+                const options = data.map(b => ({ value: b.bylawId, label: b.name }));
                 setBylaws(options);
-                if (initialData.baylawId) {
-                    const match = options.find(o => o.value === initialData.baylawId);
+                if (initialData.bylawId) {
+                    const match = options.find(o => o.value === initialData.bylawId);
                     if (match) setSelectedBylaw(match);
                 }
             })
             .catch(console.error);
-    }, [initialData.baylawId]);
+    }, [initialData.bylawId]);
 
     const handlePhotoClick = () => {
         fileInputRef.current?.click();
@@ -127,7 +127,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                     <div className="relative">
                         <div
                             onClick={handlePhotoClick}
-                            className="w-32 h-36 rounded-xl overflow-hidden cursor-pointer ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
+                            className="w-32 h-36 rounded-xl overflow-hidden ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
                         >
                             {photoPreview ? (
                                 <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
@@ -242,7 +242,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                             <SelectBox
                                 className="w-full"
                                 label="Bylaw"
-                                name="baylawId"
+                                name="bylawId"
                                 labelDirection="flex-col"
                                 options={bylaws}
                                 selectedOption={selectedBylaw}

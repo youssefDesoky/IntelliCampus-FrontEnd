@@ -456,7 +456,7 @@ export default function InstructorCourseAssignments() {
                         <div className="flex items-center gap-2">
                         <button
                         type="button"
-                        className={`p-2 rounded-lg transition-colors ${hasFile ? "hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-primary-default-light dark:text-text-primary-default-dark" : "opacity-40 cursor-not-allowed text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}
+                        className={`p-2 rounded-lg transition-colors ${hasFile ? "hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-primary-default-light dark:text-text-primary-default-dark" : "opacity-40 text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}
                         onClick={() => openFilePreview(primaryFile, s)}
                         disabled={!hasFile}
                         title={hasFile ? "Preview submission" : "No file available"}
@@ -474,7 +474,7 @@ export default function InstructorCourseAssignments() {
                             </a>
                         ) : (
                             <span
-                            className="p-2 rounded-lg opacity-40 cursor-not-allowed text-text-secondary-default-light dark:text-text-secondary-default-dark"
+                            className="p-2 rounded-lg opacity-40 text-text-secondary-default-light dark:text-text-secondary-default-dark"
                             title="No file available"
                             >
                             <DownloadIcon size={16} />

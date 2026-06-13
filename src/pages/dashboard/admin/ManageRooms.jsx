@@ -5,7 +5,6 @@ import SearchBar from "../../../components/ui/SearchBar";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import Table from "../../../components/ui/Table";
-import PaginationButtons from "../../../components/ui/PaginationButtons";
 import RoomForm from "../../../feature/admin/components/RoomForm";
 import {
     FilePenIcon,
@@ -168,7 +167,7 @@ export default function ManageRooms() {
             )}
 
             <Section>
-                <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+                <div className="flex items-center justify-between gap-4 mb-3">
                     <h2 className="text-xl font-semibold">
                         Rooms{" "}
                         <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">
@@ -203,57 +202,52 @@ export default function ManageRooms() {
                     <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">No rooms found</p>
                 </Section>
             ) : (
-                <>
-                    <div className="mb-6">
-                        {(() => {
-                            const tableRows = paginatedRooms.map(buildRoomRow);
-                            return (
-                                <Table
-                                    role="room"
-                                    headers={roomTableHeaders}
-                                    data={tableRows}
-                                    wrapInSection={false}
-                                    showHeaderActions={false}
-                                    showPagination={false}
-                                    selectedRows={selectedIndices}
-                                    onSelectionChange={(indices) => {
-                                        const visibleIds = new Set(paginatedRooms.map(r => (r.id ?? r.roomId)).filter(Boolean));
-                                        setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => (paginatedRooms[i]?.id ?? paginatedRooms[i]?.roomId)).filter(Boolean)]);
-                                    }}
-                                    actions={(row) => [
-                                        {
-                                            label: "Edit",
-                                            onClick: () => {
-                                                if (row._raw) {
-                                                    setEditingRoom(row._raw);
-                                                    setIsAddRoomFormOpen(true);
-                                                }
-                                            },
-                                            className: "text-text-primary-default-light dark:text-text-primary-default-dark font-medium",
-                                        },
-                                        {
-                                            label: "Delete",
-                                            onClick: () => {
-                                                if (row._raw) setDeleteTarget(row._raw);
-                                            },
-                                            className: "text-text-danger-default-light dark:text-text-danger-default-dark",
-                                        },
-                                    ]}
-                                />
-                            );
-                        })()}
-                    </div>
-
-                    {totalPages > 1 && (
-                        <Section>
-                            <PaginationButtons
-                                currentPage={currentPage}
+                <div className="mb-6">
+                    {(() => {
+                        const tableRows = paginatedRooms.map(buildRoomRow);
+                        return (
+                            <Table
+                                role="room"
+                                headers={roomTableHeaders}
+                                data={tableRows}
+                                wrapInSection={false}
+                                showHeaderActions={false}
+                                showPagination={false}
+                                selectedRows={selectedIndices}
+                                page={currentPage}
+                                onPageChange={setCurrentPage}
                                 totalPages={totalPages}
-                                setCurrentPage={setCurrentPage}
+                                totalItems={filteredRooms.length}
+                                itemsLabel="Rooms"
+                                from={(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                                to={Math.min(currentPage * ITEMS_PER_PAGE, filteredRooms.length)}
+                                onSelectionChange={(indices) => {
+                                    const visibleIds = new Set(paginatedRooms.map(r => (r.id ?? r.roomId)).filter(Boolean));
+                                    setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => (paginatedRooms[i]?.id ?? paginatedRooms[i]?.roomId)).filter(Boolean)]);
+                                }}
+                                actions={(row) => [
+                                    {
+                                        label: "Edit",
+                                        onClick: () => {
+                                            if (row._raw) {
+                                                setEditingRoom(row._raw);
+                                                setIsAddRoomFormOpen(true);
+                                            }
+                                        },
+                                        className: "text-text-primary-default-light dark:text-text-primary-default-dark font-medium",
+                                    },
+                                    {
+                                        label: "Delete",
+                                        onClick: () => {
+                                            if (row._raw) setDeleteTarget(row._raw);
+                                        },
+                                        className: "text-text-danger-default-light dark:text-text-danger-default-dark",
+                                    },
+                                ]}
                             />
-                        </Section>
-                    )}
-                </>
+                        );
+                    })()}
+                </div>
             )}
 
             {/* Add/Edit Room Form */}

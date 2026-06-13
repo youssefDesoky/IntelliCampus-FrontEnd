@@ -88,7 +88,7 @@ function QuestionControls({ question, questionType, answer, onAnswerChange, writ
                     placeholder={question.placeholder}
                     rows={8}
                     readOnly={disabled}
-                    className={`w-full rounded-2xl border px-4 py-3 ${disabled ? "opacity-70 cursor-not-allowed" : ""}`}
+                    className={`w-full rounded-2xl border px-4 py-3 ${disabled ? "opacity-70" : ""}`}
                 />
                 <div className="mt-3 flex items-center justify-between text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                     <span>Write at least {question.minWords} words for a strong response.</span>

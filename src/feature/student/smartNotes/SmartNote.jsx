@@ -105,7 +105,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, o
         <div
             ref={cardRef}
             onClick={() => setIsEditing(true)}
-            className="group relative min-w-70 flex overflow-hidden rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark transition-shadow duration-200 hover:shadow-md shadow-sm shadow-shadow-light dark:shadow-shadow-dark cursor-pointer"
+            className="group relative min-w-70 flex overflow-hidden rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark transition-shadow duration-200 hover:shadow-md shadow-sm shadow-shadow-light dark:shadow-shadow-dark"
         >
             {isEditing && (
                 <SmartNoteEditor

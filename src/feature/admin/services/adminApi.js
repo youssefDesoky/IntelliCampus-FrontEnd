@@ -135,7 +135,7 @@ export async function deleteAdmin(id) {
 // ─── Bylaws ─────────────────────────────────────────────────
 
 export async function fetchBylaws() {
-    const res = await fetch(`${API_URL}/api/Baylaw`, {
+    const res = await fetch(`${API_URL}/api/Bylaw`, {
         credentials: "include",
     });
     if (!res.ok) throw new Error(`Failed to fetch bylaws: ${res.status}`);
@@ -143,7 +143,7 @@ export async function fetchBylaws() {
 }
 
 export async function fetchBylawById(id) {
-    const res = await fetch(`${API_URL}/api/Baylaw/${id}`, {
+    const res = await fetch(`${API_URL}/api/Bylaw/${id}`, {
         credentials: "include",
     });
     if (!res.ok) throw new Error(`Failed to fetch bylaw: ${res.status}`);
@@ -151,7 +151,7 @@ export async function fetchBylawById(id) {
 }
 
 export async function createBylaw(data) {
-    const res = await fetch(`${API_URL}/api/Baylaw`, {
+    const res = await fetch(`${API_URL}/api/Bylaw`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -165,7 +165,7 @@ export async function createBylaw(data) {
 }
 
 export async function deleteBylaw(id) {
-    const res = await fetch(`${API_URL}/api/Baylaw/${id}`, {
+    const res = await fetch(`${API_URL}/api/Bylaw/${id}`, {
         method: "DELETE",
         credentials: "include",
     });
@@ -174,7 +174,7 @@ export async function deleteBylaw(id) {
 }
 
 export async function toggleBylawActive(id) {
-    const res = await fetch(`${API_URL}/api/Baylaw/${id}/toggle-active`, {
+    const res = await fetch(`${API_URL}/api/Bylaw/${id}/toggle-active`, {
         method: "PATCH",
         credentials: "include",
     });
@@ -185,7 +185,7 @@ export async function toggleBylawActive(id) {
 export async function uploadBylawDocument(id, file) {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(`${API_URL}/api/Baylaw/${id}/upload`, {
+    const res = await fetch(`${API_URL}/api/Bylaw/${id}/upload`, {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -198,7 +198,7 @@ export async function uploadBylawDocument(id, file) {
 }
 
 export async function setBylawGradeScales(id, items) {
-    const res = await fetch(`${API_URL}/api/Baylaw/${id}/grade-scales`, {
+    const res = await fetch(`${API_URL}/api/Bylaw/${id}/grade-scales`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -237,7 +237,7 @@ export async function uploadStudents(file, bylawId) {
     const formData = new FormData();
     formData.append("file", file);
     let url = `${API_URL}/api/ExcelImport/students`;
-    if (bylawId) url += `?baylawId=${bylawId}`;
+    if (bylawId) url += `?bylawId=${bylawId}`;
 
     const res = await fetch(url, {
         method: "POST",

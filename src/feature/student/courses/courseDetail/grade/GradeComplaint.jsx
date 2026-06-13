@@ -145,7 +145,7 @@ export default function GradeComplaint({ className = "", items = [] }) {
 									value={assessmentId}
 									onChange={(event) => setAssessmentId(event.target.value)}
 									disabled={complaintItemOptions.length === 0}
-									className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+									className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 disabled:opacity-60 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
 								>
 									<option value="">Choose a {complaintType}</option>
 									{complaintItemOptions.map((item) => (

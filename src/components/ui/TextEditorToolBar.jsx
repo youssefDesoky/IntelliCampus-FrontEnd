@@ -102,7 +102,7 @@ function Btn({ icon, active, disabled, title, onClick }) {
                 w-8 h-8 flex items-center justify-center rounded-md border-none transition-colors duration-100
                 [&_svg]:w-4 [&_svg]:h-4
                 ${disabled
-                    ? 'opacity-35 cursor-not-allowed text-icon-secondary-default-light dark:text-icon-secondary-default-dark'
+                    ? 'opacity-35 text-icon-secondary-default-light dark:text-icon-secondary-default-dark'
                     : active
                         ? 'bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-default-light dark:text-text-accent-default-dark'
                         : 'text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark hover:text-text-primary-active-light dark:hover:text-text-primary-active-dark'

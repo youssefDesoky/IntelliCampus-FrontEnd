@@ -25,7 +25,7 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
             setIsLoadingBylaws(true);
             fetchBylaws()
                 .then(data => {
-                    const options = data.map(b => ({ value: b.baylawId, label: b.name }));
+                    const options = data.map(b => ({ value: b.bylawId, label: b.name }));
                     setBylaws(options);
                 })
                 .catch(console.error)

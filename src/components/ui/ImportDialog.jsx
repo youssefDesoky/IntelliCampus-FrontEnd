@@ -93,7 +93,7 @@ export default function ImportDialog({
                         onClick={() => !file && fileInputRef.current?.click()}
                         className={[
                             "relative overflow-hidden rounded-xl border transition-all duration-200",
-                            !file ? "cursor-pointer" : "cursor-default",
+                            !file ? "" : "",
                             isDragging
                                 ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-accent-default-light/30 dark:bg-bg-surface-accent-default-dark/20"
                                 : file
@@ -137,7 +137,7 @@ export default function ImportDialog({
                                         {isDragging ? "Drop to upload" : "Drop your file here"}
                                     </p>
                                     <p className="text-[13px] text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                        or <span className="cursor-pointer font-medium text-text-accent-active-light underline underline-offset-2 transition-opacity hover:opacity-80 dark:text-text-accent-active-dark">browse files</span>
+                                        or <span className="font-medium text-text-accent-active-light underline underline-offset-2 transition-opacity hover:opacity-80 dark:text-text-accent-active-dark">browse files</span>
                                     </p>
                                 </div>
 

@@ -10,7 +10,7 @@ export default function ChatUser({ user, onClick }) {
     <div
       onClick={() => onClick?.(user)}
       className="
-        group flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer
+        group flex items-center gap-3 px-2 py-2 rounded-xl
         transition-all duration-200
         hover:bg-white/5 active:bg-white/8
       "

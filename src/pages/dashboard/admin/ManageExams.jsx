@@ -3,29 +3,9 @@ import PageHeader from "../../../components/ui/PageHeader";
 import Button from "../../../components/ui/Button";
 import Section from "../../../components/ui/Section";
 import ImportDialog from "../../../components/ui/ImportDialog";
-import { ImportIcon, FileLinesIcon, CalendarDaysIcon, ClockIcon, HashIcon, BookIcon } from "../../../components/ui/icons";
+import { ImportIcon } from "../../../components/ui/icons";
 import { uploadExams } from "../../../feature/admin/services/adminApi";
-
-const columnsWithExamType = [
-    { field: "CourseCode", desc: "Course code as registered in the system" },
-    { field: "Title", desc: "Exam title / name" },
-    { field: "ExamType (Midterm/Final)", desc: "Midterm or Final" },
-    { field: "Date (yyyy-MM-dd)", desc: "e.g. 2026-06-15" },
-    { field: "Time (HH:mm)", desc: "e.g. 10:00" },
-    { field: "DurationMinutes", desc: "Duration in minutes" },
-    { field: "RoomName", desc: "Room name as registered (optional)" },
-    { field: "Description", desc: "Any additional notes (optional)" },
-];
-
-const columnsWithoutExamType = [
-    { field: "CourseCode", desc: "Course code as registered in the system" },
-    { field: "Title", desc: "Exam title / name" },
-    { field: "Date (yyyy-MM-dd)", desc: "e.g. 2026-06-15" },
-    { field: "Time (HH:mm)", desc: "e.g. 10:00" },
-    { field: "DurationMinutes", desc: "Duration in minutes" },
-    { field: "RoomName", desc: "Room name as registered (optional)" },
-    { field: "Description", desc: "Any additional notes (optional)" },
-];
+import ExamScheduler from "../../../feature/admin/components/ExamScheduler";
 
 const examTypeOptions = [
     { value: "", label: "From file column" },
@@ -38,8 +18,6 @@ export default function ManageExams() {
     const [isUploading, setIsUploading] = useState(false);
     const [result, setResult] = useState(null);
     const [selectedExamType, setSelectedExamType] = useState(examTypeOptions[0]);
-
-    const expectedColumns = selectedExamType.value ? columnsWithoutExamType : columnsWithExamType;
 
     const handleImport = async (file) => {
         setIsUploading(true);
@@ -67,7 +45,7 @@ export default function ManageExams() {
 
     return (
         <>
-            <PageHeader title="Manage Exams" subtitle="Import exam schedules by uploading an Excel file">
+            <PageHeader title="Manage Exams" subtitle="Import exam schedules and auto-generate conflict-free timetables">
                 <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
                     <ImportIcon size={24} />
                     Import Exams
@@ -75,87 +53,24 @@ export default function ManageExams() {
             </PageHeader>
 
             <Section>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark mb-4 flex items-center gap-2">
-                            <FileLinesIcon size={18} />
-                            Expected File Format
-                        </h3>
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-4">
-                            Upload an <strong>.xlsx</strong>, <strong>.xls</strong>, or <strong>.csv</strong> file with the following columns:
-                        </p>
-                        <div className="space-y-2.5">
-                            {expectedColumns.map((col, i) => (
-                                <div key={i} className="flex items-start gap-3">
-                                    <span className="shrink-0 w-2 h-2 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark mt-1.5" />
-                                    <div>
-                                        <code className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                            {col.field}
-                                        </code>
-                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-0.5">
-                                            {col.desc}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark mb-4 flex items-center gap-2">
-                            <CalendarDaysIcon size={18} />
-                            What This Does
-                        </h3>
-                        <ul className="space-y-3 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            <li className="flex items-start gap-3">
-                                <span className="shrink-0 mt-1 text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    <HashIcon size={14} />
-                                </span>
-                                Creates exam records from your file (Midterm or Final)
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="shrink-0 mt-1 text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    <BookIcon size={14} />
-                                </span>
-                                Assigns each exam to its course (matched by CourseCode)
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="shrink-0 mt-1 text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    <CalendarDaysIcon size={14} />
-                                </span>
-                                Sets date, time, and duration for each exam
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="shrink-0 mt-1 text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    <ClockIcon size={14} />
-                                </span>
-                                Optionally assigns exams to rooms (matched by RoomName)
-                            </li>
-                        </ul>
-
-                        {result && (
-                            <div className="mt-6 pt-4 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <h4 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                                    Last Import Result
-                                </h4>
-                                <div className="flex items-center gap-4 text-sm">
-                                    <span className="text-text-success-default-light dark:text-text-success-default-dark">
-                                        ✅ {result.successCount} succeeded
-                                    </span>
-                                    {result.failCount > 0 && (
-                                        <span className="text-text-danger-default-light dark:text-text-danger-default-dark">
-                                            ❌ {result.failCount} failed
-                                        </span>
-                                    )}
-                                    <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                        / {result.totalRows} total
-                                    </span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <ExamScheduler />
             </Section>
+
+            {result && (
+                <Section>
+                    <div className="flex items-center gap-4 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <span className="text-text-success-default-light dark:text-text-success-default-dark">
+                            ✅ Last import: {result.successCount} succeeded
+                        </span>
+                        {result.failCount > 0 && (
+                            <span className="text-text-danger-default-light dark:text-text-danger-default-dark">
+                                ❌ {result.failCount} failed
+                            </span>
+                        )}
+                        <span>/ {result.totalRows} total</span>
+                    </div>
+                </Section>
+            )}
 
             {isImportOpen && (
                 <ImportDialog

@@ -174,7 +174,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         onClick={() => fileInputRef.current?.click()}
-                        className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200
+                        className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-all duration-200
                             ${isDragOver
                                 ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-accent-default-light/10 dark:bg-bg-surface-accent-default-dark/10"
                                 : "border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:border-border-primary-focus-light dark:hover:border-border-primary-focus-dark hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50"

@@ -7,7 +7,7 @@ import { PlusIcon, TrashIcon, CloudUploadIcon } from "../../../components/ui/ico
 const defaultGradeScale = { gradeLetter: "", minPercentage: 0, gpaValue: 0, sortOrder: 0 };
 
 export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoading = false, isOpen = true }) {
-    const isEdit = !!initialData.baylawId;
+    const isEdit = !!initialData.bylawId;
     const [gradeScales, setGradeScales] = useState(() => {
         if (initialData.gradeScales && initialData.gradeScales.length > 0) {
             return initialData.gradeScales.map((g, i) => ({ ...g, sortOrder: i + 1 }));
@@ -118,7 +118,7 @@ export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoadi
                     </label>
                     <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg p-4 text-center cursor-pointer hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-colors"
+                        className="border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg p-4 text-center hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-colors"
                     >
                         <input
                             ref={fileInputRef}

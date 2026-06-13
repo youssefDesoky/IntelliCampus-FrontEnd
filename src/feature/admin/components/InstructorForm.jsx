@@ -109,7 +109,7 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                     <div className="relative">
                         <div
                             onClick={handlePhotoClick}
-                            className="w-32 h-36 rounded-xl overflow-hidden cursor-pointer ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
+                            className="w-32 h-36 rounded-xl overflow-hidden ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
                         >
                             {photoPreview ? (
                                 <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />

@@ -114,7 +114,7 @@ export default function SelectBox({
                         {options.map((option) => (
                             <div
                                 key={option.value}
-                                className={`block px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark truncate cursor-pointer ${
+                                className={`block px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark truncate ${
                                     selected?.value === option.value 
                                         ? 'bg-bg-surface-primary-active-light dark:bg-bg-surface-primary-active-dark font-medium text-text-accent-default-light dark:text-text-accent-default-dark' 
                                         : ''

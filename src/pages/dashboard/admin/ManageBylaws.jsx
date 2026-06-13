@@ -5,14 +5,11 @@ import SearchBar from "../../../components/ui/SearchBar";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import Table from "../../../components/ui/Table";
-import PaginationButtons from "../../../components/ui/PaginationButtons";
 import BylawForm from "../../../feature/admin/components/BylawForm";
 import {
     FilePenIcon,
     TrashIcon,
-    BookIcon,
     PlusIcon,
-    CloudUploadIcon,
     CheckIcon,
     XIcon,
 } from "../../../components/ui/icons";
@@ -26,23 +23,16 @@ import {
 } from "../../../feature/admin/services/adminApi";
 
 const ITEMS_PER_PAGE = 10;
-const tableHeaders = ["Bylaw", "Version", "Status", "Students", "Document"];
+const tableHeaders = ["Bylaw", "Description", "Version", "Status", "Students", "Document"];
 
 function buildRow(b) {
     return {
         bylaw: (
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                    <BookIcon className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left">
-                    <p className="font-medium">{b.name}</p>
-                    {b.description && (
-                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate max-w-[200px]">{b.description}</p>
-                    )}
-                </div>
-            </div>
+            <p className="font-medium">{b.name}</p>
         ),
+        description: b.description ? (
+            <span className="truncate max-w-xs" title={b.description}>{b.description}</span>
+        ) : "—",
         version: `v${b.version}`,
         status: (
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${b.isActive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
@@ -56,7 +46,7 @@ function buildRow(b) {
                 {b.fileName}
             </span>
         ) : "—",
-        _id: b.baylawId,
+        _id: b.bylawId ?? b.id,
         _raw: b,
     };
 }
@@ -107,7 +97,7 @@ export default function ManageBylaws() {
 
     const totalPages = Math.max(1, Math.ceil(filteredBylaws.length / ITEMS_PER_PAGE));
     const paginatedBylaws = filteredBylaws.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-    const selectedIndices = paginatedBylaws.map((b, i) => selectedRowIds.includes(b.baylawId) ? i : -1).filter(i => i !== -1);
+    const selectedIndices = paginatedBylaws.map((b, i) => selectedRowIds.includes(b.bylawId ?? b.id) ? i : -1).filter(i => i !== -1);
 
     const handleEdit = (bylaw) => {
         setEditingBylaw(bylaw);
@@ -119,8 +109,8 @@ export default function ManageBylaws() {
             setFormIsLoading(true);
             const { _file, ...bylawData } = data;
             const created = await createBylaw(bylawData);
-            if (_file && created?.baylawId) {
-                await uploadBylawDocument(created.baylawId, _file);
+            if (_file && created?.bylawId) {
+                await uploadBylawDocument(created.bylawId, _file);
             }
             await loadBylaws();
             setEditingBylaw(null);
@@ -138,10 +128,10 @@ export default function ManageBylaws() {
         try {
             setFormIsLoading(true);
             if (data.gradeScales) {
-                await setBylawGradeScales(gradeScalesTarget.baylawId, data.gradeScales);
+                await setBylawGradeScales(gradeScalesTarget.bylawId, data.gradeScales);
             }
             if (data._file) {
-                await uploadBylawDocument(gradeScalesTarget.baylawId, data._file);
+                await uploadBylawDocument(gradeScalesTarget.bylawId, data._file);
             }
             await loadBylaws();
             setGradeScalesTarget(null);
@@ -159,7 +149,7 @@ export default function ManageBylaws() {
     const confirmDelete = async () => {
         if (!deleteTarget) return;
         try {
-            await deleteBylaw(deleteTarget.baylawId);
+            await deleteBylaw(deleteTarget.bylawId);
             await loadBylaws();
             setDeleteTarget(null);
         } catch (err) {
@@ -180,7 +170,7 @@ export default function ManageBylaws() {
 
     const handleToggleActive = async (bylaw) => {
         try {
-            await toggleBylawActive(bylaw.baylawId);
+            await toggleBylawActive(bylaw.bylawId);
             await loadBylaws();
         } catch (err) {
             setError(err.message);
@@ -189,7 +179,7 @@ export default function ManageBylaws() {
 
     const handleUploadDocument = async (bylaw, file) => {
         try {
-            await uploadBylawDocument(bylaw.baylawId, file);
+            await uploadBylawDocument(bylaw.bylawId, file);
             setUploadTarget(null);
             await loadBylaws();
         } catch (err) {
@@ -215,7 +205,7 @@ export default function ManageBylaws() {
             )}
 
             <Section>
-                <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+                <div className="flex items-center justify-between gap-4 flex-wrap mb-3">
                     <h2 className="text-xl font-semibold">
                         Bylaws{" "}
                         <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">
@@ -255,39 +245,34 @@ export default function ManageBylaws() {
                 ) : filteredBylaws.length === 0 ? (
                     <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">No bylaws found.</p>
                 ) : (
-                    <>
-                        <div className="mb-6">
-                            <Table
-                                role="bylaw"
-                                headers={tableHeaders}
-                                data={tableRows}
-                                wrapInSection={false}
-                                showHeaderActions={false}
-                                showPagination={false}
-                                selectedRows={selectedIndices}
-                                onSelectionChange={(indices) => {
-                                    const visibleIds = new Set(paginatedBylaws.map(b => b.baylawId).filter(Boolean));
-                                    setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedBylaws[i]?.baylawId).filter(Boolean)]);
-                                }}
-                                actions={(row) => ([
-                                    { label: "Edit", onClick: () => { setEditingBylaw(row._raw); setIsFormOpen(true); } },
-                                    { label: "Grades", onClick: () => setGradeScalesTarget(row._raw) },
-                                    { label: "Toggle Active", onClick: () => handleToggleActive(row._raw) },
-                                    { label: "Delete", onClick: () => setDeleteTarget(row._raw) },
-                                ])}
-                            />
-                        </div>
-
-                        {totalPages > 1 && (
-                            <Section>
-                                <PaginationButtons
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
-                                    setCurrentPage={setCurrentPage}
-                                />
-                            </Section>
-                        )}
-                    </>
+                    <div className="mb-6">
+                        <Table
+                            role="bylaw"
+                            headers={tableHeaders}
+                            data={tableRows}
+                            wrapInSection={false}
+                            showHeaderActions={false}
+                            showPagination={false}
+                            selectedRows={selectedIndices}
+                            page={currentPage}
+                            onPageChange={setCurrentPage}
+                            totalPages={totalPages}
+                            totalItems={filteredBylaws.length}
+                            itemsLabel="Bylaws"
+                            from={(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                            to={Math.min(currentPage * ITEMS_PER_PAGE, filteredBylaws.length)}
+                            onSelectionChange={(indices) => {
+                                const visibleIds = new Set(paginatedBylaws.map(b => b.bylawId).filter(Boolean));
+                                setSelectedRowIds(prev => [...prev.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedBylaws[i]?.bylawId).filter(Boolean)]);
+                            }}
+                            actions={(row) => ([
+                                { label: "Edit", onClick: () => { setEditingBylaw(row._raw); setIsFormOpen(true); } },
+                                { label: "Grades", onClick: () => setGradeScalesTarget(row._raw) },
+                                { label: "Toggle Active", onClick: () => handleToggleActive(row._raw) },
+                                { label: "Delete", onClick: () => setDeleteTarget(row._raw) },
+                            ])}
+                        />
+                    </div>
                 )}
 
                 {isFormOpen && (

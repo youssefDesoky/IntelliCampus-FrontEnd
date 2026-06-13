@@ -337,7 +337,7 @@ export default function StudyGroup() {
                             type="button"
                             onClick={() => document.getElementById("file-input")?.click()}
                             disabled={attachments.length >= 5}
-                            className="inline-flex items-center gap-2 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark px-3 py-2 font-medium transition-colors hover:bg-bg-surface-secondary-default-light disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-bg-surface-secondary-default-dark"
+                            className="inline-flex items-center gap-2 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark px-3 py-2 font-medium transition-colors hover:bg-bg-surface-secondary-default-light disabled:opacity-50 dark:hover:bg-bg-surface-secondary-default-dark"
                         >
                             <PaperclipIcon className="h-4 w-4" />
                             Attach file
@@ -348,7 +348,7 @@ export default function StudyGroup() {
                     <button
                         type="button"
                         disabled={!postDraft.trim()}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-text-accent-default-light px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-text-accent-hover-light disabled:cursor-not-allowed disabled:opacity-50 dark:bg-text-accent-default-dark dark:hover:bg-text-accent-hover-dark"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-text-accent-default-light px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-text-accent-hover-light disabled:opacity-50 dark:bg-text-accent-default-dark dark:hover:bg-text-accent-hover-dark"
                     >
                         <PaperPlaneIcon className="h-4 w-4" />
                         Post to study group

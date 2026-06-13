@@ -96,7 +96,7 @@ export default function Dialog({
                     <button
                         type="button"
                         onClick={handleClose}
-                        className="absolute top-2 right-2 p-2 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors z-10 cursor-pointer"
+                        className="absolute top-2 right-2 p-2 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors z-10"
                     >
                         <XIcon size={20} />
                     </button>

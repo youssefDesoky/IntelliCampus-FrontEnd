@@ -9,7 +9,7 @@ export default function RadioToggle({ name, options = [], value, onChange, class
                     <label
                         key={opt.value}
                         htmlFor={`${name}-${opt.value}`}
-                        className={`option flex-1 flex items-center gap-3 cursor-pointer select-none rounded-md transition-all border ${selected ? 'border-border-primary-default-light bg-bg-surface-secondary-default-light text-text-primary-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark' : 'border-border-primary-default-light bg-transparent text-text-secondary-default-light dark:text-text-secondary-default-dark'}`}
+                        className={`option flex-1 flex items-center gap-3 select-none rounded-md transition-all border ${selected ? 'border-border-primary-default-light bg-bg-surface-secondary-default-light text-text-primary-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark' : 'border-border-primary-default-light bg-transparent text-text-secondary-default-light dark:text-text-secondary-default-dark'}`}
                         style={{ padding: '0.5rem 0.75rem' }}
                     >
                         <input

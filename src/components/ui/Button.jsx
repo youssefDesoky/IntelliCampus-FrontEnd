@@ -32,7 +32,7 @@ export default function Button({
     return (
         <button
             className={`${width} ${base} ${sizeStyles[size] || sizeStyles.md} ${variants[variant] || variants.primary} ${
-                disabled || loading ? "opacity-50 cursor-not-allowed" : ""
+                disabled || loading ? "opacity-50" : ""
             } ${className}`}
             disabled={disabled || loading}
             {...props}

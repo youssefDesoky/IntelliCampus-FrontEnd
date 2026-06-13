@@ -192,7 +192,7 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                     value={selectedCourseId}
                                     onChange={(e) => setSelectedCourseId(e.target.value)}
                                     disabled={registering}
-                                    className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50 "
                                 >
                                     <option value="" disabled>-- Select a course to continue --</option>
                                     {availableCourses.map((c) => (
@@ -275,7 +275,7 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                                 selectedSection === s
                                                     ? "border-border-accent-active-light dark:border-border-accent-active-dark bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark shadow-sm ring-1 ring-border-accent-active-light dark:ring-border-accent-active-dark"
                                                     : "border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark hover:border-text-secondary-default-light dark:hover:border-text-secondary-default-dark"
-                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                            } disabled:opacity-50 `}
                                         >
                                             Section {s}
                                         </button>
