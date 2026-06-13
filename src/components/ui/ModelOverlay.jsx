@@ -1,4 +1,4 @@
-export default function ModelOverlay({ children, onClose, maxWidth = "max-w-3xl" }) {
+export default function ModelOverlay({ children, onClose, maxWidth = "max-w-5xl" }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div 

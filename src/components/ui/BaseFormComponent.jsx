@@ -10,7 +10,7 @@ export default function BaseFormComponent({
     submitText = "Submit",
     cancelText = "Cancel",
     children,
-    maxWidth = "max-w-4xl",
+    maxWidth = "max-w-5xl",
     className = "",
     contentClassName = "",
     footerClassName = "",
@@ -29,7 +29,7 @@ export default function BaseFormComponent({
     return (
         <ModelOverlay onClose={onClose} maxWidth={maxWidth}>
             <form
-                className={`relative z-50 w-full overflow-hidden rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)] ${className}`}
+                className={`relative z-50 w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)] ${className}`}
                 onSubmit={handleSubmit}
             >
                 <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-4 dark:border-border-primary-default-dark">

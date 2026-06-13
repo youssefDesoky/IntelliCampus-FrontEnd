@@ -6,106 +6,37 @@ import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import Table from "../../../components/ui/Table";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
-import ToggleViewMode from "../../../components/ui/ToggleViewMode";
 import DepartmentForm from "../../../feature/admin/components/DepartmentForm";
 import {
     FilePenIcon,
     TrashIcon,
-    BookIcon,
-    UserTieIcon,
-    UserIcon,
-    Grid3ColIcon,
-    TableIcon,
     PlusIcon,
 } from "../../../components/ui/icons";
 import { fetchDepartments, createDepartment, updateDepartment, deleteDepartment, fetchInstructors } from "../../../feature/admin/services/adminApi";
 
-const ITEMS_PER_PAGE = 9;
-const departmentTableHeaders = ["Department", "Head Instructor", "Courses", "Description"];
+const ITEMS_PER_PAGE = 10;
+const departmentTableHeaders = ["Department Name", "Head Instructor", "Courses", "Description"];
 
 function buildDepartmentRow(department, instructorLookup = {}) {
     const headInstructorName = department.headInstructorName || instructorLookup[String(department.instructorId)] || "—";
 
     return {
         department: (
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                    <BookIcon className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left">
-                    <p className="font-medium">{department.departmentName}</p>
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{department.id}</p>
-                </div>
+            <div className="flex flex-col text-left">
+                <p className="font-medium">{department.departmentName}</p>
+                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark" dir="rtl">{department.departmentNameAr || "—"}</p>
             </div>
         ),
         headInstructor: headInstructorName,
         courses: `${department.courseCount ?? 0}`,
         description: department.description ? (
-            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate max-w-xs" title={department.description}>
+            <span className="truncate max-w-xs" title={department.description}>
                 {department.description}
             </span>
         ) : "—",
         _id: department.id,
         _raw: department,
     };
-}
-
-function DepartmentCard({ department, headInstructorName, onEdit, onDelete }) {
-    return (
-        <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg border-l-4 border-l-border-accent-default-light dark:border-l-border-accent-default-dark shadow-sm shadow-shadow-light hover:shadow-lg dark:hover:shadow-shadow-dark transition-shadow p-5 flex flex-col justify-between gap-4">
-            <div>
-                <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                            <BookIcon className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-base leading-tight">{department.departmentName}</h3>
-                            <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                                {department.id}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mb-3">
-                    {headInstructorName && (
-                        <div className="flex items-center gap-1.5">
-                            <UserTieIcon className="w-4 h-4" />
-                            <span>{headInstructorName}</span>
-                        </div>
-                    )}
-                    <div className="flex items-center gap-1.5">
-                        <UserIcon className="w-4 h-4" />
-                        <span>{department.courseCount ?? 0} courses</span>
-                    </div>
-                </div>
-
-                {department.description && (
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-3">
-                        {department.description}
-                    </p>
-                )}
-            </div>
-
-            <div className="flex items-center gap-2 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                <Button
-                    variant="secondary"
-                    className="flex-1 justify-center text-xs px-2 py-1.5"
-                    onClick={() => onEdit(department)}
-                >
-                    <FilePenIcon className="w-4 h-4" /> Edit
-                </Button>
-                <Button
-                    variant="danger"
-                    className="flex-1 justify-center text-xs px-2 py-1.5"
-                    onClick={() => onDelete(department)}
-                >
-                    <TrashIcon className="w-4 h-4" /> Delete
-                </Button>
-            </div>
-        </div>
-    );
 }
 
 export default function ManageDepartments() {
@@ -118,13 +49,10 @@ export default function ManageDepartments() {
 
     const [editingDepartment, setEditingDepartment] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminDepartmentsViewMode") || "grid");
     const [selectedRowIds, setSelectedRowIds] = useState([]);
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [formIsLoading, setFormIsLoading] = useState(false);
-
-    useEffect(() => { localStorage.setItem("adminDepartmentsViewMode", viewMode); }, [viewMode]);
 
     const loadDepartments = useCallback(async () => {
         try {
@@ -147,7 +75,7 @@ export default function ManageDepartments() {
     useEffect(() => { loadDepartments(); }, [loadDepartments]);
 
     const instructorLookup = instructors.reduce((lookup, instructor) => {
-        lookup[String(instructor.id)] = instructor.name;
+        lookup[String(instructor.instructorId)] = instructor.name;
         return lookup;
     }, {});
 
@@ -157,6 +85,7 @@ export default function ManageDepartments() {
         const headName = department.headInstructorName || instructorLookup[String(department.instructorId)] || "";
         return (
             department.departmentName?.toLowerCase().includes(query) ||
+            department.departmentNameAr?.toLowerCase().includes(query) ||
             department.description?.toLowerCase().includes(query) ||
             headName.toLowerCase().includes(query) ||
             department.id?.toLowerCase().includes(query)
@@ -248,14 +177,7 @@ export default function ManageDepartments() {
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                         />
-                        <ToggleViewMode
-                            isFirstMode={viewMode === "grid"}
-                            onFirstModeSelect={() => { setViewMode("grid"); setSelectedRowIds([]); }}
-                            onSecondModeSelect={() => { setViewMode("list"); setSelectedRowIds([]); }}
-                            firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
-                            secondModeLabel={<TableIcon className="w-5 h-5" />}
-                        />
-                        {viewMode === "list" && selectedRowIds.length > 0 && (
+                        {selectedRowIds.length > 0 && (
                             <Button variant="danger" onClick={() => setIsDeleteSelectedOpen(true)}>
                                 <TrashIcon size={20} />
                                 Delete ({selectedRowIds.length})
@@ -283,39 +205,25 @@ export default function ManageDepartments() {
                     <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">No departments found.</p>
                 ) : (
                     <>
-                        {viewMode === "grid" ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
-                                {paginatedDepartments.map((department) => (
-                                    <DepartmentCard
-                                        key={department.id}
-                                        department={department}
-                                        headInstructorName={department.headInstructorName || instructorLookup[String(department.instructorId)] || ""}
-                                        onEdit={handleEdit}
-                                        onDelete={handleDelete}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="mb-6">
-                                <Table
-                                    role="department"
-                                    headers={departmentTableHeaders}
-                                    data={tableRows}
-                                    wrapInSection={false}
-                                    showHeaderActions={false}
-                                    showPagination={false}
-                                    selectedRows={selectedIndices}
-                                    onSelectionChange={(indices) => {
-                                        const visibleIds = new Set(paginatedDepartments.map(d => d.id).filter(Boolean));
-                                        setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedDepartments[i]?.id).filter(Boolean)]);
-                                    }}
-                                    actions={(row) => ([
-                                        { label: "Edit", onClick: () => { setEditingDepartment(row._raw); setIsAddDepartmentFormOpen(true); } },
-                                        { label: "Delete", onClick: () => setDeleteTarget(row._raw) },
-                                    ])}
-                                />
-                            </div>
-                        )}
+                        <div className="mb-6">
+                            <Table
+                                role="department"
+                                headers={departmentTableHeaders}
+                                data={tableRows}
+                                wrapInSection={false}
+                                showHeaderActions={false}
+                                showPagination={false}
+                                selectedRows={selectedIndices}
+                                onSelectionChange={(indices) => {
+                                    const visibleIds = new Set(paginatedDepartments.map(d => d.id).filter(Boolean));
+                                    setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedDepartments[i]?.id).filter(Boolean)]);
+                                }}
+                                actions={(row) => ([
+                                    { label: "Edit", onClick: () => { setEditingDepartment(row._raw); setIsAddDepartmentFormOpen(true); } },
+                                    { label: "Delete", onClick: () => setDeleteTarget(row._raw) },
+                                ])}
+                            />
+                        </div>
 
                         {totalPages > 1 && (
                             <Section>

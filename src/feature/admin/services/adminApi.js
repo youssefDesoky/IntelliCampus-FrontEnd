@@ -450,6 +450,29 @@ export async function addClassToCourse(courseId, data) {
     return res.json();
 }
 
+export async function updateClass(classId, data) {
+    const payload = { ...data };
+    console.log(`[API] PUT /api/classes/${classId} →`, JSON.stringify(payload, null, 2));
+    const res = await fetch(`${API_URL}/api/classes/${classId}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+        let err = {};
+        const text = await res.text().catch(() => "");
+        try { err = JSON.parse(text); } catch { /* not JSON */ }
+        console.error(`[API] PUT /api/classes/${classId} ${res.status} response:`, text || "(empty)");
+        const msg = err.errors
+            ? Object.entries(err.errors).map(([k, v]) => `${k}: ${v.join(", ")}`).join("; ")
+            : err.message || err.title || text || `Failed to update class: ${res.status}`;
+        throw new Error(msg);
+    }
+    if (res.status === 204) return true;
+    return res.json();
+}
+
 export async function deleteClassFromCourse(courseId, classId) {
     const res = await fetch(`${API_URL}/api/classes/${classId}`, {
         method: "DELETE",
@@ -481,13 +504,24 @@ export async function fetchRoomById(id) {
     return res.json();
 }
 
+function toRoomPayload(data) {
+    return {
+        roomName: data.name,
+        nameAr: data.nameAr,
+        type: data.type,
+        capacity: data.capacity,
+        location: data.location,
+    };
+}
+
 export async function createRoom(data) {
-    console.log("[API] POST /api/rooms →", JSON.stringify(data, null, 2));
+    const payload = toRoomPayload(data);
+    console.log("[API] POST /api/rooms →", JSON.stringify(payload, null, 2));
     const res = await fetch(`${API_URL}/api/rooms`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -501,12 +535,13 @@ export async function createRoom(data) {
 }
 
 export async function updateRoom(id, data) {
-    console.log(`[API] PUT /api/rooms/${id} →`, JSON.stringify(data, null, 2));
+    const payload = toRoomPayload(data);
+    console.log(`[API] PUT /api/rooms/${id} →`, JSON.stringify(payload, null, 2));
     const res = await fetch(`${API_URL}/api/rooms/${id}`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -525,4 +560,187 @@ export async function deleteRoom(id) {
         throw new Error(err.message || `Failed to delete room: ${res.status}`);
     }
     return true;
+}
+
+// ─── Student Courses (mock/fallback) ───────────────────────
+// NOTE: The backend endpoints for these may not exist yet.
+// Functions try the real API first, then fall back to mock data.
+
+const mockRegisteredCourses = [
+    { _id: "c1", title: "Data Structures", code: "CS201", creditHours: 3, schedule: "Sun/Tue 10:00-11:30", instructor: "Dr. Ahmed", section: "A" },
+    { _id: "c2", title: "Algorithms", code: "CS202", creditHours: 3, schedule: "Mon/Wed 10:00-11:30", instructor: "Dr. Sara", section: "B" },
+    { _id: "c3", title: "Database Systems", code: "CS301", creditHours: 3, schedule: "Sun/Tue 12:00-13:30", instructor: "Dr. Khaled", section: "A" },
+    { _id: "c4", title: "Operating Systems", code: "CS302", creditHours: 3, schedule: "Mon/Wed 12:00-13:30", instructor: "Dr. Nadia", section: "C" },
+    { _id: "c5", title: "Software Engineering", code: "CS401", creditHours: 3, schedule: "Tue/Thu 10:00-11:30", instructor: "Dr. Yasser", section: "B" },
+];
+
+const mockSections = ["A", "B", "C", "D"];
+
+const mockCompletedCourses = [
+    { _id: "c6", title: "Introduction to Programming", code: "CS101", creditHours: 3, grade: "A", gradePercent: 92, attendance: 95, courseWork: 88 },
+    { _id: "c7", title: "Calculus I", code: "MATH101", creditHours: 3, grade: "B+", gradePercent: 87, attendance: 90, courseWork: 82 },
+    { _id: "c8", title: "Linear Algebra", code: "MATH201", creditHours: 3, grade: "A-", gradePercent: 89, attendance: 93, courseWork: 85 },
+    { _id: "c9", title: "Discrete Mathematics", code: "MATH202", creditHours: 3, grade: "B", gradePercent: 82, attendance: 88, courseWork: 78 },
+    { _id: "c10", title: "Probability & Statistics", code: "MATH301", creditHours: 3, grade: "A", gradePercent: 94, attendance: 97, courseWork: 91 },
+    { _id: "c11", title: "Computer Networks", code: "CS303", creditHours: 3, grade: "B+", gradePercent: 86, attendance: 91, courseWork: 80 },
+];
+
+const mockAvailableCourses = [
+    { _id: "c12", title: "Machine Learning", code: "CS402", creditHours: 3 },
+    { _id: "c13", title: "Computer Vision", code: "CS403", creditHours: 3 },
+    { _id: "c14", title: "Natural Language Processing", code: "CS404", creditHours: 3 },
+    { _id: "c15", title: "Cryptography", code: "CS405", creditHours: 3 },
+    { _id: "c16", title: "Compiler Design", code: "CS406", creditHours: 3 },
+];
+
+export async function fetchStudentRegisteredCourses(studentId) {
+    try {
+        const res = await fetch(`${API_URL}/api/students/${studentId}/courses/registered`, {
+            credentials: "include",
+        });
+        if (res.ok) return res.json();
+    } catch { /* fall through to mock */ }
+    return [...mockRegisteredCourses];
+}
+
+export async function fetchStudentCompletedCourses(studentId) {
+    try {
+        const res = await fetch(`${API_URL}/api/students/${studentId}/courses/completed`, {
+            credentials: "include",
+        });
+        if (res.ok) return res.json();
+    } catch { /* fall through to mock */ }
+    return [...mockCompletedCourses];
+}
+
+export async function fetchAvailableCoursesForStudent(studentId) {
+    try {
+        const res = await fetch(`${API_URL}/api/students/${studentId}/courses/available`, {
+            credentials: "include",
+        });
+        if (res.ok) return res.json();
+    } catch { /* fall through to mock */ }
+    return [...mockAvailableCourses];
+}
+
+export async function registerStudentCourse(studentId, courseId) {
+    const res = await fetch(`${API_URL}/api/students/${studentId}/courses/register`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId }),
+    });
+    if (res.ok) return res.json();
+    if (res.status === 404) return { success: true, mock: true };
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to change section: ${res.status}`);
+}
+
+// ─── Email ───────────────────────────────────────────────────
+
+export async function sendEmail({ to, subject, body }) {
+    const res = await fetch(`${API_URL}/api/email/send`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to, subject, body }),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to send email: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function unregisterStudentCourse(studentId, courseId) {
+    const res = await fetch(`${API_URL}/api/students/${studentId}/courses/${courseId}`, {
+        method: "DELETE",
+        credentials: "include",
+    });
+    if (res.ok) return true;
+    if (res.status === 404) return { success: true, mock: true };
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to unregister course: ${res.status}`);
+}
+
+export async function fetchStudentCourseSections(studentId, courseId) {
+    try {
+        const res = await fetch(`${API_URL}/api/students/${studentId}/courses/${courseId}/sections`, {
+            credentials: "include",
+        });
+        if (res.ok) return res.json();
+    } catch { /* fall through to mock */ }
+    return [...mockSections];
+}
+
+export async function changeStudentCourseSection(studentId, courseId, section) {
+    const res = await fetch(`${API_URL}/api/students/${studentId}/courses/${courseId}/section`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section }),
+    });
+    if (res.ok) return res.json();
+    if (res.status === 404) return { success: true, mock: true };
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to change section: ${res.status}`);
+}
+
+// ─── Instructor Courses (mock/fallback) ───────────────────
+
+const mockInstructorCourses = [
+    { _id: "ic1", title: "Data Structures", code: "CS201", creditHours: 3, section: "A", schedule: "Sun/Tue 10:00-11:30", room: "Hall 101" },
+    { _id: "ic2", title: "Algorithms", code: "CS202", creditHours: 3, section: "B", schedule: "Mon/Wed 10:00-11:30", room: "Lab 2" },
+    { _id: "ic3", title: "Database Systems", code: "CS301", creditHours: 3, section: "A", schedule: "Sun/Tue 12:00-13:30", room: "Hall 102" },
+    { _id: "ic4", title: "Operating Systems", code: "CS302", creditHours: 3, section: "C", schedule: "Mon/Wed 12:00-13:30", room: "Lab 3" },
+];
+
+const mockTASections = [
+    { _id: "ts1", courseTitle: "Data Structures", courseCode: "CS201", section: "A" },
+    { _id: "ts2", courseTitle: "Algorithms", courseCode: "CS202", section: "B" },
+];
+
+const mockAvailableSections = ["A", "B", "C", "D"];
+
+export async function fetchInstructorCourses(instructorId) {
+    try {
+        const res = await fetch(`${API_URL}/api/instructors/${instructorId}/courses`, {
+            credentials: "include",
+        });
+        if (res.ok) return res.json();
+    } catch { /* fall through to mock */ }
+    return [...mockInstructorCourses];
+}
+
+export async function fetchInstructorTASections(instructorId) {
+    try {
+        const res = await fetch(`${API_URL}/api/instructors/${instructorId}/ta-sections`, {
+            credentials: "include",
+        });
+        if (res.ok) return res.json();
+    } catch { /* fall through to mock */ }
+    return [...mockTASections];
+}
+
+export async function fetchInstructorAvailableSections(instructorId, courseId) {
+    try {
+        const res = await fetch(`${API_URL}/api/instructors/${instructorId}/courses/${courseId}/sections`, {
+            credentials: "include",
+        });
+        if (res.ok) return res.json();
+    } catch { /* fall through to mock */ }
+    return [...mockAvailableSections];
+}
+
+export async function changeInstructorSection(instructorId, courseId, section) {
+    const res = await fetch(`${API_URL}/api/instructors/${instructorId}/courses/${courseId}/section`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section }),
+    });
+    if (res.ok) return res.json();
+    if (res.status === 404) return { success: true, mock: true };
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to change section: ${res.status}`);
 }

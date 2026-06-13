@@ -69,16 +69,27 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
         >
             <div className="space-y-6 mb-6">
                 <div className="grid grid-cols-2 gap-6">
-                    <InputItem 
-                        label="Room Name" 
-                        type="text" 
-                        id="name" 
-                        name="name" 
-                        placeholder="e.g., Hall 1, Lab A, Office 101" 
-                        defaultValue={initialData.name || initialData.roomName || ""} 
-                        required 
+                    <InputItem
+                        label="Room Name"
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="e.g., Hall 1, Lab A, Office 101"
+                        defaultValue={initialData.name || initialData.roomName || ""}
+                        required
                     />
 
+                    <InputItem
+                        label="Room Name Arabic"
+                        type="text"
+                        id="nameAr"
+                        name="nameAr"
+                        placeholder="e.g., قاعة 1، معمل أ، مكتب 101"
+                        defaultValue={initialData.nameAr || ""}
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
                     <SelectBox
                         className="w-full"
                         label="Room Type"
@@ -88,9 +99,7 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                         selectedOption={selectedType}
                         onChange={handleTypeChange}
                     />
-                </div>
 
-                <div className="grid grid-cols-2 gap-6">
                     <SelectBox
                         className="w-full"
                         label="Capacity"
@@ -100,30 +109,16 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                         selectedOption={selectedCapacity}
                         onChange={handleCapacityChange}
                     />
-
-                    <InputItem 
-                        label="Location" 
-                        type="text" 
-                        id="location" 
-                        name="location" 
-                        placeholder="e.g., Building A, Floor 2" 
-                        defaultValue={initialData.location || ""} 
-                    />
                 </div>
 
-                <div>
-                    <label htmlFor="equipment" className="block text-sm font-medium mb-2 text-text-primary-default-light dark:text-text-primary-default-dark">
-                        Equipment
-                    </label>
-                    <textarea
-                        id="equipment"
-                        name="equipment"
-                        rows="3"
-                        className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
-                        placeholder="e.g., Projector, Whiteboard, Computer Lab Setup"
-                        defaultValue={initialData.equipment || ""}
-                    />
-                </div>
+                <InputItem
+                    label="Location"
+                    type="text"
+                    id="location"
+                    name="location"
+                    placeholder="e.g., Building A, Floor 2"
+                    defaultValue={initialData.location || ""}
+                />
             </div>
         </BaseFormComponent>
     );

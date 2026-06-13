@@ -8,7 +8,7 @@ import StudentForm from "../../../feature/admin/components/StudentForm";
 
 const buttonStyle = "w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
 
-export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, actions, showSelectionColumn = true, showActionsColumn = true }) {
+export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true }) {
 	const [editingRow, setEditingRow] = useState(null);
 	const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
 	const [actionButtonClicked, setActionButtonClicked] = useState(null);
@@ -119,7 +119,7 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 						style={{ backgroundColor: showSelectionColumn && selectedRows.includes(rowIndex) ? 'rgba(59, 130, 246, 0.1)' : 'transparent' }}
 					>
 					{showSelectionColumn && (
-						<td className="p-3 text-center">
+						<td className="px-3 py-2 text-center">
 							<input 
 								type="checkbox" 
 								checked={selectedRows.includes(rowIndex)}
@@ -129,13 +129,13 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 					)}
 
 					{Object.values(row).slice(0, columnCount).map((cell, cellIndex) => (
-						<td key={cellIndex} className="p-3 text-center align-middle">
+						<td key={cellIndex} className="px-3 py-2 text-center align-middle">
 							{cell}
 						</td>
 					))}
                     
 					{showActionsColumn && (
-						<td className="p-3 text-center align-middle">
+						<td className="px-3 py-2 text-center align-middle">
 							<button
 								ref={(el) => (buttonRefs.current[rowIndex] = el)}
 								onClick={(e) => handleActionClick(e, rowIndex)}
@@ -171,7 +171,10 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 						))
 					) : (
 						<>
-							<button className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}>
+							<button 
+								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
+								onClick={() => { onPreview?.(rowData[actionButtonClicked]?._raw ?? rowData[actionButtonClicked]); setActionButtonClicked(null); }}
+							>
 								View Details
 							</button>
 							<button 

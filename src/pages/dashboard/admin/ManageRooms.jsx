@@ -6,72 +6,34 @@ import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import Table from "../../../components/ui/Table";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
-import ToggleViewMode from "../../../components/ui/ToggleViewMode";
 import RoomForm from "../../../feature/admin/components/RoomForm";
 import {
     FilePenIcon,
     TrashIcon,
-    HouseIcon,
     LocationDotIcon,
     UsersIcon,
-    Grid3ColIcon,
-    TableIcon,
     PlusIcon,
 } from "../../../components/ui/icons";
 import { fetchRooms, createRoom, updateRoom, deleteRoom } from "../../../feature/admin/services/adminApi";
 
-const ITEMS_PER_PAGE = 9;
-const roomTableHeaders = ["Room Name", "Type", "Capacity", "Location", "Equipment"];
+const ITEMS_PER_PAGE = 10;
+const roomTableHeaders = ["Room Name", "Room Name Arabic", "Type", "Capacity", "Location"];
 
 function buildRoomRow(room) {
     return {
         roomName: (
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                    <HouseIcon className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left">
-                    <p className="font-medium">{room.name || room.roomName || "—"}</p>
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{room.type || ""}</p>
-                </div>
+            <div className="flex flex-col text-left">
+                <p className="font-medium">{room.name || room.roomName || "—"}</p>
+                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{room.type || ""}</p>
             </div>
         ),
+        roomNameAr: room.roomNameAr || room.nameAr || "—",
         type: <span className="inline-block px-2 py-1 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark text-xs font-medium">{room.type || "—"}</span>,
         capacity: `${room.capacity ?? "?"} people`,
-        location: room.location || "—",
-        equipment: room.equipment ? (
-            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate max-w-xs" title={room.equipment}>
-                {room.equipment}
-            </span>
-        ) : "—",
+        location: room.location || room.roomLocation || room.Location || room.RoomLocation || "—",
         _id: room.id ?? room.roomId,
         _raw: room,
     };
-}
-
-import AdminCard from "../../../components/ui/AdminCard";
-
-function RoomCard({ room, onEdit, onDelete }) {
-    const meta = [];
-    if (room.capacity) meta.push({ icon: UsersIcon, label: `Capacity: ${room.capacity}` });
-    if (room.location) meta.push({ icon: LocationDotIcon, label: room.location });
-    if (room.equipment) meta.push({ icon: HouseIcon, label: room.equipment });
-
-    const actions = [
-        { label: 'Edit', variant: 'secondary', icon: FilePenIcon, onClick: () => onEdit(room) },
-        { label: 'Delete', variant: 'danger', icon: TrashIcon, onClick: () => onDelete(room) },
-    ];
-
-        return (
-            <AdminCard
-                icon={<HouseIcon className="w-5 h-5" />}
-                title={room.name || room.roomName || "—"}
-                subtitle={room.type || ""}
-                idLabel={room.id ?? room.roomId}
-                meta={meta}
-                footerActions={actions}
-            />
-        );
 }
 
 export default function ManageRooms() {
@@ -84,12 +46,10 @@ export default function ManageRooms() {
     const [editingRoom, setEditingRoom] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
 
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminRoomsViewMode") || "grid");
     const [selectedRowIds, setSelectedRowIds] = useState([]);
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [formIsLoading, setFormIsLoading] = useState(false);
-    useEffect(() => { localStorage.setItem("adminRoomsViewMode", viewMode); }, [viewMode]);
 
     // Load rooms on mount
     useEffect(() => {
@@ -97,7 +57,8 @@ export default function ManageRooms() {
             try {
                 setIsLoading(true);
                 const data = await fetchRooms();
-                setRawRooms(Array.isArray(data) ? data : []);
+                const list = Array.isArray(data) ? data : [];
+                setRawRooms(list);
                 setError(null);
             } catch (err) {
                 setError(err.message);
@@ -220,14 +181,7 @@ export default function ManageRooms() {
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                         />
-                        <ToggleViewMode
-                            isFirstMode={viewMode === "grid"}
-                            onFirstModeSelect={() => { setViewMode("grid"); setSelectedRowIds([]); }}
-                            onSecondModeSelect={() => { setViewMode("list"); setSelectedRowIds([]); }}
-                            firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
-                            secondModeLabel={<TableIcon className="w-5 h-5" />}
-                        />
-                        {viewMode === "list" && selectedRowIds.length > 0 && (
+                        {selectedRowIds.length > 0 && (
                             <Button
                                 variant="danger"
                                 onClick={() => setIsDeleteSelectedOpen(true)}
@@ -250,50 +204,45 @@ export default function ManageRooms() {
                 </Section>
             ) : (
                 <>
-                    {viewMode === "grid" ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {paginatedRooms.map(room => (
-                                <RoomCard
-                                    key={room.id ?? room.roomId}
-                                    room={room}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
+                    <div className="mb-6">
+                        {(() => {
+                            const tableRows = paginatedRooms.map(buildRoomRow);
+                            return (
+                                <Table
+                                    role="room"
+                                    headers={roomTableHeaders}
+                                    data={tableRows}
+                                    wrapInSection={false}
+                                    showHeaderActions={false}
+                                    showPagination={false}
+                                    selectedRows={selectedIndices}
+                                    onSelectionChange={(indices) => {
+                                        const visibleIds = new Set(paginatedRooms.map(r => (r.id ?? r.roomId)).filter(Boolean));
+                                        setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => (paginatedRooms[i]?.id ?? paginatedRooms[i]?.roomId)).filter(Boolean)]);
+                                    }}
+                                    actions={(row) => [
+                                        {
+                                            label: "Edit",
+                                            onClick: () => {
+                                                if (row._raw) {
+                                                    setEditingRoom(row._raw);
+                                                    setIsAddRoomFormOpen(true);
+                                                }
+                                            },
+                                            className: "text-text-primary-default-light dark:text-text-primary-default-dark font-medium",
+                                        },
+                                        {
+                                            label: "Delete",
+                                            onClick: () => {
+                                                if (row._raw) setDeleteTarget(row._raw);
+                                            },
+                                            className: "text-text-danger-default-light dark:text-text-danger-default-dark",
+                                        },
+                                    ]}
                                 />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="mb-6">
-                            {(() => {
-                                const tableRows = paginatedRooms.map(buildRoomRow);
-                                return (
-                                    <Table
-                                        role="room"
-                                        headers={roomTableHeaders}
-                                        data={tableRows}
-                                        wrapInSection={false}
-                                        showHeaderActions={false}
-                                        showPagination={false}
-                                        selectedRows={selectedIndices}
-                                        onSelectionChange={(indices) => {
-                                            const visibleIds = new Set(paginatedRooms.map(r => (r.id ?? r.roomId)).filter(Boolean));
-                                            setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => (paginatedRooms[i]?.id ?? paginatedRooms[i]?.roomId)).filter(Boolean)]);
-                                        }}
-                                        onDelete={(index) => {
-                                            const r = tableRows[index];
-                                            if (r && r._raw) setDeleteTarget(r._raw);
-                                        }}
-                                        onEdit={(index) => {
-                                            const r = tableRows[index];
-                                            if (r && r._raw) {
-                                                setEditingRoom(r._raw);
-                                                setIsAddRoomFormOpen(true);
-                                            }
-                                        }}
-                                    />
-                                );
-                            })()}
-                        </div>
-                    )}
+                            );
+                        })()}
+                    </div>
 
                     {totalPages > 1 && (
                         <Section>

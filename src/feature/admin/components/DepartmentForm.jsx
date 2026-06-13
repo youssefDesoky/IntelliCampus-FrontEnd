@@ -9,11 +9,12 @@ const emptyInstructorOption = { value: "", label: "No head instructor" };
 
 export default function DepartmentForm({ onClose, onSubmit, initialData = {}, instructors = [], isLoading = false, isOpen = true }) {
     const isEdit = !!initialData.id;
+    const professors = instructors.filter((instructor) => instructor.role === "Professor");
     const instructorOptions = [
         emptyInstructorOption,
-        ...instructors.map((instructor) => ({
-            value: String(instructor.id),
-            label: `${instructor.name} — ${instructor.department || "Instructor"}`,
+        ...professors.map((instructor) => ({
+            value: String(instructor.instructorId),
+            label: instructor.name,
         })),
     ];
 
@@ -39,6 +40,7 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
         try {
             await onSubmit({
                 departmentName,
+                departmentNameAr: (formData.departmentNameAr || "").trim(),
                 description: (formData.description || "").trim(),
                 instructorId: selectedInstructor.value || null,
             });
@@ -73,6 +75,15 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
                         placeholder="e.g., Computer Science"
                         defaultValue={initialData.departmentName || ""}
                         required
+                    />
+
+                    <InputItem
+                        label="Department Name (Arabic)"
+                        type="text"
+                        name="departmentNameAr"
+                        placeholder="مثال: علوم الحاسب"
+                        defaultValue={initialData.departmentNameAr || ""}
+                        dir="rtl"
                     />
 
                     <SelectBox

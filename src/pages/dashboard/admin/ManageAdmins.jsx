@@ -5,34 +5,31 @@ import SearchBar from "../../../components/ui/SearchBar";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import Table from "../../../components/ui/Table";
-import PaginationButtons from "../../../components/ui/PaginationButtons";
-import ToggleViewMode from "../../../components/ui/ToggleViewMode";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import AdminForm from "../../../feature/admin/components/AdminForm";
-import SharedAdminCard from "../../../components/ui/AdminCard";
 import {
     FilePenIcon,
     TrashIcon,
-    Grid3ColIcon,
-    TableIcon,
+    UserIcon,
     XIcon,
 } from "../../../components/ui/icons";
 import { fetchAdmins, createAdmin, deleteAdmin } from "../../../feature/admin/services/adminApi";
 
-const ITEMS_PER_PAGE = 9;
-const adminTableHeaders = ["Admin", "Admin ID", "Role", "Department", "Hire Date"];
+const ITEMS_PER_PAGE = 10;
+const adminTableHeaders = ["Admin ID", "Admin", "Role", "Phone", "Hire Date"];
 
 
 
 function buildAdminRow(a) {
     return {
+        adminID: a.adminId,
         admin: (
             <div className="flex items-center gap-3">
-                {a.avatar ? (
-                    <img src={a.avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
+                {a.profileImage || a.avatar ? (
+                    <img src={a.profileImage || a.avatar} alt={a.fullName} className="w-10 h-10 rounded-full object-cover" />
                 ) : (
-                    <div className="w-10 h-10 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                        {(a.fullName || "?").charAt(0).toUpperCase()}
+                    <div className="w-10 h-10 rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center">
+                        <UserIcon className="w-5 h-5 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                     </div>
                 )}
                 <div className="flex flex-col text-left">
@@ -41,44 +38,12 @@ function buildAdminRow(a) {
                 </div>
             </div>
         ),
-        adminID: a.adminId,
         role: a.role || "—",
-        department: a.department || "—",
+        phone: a.phoneNumber || a.phone || "—",
         hireDate: a.hireDate || "—",
         _id: a.userId,
         _raw: a,
     };
-}
-
-function AdminCard({ admin, onEdit, onDelete, onPreview }) {
-    const stats = [
-        { label: "Role", value: admin.role || "—" },
-        { label: "Dept", value: admin.department || "—" },
-    ];
-
-    const actions = [
-        { label: "Edit", variant: "secondary", icon: FilePenIcon, onClick: (e) => { e?.stopPropagation?.(); onEdit(admin); } },
-        { label: "Delete", variant: "danger", icon: TrashIcon, onClick: (e) => { e?.stopPropagation?.(); onDelete(admin); } },
-    ];
-
-    return (
-        <div className="cursor-pointer" onClick={() => onPreview?.(admin)}>
-            <SharedAdminCard
-                avatar={admin.avatar}
-                title={admin.fullName || admin.name}
-                subtitle={admin.email}
-                idLabel={admin.adminId}
-                status={{ label: admin.role || "Admin", tone: "neutral" }}
-                stats={stats}
-                meta={[]}
-                footerActions={actions}
-            >
-                <div className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    {admin.department ? `${admin.department} • ${admin.hireDate || "No hire date"}` : admin.hireDate || "No department"}
-                </div>
-            </SharedAdminCard>
-        </div>
-    );
 }
 
 export default function ManageAdmins() {
@@ -93,12 +58,9 @@ export default function ManageAdmins() {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [previewAdmin, setPreviewAdmin] = useState(null);
 
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminAdminsViewMode") || "grid");
     const [selectedRowIds, setSelectedRowIds] = useState([]);
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-
-    useEffect(() => { localStorage.setItem("adminAdminsViewMode", viewMode); }, [viewMode]);
 
     const loadAdmins = useCallback(async () => {
         try {
@@ -186,14 +148,7 @@ export default function ManageAdmins() {
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                         />
-                        <ToggleViewMode
-                            isFirstMode={viewMode === "grid"}
-                            onFirstModeSelect={() => { setViewMode("grid"); setSelectedRowIds([]); }}
-                            onSecondModeSelect={() => { setViewMode("list"); setSelectedRowIds([]); }}
-                            firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
-                            secondModeLabel={<TableIcon className="w-5 h-5" />}
-                        />
-                        {viewMode === "list" && selectedRowIds.length > 0 && (
+                        {selectedRowIds.length > 0 && (
                             <Button 
                                 variant="danger" 
                                 onClick={() => setIsDeleteSelectedOpen(true)}
@@ -219,42 +174,36 @@ export default function ManageAdmins() {
                 </Dialog>
 
                 {paginatedAdmins.length > 0 ? (
-                    viewMode === "grid" ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
-                            {paginatedAdmins.map((a) => (
-                                <AdminCard
-                                    key={a.adminId}
-                                    admin={a}
-                                    onEdit={setEditingAdmin}
-                                    onDelete={setDeleteTarget}
-                                    onPreview={setPreviewAdmin}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="mb-6">
-                            <Table
-                                role="admin"
-                                headers={adminTableHeaders}
-                                data={paginatedRows}
-                                wrapInSection={false}
-                                showHeaderActions={false}
-                                showPagination={false}
-                                selectedRows={selectedIndices}
-                                    onSelectionChange={(indices) => {
-                                        const visibleIds = new Set(paginatedRows.map(r => r._id).filter(Boolean));
-                                        setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedRows[i]?._id).filter(Boolean)]);
-                                    }}
-                            />
-                        </div>
-                    )
+                    <div className="mb-6">
+                        <Table
+                            role="admin"
+                            headers={adminTableHeaders}
+                            data={paginatedRows}
+                            wrapInSection={false}
+                            showHeaderActions={false}
+                            showPagination={false}
+                            selectedRows={selectedIndices}
+                                 page={currentPage}
+                                 onPageChange={setCurrentPage}
+                                 totalPages={totalPages}
+                                 totalItems={filteredAdmins.length}
+                                 itemsLabel="Admins"
+                                 from={(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                                 to={Math.min(currentPage * ITEMS_PER_PAGE, filteredAdmins.length)}
+                                 onSelectionChange={(indices) => {
+                                    const visibleIds = new Set(paginatedRows.map(r => r._id).filter(Boolean));
+                                    setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedRows[i]?._id).filter(Boolean)]);
+                                }}
+                                onPreview={(a) => setPreviewAdmin(a)}
+                        />
+                    </div>
                 ) : (
                     <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         No admins found.
                     </p>
                 )}
 
-                <PaginationButtons totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />
+
             </Section>
             )}
 
@@ -278,165 +227,76 @@ export default function ManageAdmins() {
             {previewAdmin && (
                 <ModelOverlay
                     onClose={() => setPreviewAdmin(null)}
-                    maxWidth="max-w-5xl"
+                    maxWidth="max-w-3xl"
                 >
-                    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
-                        <div className="sticky top-0 z-10 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark p-4 px-6 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                    Admin Profile Explorer
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => setPreviewAdmin(null)}
-                                className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark transition-all"
-                            >
-                                <XIcon className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <div className="p-6 space-y-6 overflow-y-auto">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="lg:col-span-1 h-full flex flex-col items-center text-center p-5 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                                    <div className="w-28 h-28 rounded-2xl overflow-hidden bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark ring-4 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shadow-md shrink-0 mb-4">
-                                        {previewAdmin.avatar ? (
-                                            <img
-                                                src={previewAdmin.avatar}
-                                                alt={previewAdmin.fullName || previewAdmin.name}
-                                                className="w-full h-full object-cover"
-                                            />
+                    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full flex flex-col">
+                        <div className="p-6">
+                            <div className="flex items-start justify-between mb-6">
+                                <div className="flex items-center gap-4 min-w-0">
+                                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ring-2 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shrink-0">
+                                        {previewAdmin.profileImage || previewAdmin.avatar ? (
+                                            <img src={previewAdmin.profileImage || previewAdmin.avatar} alt={previewAdmin.fullName || previewAdmin.name} className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                {(previewAdmin.fullName || previewAdmin.name || "?").charAt(0)}
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <UserIcon className="w-7 h-7 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                                             </div>
                                         )}
                                     </div>
-
-                                    <h2 className="text-xl font-bold tracking-tight text-text-primary-default-light dark:text-text-primary-default-dark line-clamp-2 px-2">
-                                        {previewAdmin.fullName || previewAdmin.name}
-                                    </h2>
-                                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 font-mono">
-                                        ID: {previewAdmin.adminId || "—"}
-                                    </p>
-                                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark break-all max-w-full px-2 mt-0.5">
-                                        {previewAdmin.email || "—"}
-                                    </p>
-
-                                    <div className="w-full mt-auto pt-6">
-                                        <div className="w-3/4 mx-auto border-t border-border-primary-default-light dark:border-border-primary-default-dark mb-6"></div>
-
-                                        <div className="grid grid-cols-2 gap-2 w-full">
-                                            <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark">
-                                                <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Role</span>
-                                                <span className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                    {previewAdmin.role || "Admin"}
-                                                </span>
-                                            </div>
-                                            <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark">
-                                                <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Department</span>
-                                                <span className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                    {previewAdmin.department || "—"}
-                                                </span>
-                                            </div>
-                                        </div>
+                                    <div className="min-w-0">
+                                        <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                                            {previewAdmin.fullName || previewAdmin.name}
+                                        </h2>
+                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark font-mono mt-1">
+                                            ID: {previewAdmin.adminId || "—"}
+                                        </p>
                                     </div>
                                 </div>
+                                <button
+                                    onClick={() => setPreviewAdmin(null)}
+                                    className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors"
+                                >
+                                    <XIcon className="w-5 h-5" />
+                                </button>
+                            </div>
 
-                                <div className="lg:col-span-2 h-full flex flex-col border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-                                    <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark mb-4 pb-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                                        Administrative Information
-                                    </h3>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm mt-2">
-                                        <div className="space-y-0.5">
-                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Role</span>
-                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.role || "—"}</span>
-                                        </div>
-                                        <div className="space-y-0.5">
-                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Department</span>
-                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.department || "—"}</span>
-                                        </div>
-                                        <div className="space-y-0.5">
-                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Hire Date</span>
-                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.hireDate || "—"}</span>
-                                        </div>
-                                        <div className="space-y-0.5">
-                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Status</span>
-                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.role || "Admin"}</span>
-                                        </div>
-
-                                        <div className="sm:col-span-2 my-1 border-t border-dashed border-border-primary-default-light dark:border-border-primary-default-dark pt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                                            <div className="space-y-0.5">
-                                                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Account Security</span>
-                                                <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                    {previewAdmin.password ? "Configured" : "No password shown"}
-                                                </span>
-                                            </div>
-                                            <div className="space-y-0.5">
-                                                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Record Type</span>
-                                                <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Administrative User</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                                <div className="p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                    <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Role</span>
+                                    <span className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.role || "—"}</span>
+                                </div>
+                                <div className="p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                    <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Phone</span>
+                                    <span className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.phoneNumber || previewAdmin.phone || "—"}</span>
+                                </div>
+                                <div className="p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                    <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Hire Date</span>
+                                    <span className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.hireDate || "—"}</span>
                                 </div>
                             </div>
 
-                            <div className="border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark w-full">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark mb-4">
-                                    Access Summary
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div className="rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark p-3">
-                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Role</p>
-                                        <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mt-1">{previewAdmin.role || "Admin"}</p>
-                                    </div>
-                                    <div className="rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark p-3">
-                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Department</p>
-                                        <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mt-1">{previewAdmin.department || "—"}</p>
-                                    </div>
-                                    <div className="rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark p-3">
-                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Hire Date</p>
-                                        <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mt-1">{previewAdmin.hireDate || "—"}</p>
-                                    </div>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3 px-1">
+                                    <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark w-20">Email</span>
+                                    <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.email || "—"}</span>
+                                </div>
+                                <div className="flex items-center gap-3 px-1">
+                                    <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark w-20">Role</span>
+                                    <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.role || "—"}</span>
+                                </div>
+                                <div className="flex items-center gap-3 px-1">
+                                    <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark w-20">Hire Date</span>
+                                    <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.hireDate || "—"}</span>
+                                </div>
+                                <div className="flex items-center gap-3 px-1">
+                                    <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark w-20">Phone</span>
+                                    <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.phoneNumber || previewAdmin.phone || "—"}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="sticky bottom-0 mt-auto bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-t border-border-primary-default-light dark:border-border-primary-default-dark p-4 px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full sm:w-auto order-2 sm:order-1"
-                                onClick={() => console.log("Message", previewAdmin)}
-                            >
-                                Send Message
-                            </Button>
-
-                            <div className="flex items-center gap-2 w-full sm:w-auto order-1 sm:order-2">
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    className="flex-1 sm:flex-initial"
-                                    onClick={() => {
-                                        setEditingAdmin(previewAdmin);
-                                        setPreviewAdmin(null);
-                                    }}
-                                >
-                                    Edit Profile
-                                </Button>
-                                <Button
-                                    variant="danger"
-                                    size="sm"
-                                    className="flex-1 sm:flex-initial"
-                                    onClick={() => {
-                                        setDeleteTarget(previewAdmin);
-                                        setPreviewAdmin(null);
-                                    }}
-                                >
-                                    Delete Record
-                                </Button>
-                            </div>
+                        <div className="border-t border-border-primary-default-light dark:border-border-primary-default-dark p-4 px-6 flex justify-end gap-3">
+                            <Button variant="secondary" size="sm" onClick={() => setPreviewAdmin(null)}>Close</Button>
+                            <Button variant="primary" size="sm" onClick={() => { setEditingAdmin(previewAdmin); setPreviewAdmin(null); }}>Edit Profile</Button>
                         </div>
                     </div>
                 </ModelOverlay>

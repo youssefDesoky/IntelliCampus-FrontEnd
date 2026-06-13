@@ -16,6 +16,7 @@ export { default as BoldIcon } from './BoldIcon.jsx';
 export { default as CalendarCheckIcon } from './CalendarCheckIcon.jsx';
 export { default as CalendarDaysIcon  } from './CalendarDaysIcon.jsx';
 export { default as CalendarIcon } from './CalendarIcon.jsx';
+export { default as CameraIcon } from './CameraIcon.jsx';
 export { default as ChartLineIcon } from './ChartLineIcon.jsx';
 export { default as ChartBarIcon } from './ChartBarIcon.jsx';
 export { default as CheckIcon } from './CheckIcon.jsx';

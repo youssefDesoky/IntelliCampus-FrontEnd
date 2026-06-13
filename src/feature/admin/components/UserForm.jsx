@@ -13,6 +13,11 @@ const nationalities = [
     { value: 'in', label: 'India' },
 ];
 
+const adminRoleOptions = [
+    { value: 'Post Grad Affairs Admin', label: 'Post Grad Affairs Admin' },
+    { value: 'Under Grad Affairs Admin', label: 'Under Grad Affairs Admin' },
+];
+
 export default function UserForm({ role, method = "post", onClose, onSubmit, initialData = {}, children, isOpen = true }) {
     const roleLabel = role === "admin" ? "Admin" : role === "student" ? "Student" : "Instructor";
     const isEdit = method === "put";
@@ -25,8 +30,19 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
         return nationalities[0];
     });
 
+    const [selectedAdminRole, setSelectedAdminRole] = useState(() => {
+        if (initialData.role) {
+            return adminRoleOptions.find(o => o.value === initialData.role) || adminRoleOptions[0];
+        }
+        return adminRoleOptions[0];
+    });
+
     const handleNationalityChange = (option) => {
         setSelectedNationality(option);
+    };
+
+    const handleAdminRoleChange = (option) => {
+        setSelectedAdminRole(option);
     };
 
     const handleSubmit = (e) => {
@@ -51,21 +67,35 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
                 <div className="grid grid-cols-2 gap-6">
                     <InputItem label="Full Name" type="text" id="fullName" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
 
-                    <InputItem label={`${roleLabel} ID`} type="text" id={roleIdField} name={roleIdField} placeholder={`Enter ${roleLabel.toLowerCase()} ID`} defaultValue={initialData[roleIdField] || ""} required />
+                    {role !== "student" && role !== "admin" && (
+                        <InputItem label={`${roleLabel} ID`} type="text" id={roleIdField} name={roleIdField} placeholder={`Enter ${roleLabel.toLowerCase()} ID`} defaultValue={initialData[roleIdField] || ""} required />
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                     <InputItem label="National ID" type="text" id="nationalId" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
 
-                    <SelectBox
-                        className="w-full"
-                        label="Nationality"
-                        name="nationality"
-                        labelDirection="flex-col"
-                        options={nationalities}
-                        selectedOption={selectedNationality}
-                        onChange={handleNationalityChange}
-                    />
+                    {role === "admin" ? (
+                        <SelectBox
+                            className="w-full"
+                            label="Role"
+                            name="role"
+                            labelDirection="flex-col"
+                            options={adminRoleOptions}
+                            selectedOption={selectedAdminRole}
+                            onChange={handleAdminRoleChange}
+                        />
+                    ) : (
+                        <SelectBox
+                            className="w-full"
+                            label="Nationality"
+                            name="nationality"
+                            labelDirection="flex-col"
+                            options={nationalities}
+                            selectedOption={selectedNationality}
+                            onChange={handleNationalityChange}
+                        />
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">

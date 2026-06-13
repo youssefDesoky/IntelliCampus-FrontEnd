@@ -5,8 +5,6 @@ import Section from "../../../components/ui/Section";
 import Button from "../../../components/ui/Button";
 import SearchBar from "../../../components/ui/SearchBar";
 import Dialog from "../../../components/ui/Dialog";
-import PaginationButtons from "../../../components/ui/PaginationButtons";
-import ToggleViewMode from "../../../components/ui/ToggleViewMode";
 import Table from "../../../components/ui/Table";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import CourseForm from "../../../feature/admin/components/CourseForm";
@@ -21,8 +19,6 @@ import {
     UserTieIcon,
     ClipboardCheckIcon,
     ArrowRightIcon,
-    Grid3ColIcon,
-    TableIcon
 } from "../../../components/ui/icons";
 import {
     fetchCourses,
@@ -33,7 +29,7 @@ import {
     deactivateCourse,
 } from "../../../feature/admin/services/adminApi";
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 10;
 
 function StatusBadge({ isActive, displaySemester }) {
     return (
@@ -50,7 +46,7 @@ function StatusBadge({ isActive, displaySemester }) {
     );
 }
 
-const courseTableHeaders = ["Course", "Course ID", "Department", "Credit Hours", "Professor", "Status"];
+const courseTableHeaders = ["Course", "Course Code", "Department", "Credit Hours", "Professor", "Status"];
 
 function buildCourseRow(course) {
     return {
@@ -76,141 +72,6 @@ function buildCourseRow(course) {
     };
 }
 
-function CourseCard({ course, onEdit, onDelete, onActivate, onDeactivate, onManage, onView }) {
-    const borderColor = course.isActive
-        ? "border-l-border-success-default-light dark:border-l-border-success-default-dark"
-        : "border-l-border-accent-default-light dark:border-l-border-accent-default-dark";
-
-    const formatSemester = (s) => {
-        if (!s) return null;
-        // If already like "Spring 2024" return as-is
-        if (/^[A-Za-z]+\s+\d{4}$/.test(s)) return s;
-        // Convert hyphenated like "spring-2024" or "spring_2024"
-        const cleaned = s.replace(/[-_]/g, ' ').trim();
-        const parts = cleaned.split(/\s+/);
-        if (parts.length === 2 && /\d{4}/.test(parts[1])) {
-            return parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase() + ' ' + parts[1];
-        }
-        return s;
-    };
-
-    const displaySemester = formatSemester(course.semester || course.level || course.term || `${course.term || ''} ${course.year || ''}`.trim());
-
-    return (
-        <div
-            className={`relative bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg border-l-4 ${borderColor} shadow-sm hover:shadow-lg transition-shadow p-4 flex flex-col justify-between gap-4 cursor-pointer`}
-            onClick={() => onView(course)}
-        >
-            {/* Top-right status + semester */}
-            <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
-                <StatusBadge isActive={course.isActive} displaySemester={displaySemester} />
-                {course.isActive && displaySemester && (
-                    <span className="text-xs px-2 py-0.5 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark">{displaySemester}</span>
-                )}
-            </div>
-
-            {/* Top: Avatar + Name + Code */}
-            <div>
-                <div className="flex items-start gap-3 mb-3">
-                    <div className="w-12 h-12 shrink-0 rounded-lg bg-linear-to-br from-bg-surface-accent-default-light to-bg-surface-primary-default-light dark:from-bg-surface-accent-default-dark dark:to-bg-surface-primary-default-dark flex items-center justify-center text-lg font-extrabold text-text-accent-active-light dark:text-text-accent-active-dark">
-                        {(course.courseName || "?").charAt(0).toUpperCase()}
-                    </div>
-
-                    <div className="min-w-0 flex flex-col justify-center">
-                        <h3 className="text-sm font-semibold line-clamp-1">{course.courseName || course.title || course.name || "Untitled"}</h3>
-                        <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">{course.courseCode || course.id || course.courseId || "—"}</span>
-                    </div>
-                </div>
-
-                {/* Metadata chips */}
-                <div className="grid grid-cols-2 gap-2 text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mb-3">
-                    <div className="flex items-center gap-2">
-                        <BookIcon className="w-4 h-4" />
-                        <span className="truncate">{course.departmentName || "—"}</span>
-                    </div>
-                        <div className="flex items-center gap-2">
-                        <ClipboardCheckIcon className="w-4 h-4" />
-                        <span>{course.creditHours ?? course.credits ?? "—"} Credit Hrs</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <UserTieIcon className="w-4 h-4" />
-                        <span className="truncate">{course.professor || course.instructor || "—"}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-0.5 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark">{displaySemester ?? 'N/A'}</span>
-                    </div>
-                </div>
-
-                {course.description && (
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-3">
-                        {course.description}
-                    </p>
-                )}
-            </div>
-
-            {/* Footer: stats + actions */}
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        <span className="font-semibold">{course.numOfStudents ?? course.enrolledCount ?? "—"}</span>
-                        <span>students</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        <span className="font-semibold">{course.capacity ?? course.maxStudents ?? "—"}</span>
-                        <span>capacity</span>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {course.isActive && (
-                        <Button
-                            variant="primary"
-                            className="text-xs px-3 py-1"
-                            onClick={() => onManage(course)}
-                        >
-                            Manage
-                        </Button>
-                    )}
-
-                    <Button
-                        variant="secondary"
-                        className="text-xs px-3 py-1"
-                        onClick={() => onEdit(course)}
-                    >
-                        Edit
-                    </Button>
-
-                    {course.isActive ? (
-                        <Button
-                            variant="warning"
-                            className="text-xs px-3 py-1"
-                            onClick={() => onDeactivate(course)}
-                        >
-                            Deactivate
-                        </Button>
-                    ) : (
-                        <Button
-                            variant="success"
-                            className="text-xs px-3 py-1"
-                            onClick={() => onActivate(course)}
-                        >
-                            Activate
-                        </Button>
-                    )}
-
-                    <Button
-                        variant="danger"
-                        className="text-xs px-3 py-1"
-                        onClick={() => onDelete(course)}
-                    >
-                        Delete
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 export default function ManageCourses() {
     const navigate = useNavigate();
 
@@ -228,19 +89,12 @@ export default function ManageCourses() {
 
     const [successMessage, setSuccessMessage] = useState(null);
 
-    // View mode
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminCoursesViewMode") || "grid");
-
     // Table selection
     const [selectedRowIds, setSelectedRowIds] = useState([]);
     const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
-
-    useEffect(() => {
-        localStorage.setItem("adminCoursesViewMode", viewMode);
-    }, [viewMode]);
 
     const loadCourses = useCallback(async () => {
         try {
@@ -426,14 +280,7 @@ export default function ManageCourses() {
                                     setCurrentPage(1);
                                 }}
                             />
-                            <ToggleViewMode
-                                isFirstMode={viewMode === "grid"}
-                                onFirstModeSelect={() => { setViewMode("grid"); setSelectedRowIds([]); }}
-                                onSecondModeSelect={() => { setViewMode("list"); setSelectedRowIds([]); }}
-                                firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
-                                secondModeLabel={<TableIcon className="w-5 h-5" />}
-                            />
-                            {viewMode === "list" && selectedRowIds.length > 0 && (
+                            {selectedRowIds.length > 0 && (
                                 <>
                                     {allSelectedInactive && (
                                         <Button variant="success" className="whitespace-nowrap shrink-0" onClick={handleActivateSelected}>
@@ -471,81 +318,64 @@ export default function ManageCourses() {
                     </Dialog>
 
                     {paginatedCourses.length > 0 ? (
-                        viewMode === "grid" ? (
-                            /* ─── Cards Grid ─── */
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
-                                {paginatedCourses.map((course) => (
-                                    <CourseCard
-                                        key={course.courseId}
-                                        course={course}
-                                        onEdit={setEditingCourse}
-                                        onDelete={setDeleteTarget}
-                                        onActivate={handleActivate}
-                                        onDeactivate={handleDeactivate}
-                                        onManage={handleManage}
-                                        onView={setViewingCourse}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            /* ─── Table View ─── */
-                            <div className="mb-6">
-                                <Table
-                                    role="course"
-                                    roleLabel="Courses"
-                                    headers={courseTableHeaders}
-                                    data={paginatedCourses.map(buildCourseRow)}
-                                    wrapInSection={false}
-                                    showHeaderActions={false}
-                                    showPagination={false}
-                                    selectedRows={selectedIndices}
-                                    onSelectionChange={(indices) => {
-                                        const visibleIds = new Set(paginatedCourses.map(c => c.courseId).filter(Boolean));
-                                        setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedCourses[i]?.courseId).filter(Boolean)]);
-                                    }}
-                                    actions={(row) => [
-                                        ...(row._raw.isActive ? [{
-                                            label: "Manage Course",
-                                            onClick: () => handleManage(row._raw),
-                                            className: "text-text-secondary-default-light dark:text-text-accent-active-dark font-medium",
-                                        }] : []),
-                                        {
-                                            label: "Edit",
-                                            onClick: () => setEditingCourse(row._raw),
-                                            className: "text-text-primary-default-light dark:text-text-primary-default-dark",
-                                        },
-                                        row._raw.isActive
-                                            ? {
-                                                  label: "Deactivate",
-                                                  onClick: () => handleDeactivate(row._raw),
-                                                  className: "text-text-warning-default-light dark:text-text-warning-default-dark",
-                                              }
-                                            : {
-                                                  label: "Activate",
-                                                  onClick: () => handleActivate(row._raw),
-                                                  className: "text-text-success-default-light dark:text-text-success-default-dark",
-                                              },
-                                        {
-                                            label: "Delete",
-                                            onClick: () => setDeleteTarget(row._raw),
-                                            className: "text-text-danger-default-light dark:text-text-danger-default-dark",
-                                        },
-                                    ]}
-                                />
-                            </div>
-                        )
+                        <div className="mb-6">
+                            <Table
+                                role="course"
+                                roleLabel="Courses"
+                                headers={courseTableHeaders}
+                                data={paginatedCourses.map(buildCourseRow)}
+                                wrapInSection={false}
+                                showHeaderActions={false}
+                                showPagination={false}
+                                selectedRows={selectedIndices}
+                                page={currentPage}
+                                onPageChange={setCurrentPage}
+                                totalPages={totalPages}
+                                totalItems={filteredCourses.length}
+                                itemsLabel="Courses"
+                                from={(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                                to={Math.min(currentPage * ITEMS_PER_PAGE, filteredCourses.length)}
+                                onSelectionChange={(indices) => {
+                                    const visibleIds = new Set(paginatedCourses.map(c => c.courseId).filter(Boolean));
+                                    setSelectedRowIds([...selectedRowIds.filter(id => !visibleIds.has(id)), ...indices.map(i => paginatedCourses[i]?.courseId).filter(Boolean)]);
+                                }}
+                                actions={(row) => [
+                                    ...(row._raw.isActive ? [{
+                                        label: "Manage Course",
+                                        onClick: () => handleManage(row._raw),
+                                        className: "text-text-secondary-default-light dark:text-text-accent-active-dark font-medium",
+                                    }] : []),
+                                    {
+                                        label: "Edit",
+                                        onClick: () => setEditingCourse(row._raw),
+                                        className: "text-text-primary-default-light dark:text-text-primary-default-dark",
+                                    },
+                                    row._raw.isActive
+                                        ? {
+                                              label: "Deactivate",
+                                              onClick: () => handleDeactivate(row._raw),
+                                              className: "text-text-warning-default-light dark:text-text-warning-default-dark",
+                                          }
+                                        : {
+                                              label: "Activate",
+                                              onClick: () => handleActivate(row._raw),
+                                              className: "text-text-success-default-light dark:text-text-success-default-dark",
+                                          },
+                                    {
+                                        label: "Delete",
+                                        onClick: () => setDeleteTarget(row._raw),
+                                        className: "text-text-danger-default-light dark:text-text-danger-default-dark",
+                                    },
+                                ]}
+                            />
+                        </div>
                     ) : (
                         <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             No courses found.
                         </p>
                     )}
 
-                    {/* Pagination */}
-                    <PaginationButtons
-                        totalPages={totalPages}
-                        currentPage={currentPage}
-                        setCurrentPage={setCurrentPage}
-                    />
+
                 </Section>
             )}
 
@@ -555,6 +385,7 @@ export default function ManageCourses() {
                     method="post"
                     onClose={() => setIsCreateFormOpen(false)}
                     onSubmit={handleCreate}
+                    allCourses={courses}
                 />
             )}
 
@@ -565,6 +396,7 @@ export default function ManageCourses() {
                     initialData={editingCourse}
                     onClose={() => setEditingCourse(null)}
                     onSubmit={handleEditSubmit}
+                    allCourses={courses}
                 />
             )}
 

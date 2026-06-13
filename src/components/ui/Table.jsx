@@ -5,7 +5,7 @@ import BaseComponent from "./BaseComponent";
 import { TableHeader, TableHeaderActions, TableBody } from "./table";
 
 
-export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows }) {
+export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to }) {
     const rawData = data || [];
     const hasPagingLimit = typeof displayRowLimit === 'number' && displayRowLimit > 0;
     const computedTotalPages = hasPagingLimit ? Math.max(1, Math.ceil(rawData.length / displayRowLimit)) : totalPages || 1;
@@ -105,6 +105,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         setSelectedRows={setSelectedRows}
                         onDelete={onDelete}
                         onEdit={onEdit}
+                        onPreview={onPreview}
                         actions={actions}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
@@ -115,7 +116,9 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">
                         <div className="text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
                             {(hasPagingLimit && rawData.length > displayRowLimit)
-                                ? `Showing first ${displayRowLimit} of ${rawData.length} rows`
+                                ? (itemsLabel
+                                    ? `Showing ${(currentPage - 1) * displayRowLimit + 1}–${Math.min(currentPage * displayRowLimit, rawData.length)} of ${rawData.length} ${itemsLabel}`
+                                    : `Showing first ${displayRowLimit} of ${rawData.length} rows`)
                                 : paginationSummary || ""}
                         </div>
 
@@ -150,6 +153,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         setSelectedRows={setSelectedRows}
                         onDelete={onDelete}
                         onEdit={onEdit}
+                        onPreview={onPreview}
                         actions={actions}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
@@ -160,7 +164,9 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">
                         <div className="text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
                             {(hasPagingLimit && rawData.length > displayRowLimit)
-                                ? `Showing first ${displayRowLimit} of ${rawData.length} rows`
+                                ? (itemsLabel
+                                    ? `Showing ${(currentPage - 1) * displayRowLimit + 1}–${Math.min(currentPage * displayRowLimit, rawData.length)} of ${rawData.length} ${itemsLabel}`
+                                    : `Showing first ${displayRowLimit} of ${rawData.length} rows`)
                                 : paginationSummary || ""}
                         </div>
 
@@ -175,8 +181,35 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                 )}
                 </div>
             )}
+
+            <PaginationRow
+                page={page}
+                totalPages={totalPages}
+                onPageChange={onPageChange}
+                from={from !== undefined ? from : (page && displayData.length ? (page - 1) * displayData.length + 1 : undefined)}
+                to={to !== undefined ? to : (page && displayData.length ? (page - 1) * displayData.length + displayData.length : undefined)}
+                totalItems={totalItems}
+                itemsLabel={itemsLabel}
+            />
         </>
     );
 
     return wrapInSection ? <Section>{content}</Section> : content;
+}
+
+function PaginationRow({ page, totalPages, onPageChange, from, to, totalItems, itemsLabel }) {
+    if (page === undefined) return null;
+    return (
+        <div className="pt-3">
+            <PaginationButtons
+                totalPages={totalPages}
+                currentPage={page}
+                setCurrentPage={onPageChange}
+                from={from}
+                to={to}
+                total={totalItems}
+                label={itemsLabel}
+            />
+        </div>
+    );
 }
