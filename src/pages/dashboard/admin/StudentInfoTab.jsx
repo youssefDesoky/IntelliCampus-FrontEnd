@@ -84,7 +84,7 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                                 <InfoField label="Program" value={student.program} />
                                 <InfoField label="Department" value={student.department ?? student.faculty} />
-                                <InfoField label="Bylaw" value={student.baylawName ?? student.bylaw} />
+                                <InfoField label="Bylaw" value={student.bylawName ?? student.bylaw} />
                                 <InfoField label="Enrollment Date" value={student.enrollmentDate ?? student.enrolledAt} />
                             </div>
                         </div>

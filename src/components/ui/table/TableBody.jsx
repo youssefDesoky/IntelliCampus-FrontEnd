@@ -160,7 +160,7 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 						actions(rowData[actionButtonClicked], actionButtonClicked).map((action, i) => (
 							<button
 								key={i}
-								className={`${buttonStyle} ${action.className || ""}`}
+								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark ${action.className || ""}`}
 								onClick={() => {
 									action.onClick();
 									setActionButtonClicked(null);

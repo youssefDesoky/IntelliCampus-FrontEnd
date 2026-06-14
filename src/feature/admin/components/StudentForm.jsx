@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
+import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
 import RadioToggle from "../../../components/form/RadioToggle";
 import InputItem from "../../../components/form/InputItem";
+import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
 import { fetchBylaws } from "../services/adminApi";
 
@@ -189,12 +191,11 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                             </div>
                             <div className="col-span-2">
                                 <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Address</label>
-                                <textarea
+                                <TextArea
                                     name="address"
-                                    rows={2}
                                     placeholder="Enter address"
                                     defaultValue={initialData.address || ""}
-                                    className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark resize-none"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark"
                                     required
                                 />
                             </div>
@@ -248,7 +249,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                 selectedOption={selectedBylaw}
                                 onChange={setSelectedBylaw}
                             />
-                            <InputItem label="Enrollment Date" type="date" name="enrollmentDate" className="col-span-2" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
+                            <DateInput label="Enrollment Date" name="enrollmentDate" className="col-span-2" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
                         </div>
                     </div>
                 </div>

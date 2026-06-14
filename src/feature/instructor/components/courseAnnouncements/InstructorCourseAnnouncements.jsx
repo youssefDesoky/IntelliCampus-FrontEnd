@@ -3,6 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { fetchCourseAnnouncements, createCourseAnnouncement, updateCourseAnnouncement } from "../../../course/components/announcements";
 import CourseAnnouncementCard from "../../../course/components/announcements/CourseAnnouncementCard";
 import Button from "../../../../components/ui/Button";
+import TextArea from "../../../../components/ui/TextArea";
 import { PlusIcon, XIcon } from "../../../../components/ui/icons";
 import BaseFormComponent from "../../../../components/ui/BaseFormComponent";
 
@@ -165,11 +166,10 @@ export default function InstructorCourseAnnouncements() {
                     <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                         Content
                     </label>
-                    <textarea
+                    <TextArea
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         placeholder="Enter announcement content..."
-                        rows={6}
                         disabled={isSubmitting}
                         className="w-full px-3 py-2 border rounded-lg border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark placeholder-text-secondary-default-light dark:placeholder-text-secondary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark disabled:opacity-50"
                     />

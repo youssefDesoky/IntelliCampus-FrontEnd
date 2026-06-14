@@ -37,7 +37,7 @@ export default function DropdownMenu({children, className = '', direction = 'bot
 
     const menu = (
         <menu 
-            className={`${positionType} ${arrowContent} bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-hover-light dark:border-border-primary-hover-dark rounded-lg shadow-lg p-3 flex flex-col gap-2 min-w-50 z-9999 ${directionClass} ${positionClass} ${arrowDirectionClass} ${arrowPositionClass} ${className}`}
+            className={`${positionType} ${arrowContent} bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-hover-light dark:border-border-primary-hover-dark rounded-lg shadow-lg p-3 flex flex-col gap-2 min-w-50 z-[9999] ${directionClass} ${positionClass} ${arrowDirectionClass} ${arrowPositionClass} ${className}`}
             style={style}
             {...props}
         >

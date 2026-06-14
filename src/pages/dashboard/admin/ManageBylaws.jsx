@@ -5,7 +5,11 @@ import SearchBar from "../../../components/ui/SearchBar";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import Table from "../../../components/ui/Table";
+import ModelOverlay from "../../../components/ui/ModelOverlay";
 import BylawForm from "../../../feature/admin/components/BylawForm";
+import GradeScalesForm from "../../../feature/admin/components/GradeScalesForm";
+import MaterialPreview from "../../../components/ui/MaterialPreview";
+import { API_URL } from "../../../config/api";
 import {
     FilePenIcon,
     TrashIcon,
@@ -25,7 +29,7 @@ import {
 const ITEMS_PER_PAGE = 10;
 const tableHeaders = ["Bylaw", "Description", "Version", "Status", "Students", "Document"];
 
-function buildRow(b) {
+function buildRow(b, onDocClick) {
     return {
         bylaw: (
             <p className="font-medium">{b.name}</p>
@@ -42,9 +46,9 @@ function buildRow(b) {
         ),
         students: b.studentCount ?? 0,
         document: b.fileName ? (
-            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate max-w-[120px] block" title={b.fileName}>
+            <button type="button" onClick={(e) => { e.stopPropagation(); onDocClick(b); }} className="truncate max-w-[120px] block mx-auto text-center hover:text-text-accent-default-light dark:hover:text-text-accent-default-dark transition-colors" title={b.fileName}>
                 {b.fileName}
-            </span>
+            </button>
         ) : "—",
         _id: b.bylawId ?? b.id,
         _raw: b,
@@ -67,6 +71,7 @@ export default function ManageBylaws() {
     const [currentPage, setCurrentPage] = useState(1);
     const [formIsLoading, setFormIsLoading] = useState(false);
     const [uploadTarget, setUploadTarget] = useState(null);
+    const [documentPreviewTarget, setDocumentPreviewTarget] = useState(null);
     const fileInputRef = useRef(null);
 
     const loadBylaws = useCallback(async () => {
@@ -127,12 +132,7 @@ export default function ManageBylaws() {
         if (!gradeScalesTarget) return;
         try {
             setFormIsLoading(true);
-            if (data.gradeScales) {
-                await setBylawGradeScales(gradeScalesTarget.bylawId, data.gradeScales);
-            }
-            if (data._file) {
-                await uploadBylawDocument(gradeScalesTarget.bylawId, data._file);
-            }
+            await setBylawGradeScales(gradeScalesTarget.bylawId, data.gradeScales);
             await loadBylaws();
             setGradeScalesTarget(null);
         } catch (err) {
@@ -187,7 +187,11 @@ export default function ManageBylaws() {
         }
     };
 
-    const tableRows = paginatedBylaws.map(buildRow);
+    const handleDocumentPreview = useCallback((bylaw) => {
+        setDocumentPreviewTarget(bylaw);
+    }, []);
+
+    const tableRows = paginatedBylaws.map((b) => buildRow(b, handleDocumentPreview));
 
     return (
         <div className="space-y-6">
@@ -288,7 +292,7 @@ export default function ManageBylaws() {
                 )}
 
                 {gradeScalesTarget && (
-                    <BylawForm
+                    <GradeScalesForm
                         onClose={() => setGradeScalesTarget(null)}
                         onSubmit={handleGradeScalesSubmit}
                         initialData={gradeScalesTarget}
@@ -308,6 +312,35 @@ export default function ManageBylaws() {
                 >
                     Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? Students assigned to this bylaw will have their bylaw reference removed.
                 </Dialog>
+
+                {documentPreviewTarget && (
+                    <ModelOverlay onClose={() => setDocumentPreviewTarget(null)} maxWidth="max-w-5xl">
+                        <div className="relative z-50 w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
+                            <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-4 dark:border-border-primary-default-dark">
+                                <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                                    {documentPreviewTarget.fileName || "Document Preview"}
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={() => setDocumentPreviewTarget(null)}
+                                    className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                                        <path d="M18.3 5.71 12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                <MaterialPreview
+                                    type={0}
+                                    title={documentPreviewTarget.fileName || "document"}
+                                    viewUrl={`${API_URL}/api/Bylaw/${documentPreviewTarget.bylawId}/download`}
+                                    downloadUrl={`${API_URL}/api/Bylaw/${documentPreviewTarget.bylawId}/download`}
+                                />
+                            </div>
+                        </div>
+                    </ModelOverlay>
+                )}
 
                 {uploadTarget && (
                     <Dialog

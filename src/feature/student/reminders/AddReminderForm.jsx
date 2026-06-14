@@ -3,6 +3,7 @@ import { Form } from "react-router-dom";
 
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import InputItem from "../../../components/form/InputItem";
+import DateTimeInput from "../../../components/form/DateTimeInput";
 import Button from "../../../components/ui/Button";
 import { XIcon } from "../../../components/ui/icons";
 
@@ -86,10 +87,9 @@ export default function AddReminderForm({ setIsFormOpen, onAddReminder, onSaveRe
                         onChange={(e) => setLocation(e.target.value)}
                     />
 
-                    <InputItem 
+                    <DateTimeInput 
                         label="Date & Time" 
                         name="datetime" 
-                        type="datetime-local" 
                         min={minDatetime}
                         errorMessage={
                             submitted && !datetime

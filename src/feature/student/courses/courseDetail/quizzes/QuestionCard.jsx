@@ -1,3 +1,4 @@
+import TextArea from "../../../../../components/ui/TextArea";
 import { ClipboardCheckIcon } from "../../../../../components/ui/icons";
 
 export function TypeBadge({ type }) {
@@ -82,11 +83,10 @@ function QuestionControls({ question, questionType, answer, onAnswerChange, writ
     if (type === "Written Question") {
         return (
             <>
-                <textarea
+                <TextArea
                     value={answer || ""}
                     onChange={(e) => onAnswerChange && onAnswerChange(e.target.value)}
                     placeholder={question.placeholder}
-                    rows={8}
                     readOnly={disabled}
                     className={`w-full rounded-2xl border px-4 py-3 ${disabled ? "opacity-70" : ""}`}
                 />

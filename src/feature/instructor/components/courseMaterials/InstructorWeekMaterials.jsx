@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import Button from "../../../../components/ui/Button";
+import TextArea from "../../../../components/ui/TextArea";
 import Dialog from "../../../../components/ui/Dialog";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import InstructorWeekMaterialContent from "./InstructorWeekMaterialContent";
@@ -256,11 +257,10 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                             <label className="block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">
                                 Description
                             </label>
-                            <textarea
+                            <TextArea
                                 value={editDescription}
                                 onChange={(e) => setEditDescription(e.target.value)}
-                                rows={3}
-                                className="w-full px-3 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark transition-colors resize-none"
+                                className="w-full px-3 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark transition-colors"
                             />
                         </div>
 

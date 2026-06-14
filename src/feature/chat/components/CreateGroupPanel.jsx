@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import TextArea from "../../../components/ui/TextArea";
 import { ImageIcon } from "../../../components/ui/icons";
 
 export default function CreateGroupPanel({
@@ -108,12 +109,11 @@ export default function CreateGroupPanel({
               — optional
             </span>
           </label>
-          <textarea
-            className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all resize-none"
+          <TextArea
+            className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all"
             placeholder="What's this group about?"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            rows={2}
           />
         </div>
 

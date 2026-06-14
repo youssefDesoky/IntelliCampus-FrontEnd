@@ -83,7 +83,7 @@ export default function CustomCursor() {
     return (
         <div
             ref={cursorRef}
-            className="custom-cursor fixed top-0 left-0 w-10 h-10 pointer-events-none z-[9999] transition-opacity duration-200"
+            className="custom-cursor fixed top-0 left-0 w-10 h-10 pointer-events-none z-[99999] transition-opacity duration-200"
             style={{ opacity: 1 }}
         >
             <img

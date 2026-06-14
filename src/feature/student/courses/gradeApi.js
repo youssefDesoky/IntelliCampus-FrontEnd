@@ -104,3 +104,49 @@ export const fetchMyComplaints = async () => {
 
     return response.json();
 };
+
+/**
+ * Fetch transcript data for the current student
+ * GET /api/grades/transcript
+ * @returns {Promise<Array>} Array of TranscriptCourseDto objects
+ */
+export const fetchTranscript = async () => {
+    const response = await fetch(`${API_URL}/api/grades/transcript`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch transcript: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+};
+
+/**
+ * Export transcript as PDF and trigger download
+ * GET /api/grades/transcript/export
+ */
+export const exportTranscriptPdf = async () => {
+    const response = await fetch(`${API_URL}/api/grades/transcript/export`, {
+        method: "GET",
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to export transcript: ${response.status} ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Transcript.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+};

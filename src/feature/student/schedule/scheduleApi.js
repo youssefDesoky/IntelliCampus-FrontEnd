@@ -31,3 +31,31 @@ export async function fetchScheduleById(scheduleId) {
     if (!res.ok) throw new Error(`Failed to fetch schedule: ${res.status}`);
     return res.json();
 }
+
+/**
+ * Export schedule as PDF and trigger download
+ * GET /api/schedule/my-schedule/export
+ */
+export async function exportSchedulePdf(types = []) {
+    let url = `${API_URL}/api/schedule/my-schedule/export`;
+    
+    if (types && types.length > 0) {
+        const typeParams = types.map((t) => `type=${encodeURIComponent(t)}`).join("&");
+        url += `?${typeParams}`;
+    }
+
+    const res = await fetch(url, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to export schedule: ${res.status}`);
+
+    const blob = await res.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = "WeeklySchedule.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+}

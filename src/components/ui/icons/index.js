@@ -12,6 +12,7 @@ export { default as BookIcon } from './BookIcon.jsx';
 export { default as BullHornIcon } from './BullHornIcon.jsx';
 export { default as BrainIcon } from './BrainIcon.jsx';
 export { default as BoldIcon } from './BoldIcon.jsx';
+export { default as BuildingIcon } from './BuildingIcon.jsx';
 
 export { default as CalendarCheckIcon } from './CalendarCheckIcon.jsx';
 export { default as CalendarDaysIcon  } from './CalendarDaysIcon.jsx';
@@ -30,6 +31,7 @@ export { default as CopyIcon } from './CopyIcon.jsx';
 
 export { default as DownloadIcon } from './DownloadIcon.jsx';
 export { default as DesktopIcon } from './DesktopIcon.jsx';
+export { default as DoorOpenIcon } from './DoorOpenIcon.jsx';
 
 export { default as EllipsisVerticalIcon } from './EllipsisVerticalIcon.jsx';
 export { default as ExclamationIcon } from './ExclamationIcon.jsx';

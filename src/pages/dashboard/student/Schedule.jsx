@@ -4,8 +4,8 @@ import useDeviceType from "../../../hooks/useDeviceType";
 import WeeklySchedule from "../../../components/ui/WeeklySchedule";
 import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
 import ExamSchedule from "../../../feature/student/schedule/ExamSchedule";
-import { fetchMySchedule } from "../../../feature/student/schedule/scheduleApi";
-import { fetchMyExams } from "../../../feature/student/schedule/examScheduleApi";
+import { fetchMySchedule, exportSchedulePdf } from "../../../feature/student/schedule/scheduleApi";
+import { fetchMyExams, exportExamSchedulePdf } from "../../../feature/student/schedule/examScheduleApi";
 
 const scheduleStorageKey = "studentCurrSchedule";
 const allowedTypeFilters = ["lecture", "section", "activity"];
@@ -63,6 +63,19 @@ export default function Schedule() {
 
     const clearTypeFilters = () => setSelectedTypes([]);
 
+    const handleExport = async () => {
+        try {
+            if (currSchedule === "weekly") {
+                await exportSchedulePdf(selectedTypes);
+            } else {
+                await exportExamSchedulePdf();
+            }
+        } catch (err) {
+            console.error("Export failed:", err);
+            alert("Failed to export PDF. Please try again.");
+        }
+    };
+
     const filteredSchedule = selectedTypes.length === 0
         ? scheduleData
         : scheduleData.filter((event) => selectedTypes.includes(getTypeGroup(event.type)));
@@ -100,6 +113,7 @@ export default function Schedule() {
                 selectedTypes={selectedTypes}
                 onToggleType={toggleTypeFilter}
                 onClearTypes={clearTypeFilters}
+                onExport={handleExport}
             />
 
             {currSchedule === "weekly" ? (

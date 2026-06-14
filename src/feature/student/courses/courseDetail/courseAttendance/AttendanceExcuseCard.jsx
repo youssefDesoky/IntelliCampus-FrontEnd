@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import Button from "../../../../../components/ui/Button";
+import TextArea from "../../../../../components/ui/TextArea";
 import BaseComponent from "../../../../../components/ui/BaseComponent";
 import BaseFormComponent from "../../../../../components/ui/BaseFormComponent";
 import { CloudUploadIcon, FileLinesIcon, FileIcon, TrashIcon, PaperclipIcon, ExclamationIcon } from "../../../../../components/ui/icons";
@@ -104,12 +105,11 @@ export default function AttendanceExcuseCard() {
                             <FileLinesIcon size={16} className="text-text-secondary-light dark:text-text-secondary-dark" />
                             Reason for excuse
                         </span>
-                        <textarea
-                            rows={5}
+                        <TextArea
                             value={reason}
                             onChange={(event) => setReason(event.target.value)}
                             placeholder="Explain why you missed the session and any relevant details..."
-                            className="min-h-32 w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-all placeholder:text-text-secondary-light focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-dark"
+                            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-all placeholder:text-text-secondary-light focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-dark"
                         />
                     </label>
 

@@ -4,6 +4,7 @@ import { NavLink, useOutletContext } from "react-router-dom";
 import Section from "../../../components/ui/Section";
 import BaseComponent from "../../../components/ui/BaseComponent";
 import StudyGroupPost from "../../../components/ui/StudyGroupPost";
+import TextArea from "../../../components/ui/TextArea";
 
 import {
     ArrowRightIcon,
@@ -279,12 +280,11 @@ export default function StudyGroup() {
                     componentButton={<PaperPlaneIcon className="h-5 w-5 text-text-accent-default-light dark:text-text-accent-default-dark" />}
                     contentClassName="space-y-4"
                 >
-                    <textarea
+                    <TextArea
                         value={postDraft}
                         onChange={(event) => setPostDraft(event.target.value)}
-                        rows={7}
                         placeholder="Write a question, share notes, or ask for help..."
-                        className="w-full resize-none rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors placeholder:text-text-tertiary-default-light focus:border-text-accent-default-light dark:text-text-primary-default-dark dark:placeholder:text-text-tertiary-default-dark dark:focus:border-text-accent-default-dark"
+                        className="w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors placeholder:text-text-tertiary-default-light focus:border-text-accent-default-light dark:text-text-primary-default-dark dark:placeholder:text-text-tertiary-default-dark dark:focus:border-text-accent-default-dark"
                     />
 
                     {attachments.length > 0 && (

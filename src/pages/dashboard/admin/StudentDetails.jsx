@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Button from "../../../components/ui/Button";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
+import TextArea from "../../../components/ui/TextArea";
 import {
     ArrowRightIcon,
     FilePenIcon,
@@ -210,13 +211,12 @@ export default function StudentDetails() {
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Message</label>
-                                <textarea
+                                <TextArea
                                     value={emailBody}
                                     onChange={(e) => setEmailBody(e.target.value)}
                                     disabled={sendingEmail}
-                                    rows={6}
                                     placeholder="Write your message here..."
-                                    className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50 placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark resize-none"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50 placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark"
                                 />
                             </div>
                             <div className="flex justify-end gap-2 pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">

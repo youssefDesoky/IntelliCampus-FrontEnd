@@ -1,34 +1,15 @@
 import { useState, useRef } from "react";
 import InputItem from "../../../components/form/InputItem";
 import Button from "../../../components/ui/Button";
+import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
-import { PlusIcon, TrashIcon, CloudUploadIcon } from "../../../components/ui/icons";
-
-const defaultGradeScale = { gradeLetter: "", minPercentage: 0, gpaValue: 0, sortOrder: 0 };
+import { CloudUploadIcon } from "../../../components/ui/icons";
 
 export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoading = false, isOpen = true }) {
     const isEdit = !!initialData.bylawId;
-    const [gradeScales, setGradeScales] = useState(() => {
-        if (initialData.gradeScales && initialData.gradeScales.length > 0) {
-            return initialData.gradeScales.map((g, i) => ({ ...g, sortOrder: i + 1 }));
-        }
-        return [];
-    });
     const [selectedFile, setSelectedFile] = useState(null);
     const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
-
-    const addGradeScale = () => {
-        setGradeScales(prev => [...prev, { ...defaultGradeScale, sortOrder: prev.length + 1 }]);
-    };
-
-    const removeGradeScale = (index) => {
-        setGradeScales(prev => prev.filter((_, i) => i !== index).map((g, i) => ({ ...g, sortOrder: i + 1 })));
-    };
-
-    const updateGradeScale = (index, field, value) => {
-        setGradeScales(prev => prev.map((g, i) => i === index ? { ...g, [field]: value } : g));
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -41,17 +22,10 @@ export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoadi
             return;
         }
 
-        const validGradeScales = gradeScales.filter(g => g.gradeLetter.trim() !== "");
         const payload = {
             name,
             version: parseInt(formData.version || "1", 10),
             description: (formData.description || "").trim(),
-            gradeScales: validGradeScales.length > 0 ? validGradeScales.map(g => ({
-                gradeLetter: g.gradeLetter,
-                minPercentage: parseFloat(g.minPercentage) || 0,
-                gpaValue: parseFloat(g.gpaValue) || 0,
-                sortOrder: g.sortOrder,
-            })) : null,
         };
 
         try {
@@ -66,7 +40,7 @@ export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoadi
         <BaseFormComponent
             isOpen={isOpen}
             title={`${isEdit ? "Edit" : "Create New"} Bylaw`}
-            description={isEdit ? "Update the bylaw details and grade scales below." : "Create a new academic bylaw with grade scales."}
+            description={isEdit ? "Update the bylaw details below." : "Create a new academic bylaw."}
             onClose={onClose}
             onSubmit={handleSubmit}
             submitText={isEdit ? (isLoading ? "Saving..." : "Update Bylaw") : (isLoading ? "Saving..." : "Create Bylaw")}
@@ -79,7 +53,7 @@ export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoadi
                     </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                     <InputItem
                         label="Bylaw Name"
                         type="text"
@@ -102,10 +76,9 @@ export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoadi
                     <label htmlFor="description" className="block text-sm font-medium mb-2 text-text-primary-default-light dark:text-text-primary-default-dark">
                         Description
                     </label>
-                    <textarea
+                    <TextArea
                         id="description"
                         name="description"
-                        rows="3"
                         className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
                         placeholder="Describe the bylaw purpose and scope"
                         defaultValue={initialData.description || ""}
@@ -145,81 +118,6 @@ export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoadi
                                 Click to upload a bylaw document (PDF, DOC)
                             </div>
                         )}
-                    </div>
-                </div>
-
-                <div>
-                    <div className="flex items-center justify-between mb-3">
-                        <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                            Grade Scales
-                        </label>
-                        <Button variant="secondary" type="button" onClick={addGradeScale}>
-                            <PlusIcon size={16} />
-                            Add Grade Scale
-                        </Button>
-                    </div>
-
-                    {gradeScales.length === 0 && (
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
-                            No grade scales defined. Click "Add Grade Scale" to add one.
-                        </p>
-                    )}
-
-                    <div className="space-y-3">
-                        {gradeScales.map((scale, index) => (
-                            <div key={index} className="grid grid-cols-5 gap-3 items-end p-3 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
-                                <div>
-                                    <label className="block text-xs font-medium mb-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">Grade</label>
-                                    <input
-                                        type="text"
-                                        value={scale.gradeLetter}
-                                        onChange={(e) => updateGradeScale(index, "gradeLetter", e.target.value)}
-                                        placeholder="A"
-                                        className="w-full px-2 py-1.5 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark focus:outline-none focus:border-border-primary-active-light"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium mb-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">Min %</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={scale.minPercentage}
-                                        onChange={(e) => updateGradeScale(index, "minPercentage", e.target.value)}
-                                        placeholder="90"
-                                        className="w-full px-2 py-1.5 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark focus:outline-none focus:border-border-primary-active-light"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium mb-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">GPA</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={scale.gpaValue}
-                                        onChange={(e) => updateGradeScale(index, "gpaValue", e.target.value)}
-                                        placeholder="4.0"
-                                        className="w-full px-2 py-1.5 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark focus:outline-none focus:border-border-primary-active-light"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium mb-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">Order</label>
-                                    <input
-                                        type="number"
-                                        value={scale.sortOrder}
-                                        onChange={(e) => updateGradeScale(index, "sortOrder", parseInt(e.target.value) || 0)}
-                                        className="w-full px-2 py-1.5 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark focus:outline-none focus:border-border-primary-active-light"
-                                    />
-                                </div>
-                                <div className="flex justify-center">
-                                    <Button
-                                        variant="danger"
-                                        type="button"
-                                        onClick={() => removeGradeScale(index)}
-                                    >
-                                        <TrashIcon size={16} />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
                     </div>
                 </div>
             </div>

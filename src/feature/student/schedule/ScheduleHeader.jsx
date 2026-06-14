@@ -13,7 +13,7 @@ const typeFilterOptions = [
     { value: "activity", label: "Activity" },
 ];
 
-export default function ScheduleHeader({ currSchedule, setCurrSchedule, isMobile, selectedTypes = [], onToggleType }) {
+export default function ScheduleHeader({ currSchedule, setCurrSchedule, isMobile, selectedTypes = [], onToggleType, onExport }) {
     const handleToggle = (state) => {
         setCurrSchedule(state);
         localStorage.setItem(scheduleStorageKey, state);
@@ -64,7 +64,7 @@ export default function ScheduleHeader({ currSchedule, setCurrSchedule, isMobile
                         </p>
                     </div>
 
-                    <Button variant="secondary" type="button">
+                    <Button variant="secondary" type="button" onClick={onExport}>
                         <DownloadIcon size={18} />
                         {isMobile ? null : "Export"}
                     </Button>

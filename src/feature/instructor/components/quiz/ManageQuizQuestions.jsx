@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Button from "../../../../components/ui/Button";
+import TextArea from "../../../../components/ui/TextArea";
 import { addQuestions } from "./instructorQuizApi";
 
 const QUESTION_TYPES = [
@@ -130,7 +131,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
 
                         <div>
                             <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1">Prompt</label>
-                            <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={3} placeholder="Enter the question text..." className="block w-full rounded-lg border px-3 py-2" />
+                            <TextArea value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Enter the question text..." className="block w-full rounded-lg border px-3 py-2" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">

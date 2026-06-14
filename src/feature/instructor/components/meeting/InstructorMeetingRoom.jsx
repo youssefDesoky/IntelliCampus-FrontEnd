@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 import Section from "../../../../components/ui/Section";
+import DateTimeInput from "../../../../components/form/DateTimeInput";
 import { fetchCourseMeetings, createMeeting } from "../../../course/services/meetingsApi";
 import MicIcon from "../../../../components/ui/icons/MicIcon";
 import MicSlashIcon from "../../../../components/ui/icons/MicSlashIcon";
@@ -312,14 +313,7 @@ export default function MeetingRoom() {
                                     placeholder="e.g. Week 5 Lecture"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Date & Time</label>
-                                <input
-                                    type="datetime-local" value={dateTime}
-                                    onChange={(e) => setDateTime(e.target.value)}
-                                    className="w-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl px-4 py-2.5 text-text-primary-default-light dark:text-text-primary-default-dark focus:outline-none focus:ring-2 focus:ring-text-accent-default-light dark:focus:ring-text-accent-default-dark"
-                                />
-                            </div>
+                            <DateTimeInput label="Date & Time" value={dateTime} onChange={(e) => setDateTime(e.target.value)} />
                             <button
                                 onClick={handleCreate}
                                 disabled={!title || !dateTime || creating}

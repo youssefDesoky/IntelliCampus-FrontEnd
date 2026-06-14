@@ -59,3 +59,30 @@ export async function fetchExamScheduleById(examScheduleId) {
     if (!res.ok) throw new Error(`Failed to fetch exam schedule: ${res.status}`);
     return res.json();
 }
+
+/**
+ * Export exam schedule as PDF and trigger download
+ * GET /api/examschedule/my-exams/export
+ */
+export async function exportExamSchedulePdf(type, status) {
+    let url = `${API_URL}/api/examschedule/my-exams/export`;
+    const params = [];
+    if (type) params.push(`type=${encodeURIComponent(type)}`);
+    if (status) params.push(`status=${encodeURIComponent(status)}`);
+    if (params.length) url += `?${params.join("&")}`;
+
+    const res = await fetch(url, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to export exam schedule: ${res.status}`);
+
+    const blob = await res.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = "ExamSchedule.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+}

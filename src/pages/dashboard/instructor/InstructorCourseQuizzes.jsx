@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 
 import Button from "../../../components/ui/Button";
+import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
+import DateTimeInput from "../../../components/form/DateTimeInput";
 
 import { createQuiz, fetchQuizzesByCourse } from "../../../feature/instructor/components/quiz/instructorQuizApi";
 import ManageQuizQuestions from "../../../feature/instructor/components/quiz/ManageQuizQuestions";
@@ -119,7 +121,7 @@ export default function InstructorCourseQuizzes() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Description</label>
-                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Quiz description (optional)" rows={3} className="mt-1 block w-full rounded-lg border px-3 py-2" />
+                        <TextArea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Quiz description (optional)" className="mt-1 block w-full rounded-lg border px-3 py-2" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -131,10 +133,7 @@ export default function InstructorCourseQuizzes() {
                             <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} placeholder="e.g., 60" min="1" className="mt-1 block w-full rounded-lg border px-3 py-2" />
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Due Date</label>
-                        <input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="mt-1 block w-full rounded-lg border px-3 py-2" />
-                    </div>
+                    <DateTimeInput label="Due Date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
                 </div>
             </BaseFormComponent>
         </div>

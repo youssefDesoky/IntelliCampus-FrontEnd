@@ -2,6 +2,7 @@ import { useState } from "react";
 import InputItem from "../../../components/form/InputItem";
 import SelectBox from "../../../components/ui/SelectBox";
 import Button from "../../../components/ui/Button";
+import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import { XIcon } from "../../../components/ui/icons";
 
@@ -101,10 +102,9 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
                     <label htmlFor="description" className="block text-sm font-medium mb-2 text-text-primary-default-light dark:text-text-primary-default-dark">
                         Description
                     </label>
-                    <textarea
+                    <TextArea
                         id="description"
                         name="description"
-                        rows="4"
                         className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
                         placeholder="Describe the department focus and scope"
                         defaultValue={initialData.description || ""}

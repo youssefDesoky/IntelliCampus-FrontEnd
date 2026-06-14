@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import PageHeader from "../../../components/ui/PageHeader";
 import Button from "../../../components/ui/Button";
 import Section from "../../../components/ui/Section";
+import Dialog from "../../../components/ui/Dialog";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import { ImportIcon } from "../../../components/ui/icons";
 import { uploadExams } from "../../../feature/admin/services/adminApi";
@@ -13,9 +14,32 @@ const examTypeOptions = [
     { value: "Final", label: "Final" },
 ];
 
+function downloadCSV(data, filename) {
+    if (!data || data.length === 0) return;
+    const headers = Object.keys(data[0]);
+    const csvRows = [headers.join(",")];
+    for (const row of data) {
+        csvRows.push(headers.map(h => {
+            const v = row[h];
+            const s = String(v ?? "");
+            return s.includes(",") || s.includes('"') || s.includes("\n")
+                ? `"${s.replace(/"/g, '""')}"` : s;
+        }).join(","));
+    }
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
 export default function ManageExams() {
+    const schedulerRef = useRef(null);
+    const [hasSchedule, setHasSchedule] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [confirmReset, setConfirmReset] = useState(false);
     const [result, setResult] = useState(null);
     const [selectedExamType, setSelectedExamType] = useState(examTypeOptions[0]);
 
@@ -43,17 +67,37 @@ export default function ManageExams() {
         }
     };
 
+    const handleExport = useCallback(() => {
+        const data = schedulerRef.current?.getScheduleData?.();
+        if (data && data.length > 0) {
+            downloadCSV(data, `exam-schedule-${new Date().toISOString().split("T")[0]}.csv`);
+        }
+    }, []);
+
     return (
         <>
             <PageHeader title="Manage Exams" subtitle="Import exam schedules and auto-generate conflict-free timetables">
-                <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
-                    <ImportIcon size={24} />
-                    Import Exams
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="primary" onClick={() => schedulerRef.current?.handleAuto?.()}>
+                        Auto Schedule
+                    </Button>
+                    {hasSchedule && (
+                        <Button variant="secondary" onClick={() => setConfirmReset(true)}>
+                            Reset
+                        </Button>
+                    )}
+                    <Button variant="secondary" onClick={handleExport} disabled={!hasSchedule}>
+                        Export Excel
+                    </Button>
+                    <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
+                        <ImportIcon size={24} />
+                        Import Exams
+                    </Button>
+                </div>
             </PageHeader>
 
             <Section>
-                <ExamScheduler />
+                <ExamScheduler ref={schedulerRef} onScheduleChange={setHasSchedule} />
             </Section>
 
             {result && (
@@ -71,6 +115,18 @@ export default function ManageExams() {
                     </div>
                 </Section>
             )}
+
+            <Dialog
+                isOpen={confirmReset}
+                variant="warning"
+                title="Reset Schedule?"
+                confirmText="Yes, Reset"
+                cancelText="Cancel"
+                onClose={() => setConfirmReset(false)}
+                onConfirm={() => { schedulerRef.current?.handleReset?.(); setConfirmReset(false); }}
+            >
+                This will remove all scheduled exams. This action cannot be undone.
+            </Dialog>
 
             {isImportOpen && (
                 <ImportDialog

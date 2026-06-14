@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import Button from "./Button";
+import TextArea from "./TextArea";
 import { CloudUploadIcon, XIcon, FileIcon, TrashIcon, PaperPlaneIcon } from "./icons";
 
 const MAX_SIZE_MB = 50;
@@ -104,12 +105,11 @@ export default function QuickUpload({
                         <label className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wide">
                             {noteLabel} <span className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark font-normal normal-case">{noteOptionalText}</span>
                         </label>
-                        <textarea
+                        <TextArea
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             placeholder={notePlaceholder}
-                            rows={3}
-                            className="w-full resize-none rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-tertiary-default-light dark:placeholder:text-text-tertiary-default-dark focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                            className="w-full rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-tertiary-default-light dark:placeholder:text-text-tertiary-default-dark focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                         />
                     </div>
                 )}

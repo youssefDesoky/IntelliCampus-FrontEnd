@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import InstructorWeekMaterials from "../../../feature/instructor/components/courseMaterials/InstructorWeekMaterials";
 import Button from "../../../components/ui/Button";
+import TextArea from "../../../components/ui/TextArea";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import { PlusIcon, XIcon } from "../../../components/ui/icons";
 import { createFolder, createMaterial, deleteMaterial, deleteFolder, updateFolder } from "../../../feature/course/services/materialsApi";
@@ -145,12 +146,11 @@ export default function InstructorCourseMaterials() {
                                 <label className="block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">
                                     Description
                                 </label>
-                                <textarea
+                                <TextArea
                                     value={newFolderDescription}
                                     onChange={(e) => setNewFolderDescription(e.target.value)}
                                     placeholder="Brief description of the folder contents..."
-                                    rows={3}
-                                    className="w-full px-3 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark transition-colors resize-none"
+                                    className="w-full px-3 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark transition-colors"
                                 />
                             </div>
 

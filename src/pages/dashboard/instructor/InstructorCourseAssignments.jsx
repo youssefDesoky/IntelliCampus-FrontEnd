@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 
 import Button from "../../../components/ui/Button";
+import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import MaterialPreview from "../../../components/ui/MaterialPreview";
+import DateTimeInput from "../../../components/form/DateTimeInput";
 import { PlusIcon, TrashIcon, EyeIcon, DownloadIcon, XIcon } from "../../../components/ui/icons";
 
 import {
@@ -285,8 +287,7 @@ export default function InstructorCourseAssignments() {
         
         <div className="space-y-2">
         <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Description</label>
-        <textarea
-        rows={3}
+        <TextArea
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         placeholder="Short summary..."
@@ -296,8 +297,7 @@ export default function InstructorCourseAssignments() {
         
         <div className="space-y-2">
         <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Full Instructions</label>
-        <textarea
-        rows={5}
+        <TextArea
         value={instructions}
         onChange={(event) => setInstructions(event.target.value)}
         placeholder="Detailed instructions for students..."
@@ -306,15 +306,7 @@ export default function InstructorCourseAssignments() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Due Date</label>
-        <input
-        type="datetime-local"
-        value={dueDate}
-        onChange={(event) => setDueDate(event.target.value)}
-        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
-        />
-        </div>
+        <DateTimeInput label="Due Date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
         
         <div className="space-y-2">
         <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Total Points</label>

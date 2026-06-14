@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Button from "../../../components/ui/Button";
+import TextArea from "../../../components/ui/TextArea";
 import { PlusIcon, FilePenIcon } from "../../../components/ui/icons";
 import InputItem from "../../../components/form/InputItem";
 import SelectBox from "../../../components/ui/SelectBox";
@@ -108,10 +109,9 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
 
                 <div>
                     <label htmlFor="address">Address</label>
-                    <textarea
+                    <TextArea
                         id="address"
                         name="address"
-                        rows="4"
                         className="mt-1 block w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark rounded-md focus:outline-none"
                         placeholder="Enter address"
                         defaultValue={initialData.address || ""}

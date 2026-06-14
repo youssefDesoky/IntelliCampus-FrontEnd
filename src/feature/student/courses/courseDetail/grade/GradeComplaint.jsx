@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import TextArea from "../../../../../components/ui/TextArea";
 import BaseComponent from "../../../../../components/ui/BaseComponent";
 import BaseFormComponent from "../../../../../components/ui/BaseFormComponent";
 import Button from "../../../../../components/ui/Button";
@@ -167,12 +168,11 @@ export default function GradeComplaint({ className = "", items = [] }) {
 						<label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
 							Complaint details
 						</label>
-						<textarea
-							rows={5}
+						<TextArea
 							value={complaintReason}
 							onChange={(event) => setComplaintReason(event.target.value)}
 							placeholder="Explain what should be rechecked and why you think the grade needs review..."
-							className="min-h-32 w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors placeholder:text-text-secondary-default-light focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-default-dark"
+							className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors placeholder:text-text-secondary-default-light focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-default-dark"
 						/>
 					</div>
 				</div>

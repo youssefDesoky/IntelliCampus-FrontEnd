@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Button from "../../../components/ui/Button";
 import InputItem from "../../../components/form/InputItem";
+import TimeInput from "../../../components/form/TimeInput";
 import SelectBox from "../../../components/ui/SelectBox";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import { PlusIcon, XIcon } from "../../../components/ui/icons";
@@ -248,11 +249,9 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                                     ))}
                                 </select>
 
-                                <input
-                                    type="time"
+                                <TimeInput
                                     value={slot.time}
                                     onChange={(e) => updateSlot(idx, "time", e.target.value)}
-                                    className="flex-1 px-3 py-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark focus:outline-none text-sm"
                                     required
                                 />
 

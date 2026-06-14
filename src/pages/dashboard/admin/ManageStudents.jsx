@@ -34,7 +34,7 @@ function buildStudentRow(s) {
         nationalId: s.nationalId || "—",
         specilization: s.specialization || "—",
         level: s.level ?? "—",
-        bylaw: s.baylawName ?? "—",
+        bylaw: s.bylawName ?? "—",
         _id: s.userId,
         _raw: s,
     };
