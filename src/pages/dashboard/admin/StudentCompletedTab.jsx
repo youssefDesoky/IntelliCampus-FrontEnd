@@ -1,7 +1,7 @@
+import { useMemo } from "react";
 import Table from "../../../components/ui/Table";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
-
-const headers = ["Code", "Course", "Credit Hours", "Course Work", "Percentage", "Grade"];
+import useDeviceType from "../../../hooks/useDeviceType";
 
 function toGradeLetter(p) {
     if (p === null || p === undefined) return "—";
@@ -14,27 +14,40 @@ function toGradeLetter(p) {
     return "F";
 }
 
-function buildRow(c) {
-    return {
-        code: c.code || c.courseCode || "—",
-        course: c.title || c.name || "—",
-        creditHours: c.creditHours ?? "—",
-        courseWork: c.courseWork != null ? `${c.courseWork}` : "—",
-        percentage: c.gradePercent != null ? `${c.gradePercent}%` : "—",
-        grade: (
-            <span className={`px-2 py-0.5 rounded font-semibold text-xs ${
+export default function StudentCompletedTab({ courses, loading, page, totalPages, setPage }) {
+    const { isPhone } = useDeviceType();
+
+    const headers = useMemo(() => {
+        if (isPhone) return ["Course", "Percentage", "Grade"];
+        return ["Code", "Course", "Credit Hours", "Course Work", "Percentage", "Grade"];
+    }, [isPhone]);
+
+    const buildRow = useMemo(() => (c) => {
+        const row = {};
+        if (!isPhone) {
+            row.code = c.code || c.courseCode || "—";
+        }
+        row.course = c.title || c.name || "—";
+        if (!isPhone) {
+            row.creditHours = c.creditHours ?? "—";
+        }
+        if (!isPhone) {
+            row.courseWork = c.courseWork != null ? `${c.courseWork}` : "—";
+        }
+        row.percentage = c.gradePercent != null ? `${c.gradePercent}%` : "—";
+        row.grade = (
+            <span className={"px-2 py-0.5 rounded font-semibold text-xs " + (
                 c.grade?.startsWith("A") ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" :
                 c.grade?.startsWith("B") ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" :
                 c.grade?.startsWith("C") ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" :
                 "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
-            }`}>
+            )}>
                 {c.grade || toGradeLetter(c.gradePercent)}
             </span>
-        ),
-    };
-}
+        );
+        return row;
+    }, [isPhone]);
 
-export default function StudentCompletedTab({ courses, loading, page, totalPages, setPage }) {
     const paginated = courses.slice((page - 1) * 10, page * 10);
 
     if (loading) {
@@ -55,6 +68,7 @@ export default function StudentCompletedTab({ courses, loading, page, totalPages
                 role="course"
                 headers={headers}
                 data={paginated.map(buildRow)}
+                columnAlignments={isPhone ? ["text-left", "text-center", "text-center"] : ["text-left", "text-left", "text-center", "text-center", "text-center", "text-center"]}
                 wrapInSection={false}
                 showHeaderActions={false}
                 showPagination={false}

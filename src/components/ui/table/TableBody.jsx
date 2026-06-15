@@ -8,7 +8,7 @@ import StudentForm from "../../../feature/admin/components/StudentForm";
 
 const buttonStyle = "w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
 
-export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true }) {
+export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true, columnAlignments }) {
 	const [editingRow, setEditingRow] = useState(null);
 	const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
 	const [actionButtonClicked, setActionButtonClicked] = useState(null);
@@ -129,13 +129,13 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 					)}
 
 					{Object.values(row).slice(0, columnCount).map((cell, cellIndex) => (
-						<td key={cellIndex} className="px-3 py-2 text-center align-middle">
+						<td key={cellIndex} className={`px-1 sm:px-3 py-2 align-middle ${columnAlignments?.[cellIndex] || "text-center"}`}>
 							{cell}
 						</td>
 					))}
                     
 					{showActionsColumn && (
-						<td className="px-3 py-2 text-center align-middle">
+						<td className="px-1 sm:px-3 py-2 text-center align-middle">
 							<button
 								ref={(el) => (buttonRefs.current[rowIndex] = el)}
 								onClick={(e) => handleActionClick(e, rowIndex)}

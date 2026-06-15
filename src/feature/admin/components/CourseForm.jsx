@@ -123,7 +123,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             submitText={isEdit ? "Update Course" : "Create Course"}
         >
             <div className="space-y-6 mb-6">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem
                         label="Course Title"
                         type="text"
@@ -145,7 +145,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem
                         label="Course Code"
                         type="text"
@@ -168,7 +168,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem
                         label="Credit Hours"
                         type="number"

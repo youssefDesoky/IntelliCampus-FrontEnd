@@ -428,7 +428,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
       type: "user",
       userId: String(user.id),
       fullName: user.name,
-      role: user.role ?? "",
+      role: (user.roles?.[0] ?? ""),
       avatar: user.avatar || null,
     });
     setActivePanel("messaging");

@@ -1,15 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
 import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
-
-const adminRoleOptions = [
-    { value: "Post Grad Affairs Admin", label: "Post Grad Affairs Admin" },
-    { value: "Under Grad Affairs Admin", label: "Under Grad Affairs Admin" },
-];
+import { fetchAdminRoles } from "../services/adminApi";
 
 export default function AdminForm({ onClose, method = "post", onSubmit, initialData = {} }) {
     const isEdit = method === "put";
@@ -17,13 +13,24 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
 
     const [photoPreview, setPhotoPreview] = useState(initialData.profileImage || null);
     const [photoFile, setPhotoFile] = useState(null);
+    const [roleOptions, setRoleOptions] = useState([]);
 
-    const [selectedRole, setSelectedRole] = useState(() => {
-        if (initialData.role) {
-            return adminRoleOptions.find(o => o.value === initialData.role) || adminRoleOptions[0];
-        }
-        return adminRoleOptions[0];
-    });
+    useEffect(() => {
+        fetchAdminRoles()
+            .then(data => {
+                const options = data.map(r => ({ value: r.value, label: r.label }));
+                setRoleOptions(options);
+            })
+            .catch(() => {
+                setRoleOptions([
+                    { value: "undergrad", label: "Under Grad Affairs Admin" },
+                    { value: "postgrad", label: "Post Grad Affairs Admin" },
+                    { value: "academicstaff", label: "Academic Staff Admin" }
+                ]);
+            });
+    }, []);
+
+    const [selectedRole, setSelectedRole] = useState(null);
 
     const handlePhotoClick = () => {
         fileInputRef.current?.click();
@@ -61,13 +68,13 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
             onSubmit={handleSubmit}
             submitText={isEdit ? "Save Changes" : "Create Admin"}
         >
-            <div className="flex gap-6 items-start">
+            <div className="flex flex-col sm:flex-row gap-6 items-stretch sm:items-start">
                 {/* Left: Photo */}
-                <div className="flex flex-col items-center shrink-0">
+                <div className="flex flex-col items-center shrink-0 self-center sm:self-start">
                     <div className="relative">
                         <div
                             onClick={handlePhotoClick}
-                            className="w-32 h-36 rounded-xl overflow-hidden ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
+                            className="w-24 h-28 sm:w-32 sm:h-36 rounded-xl overflow-hidden ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
                         >
                             {photoPreview ? (
                                 <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
@@ -103,7 +110,7 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                 </div>
 
                 {/* Right: Fields */}
-                <div className="flex-1 min-w-0 space-y-5">
+                <div className="w-full flex-1 min-w-0 space-y-5">
                     {/* Personal Info */}
                     <div>
                         <div className="flex items-center gap-3 mb-3">
@@ -111,12 +118,12 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                             <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">Personal Information</h4>
                             <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
                             <InputItem label="Full Name" type="text" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
                             <InputItem label="National ID" type="text" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
                             <InputItem label="Email Address" type="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
                             <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
-                            <div className="col-span-2">
+                            <div className="col-span-1 sm:col-span-2">
                                 <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Address</label>
                                 <TextArea
                                     name="address"
@@ -136,13 +143,13 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                             <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">Employment</h4>
                             <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
                             <SelectBox
                                 className="w-full"
                                 label="Role"
                                 name="role"
                                 labelDirection="flex-col"
-                                options={adminRoleOptions}
+                                options={roleOptions}
                                 selectedOption={selectedRole}
                                 onChange={setSelectedRole}
                             />

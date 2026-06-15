@@ -68,7 +68,7 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
                     </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem
                         label="Department Name"
                         type="text"

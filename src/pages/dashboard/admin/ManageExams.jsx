@@ -4,7 +4,8 @@ import Button from "../../../components/ui/Button";
 import Section from "../../../components/ui/Section";
 import Dialog from "../../../components/ui/Dialog";
 import ImportDialog from "../../../components/ui/ImportDialog";
-import { ImportIcon } from "../../../components/ui/icons";
+import { ArrowRotateRightIcon, CalendarCheckIcon, DownloadIcon, ImportIcon } from "../../../components/ui/icons";
+import useDeviceType from "../../../hooks/useDeviceType";
 import { uploadExams } from "../../../feature/admin/services/adminApi";
 import ExamScheduler from "../../../feature/admin/components/ExamScheduler";
 
@@ -35,6 +36,7 @@ function downloadCSV(data, filename) {
 }
 
 export default function ManageExams() {
+    const { isPhone } = useDeviceType();
     const schedulerRef = useRef(null);
     const [hasSchedule, setHasSchedule] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
@@ -79,19 +81,22 @@ export default function ManageExams() {
             <PageHeader title="Manage Exams" subtitle="Import exam schedules and auto-generate conflict-free timetables">
                 <div className="flex items-center gap-2">
                     <Button variant="primary" onClick={() => schedulerRef.current?.handleAuto?.()}>
-                        Auto Schedule
+                        <CalendarCheckIcon size={24} />
+                        {!isPhone && "Auto Schedule"}
                     </Button>
                     {hasSchedule && (
                         <Button variant="secondary" onClick={() => setConfirmReset(true)}>
-                            Reset
+                            <ArrowRotateRightIcon size={24} />
+                            {!isPhone && "Reset"}
                         </Button>
                     )}
                     <Button variant="secondary" onClick={handleExport} disabled={!hasSchedule}>
-                        Export Excel
+                        <DownloadIcon size={24} />
+                        {!isPhone && "Export Excel"}
                     </Button>
                     <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
                         <ImportIcon size={24} />
-                        Import Exams
+                        {!isPhone && "Import Exams"}
                     </Button>
                 </div>
             </PageHeader>

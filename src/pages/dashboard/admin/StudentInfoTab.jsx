@@ -18,7 +18,7 @@ function InfoField({ label, value }) {
 export default function StudentInfoTab({ student, completedCount, registeredCount }) {
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
                     { label: "GPA", value: student.gpa ?? "—", color: "text-emerald-500", icon: ChartLineIcon },
                     { label: "Level", value: student.level ?? "—", color: "text-blue-500", icon: BookIcon },
@@ -38,7 +38,7 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-2 flex flex-col items-center text-center p-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-gradient-to-b from-bg-surface-secondary-default-light to-bg-surface-primary-default-light dark:from-bg-surface-secondary-default-dark dark:to-bg-surface-primary-default-dark h-full">
+                <div className="lg:col-span-2 flex flex-col items-center text-center p-4 sm:p-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-gradient-to-b from-bg-surface-secondary-default-light to-bg-surface-primary-default-light dark:from-bg-surface-secondary-default-dark dark:to-bg-surface-primary-default-dark h-full">
                     <div className="relative mb-5">
                         <div className="w-36 h-36 rounded-2xl overflow-hidden bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark ring-4 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shadow-xl shrink-0">
                             {student.profileImage ? (
@@ -74,28 +74,13 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                     </div>
                 </div>
 
-                <div className="lg:col-span-3 flex flex-col gap-4">
+                <div className="lg:col-span-3 flex flex-col gap-3 sm:gap-4">
                     <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
-                        <div className="px-5 py-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark flex items-center gap-2">
-                            <BookIcon className="w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Academic Information</h3>
-                        </div>
-                        <div className="p-5">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                                <InfoField label="Program" value={student.program} />
-                                <InfoField label="Department" value={student.department ?? student.faculty} />
-                                <InfoField label="Bylaw" value={student.bylawName ?? student.bylaw} />
-                                <InfoField label="Enrollment Date" value={student.enrollmentDate ?? student.enrolledAt} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
-                        <div className="px-5 py-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark flex items-center gap-2">
+                        <div className="px-3 sm:px-5 py-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark flex items-center gap-2">
                             <UserIcon className="w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                             <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Personal Details</h3>
                         </div>
-                        <div className="p-5">
+                        <div className="p-3 sm:p-5">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                                 <InfoField label="National ID" value={student.nationalId} />
                                 <InfoField label="Nationality" value={student.nationality} />
@@ -105,6 +90,21 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                                     <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Address</span>
                                     <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark break-words">{student.address ?? "—"}</span>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+                        <div className="px-3 sm:px-5 py-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark flex items-center gap-2">
+                            <BookIcon className="w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Academic Information</h3>
+                        </div>
+                        <div className="p-3 sm:p-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                                <InfoField label="Program" value={student.program} />
+                                <InfoField label="Department" value={student.department ?? student.departmentName ?? student.faculty} />
+                                <InfoField label="Bylaw" value={student.bylawName ?? student.bylaw} />
+                                <InfoField label="Enrollment Date" value={student.enrollmentDate ?? student.enrolledAt} />
                             </div>
                         </div>
                     </div>

@@ -45,17 +45,17 @@ export default function FilterDropdown({
                 disabled={disabled}
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-border-primary-default-light bg-bg-surface-primary-default-light px-4 py-2 text-sm font-medium text-text-secondary-active-light transition-colors hover:bg-bg-fill-primary-hover-light disabled:opacity-60 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-secondary-active-dark dark:hover:bg-bg-fill-primary-hover-dark"
+                className="inline-flex items-center rounded-md border border-border-primary-default-light bg-bg-surface-primary-default-light px-4 py-2 text-sm font-medium text-text-secondary-active-light transition-colors hover:bg-bg-fill-primary-hover-light disabled:opacity-60 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-secondary-active-dark dark:hover:bg-bg-fill-primary-hover-dark"
             >
-                <FilterIcon size={18} />
-                {label}{selectedValues.length > 0 ? ` (${selectedValues.length})` : ""}
-                <AngleDownIcon size={18} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                <FilterIcon size={18} className="shrink-0" />
+                <span className="flex-1 text-center">{label}{selectedValues.length > 0 ? ` (${selectedValues.length})` : ""}</span>
+                <AngleDownIcon size={18} className={`shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
             {isOpen && (
                 <div
                     role="menu"
-                    className="absolute left-0 top-[calc(100%+8px)] z-20 w-56 rounded-xl border border-border-primary-default-light bg-bg-surface-primary-default-light p-3 shadow-lg dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark"
+                    className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+8px)] z-20 w-56 rounded-xl border border-border-primary-default-light bg-bg-surface-primary-default-light p-3 shadow-lg dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark"
                 >
                     <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                         {headerLabel || `Filter by ${label.toLowerCase()}`}

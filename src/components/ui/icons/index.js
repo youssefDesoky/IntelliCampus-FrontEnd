@@ -37,6 +37,7 @@ export { default as EllipsisVerticalIcon } from './EllipsisVerticalIcon.jsx';
 export { default as ExclamationIcon } from './ExclamationIcon.jsx';
 export { default as EyeSlashIcon } from './EyeSlashIcon.jsx';
 export { default as EyeIcon } from './EyeIcon.jsx';
+export { default as EnvelopIcon } from './EnvelopIcon.jsx';
 
 export { default as FahimIcon } from './FahimIcon.jsx';
 export { default as FileIcon } from './FileIcon.jsx';

@@ -11,7 +11,9 @@ import ToggleTheme from "../../ui/ToggleTheme";
 import { IntelliCampusIcon, BellIconLight, TranslateIcon, SignOutIcon, UserIcon } from "../../ui/icons";
 
 
-export default function Header({ avatar, notifications: initialNotifications, isMobile }) {
+const viewLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
+
+export default function Header({ avatar, notifications: initialNotifications, isMobile, availableViews = [], activeView, onViewChange }) {
     const { i18n } = useTranslation('common/header');
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -161,6 +163,18 @@ export default function Header({ avatar, notifications: initialNotifications, is
                     />
                 }
 
+                {availableViews.length > 1 && (
+                    <div className="hidden sm:flex items-center gap-1">
+                        <ToggleViewMode
+                            isFirstMode={activeView === availableViews[0]}
+                            onFirstModeSelect={() => onViewChange(availableViews[0])}
+                            onSecondModeSelect={() => onViewChange(availableViews[1])}
+                            firstModeLabel={viewLabels[availableViews[0]] || availableViews[0]}
+                            secondModeLabel={viewLabels[availableViews[1]] || availableViews[1]}
+                        />
+                    </div>
+                )}
+
                 <div id="notifications-button" className="relative" ref={notificationsRef}>
                     <button 
                         className="transition-colors duration-200 p-2 rounded-md relative text-text-secondary-active-light hover:text-text-secondary-hover-light hover:bg-bg-fill-primary-hover-light dark:text-text-secondary-active-dark dark:hover:text-text-primary-active-dark dark:hover:bg-bg-fill-primary-hover-dark" 
@@ -275,6 +289,23 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                         <span className="text-sm font-semibold whitespace-nowrap">Language</span>
                                     </button>
                                 </li>
+
+                                {availableViews.length > 1 && (
+                                    <li className="mb-2 px-3">
+                                        <div className="flex items-center gap-2 py-1">
+                                            <span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wider">View:</span>
+                                            <select
+                                                value={activeView}
+                                                onChange={(e) => onViewChange(e.target.value)}
+                                                className="text-sm font-semibold bg-transparent border border-border-primary-default-light dark:border-border-primary-default-dark rounded px-2 py-1 outline-none"
+                                            >
+                                                {availableViews.map(v => (
+                                                    <option key={v} value={v}>{viewLabels[v] || v}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </li>
+                                )}
 
                                 <li >
                                     <Form method="post" action="/logout">

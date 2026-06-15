@@ -13,7 +13,7 @@ export default function TableHeader({ headerData, selectAll, setSelectAll, showS
                 )}
 
                 {headerData.map((header, index) => (
-                    <th key={index} className="p-3">
+                    <th key={index} className="p-3 text-center">
                         {header}
                     </th>
                 ))}

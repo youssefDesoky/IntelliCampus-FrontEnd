@@ -35,13 +35,23 @@ const nationalities = [
     { value: "in", label: "India" },
 ];
 
-export default function StudentForm({ onClose, method = "post", onSubmit, initialData = {} }) {
+const studentTypes = [
+    { value: "undergrad", label: "Under Grad" },
+    { value: "postgrad", label: "Post Grad" },
+];
+
+export default function StudentForm({ onClose, method = "post", onSubmit, initialData = {}, isSuperAdmin = false, defaultStudentType }) {
     const isEdit = method === "put";
     const fileInputRef = useRef(null);
 
     const [bylaws, setBylaws] = useState([]);
     const [photoPreview, setPhotoPreview] = useState(initialData.profileImage || null);
     const [photoFile, setPhotoFile] = useState(null);
+
+    const defaultType = defaultStudentType || 'undergrad';
+    const [selectedStudentType, setSelectedStudentType] = useState(
+        studentTypes.find(t => t.value === defaultType) || studentTypes[0]
+    );
 
     const [selectedProgram, setSelectedProgram] = useState(() => {
         if (initialData.program) {
@@ -51,8 +61,9 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
     });
 
     const [selectedDepartment, setSelectedDepartment] = useState(() => {
-        if (initialData.department) {
-            return departments.find(d => d.value === initialData.department || d.label === initialData.department) || departments[0];
+        const dept = initialData.department || initialData.departmentName;
+        if (dept) {
+            return departments.find(d => d.value === dept || d.label === dept) || departments[0];
         }
         return departments[0];
     });
@@ -111,105 +122,133 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
         const formData = Object.fromEntries(new FormData(form));
         if (formData.level) formData.level = Number(formData.level);
         formData.profileImage = photoPreview;
+        if (isSuperAdmin && !isEdit) {
+            formData.studentType = selectedStudentType.value;
+        }
         onSubmit?.(formData);
     };
 
-    return (
-        <BaseFormComponent
-            isOpen={true}
-            title={isEdit ? "Edit Student" : "Create New Student"}
-            description={isEdit ? "Update the details below to edit this student." : "Fill in the details below to add a new student to the system."}
-            onClose={onClose}
-            onSubmit={handleSubmit}
-            submitText={isEdit ? "Save Changes" : "Create Student"}
-        >
-            <div className="flex gap-6 items-start">
-                {/* Left: Photo */}
-                <div className="flex flex-col items-center shrink-0">
-                    <div className="relative">
-                        <div
-                            onClick={handlePhotoClick}
-                            className="w-32 h-36 rounded-xl overflow-hidden ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
-                        >
-                            {photoPreview ? (
-                                <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                                    <UserIcon className="w-10 h-10 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
-                                </div>
-                            )}
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
-                                <CameraIcon className="w-7 h-7 text-white" />
+return (
+    <BaseFormComponent
+        isOpen={true}
+        title={isEdit ? "Edit Student" : "Create New Student"}
+        description={isEdit ? "Update the details below to edit this student." : "Fill in the details below to add a new student to the system."}
+        onClose={onClose}
+        onSubmit={handleSubmit}
+        submitText={isEdit ? "Save Changes" : "Create Student"}
+    >
+        {/* FIX 1: Changed items-start to sm:items-start and added items-stretch for mobile full width */}
+        <div className="flex flex-col sm:flex-row gap-6 items-stretch sm:items-start">
+            
+            {/* Left: Photo */}
+            <div className="flex flex-col items-center shrink-0 self-center sm:self-start">
+                <div className="relative">
+                    <div
+                        onClick={handlePhotoClick}
+                        className="w-24 h-28 sm:w-32 sm:h-36 rounded-xl overflow-hidden ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
+                    >
+                        {photoPreview ? (
+                            <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                <UserIcon className="w-10 h-10 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                             </div>
-                        </div>
-                        {photoPreview && (
-                            <button
-                                type="button"
-                                onClick={handleRemovePhoto}
-                                className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark flex items-center justify-center shadow-sm hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3 fill-current"><path d="M18.3 5.71 12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg>
-                            </button>
                         )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                            <CameraIcon className="w-7 h-7 text-white" />
+                        </div>
                     </div>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                    />
-                    <p className="mt-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark text-center">
-                        Click to {photoPreview ? "change" : "upload"}<br />profile photo
-                    </p>
+                    {photoPreview && (
+                        <button
+                            type="button"
+                            onClick={handleRemovePhoto}
+                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark flex items-center justify-center shadow-sm hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3 fill-current"><path d="M18.3 5.71 12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg>
+                        </button>
+                    )}
+                </div>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                />
+                <p className="mt-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark text-center">
+                    Click to {photoPreview ? "change" : "upload"}<br />profile photo
+                </p>
+            </div>
+
+            {/* Right: Fields */}
+            {/* FIX 2: Added w-full here so the container stretches to 100% on mobile screens */}
+            <div className="w-full flex-1 min-w-0 space-y-5">
+                {/* Personal Info */}
+                <div>
+                    <div className="flex items-center gap-3 mb-3">
+                        <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">Personal Information</h4>
+                        <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
+                        <InputItem label="Full Name" type="text" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
+                        <InputItem label="National ID" type="text" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
+                        <InputItem label="Email Address" type="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
+                        <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
+                        <div className="col-span-1 sm:col-span-2">
+                            <SelectBox
+                                className="w-full"
+                                label="Nationality"
+                                name="nationality"
+                                labelDirection="flex-col"
+                                options={nationalities}
+                                selectedOption={selectedNationality}
+                                onChange={setSelectedNationality}
+                            />
+                        </div>
+                        <div className="col-span-1 sm:col-span-2">
+                            <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Address</label>
+                            <TextArea
+                                name="address"
+                                placeholder="Enter address"
+                                defaultValue={initialData.address || ""}
+                                className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark"
+                                required
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                {/* Right: Fields */}
-                <div className="flex-1 min-w-0 space-y-5">
-                    {/* Personal Info */}
-                    <div>
-                        <div className="flex items-center gap-3 mb-3">
-                            <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
-                            <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">Personal Information</h4>
-                            <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <InputItem label="Full Name" type="text" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
-                            <InputItem label="National ID" type="text" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
-                            <InputItem label="Email Address" type="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
-                            <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
-                            <div className="col-span-2">
-                                <SelectBox
-                                    className="w-full"
-                                    label="Nationality"
-                                    name="nationality"
-                                    labelDirection="flex-col"
-                                    options={nationalities}
-                                    selectedOption={selectedNationality}
-                                    onChange={setSelectedNationality}
-                                />
-                            </div>
-                            <div className="col-span-2">
-                                <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Address</label>
-                                <TextArea
-                                    name="address"
-                                    placeholder="Enter address"
-                                    defaultValue={initialData.address || ""}
-                                    className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark"
-                                    required
-                                />
-                            </div>
-                        </div>
+                {/* Academic Info */}
+                <div className="pt-5">
+                    <div className="flex items-center gap-3 mb-3">
+                        <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">Academic Information</h4>
+                        <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
                     </div>
-
-                    {/* Academic Info */}
-                    <div className="pt-5">
-                        <div className="flex items-center gap-3 mb-3">
-                            <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
-                            <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">Academic Information</h4>
-                            <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
+                        {isSuperAdmin && !isEdit && (
+                            <div className="col-span-1 w-1/2 sm:w-auto">
+                                <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Student Type</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <label className={`option flex items-center gap-3 select-none rounded-md transition-all border p-2 ${selectedStudentType.value === 'undergrad' ? 'border-border-primary-default-light bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark' : 'border-border-primary-default-light bg-transparent'}`}>
+                                        <input type="radio" name="studentType" value="undergrad" checked={selectedStudentType.value === 'undergrad'} onChange={() => setSelectedStudentType(studentTypes[0])} className="hidden" />
+                                        <div className={`dot h-4 w-4 rounded-full flex items-center justify-center ${selectedStudentType.value === 'undergrad' ? 'bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark' : 'bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark'}`}>
+                                            {selectedStudentType.value === 'undergrad' ? <div className="inner h-2 w-2 rounded-full bg-text-primary-default-light dark:bg-text-primary-default-dark" /> : null}
+                                        </div>
+                                        <span className="text-sm">Under Grad</span>
+                                    </label>
+                                    <label className={`option flex items-center gap-3 select-none rounded-md transition-all border p-2 ${selectedStudentType.value === 'postgrad' ? 'border-border-primary-default-light bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark' : 'border-border-primary-default-light bg-transparent'}`}>
+                                        <input type="radio" name="studentType" value="postgrad" checked={selectedStudentType.value === 'postgrad'} onChange={() => setSelectedStudentType(studentTypes[1])} className="hidden" />
+                                        <div className={`dot h-4 w-4 rounded-full flex items-center justify-center ${selectedStudentType.value === 'postgrad' ? 'bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark' : 'bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark'}`}>
+                                            {selectedStudentType.value === 'postgrad' ? <div className="inner h-2 w-2 rounded-full bg-text-primary-default-light dark:bg-text-primary-default-dark" /> : null}
+                                        </div>
+                                        <span className="text-sm">Post Grad</span>
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+                        {(!isEdit && !(isSuperAdmin ? selectedStudentType.value === 'postgrad' : defaultStudentType === 'postgrad')) && (
                             <div className="flex flex-col">
                                 <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Program</label>
                                 <RadioToggle
@@ -220,40 +259,45 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                         const selected = programs.find(p => p.value === value) || programs[0];
                                         setSelectedProgram(selected);
                                     }}
+                                    className="w-full"
                                 />
                             </div>
-                            <SelectBox
-                                className="w-full"
-                                label="Department"
-                                name="department"
-                                labelDirection="flex-col"
-                                options={departments}
-                                selectedOption={selectedDepartment}
-                                onChange={setSelectedDepartment}
-                            />
-                            <SelectBox
-                                className="w-full"
-                                label="Level"
-                                name="level"
-                                labelDirection="flex-col"
-                                options={levels}
-                                selectedOption={selectedLevel}
-                                onChange={setSelectedLevel}
-                            />
-                            <SelectBox
-                                className="w-full"
-                                label="Bylaw"
-                                name="bylawId"
-                                labelDirection="flex-col"
-                                options={bylaws}
-                                selectedOption={selectedBylaw}
-                                onChange={setSelectedBylaw}
-                            />
-                            <DateInput label="Enrollment Date" name="enrollmentDate" className="col-span-2" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
-                        </div>
+                        )}
+                        <SelectBox
+                            className="w-full"
+                            label="Department"
+                            name="department"
+                            labelDirection="flex-col"
+                            options={departments}
+                            selectedOption={selectedDepartment}
+                            onChange={setSelectedDepartment}
+                        />
+                        <SelectBox
+                            className="w-full"
+                            label="Level"
+                            name="level"
+                            labelDirection="flex-col"
+                            options={levels}
+                            selectedOption={selectedLevel}
+                            onChange={setSelectedLevel}
+                        />
+                        <SelectBox
+                            className="w-full"
+                            label="Bylaw"
+                            name="bylawId"
+                            labelDirection="flex-col"
+                            options={bylaws}
+                            selectedOption={selectedBylaw}
+                            onChange={setSelectedBylaw}
+                        />
+                        {(!isEdit && (isSuperAdmin ? selectedStudentType.value === 'postgrad' : defaultStudentType === 'postgrad')) && (
+                            <InputItem label="Specialization" type="text" name="specialization" placeholder="Enter specialization (e.g. Computer Science)" defaultValue={initialData.specialization || ""} />
+                        )}
+                        <DateInput label="Enrollment Date" name="enrollmentDate" className="col-span-1 sm:col-span-2" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
                     </div>
                 </div>
             </div>
-        </BaseFormComponent>
-    );
+        </div>
+    </BaseFormComponent>
+);
 }

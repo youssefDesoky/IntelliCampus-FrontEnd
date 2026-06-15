@@ -90,7 +90,7 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
                         onClick={openImport}
                     >
                         <ImportIcon size={24} />
-                        Import {labels.plural}
+                        <span className="hidden sm:inline">Import {labels.plural}</span>
                     </Button>
                     
                     <Button 
@@ -98,7 +98,7 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
                         onClick={() => setIsUserFormOpen(true)}
                     >
                         <PlusIcon size={24} />
-                        Add {labels.singular}
+                        <span className="hidden sm:inline">Add {labels.singular}</span>
                     </Button>
                 </div>
             </PageHeader>

@@ -68,7 +68,7 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
             submitLoading={isLoading}
         >
             <div className="space-y-6 mb-6">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem
                         label="Room Name"
                         type="text"
@@ -89,7 +89,7 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <SelectBox
                         className="w-full"
                         label="Room Type"

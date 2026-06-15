@@ -153,7 +153,7 @@ export default function TimeInput({
             return h12 === 12 ? 12 : h12 + 12;
         };
         const toISO = (h24, m) => `${String(h24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-        onChange?.({ target: { name, value: toISO(to24h(h12, p), m) } });
+        onChange?.({ target: { name, value: toISO(to24h(h, p), m) } });
     };
 
     const handleHour = (h) => {

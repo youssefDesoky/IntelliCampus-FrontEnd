@@ -58,12 +58,12 @@ export default function UnauthorizedPage() {
 
                     <div className="relative overflow-hidden rounded-r-4xl sm:rounded-r-4xl">
                         <img
-                            src="/images/UnAuthorized-Light.png"
+                            src="/images/UnAuthorized-light.png"
                             alt="Unauthorized access illustration"
                             className="block absolute inset-0 h-full w-full object-cover shadow-2xl dark:hidden"
                         />
                         <img
-                            src="/images/UnAuthorized-Dark.png"
+                            src="/images/UnAuthorized-dark.png"
                             alt="Unauthorized access illustration"
                             className="hidden absolute inset-0 h-full w-full object-cover shadow-2xl dark:block"
                         />

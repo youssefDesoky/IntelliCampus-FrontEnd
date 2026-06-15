@@ -482,7 +482,7 @@ activePanel === "time"
 
             {/* Error */}
             {errorMessage && (
-                <p className="mt-1 text-xs text-text-danger-default-light">{errorMessage}</p>
+                <p className="mt-1 text-xs text-red-500">{errorMessage}</p>
             )}
         </div>
     );

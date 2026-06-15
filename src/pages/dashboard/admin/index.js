@@ -10,3 +10,5 @@ export { default as ManageBylaws } from './ManageBylaws';
 export { default as ManageExams } from './ManageExams';
 export { default as StudentDetails } from './StudentDetails';
 export { default as InstructorDetails } from './InstructorDetails';
+export { default as ManageCourseStudentsTab } from './ManageCourseStudentsTab';
+export { default as ManageCourseGradesTab } from './ManageCourseGradesTab';

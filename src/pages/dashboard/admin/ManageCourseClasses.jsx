@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import PageHeader from "../../../components/ui/PageHeader";
 import Section from "../../../components/ui/Section";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import ClassForm from "../../../feature/admin/components/ClassForm";
+import CourseForm from "../../../feature/admin/components/CourseForm";
+import ManageCourseStudentsTab from "./ManageCourseStudentsTab";
+import ManageCourseGradesTab from "./ManageCourseGradesTab";
 import {
     PlusIcon,
     ImportIcon,
@@ -14,8 +16,8 @@ import {
     CalendarIcon,
     LocationDotIcon,
     UserTieIcon,
-    BookIcon,
     AngleDownIcon,
+    ArrowRightIcon,
 } from "../../../components/ui/icons";
 import {
     fetchCourseById,
@@ -23,7 +25,16 @@ import {
     addClassToCourse,
     updateClass,
     deleteClassFromCourse,
+    updateCourse,
+    deactivateCourse,
+    fetchCourses,
 } from "../../../feature/admin/services/adminApi";
+
+const tabs = [
+    { key: "classes", label: "Classes" },
+    { key: "students", label: "Students" },
+    { key: "grades", label: "Upload Final Grades" },
+];
 
 function formatTime(timeSpan) {
     if (!timeSpan) return "";
@@ -135,11 +146,16 @@ export default function ManageCourseClasses() {
     const [classes, setClasses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState("classes");
 
     const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
     const [editingClass, setEditingClass] = useState(null);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
+
+    const [isEditCourseOpen, setIsEditCourseOpen] = useState(false);
+    const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
+    const [allCourses, setAllCourses] = useState([]);
 
     const loadData = useCallback(async () => {
         try {
@@ -164,7 +180,6 @@ export default function ManageCourseClasses() {
         const arr = Array.isArray(payloads) ? payloads : [payloads];
         try {
             for (const data of arr) {
-                console.log("[ManageCourseClasses] Adding class:", courseId, JSON.stringify(data, null, 2));
                 await addClassToCourse(courseId, data);
             }
             setIsCreateFormOpen(false);
@@ -189,7 +204,6 @@ export default function ManageCourseClasses() {
     const handleEditSubmit = async (formData) => {
         try {
             const id = editingClass._classId;
-            console.log("[ManageCourseClasses] Editing class:", id, JSON.stringify(formData, null, 2));
             await updateClass(id, formData);
             setEditingClass(null);
             await loadData();
@@ -209,6 +223,36 @@ export default function ManageCourseClasses() {
         setDeleteTarget(null);
     };
 
+    const handleEditCourse = async (formData) => {
+        try {
+            await updateCourse(courseId, formData);
+            setIsEditCourseOpen(false);
+            await loadData();
+        } catch (err) {
+            console.error("Failed to update course:", err);
+        }
+    };
+
+    const handleDeactivate = async () => {
+        try {
+            await deactivateCourse(courseId);
+            navigate("/admin/courses");
+        } catch (err) {
+            console.error("Failed to deactivate course:", err);
+        }
+        setIsDeactivateOpen(false);
+    };
+
+    const handleOpenEdit = async () => {
+        try {
+            const courses = await fetchCourses();
+            setAllCourses(Array.isArray(courses) ? courses : []);
+        } catch (err) {
+            console.error("Failed to load courses for edit:", err);
+        }
+        setIsEditCourseOpen(true);
+    };
+
     const lectures = classes.filter((c) => c.classTypeName === "Lecture");
     const sections = classes.filter((c) => c.classTypeName === "Section");
 
@@ -225,101 +269,95 @@ export default function ManageCourseClasses() {
     }
 
     return (
-        <>
-            <PageHeader
-                title={course?.courseName || "Course Classes"}
-                subtitle={`${course?.courseCode || ""} — ${course?.departmentName || ""} — ${course?.creditHours || "—"} Credit Hours`}
-            >
-                <div className="flex items-center gap-2">
-                    <Button variant="secondary" onClick={() => navigate("/admin/courses")}>
-                        ← Back to Courses
-                    </Button>
-                    <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
-                        <ImportIcon size={24} />
-                        Import Classes
-                    </Button>
-                    <Button variant="primary" onClick={() => setIsCreateFormOpen(true)}>
-                        <PlusIcon size={24} />
-                        Add Class
-                    </Button>
-                </div>
-            </PageHeader>
-
-            {/* Stats Banner */}
-            <Section>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="flex items-center gap-3 p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-                        <div className="p-2 rounded-lg bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark">
-                            <BookIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Total Classes
-                            </p>
-                            <p className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {classes.length}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                            <AngleDownIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Lectures
-                            </p>
-                            <p className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {lectures.length}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-                        <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                            <AngleDownIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 rotate-180" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Sections
-                            </p>
-                            <p className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {sections.length}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-                        <div className="p-2 rounded-lg bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark">
-                            <CalendarIcon className="w-5 h-5 text-accent-default" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Course Code
-                            </p>
-                            <p className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {course?.courseCode || "—"}
-                            </p>
-                        </div>
+        <div className="p-0 sm:p-6">
+            {/* ── Header ── */}
+            <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="flex items-center gap-4 min-w-0">
+                    <button
+                        onClick={() => navigate("/admin/courses")}
+                        className="shrink-0 w-10 h-10 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors"
+                    >
+                        <ArrowRightIcon className="w-5 h-5 rotate-180 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+                    </button>
+                    <div className="min-w-0">
+                        <h1 className="text-xl md:text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark truncate">
+                            {course?.courseName || "Course"}
+                        </h1>
+                        <p className="text-text-secondary-active-light dark:text-text-secondary-active-dark text-xs md:text-sm truncate">
+                            {course?.courseCode || ""}{course?.courseCode && course?.departmentName ? " • " : ""}{course?.departmentName || ""}{course?.creditHours ? ` • ${course.creditHours} Credit Hours` : ""}
+                        </p>
                     </div>
                 </div>
-            </Section>
+                <div className="flex items-center gap-2 shrink-0">
+                    <Button variant="secondary" size="sm" onClick={handleOpenEdit}>
+                        <FilePenIcon className="w-4 h-4" />
+                        <span className="hidden sm:inline"> Edit</span>
+                    </Button>
+                    <Button variant="warning" size="sm" onClick={() => setIsDeactivateOpen(true)}>
+                        <span className="hidden sm:inline">Deactivate</span>
+                        <span className="sm:hidden">X</span>
+                    </Button>
+                </div>
+            </div>
 
-            {/* Lectures */}
-            <ClassSection
-                icon={AngleDownIcon}
-                title="Lectures"
-                classes={lectures}
-                onEdit={handleEditClick}
-                onDelete={setDeleteTarget}
-            />
+            {/* ── Tabs ── */}
+            <div className="flex gap-1 mb-6 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
+                            activeTab === tab.key
+                                ? "border-border-accent-active-light dark:border-border-accent-active-dark text-text-primary-default-light dark:text-text-primary-default-dark"
+                                : "border-transparent text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark"
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
 
-            {/* Sections */}
-            <ClassSection
-                icon={AngleDownIcon}
-                title="Sections"
-                classes={sections}
-                onEdit={handleEditClick}
-                onDelete={setDeleteTarget}
-            />
+            {/* ─── Tab: Classes ─── */}
+            {activeTab === "classes" && (
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => setIsImportOpen(true)}>
+                            <ImportIcon size={20} />
+                            <span className="hidden sm:inline"> Import Classes</span>
+                        </Button>
+                        <Button variant="primary" size="sm" onClick={() => setIsCreateFormOpen(true)}>
+                            <PlusIcon size={20} />
+                            <span className="hidden sm:inline"> Create Class</span>
+                        </Button>
+                    </div>
+
+                    <ClassSection
+                        icon={AngleDownIcon}
+                        title="Lectures"
+                        classes={lectures}
+                        onEdit={handleEditClick}
+                        onDelete={setDeleteTarget}
+                    />
+
+                    <ClassSection
+                        icon={AngleDownIcon}
+                        title="Sections"
+                        classes={sections}
+                        onEdit={handleEditClick}
+                        onDelete={setDeleteTarget}
+                    />
+                </div>
+            )}
+
+            {/* ─── Tab: Students ─── */}
+            {activeTab === "students" && (
+                <ManageCourseStudentsTab courseId={courseId} />
+            )}
+
+            {/* ─── Tab: Upload Final Grades ─── */}
+            {activeTab === "grades" && (
+                <ManageCourseGradesTab courseId={courseId} courseName={course?.courseName} />
+            )}
 
             {/* Add Class Form */}
             {isCreateFormOpen && (
@@ -337,6 +375,17 @@ export default function ManageCourseClasses() {
                     onClose={() => setEditingClass(null)}
                     onSubmit={handleEditSubmit}
                     courseDepartment={course?.departmentName || course?.department || ""}
+                />
+            )}
+
+            {/* Edit Course Form */}
+            {isEditCourseOpen && (
+                <CourseForm
+                    method="put"
+                    initialData={course}
+                    onClose={() => setIsEditCourseOpen(false)}
+                    onSubmit={handleEditCourse}
+                    allCourses={allCourses}
                 />
             )}
 
@@ -366,6 +415,22 @@ export default function ManageCourseClasses() {
                 {deleteTarget?.instructorName ? ` taught by ${deleteTarget.instructorName}` : ""}?
                 This action cannot be undone.
             </Dialog>
-        </>
+
+            {/* Deactivate Confirmation */}
+            <Dialog
+                isOpen={isDeactivateOpen}
+                variant="warning"
+                title="Deactivate Course"
+                onClose={() => setIsDeactivateOpen(false)}
+                onConfirm={() => { handleDeactivate(); return true; }}
+                confirmText="Deactivate"
+                cancelText="Cancel"
+                showCloseButton={true}
+            >
+                Are you sure you want to deactivate{" "}
+                <strong>{course?.courseName}</strong> ({course?.courseCode})?
+                This will make the course unavailable to students.
+            </Dialog>
+        </div>
     );
 }

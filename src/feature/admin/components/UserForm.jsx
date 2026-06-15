@@ -65,7 +65,7 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
             submitText={isEdit ? `Edit ${roleLabel}` : `Create ${roleLabel}`}
         >
             <div className="space-y-6 mb-6">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem label="Full Name" type="text" id="fullName" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
 
                     {role !== "student" && role !== "admin" && (
@@ -73,7 +73,7 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem label="National ID" type="text" id="nationalId" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
 
                     {role === "admin" ? (
@@ -99,7 +99,7 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem label="Email Address" type="email" id="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
 
                     <InputItem label="Phone Number" type="tel" id="phoneNumber" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />

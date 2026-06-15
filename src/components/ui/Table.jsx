@@ -5,7 +5,7 @@ import BaseComponent from "./BaseComponent";
 import { TableHeader, TableHeaderActions, TableBody } from "./table";
 
 
-export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to }) {
+export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments }) {
     const rawData = data || [];
     const hasPagingLimit = typeof displayRowLimit === 'number' && displayRowLimit > 0;
     const computedTotalPages = hasPagingLimit ? Math.max(1, Math.ceil(rawData.length / displayRowLimit)) : totalPages || 1;
@@ -109,6 +109,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         actions={actions}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
+                        columnAlignments={columnAlignments}
                     />
                 </table>
 
@@ -157,6 +158,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         actions={actions}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
+                        columnAlignments={columnAlignments}
                     />
                 </table>
 

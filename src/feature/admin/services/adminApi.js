@@ -132,6 +132,56 @@ export async function deleteAdmin(id) {
     return true;
 }
 
+// ─── User Roles (Super Admin) ──────────────────────────────
+
+export async function fetchUserRoles(userId) {
+    const res = await fetch(`${API_URL}/api/users/${userId}/roles`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch user roles: ${res.status}`);
+    return res.json();
+}
+
+export async function assignUserRoles(userId, roles) {
+    const res = await fetch(`${API_URL}/api/users/${userId}/roles`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roles }),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to assign roles: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function fetchAssignableRoles() {
+    const res = await fetch(`${API_URL}/api/roles/assignable`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch assignable roles: ${res.status}`);
+    return res.json();
+}
+
+// ─── Roles ──────────────────────────────────────────────────
+
+export async function fetchAdminRoles() {
+    const res = await fetch(`${API_URL}/api/roles/admin`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch admin roles: ${res.status}`);
+    return res.json();
+}
+
+export async function fetchInstructorRoles() {
+    const res = await fetch(`${API_URL}/api/roles/instructor`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch instructor roles: ${res.status}`);
+    return res.json();
+}
+
 // ─── Bylaws ─────────────────────────────────────────────────
 
 export async function fetchBylaws() {
@@ -212,6 +262,40 @@ export async function setBylawGradeScales(id, items) {
 }
 
 // ─── Exams ─────────────────────────────────────────────────
+
+export async function fetchExams() {
+    const res = await fetch(`${API_URL}/api/exams`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch exams: ${res.status}`);
+    return res.json();
+}
+
+export async function deleteExam(id) {
+    const res = await fetch(`${API_URL}/api/exams/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to delete exam: ${res.status}`);
+    }
+    return true;
+}
+
+export async function updateExam(id, data) {
+    const res = await fetch(`${API_URL}/api/exams/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.title || `Failed to update exam: ${res.status}`);
+    }
+    return res.json();
+}
 
 export async function uploadExams(file, examType) {
     const formData = new FormData();
@@ -473,6 +557,43 @@ export async function updateClass(classId, data) {
     return res.json();
 }
 
+// ─── Course Students ────────────────────────────────────────
+
+const mockCourseStudents = [
+    { studentId: "STU001", fullName: "Ahmed Mohamed", email: "ahmed@example.com", gpa: 3.5, section: "A" },
+    { studentId: "STU002", fullName: "Sara Ali", email: "sara@example.com", gpa: 3.8, section: "A" },
+    { studentId: "STU003", fullName: "Khaled Hassan", email: "khaled@example.com", gpa: 3.2, section: "B" },
+    { studentId: "STU004", fullName: "Nadia Ibrahim", email: "nadia@example.com", gpa: 3.9, section: "B" },
+    { studentId: "STU005", fullName: "Omar Farouk", email: "omar@example.com", gpa: 2.9, section: "A" },
+];
+
+export async function fetchCourseStudents(courseId) {
+    try {
+        const res = await fetch(`${API_URL}/api/courses/${courseId}/students`, {
+            credentials: "include",
+        });
+        if (res.ok) return res.json();
+    } catch { /* fall through to mock */ }
+    return [...mockCourseStudents];
+}
+
+// ─── Course Grades ──────────────────────────────────────────
+
+export async function uploadCourseGrades(courseId, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${API_URL}/api/courses/${courseId}/grades/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Failed to upload grades: ${res.status}`);
+    }
+    return res.json();
+}
+
 export async function deleteClassFromCourse(courseId, classId) {
     const res = await fetch(`${API_URL}/api/classes/${classId}`, {
         method: "DELETE",
@@ -649,6 +770,86 @@ export async function sendEmail({ to, subject, body }) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || `Failed to send email: ${res.status}`);
     }
+    return res.json();
+}
+
+// ─── Auto Exam Scheduling ───────────────────────────────────
+
+export async function autoSchedule(request) {
+    const res = await fetch(`${API_URL}/api/ExamScheduling/auto-schedule`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.errorMessage || err.message || `Auto-schedule failed: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function detectConflicts({ courseId, date, startTime, endTime, excludeExamId }) {
+    const params = new URLSearchParams({
+        courseId,
+        date,
+        startTime,
+        endTime,
+    });
+    if (excludeExamId) params.append("excludeExamId", excludeExamId);
+    const res = await fetch(`${API_URL}/api/ExamScheduling/detect-conflicts?${params}`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to detect conflicts: ${res.status}`);
+    return res.json();
+}
+
+export async function getConflictGraph() {
+    const res = await fetch(`${API_URL}/api/ExamScheduling/conflict-graph`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to get conflict graph: ${res.status}`);
+    return res.json();
+}
+
+export async function assignHalls(examId, examHallIds) {
+    const res = await fetch(`${API_URL}/api/ExamScheduling/assign-halls/${examId}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ examId, examHallIds }),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.errorMessage || err.message || `Failed to assign halls: ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function getHallAssignments(examId) {
+    const res = await fetch(`${API_URL}/api/ExamScheduling/hall-assignments/${examId}`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to get hall assignments: ${res.status}`);
+    return res.json();
+}
+
+export async function getSeatAssignments(examId) {
+    const res = await fetch(`${API_URL}/api/ExamScheduling/seat-assignments/${examId}`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to get seat assignments: ${res.status}`);
+    return res.json();
+}
+
+export async function getAvailableSlots(request) {
+    const res = await fetch(`${API_URL}/api/ExamScheduling/available-slots`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+    });
+    if (!res.ok) throw new Error(`Failed to get available slots: ${res.status}`);
     return res.json();
 }
 

@@ -12,6 +12,7 @@ import {
     CheckIcon,
     XIcon,
     PaperPlaneIcon,
+    EnvelopIcon,
 } from "../../../components/ui/icons";
 import {
     fetchInstructorById,
@@ -157,7 +158,7 @@ export default function InstructorDetails() {
     }
 
     return (
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
             <div className="flex items-start justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4 min-w-0">
                     <button
@@ -167,7 +168,7 @@ export default function InstructorDetails() {
                         <ArrowRightIcon className="w-5 h-5 rotate-180 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                     </button>
                     <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ring-2 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shrink-0">
+                        <div className="hidden sm:block w-14 h-14 rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ring-2 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shrink-0">
                             {instructor.profileImage ? (
                                 <img src={instructor.profileImage} alt={instructor.fullName || instructor.name} className="w-full h-full object-cover" />
                             ) : (
@@ -190,10 +191,12 @@ export default function InstructorDetails() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     <Button variant="secondary" size="sm" onClick={() => { setEmailSubject(""); setEmailBody(""); setIsEmailOpen(true); }}>
-                        Send Email
+                        <EnvelopIcon className="w-4 h-4" />
+                        <span className="hidden sm:inline"> Send Email</span>
                     </Button>
                     <Button variant="primary" size="sm" onClick={() => setIsEditOpen(true)}>
-                        <FilePenIcon className="w-4 h-4" /> Edit
+                        <FilePenIcon className="w-4 h-4" />
+                        <span className="hidden sm:inline"> Edit</span>
                     </Button>
                 </div>
             </div>
@@ -264,7 +267,7 @@ export default function InstructorDetails() {
 
             {activeTab === "info" && (
                 <div className="space-y-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {[
                             { label: "Department", value: instructor.departmentName || instructor.department || "—", color: "text-blue-500", icon: BookIcon },
                             { label: "Role", value: instructor.role || "—", color: "text-purple-500", icon: StarIcon },
@@ -367,40 +370,29 @@ export default function InstructorDetails() {
                         <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">No courses found.</p>
                     ) : (
                         <>
-                            <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark overflow-hidden">
+                                <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark overflow-hidden">
                                 <div className="px-5 py-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark flex items-center gap-2">
-                                    <BookIcon className="w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Courses Taught</h3>
                                     <span className="ml-auto text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{courses.length} course{courses.length !== 1 ? "s" : ""}</span>
                                 </div>
-                                <div className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
-                                    {courses.map((c) => (
-                                        <div key={c._id} className="flex items-center justify-between px-5 py-4 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors">
-                                            <div className="flex items-center gap-4 min-w-0">
-                                                <div className="w-10 h-10 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center shrink-0">
-                                                    <BookIcon className="w-5 h-5 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">{c.title}</p>
-                                                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                        {c.code} &middot; {c.creditHours} cr
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-3 shrink-0 ml-4">
-                                                {c.section && (
-                                                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark">
-                                                        Section {c.section}
-                                                    </span>
-                                                )}
-                                                <div className="text-right text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark hidden sm:block">
-                                                    {c.schedule && <p>{c.schedule}</p>}
-                                                    {c.room && <p className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{c.room}</p>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                            <th className="text-left px-5 py-3 font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Course Name</th>
+                                            <th className="text-left px-5 py-3 font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Section</th>
+                                            <th className="text-left px-5 py-3 font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Semester</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
+                                        {courses.map((c) => (
+                                            <tr key={c._id} className="hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors">
+                                                <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{c.title}</td>
+                                                <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{c.section ?? "—"}</td>
+                                                <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{c.semester ?? "—"}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
 
                             {isTA && taSections.length > 0 && (

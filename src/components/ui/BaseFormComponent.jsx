@@ -13,6 +13,7 @@ export default function BaseFormComponent({
     maxWidth = "max-w-5xl",
     className = "",
     contentClassName = "",
+    maxHeight = "max-h-[75vh] sm:max-h-none",
     footerClassName = "",
     submitDisabled = false,
     submitLoading = false,
@@ -29,14 +30,14 @@ export default function BaseFormComponent({
     return (
         <ModelOverlay onClose={onClose} maxWidth={maxWidth}>
             <form
-                className={`relative z-50 w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)] ${className}`}
+                className={`relative z-50 w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)] flex flex-col ${maxHeight} ${className}`}
                 onSubmit={handleSubmit}
             >
-                <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-4 dark:border-border-primary-default-dark">
-                    <div>
-                        <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{title}</h3>
+                <div className="shrink-0 flex items-center justify-between gap-4 border-b border-border-primary-default-light px-3 sm:px-6 py-4 dark:border-border-primary-default-dark">
+                    <div className="min-w-0 truncate">
+                        <h3 className="text-xl font-semibold truncate text-text-primary-default-light dark:text-text-primary-default-dark">{title}</h3>
                         {description ? (
-                            <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{description}</p>
+                            <p className="mt-1 text-sm truncate text-text-secondary-default-light dark:text-text-secondary-default-dark">{description}</p>
                         ) : null}
                     </div>
 
@@ -52,16 +53,16 @@ export default function BaseFormComponent({
                     </button>
                 </div>
 
-                <div className={`px-6 py-6 ${contentClassName}`}>{children}</div>
+                <div className={`p-6 overflow-y-auto ${contentClassName}`}>{children}</div>
 
-                <div className={`flex flex-col gap-3 border-t border-border-primary-default-light px-6 py-4 sm:flex-row sm:justify-end dark:border-border-primary-default-dark ${footerClassName}`}>
-                    <Button variant={cancelVariant} type="button" onClick={onClose} width="w-full sm:w-auto">
+                <div className={`shrink-0 flex gap-3 border-t border-border-primary-default-light px-3 sm:px-6 py-4 sm:justify-end dark:border-border-primary-default-dark ${footerClassName}`}>
+                    <Button variant={cancelVariant} type="button" onClick={onClose} width="flex-1 sm:w-auto">
                         {cancelText}
                     </Button>
                     <Button
                         variant={submitVariant}
                         type="submit"
-                        width="w-full sm:w-auto"
+                        width="flex-1 sm:w-auto"
                         disabled={submitDisabled}
                         loading={submitLoading}
                     >

@@ -9,6 +9,7 @@ import {
     UserIcon,
     XIcon,
     PaperPlaneIcon,
+    EnvelopIcon,
 } from "../../../components/ui/icons";
 import {
     fetchStudentById,
@@ -26,8 +27,8 @@ const ITEMS_PER_PAGE = 10;
 
 const tabs = [
     { key: "info", label: "Information" },
-    { key: "completed", label: "Completed Courses" },
-    { key: "registered", label: "Registered Courses" },
+    { key: "completed", label: "Completed" },
+    { key: "registered", label: "Registered" },
 ];
 
 export default function StudentDetails() {
@@ -140,7 +141,7 @@ export default function StudentDetails() {
     }
 
     return (
-        <div className="p-6">
+        <div className="p-0 sm:p-6">
             {/* ── Header ── */}
             <div className="flex items-start justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4 min-w-0">
@@ -151,7 +152,7 @@ export default function StudentDetails() {
                         <ArrowRightIcon className="w-5 h-5 rotate-180 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                     </button>
                     <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ring-2 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shrink-0">
+                        <div className="hidden sm:block w-14 h-14 rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ring-2 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shrink-0">
                             {student.profileImage ? (
                                 <img src={student.profileImage} alt={student.fullName || student.name} className="w-full h-full object-cover" />
                             ) : (
@@ -174,10 +175,12 @@ export default function StudentDetails() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     <Button variant="secondary" size="sm" onClick={() => { setEmailSubject(""); setEmailBody(""); setIsEmailOpen(true); }}>
-                        Send Email
+                        <EnvelopIcon className="w-4 h-4" />
+                        <span className="hidden sm:inline"> Send Email</span>
                     </Button>
                     <Button variant="primary" size="sm" onClick={() => setIsEditOpen(true)}>
-                        <FilePenIcon className="w-4 h-4" /> Edit
+                        <FilePenIcon className="w-4 h-4" />
+                        <span className="hidden sm:inline"> Edit</span>
                     </Button>
                 </div>
             </div>

@@ -1,22 +1,17 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
-import RadioToggle from "../../../components/form/RadioToggle";
 import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
+import { fetchInstructorRoles } from "../services/adminApi";
 
 const departments = [
     { value: "CS", label: "Computer Science" },
     { value: "IS", label: "Information Systems" },
     { value: "IT", label: "Information Technology" },
     { value: "AI", label: "Artificial Intelligence" },
-];
-
-const employmentStatuses = [
-    { value: "Permanent", label: "Permanent" },
-    { value: "On Loan", label: "On Loan" },
 ];
 
 const nationalities = [
@@ -33,6 +28,24 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
 
     const [photoPreview, setPhotoPreview] = useState(initialData.profileImage || null);
     const [photoFile, setPhotoFile] = useState(null);
+    const [roleOptions, setRoleOptions] = useState([]);
+
+    useEffect(() => {
+        fetchInstructorRoles()
+            .then(data => {
+                const options = data.map(r => ({ value: r.value, label: r.label }));
+                setRoleOptions(options);
+            })
+            .catch(() => {
+                setRoleOptions([
+                    { value: "teachingassistant", label: "Teaching Assistant" },
+                    { value: "lecturer", label: "Lecturer" },
+                    { value: "assistantlecturer", label: "Assistant Lecturer" },
+                    { value: "associateprofessor", label: "Associate Professor" },
+                    { value: "professor", label: "Professor" },
+                ]);
+            });
+    }, []);
 
     const [selectedNationality, setSelectedNationality] = useState(() => {
         if (initialData.nationality) {
@@ -41,7 +54,7 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
         return nationalities[0];
     });
 
-    const [selectedRole, setSelectedRole] = useState(initialData.role || "Professor");
+    const [selectedRole, setSelectedRole] = useState(null);
 
     const [selectedDepartment, setSelectedDepartment] = useState(() => {
         if (initialData.department) {
@@ -49,16 +62,6 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
         }
         return departments[0];
     });
-
-    const [selectedEmploymentStatus, setSelectedEmploymentStatus] = useState(() => {
-        const status = initialData.employmentStatus || initialData.professorStatus;
-        if (status) {
-            return employmentStatuses.find(option => option.value === status) || employmentStatuses[0];
-        }
-        return employmentStatuses[0];
-    });
-
-    const isProfessor = selectedRole === "Professor";
 
     const handlePhotoClick = () => {
         fileInputRef.current?.click();
@@ -79,15 +82,6 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const handleRoleChange = (val) => {
-        setSelectedRole(val);
-    };
-
-    const handleEmploymentStatusChange = (val) => {
-        const status = employmentStatuses.find(e => e.value === val);
-        setSelectedEmploymentStatus(status || employmentStatuses[0]);
-    };
-
     const handleSubmit = (e) => {
         e.preventDefault();
         const form = e.target;
@@ -105,13 +99,13 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
             onSubmit={handleSubmit}
             submitText={isEdit ? "Save Changes" : "Create Instructor"}
         >
-            <div className="flex gap-6 items-start">
+            <div className="flex flex-col sm:flex-row gap-6 items-stretch sm:items-start">
                 {/* Left: Photo */}
-                <div className="flex flex-col items-center shrink-0">
+                <div className="flex flex-col items-center shrink-0 self-center sm:self-start">
                     <div className="relative">
                         <div
                             onClick={handlePhotoClick}
-                            className="w-32 h-36 rounded-xl overflow-hidden ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
+                            className="w-24 h-28 sm:w-32 sm:h-36 rounded-xl overflow-hidden ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
                         >
                             {photoPreview ? (
                                 <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
@@ -147,7 +141,7 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                 </div>
 
                 {/* Right: Fields */}
-                <div className="flex-1 min-w-0 space-y-5">
+                <div className="w-full flex-1 min-w-0 space-y-5">
                     {/* Personal Info */}
                     <div>
                         <div className="flex items-center gap-3 mb-3">
@@ -155,12 +149,12 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                             <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">Personal Information</h4>
                             <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
                             <InputItem label="Full Name" type="text" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
                             <InputItem label="National ID" type="text" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
                             <InputItem label="Email Address" type="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
                             <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
-                            <div className="col-span-2">
+                            <div className="col-span-1 sm:col-span-2">
                                 <SelectBox
                                     className="w-full"
                                     label="Nationality"
@@ -171,7 +165,7 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                                     onChange={setSelectedNationality}
                                 />
                             </div>
-                            <div className="col-span-2">
+                            <div className="col-span-1 sm:col-span-2">
                                 <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Address</label>
                                 <TextArea
                                     name="address"
@@ -191,66 +185,27 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                             <h4 className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">Professional Information</h4>
                             <hr className="flex-1 border-border-primary-default-light dark:border-border-primary-default-dark" />
                         </div>
-                        {isProfessor ? (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="flex flex-col">
-                                    <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Role</label>
-                                    <RadioToggle
-                                        name="role"
-                                        options={[
-                                            { value: "Professor", label: "Professor" },
-                                            { value: "Technical Assistant", label: "Technical Assistant" },
-                                        ]}
-                                        value={selectedRole}
-                                        onChange={handleRoleChange}
-                                    />
-                                </div>
-                                <div className="flex flex-col">
-                                    <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Professor Status</label>
-                                    <RadioToggle
-                                        name="employmentStatus"
-                                        options={employmentStatuses}
-                                        value={selectedEmploymentStatus.value}
-                                        onChange={handleEmploymentStatusChange}
-                                    />
-                                </div>
-                                <SelectBox
-                                    className="w-full"
-                                    label="Department"
-                                    name="departmentId"
-                                    labelDirection="flex-col"
-                                    options={departments}
-                                    selectedOption={selectedDepartment}
-                                    onChange={setSelectedDepartment}
-                                />
-                                <DateInput label="Hire Date" name="hireDate" defaultValue={(initialData.hireDate || new Date().toISOString()).split("T")[0]} required />
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="flex flex-col">
-                                    <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Role</label>
-                                    <RadioToggle
-                                        name="role"
-                                        options={[
-                                            { value: "Professor", label: "Professor" },
-                                            { value: "Technical Assistant", label: "Technical Assistant" },
-                                        ]}
-                                        value={selectedRole}
-                                        onChange={handleRoleChange}
-                                    />
-                                </div>
-                                <SelectBox
-                                    className="w-full"
-                                    label="Department"
-                                    name="departmentId"
-                                    labelDirection="flex-col"
-                                    options={departments}
-                                    selectedOption={selectedDepartment}
-                                    onChange={setSelectedDepartment}
-                                />
-                                <DateInput label="Hire Date" name="hireDate" defaultValue={(initialData.hireDate || new Date().toISOString()).split("T")[0]} className="col-span-2" required />
-                            </div>
-                        )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
+                            <SelectBox
+                                className="w-full"
+                                label="Role"
+                                name="role"
+                                labelDirection="flex-col"
+                                options={roleOptions}
+                                selectedOption={selectedRole}
+                                onChange={setSelectedRole}
+                            />
+                            <SelectBox
+                                className="w-full"
+                                label="Department"
+                                name="departmentId"
+                                labelDirection="flex-col"
+                                options={departments}
+                                selectedOption={selectedDepartment}
+                                onChange={setSelectedDepartment}
+                            />
+                            <DateInput label="Hire Date" name="hireDate" defaultValue={(initialData.hireDate || new Date().toISOString()).split("T")[0]} required />
+                        </div>
                     </div>
                 </div>
             </div>

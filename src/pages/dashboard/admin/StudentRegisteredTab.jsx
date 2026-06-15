@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
@@ -10,6 +10,7 @@ import {
     FilePenIcon,
     XIcon,
 } from "../../../components/ui/icons";
+import useDeviceType from "../../../hooks/useDeviceType";
 import {
     registerStudentCourse,
     unregisterStudentCourse,
@@ -18,31 +19,37 @@ import {
 } from "../../../feature/admin/services/adminApi";
 
 const ITEMS_PER_PAGE = 10;
-const headers = ["Code", "Course", "Section", "Actions"];
-
-function buildRow(c, onSectionChange, onUnregister) {
-    return {
-        code: c.code || c.courseCode || "—",
-        course: <span className="font-medium text-sm">{c.title || c.name}</span>,
-        section: (
-            <span className="px-2.5 py-1 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark text-xs font-medium">
-                Section {c.section || "—"}
-            </span>
-        ),
-        actions: (
-            <div className="flex items-center justify-center gap-3">
-                <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); onSectionChange(c); }}>
-                    <FilePenIcon className="w-4 h-4" /> Change Section
-                </Button>
-                <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); onUnregister(c); }}>
-                    <TrashIcon className="w-4 h-4" /> Unregister
-                </Button>
-            </div>
-        ),
-    };
-}
 
 export default function StudentRegisteredTab({ student, studentId, courses, availableCourses, loading, onRefresh }) {
+    const { isPhone } = useDeviceType();
+
+    const headers = useMemo(() => {
+        if (isPhone) return ["Course", "Section", "Actions"];
+        return ["Code", "Course", "Section", "Actions"];
+    }, [isPhone]);
+
+    const buildRow = useMemo(() => (c, onSectionChange, onUnregister) => {
+        const row = {};
+        if (!isPhone) {
+            row.code = c.code || c.courseCode || "—";
+        }
+        row.course = <span className="font-medium text-sm">{c.title || c.name}</span>;
+        row.section = "Section " + (c.section || "—");
+        row.actions = (
+            <div className="flex items-center justify-center gap-1 sm:gap-3">
+                <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); onSectionChange(c); }}>
+                    <FilePenIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline"> Change Section</span>
+                </Button>
+                <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); onUnregister(c); }}>
+                    <TrashIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline"> Unregister</span>
+                </Button>
+            </div>
+        );
+        return row;
+    }, [isPhone]);
+
     const [page, setPage] = useState(1);
 
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -123,15 +130,16 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div>
+            <div className="flex items-start justify-between gap-2 mb-6">
+                <div className="min-w-0">
                     <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Registered Courses</h3>
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1">
+                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 truncate">
                         Showing {courses.length} registered course{courses.length !== 1 ? "s" : ""} for this student.
                     </p>
                 </div>
-                <Button variant="primary" onClick={() => setIsRegisterOpen(true)} className="shadow-sm hover:shadow-md transition-shadow">
-                    <PlusIcon className="w-5 h-5 mr-2" /> Register Course
+                <Button variant="primary" onClick={() => setIsRegisterOpen(true)} className="shadow-sm hover:shadow-md transition-shadow shrink-0">
+                    <PlusIcon className="w-5 h-5 sm:mr-2" />
+                    <span className="hidden sm:inline">Register Course</span>
                 </Button>
             </div>
 
@@ -156,6 +164,7 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                 role="course"
                                 headers={headers}
                                 data={paginated.map((c) => buildRow(c, setSectionChangeTarget, setUnregisterTarget))}
+                                columnAlignments={isPhone ? ["text-left", "text-center", "text-center"] : ["text-left", "text-left", "text-center", "text-center"]}
                                 wrapInSection={false}
                                 showHeaderActions={false}
                                 showPagination={false}
