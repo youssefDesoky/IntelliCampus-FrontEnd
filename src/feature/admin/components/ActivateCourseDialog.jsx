@@ -29,9 +29,7 @@ export default function ActivateCourseDialog({ course, onClose, onActivate }) {
                 setProfessorOptions(professors);
 
                 if (professors.length > 0) setSelectedProfessor(professors[0]);
-            } catch (err) {
-                console.error("Failed to load instructors:", err);
-            }
+            } catch { /* silently ignored */ }
         }
         loadInstructors();
     }, []);

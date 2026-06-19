@@ -3,6 +3,7 @@ import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 
 import useDeviceType from "../../../hooks/useDeviceType";
 import { API_URL } from "../../../config/api";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 import SmartNotesBody from "../../../feature/student/smartNotes/SmartNotesBody";
 
@@ -17,7 +18,7 @@ export default function SmartNotes() {
 
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError } = useError();
 
     const studentId = authUser?.role === "student" ? authUser?.userId : null;
     const currentCourseId = outletCtx?.courseId || null;
@@ -36,7 +37,6 @@ export default function SmartNotes() {
 
             try {
                 setLoading(true);
-                setError(null);
 
                 const res = await fetch(`${API_URL}/api/students/${studentId}`, {
                     credentials: "include",
@@ -69,7 +69,7 @@ export default function SmartNotes() {
                 }
             } catch (err) {
                 if (!cancelled) {
-                    setError(err?.message || "Failed to load notes");
+                    showError(err?.message || "Failed to load notes");
                     setNotes([]);
                 }
             } finally {
@@ -112,14 +112,6 @@ export default function SmartNotes() {
         return (
             <div className="flex justify-center py-12">
                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading notes...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex justify-center py-12">
-                <p className="text-red-500">Failed to load notes: {error}</p>
             </div>
         );
     }

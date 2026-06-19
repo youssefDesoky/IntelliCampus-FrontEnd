@@ -17,11 +17,19 @@ import {
     fetchStudentCourseSections,
     changeStudentCourseSection,
 } from "../../../feature/admin/services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function StudentRegisteredTab({ student, studentId, courses, availableCourses, loading, onRefresh }) {
     const { isPhone } = useDeviceType();
+    const { showError } = useError();
+
+    const registeredIds = useMemo(() => new Set(courses.map(c => c.courseId)), [courses]);
+    const unregisteredCourses = useMemo(
+        () => availableCourses.filter(c => !registeredIds.has(c.courseId)),
+        [availableCourses, registeredIds]
+    );
 
     const headers = useMemo(() => {
         if (isPhone) return ["Course", "Section", "Actions"];
@@ -31,10 +39,10 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
     const buildRow = useMemo(() => (c, onSectionChange, onUnregister) => {
         const row = {};
         if (!isPhone) {
-            row.code = c.code || c.courseCode || "—";
+            row.code = c.courseCode || c.code || "-";
         }
-        row.course = <span className="font-medium text-sm">{c.title || c.name}</span>;
-        row.section = "Section " + (c.section || "—");
+        row.course = <span className="font-medium text-sm">{c.courseName || c.title || c.name}</span>;
+        row.section = "Section " + (c.section || c.className || "-");
         row.actions = (
             <div className="flex items-center justify-center gap-1 sm:gap-3">
                 <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); onSectionChange(c); }}>
@@ -64,28 +72,54 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
     const [selectedSection, setSelectedSection] = useState("");
     const [changingSection, setChangingSection] = useState(false);
 
+    const [registerSection, setRegisterSection] = useState("");
+    const [availableCoursesSections, setAvailableCoursesSections] = useState({});
+    const [loadingSections, setLoadingSections] = useState(false);
+
     const totalPages = Math.max(1, Math.ceil(courses.length / ITEMS_PER_PAGE));
     const paginated = courses.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
     useEffect(() => {
         if (sectionChangeTarget) {
-            fetchStudentCourseSections(studentId, sectionChangeTarget._id).then(setAvailableSections).catch(() => {});
-            setSelectedSection(sectionChangeTarget.section || "");
+            fetchStudentCourseSections(studentId, sectionChangeTarget.courseId).then(setAvailableSections).catch(() => {});
+            setSelectedSection(sectionChangeTarget.classId || "");
         }
     }, [sectionChangeTarget, studentId]);
 
+    useEffect(() => {
+        if (selectedCourseId) {
+            fetchCourseSections(selectedCourseId);
+        }
+    }, [selectedCourseId]);
+
     useEffect(() => { setPage(1); }, [courses.length]);
+
+    const fetchCourseSections = async (courseId) => {
+        if (!courseId) return [];
+        try {
+            setLoadingSections(true);
+            const sections = await fetchStudentCourseSections(studentId, courseId);
+            setAvailableCoursesSections(prev => ({ ...prev, [courseId]: sections }));
+            return sections;
+        } catch (err) {
+            showError(err.message);
+            return [];
+        } finally {
+            setLoadingSections(false);
+        }
+    };
 
     const handleRegister = async () => {
         if (!selectedCourseId) return;
         setRegistering(true);
         try {
-            await registerStudentCourse(studentId, selectedCourseId);
+            await registerStudentCourse(studentId, selectedCourseId, registerSection || null);
             onRefresh?.();
             setIsRegisterOpen(false);
             setSelectedCourseId("");
+            setRegisterSection("");
         } catch (err) {
-            console.error("Failed to register course:", err);
+            showError(err.message);
         } finally {
             setRegistering(false);
         }
@@ -95,11 +129,11 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
         if (!unregisterTarget) return;
         setUnregistering(true);
         try {
-            await unregisterStudentCourse(studentId, unregisterTarget._id);
+            await unregisterStudentCourse(studentId, unregisterTarget.courseId);
             onRefresh?.();
             setUnregisterTarget(null);
         } catch (err) {
-            console.error("Failed to unregister course:", err);
+            showError(err.message);
         } finally {
             setUnregistering(false);
         }
@@ -109,11 +143,11 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
         if (!sectionChangeTarget || !selectedSection) return;
         setChangingSection(true);
         try {
-            await changeStudentCourseSection(studentId, sectionChangeTarget._id, selectedSection);
+            await changeStudentCourseSection(studentId, sectionChangeTarget.courseId, selectedSection);
             onRefresh?.();
             setSectionChangeTarget(null);
         } catch (err) {
-            console.error("Failed to change section:", err);
+            showError(err.message);
         } finally {
             setChangingSection(false);
         }
@@ -199,20 +233,45 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                 <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Available Courses</label>
                                 <select
                                     value={selectedCourseId}
-                                    onChange={(e) => setSelectedCourseId(e.target.value)}
+                                    onChange={(e) => { setSelectedCourseId(e.target.value); setRegisterSection(""); }}
                                     disabled={registering}
-                                    className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50 "
+                                    className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50"
                                 >
                                     <option value="" disabled>-- Select a course to continue --</option>
-                                    {availableCourses.map((c) => (
-                                        <option key={c._id} value={c._id}>
-                                            {c.code || c.courseCode || ""} — {c.title || c.name}
+                                    {unregisteredCourses.map((c) => (
+                                        <option key={c.courseId} value={c.courseId}>
+                                            {c.courseCode || c.code || ""} - {c.courseName || c.title || c.name}
                                         </option>
                                     ))}
                                 </select>
                             </div>
+                            {selectedCourseId && availableCoursesSections[selectedCourseId]?.length > 0 && (
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Section</label>
+                                    <select
+                                        value={registerSection}
+                                        onChange={(e) => setRegisterSection(e.target.value)}
+                                        disabled={registering}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50"
+                                    >
+                                        <option value="" disabled>-- Select a section --</option>
+                                        {availableCoursesSections[selectedCourseId]
+                                            .filter(s => s.classType === "Section")
+                                            .map((section) => (
+                                            <option key={section.classId} value={section.classId}>
+                                                {section.groupCode || `Section ${section.classId}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                            {loadingSections && (
+                                <div className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                    Loading sections...
+                                </div>
+                            )}
                             <div className="flex justify-end gap-2 pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <Button variant="outline" size="sm" onClick={() => { setIsRegisterOpen(false); setSelectedCourseId(""); }}>Cancel</Button>
+                                <Button variant="outline" size="sm" onClick={() => { setIsRegisterOpen(false); setSelectedCourseId(""); setRegisterSection(""); }}>Cancel</Button>
                                 <Button variant="primary" size="sm" onClick={handleRegister} disabled={registering || !selectedCourseId}>
                                     {registering ? "Registering..." : "Register"}
                                 </Button>
@@ -242,8 +301,8 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                         <div className="space-y-2">
                             <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Confirm Unregistration</p>
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark leading-relaxed">
-                                Are you sure you want to unregister <strong className="text-text-primary-default-light dark:text-text-primary-default-dark">{unregisterTarget?.title || unregisterTarget?.name}</strong>{" "}
-                                (<span className="font-mono text-xs">{unregisterTarget?.code || unregisterTarget?.courseCode}</span>)
+                                Are you sure you want to unregister <strong className="text-text-primary-default-light dark:text-text-primary-default-dark">{unregisterTarget?.courseName || unregisterTarget?.title || unregisterTarget?.name}</strong>{" "}
+                                (<span className="font-mono text-xs">{unregisterTarget?.courseCode || unregisterTarget?.code}</span>)
                                 for <strong className="text-text-primary-default-light dark:text-text-primary-default-dark">{student?.fullName || student?.name}</strong>?
                             </p>
                         </div>
@@ -269,24 +328,24 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                         </div>
                         <div className="p-5 space-y-5">
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Select a new section for <strong className="text-text-primary-default-light dark:text-text-primary-default-dark">{sectionChangeTarget?.title || sectionChangeTarget?.name}</strong>{" "}
-                                ({sectionChangeTarget?.code || sectionChangeTarget?.courseCode}).
+                                Select a new section for <strong className="text-text-primary-default-light dark:text-text-primary-default-dark">{sectionChangeTarget?.courseName || sectionChangeTarget?.title || sectionChangeTarget?.name}</strong>{" "}
+                                ({sectionChangeTarget?.courseCode || sectionChangeTarget?.code}).
                             </p>
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Available Sections</label>
                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                    {availableSections.map((s) => (
+                                    {availableSections.filter(s => s.classType === "Section").map((s) => (
                                         <button
-                                            key={s}
+                                            key={s.classId}
                                             disabled={changingSection}
-                                            onClick={() => setSelectedSection(s)}
+                                            onClick={() => setSelectedSection(s.classId)}
                                             className={`flex items-center justify-center py-2.5 px-3 rounded-lg border text-sm font-medium transition-all ${
-                                                selectedSection === s
+                                                selectedSection === s.classId
                                                     ? "border-border-accent-active-light dark:border-border-accent-active-dark bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark shadow-sm ring-1 ring-border-accent-active-light dark:ring-border-accent-active-dark"
                                                     : "border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark hover:border-text-secondary-default-light dark:hover:border-text-secondary-default-dark"
                                             } disabled:opacity-50 `}
                                         >
-                                            Section {s}
+                                            {s.groupCode || `Section ${s.classId}`}
                                         </button>
                                     ))}
                                 </div>

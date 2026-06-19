@@ -36,7 +36,7 @@ export default function ManageInstructors() {
           instructor.instructorId?.toLowerCase().includes(q) ||
           instructor.email?.toLowerCase().includes(q) ||
           instructor.departmentName?.toLowerCase().includes(q) ||
-          instructor.specialization?.toLowerCase().includes(q))) return false;
+                      (instructor.specialization || instructor.specializationName)?.toLowerCase().includes(q))) return false;
     }
     if (filterDepartment.length > 0 && !filterDepartment.includes(instructor.departmentName)) return false;
     if (filterType.length > 0 && !filterType.includes(instructor.role)) return false;
@@ -58,7 +58,7 @@ export default function ManageInstructors() {
       </div>
     );
     if (isDesktop || isTablet) row.department = instructor.departmentName || "—";
-    if (isDesktop) { row.specialization = instructor.specialization || "—"; row.role = instructor.role || "—"; }
+    if (isDesktop) { row.specialization = instructor.specialization || instructor.specializationName || "—"; row.role = instructor.role || instructor.instructorRole || "—"; }
     return row;
   }, []);
 
@@ -114,10 +114,10 @@ export default function ManageInstructors() {
           </>
         );
       }}
-      renderForm={({ isFormOpen, editingItem, closeForm, handleCreate }) => {
+      renderForm={({ isFormOpen, editingItem, closeForm, handleCreate, handleFormSubmit }) => {
         if (!isFormOpen) return null;
         if (editingItem) {
-          return <InstructorForm method="put" initialData={editingItem} onClose={closeForm} />;
+          return <InstructorForm method="put" initialData={editingItem} onClose={closeForm} onSubmit={handleFormSubmit} />;
         }
         return <InstructorForm method="post" onClose={closeForm} onSubmit={handleCreate} />;
       }}

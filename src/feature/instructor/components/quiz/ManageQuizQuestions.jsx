@@ -1,7 +1,9 @@
 import { useState } from "react";
 import Button from "../../../../components/ui/Button";
 import TextArea from "../../../../components/ui/TextArea";
+import NumberInput from "../../../../components/form/NumberInput";
 import { addQuestions } from "./instructorQuizApi";
+import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 const QUESTION_TYPES = [
     { value: "TF", label: "True/False" },
@@ -18,6 +20,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
     const [options, setOptions] = useState(["", ""]);
     const [points, setPoints] = useState("");
     const [correctAnswer, setCorrectAnswer] = useState("");
+    const { showError } = useError();
 
     const resetForm = () => {
         setType("TF");
@@ -28,17 +31,17 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
     };
 
     const handleAdd = () => {
-        if (!prompt.trim()) { alert("Enter a question prompt."); return; }
-        if (!points.trim()) { alert("Enter points for this question."); return; }
+        if (!prompt.trim()) { showError("Enter a question prompt."); return; }
+        if (!points.trim()) { showError("Enter points for this question."); return; }
 
         if (type === "MCQ") {
             const filledOptions = options.filter(o => o.trim());
-            if (filledOptions.length < 2) { alert("Add at least 2 options for MCQ."); return; }
-            if (!correctAnswer.trim()) { alert("Select the correct answer."); return; }
+            if (filledOptions.length < 2) { showError("Add at least 2 options for MCQ."); return; }
+            if (!correctAnswer.trim()) { showError("Select the correct answer."); return; }
         }
 
         if (type === "TF" && !correctAnswer) {
-            alert("Select the correct answer (True/False).");
+            showError("Select the correct answer (True/False).");
             return;
         }
 
@@ -55,15 +58,15 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
     };
 
     const handleSave = async () => {
-        if (questions.length === 0) { alert("Add at least one question first."); return; }
+        if (questions.length === 0) { showError("Add at least one question first."); return; }
         setSaving(true);
         try {
             await addQuestions(courseId, quiz.id, questions);
             setQuestions([]);
             onClose();
-            alert("Questions saved successfully.");
+            showError("Questions saved successfully.");
         } catch (err) {
-            alert(err.message || "Failed to save questions.");
+            showError(err.message || "Failed to save questions.");
         } finally {
             setSaving(false);
         }
@@ -137,7 +140,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1">Points</label>
-                                <input type="number" value={points} onChange={e => setPoints(e.target.value)} min="1" placeholder="e.g., 10" className="block w-full rounded-lg border px-3 py-2" />
+                                <NumberInput value={points} onChange={e => setPoints(e.target.value)} min="1" placeholder="e.g., 10" className="block w-full" />
                             </div>
                         </div>
 

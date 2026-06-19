@@ -5,9 +5,11 @@ import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import DateTimeInput from "../../../components/form/DateTimeInput";
+import NumberInput from "../../../components/form/NumberInput";
 
 import { createQuiz, fetchQuizzesByCourse } from "../../../feature/instructor/components/quiz/instructorQuizApi";
 import ManageQuizQuestions from "../../../feature/instructor/components/quiz/ManageQuizQuestions";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function InstructorCourseQuizzes() {
     const outlet = useOutletContext() || {};
@@ -25,6 +27,7 @@ export default function InstructorCourseQuizzes() {
     const [maxGrade, setMaxGrade] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [durationMinutes, setDurationMinutes] = useState("");
+    const { showError } = useError();
     const [isCreating, setIsCreating] = useState(false);
 
     const loadQuizzes = useCallback(async () => {
@@ -43,10 +46,10 @@ export default function InstructorCourseQuizzes() {
     useEffect(() => { loadQuizzes(); }, [loadQuizzes]);
 
     const handleCreate = async () => {
-        if (!title.trim()) { alert("Enter quiz title."); return; }
-        if (!maxGrade.trim()) { alert("Enter max points for the quiz."); return; }
-        if (!dueDate) { alert("Select a due date."); return; }
-        if (!durationMinutes.trim()) { alert("Enter quiz duration in minutes."); return; }
+        if (!title.trim()) { showError("Enter quiz title."); return; }
+        if (!maxGrade.trim()) { showError("Enter max points for the quiz."); return; }
+        if (!dueDate) { showError("Select a due date."); return; }
+        if (!durationMinutes.trim()) { showError("Enter quiz duration in minutes."); return; }
         
         setIsCreating(true);
         try {
@@ -67,7 +70,7 @@ export default function InstructorCourseQuizzes() {
             setDurationMinutes("");
             await loadQuizzes();
         } catch (err) {
-            alert(err.message || "Failed to create quiz.");
+            showError(err.message || "Failed to create quiz.");
         } finally { setIsCreating(false); }
     };
 
@@ -126,11 +129,11 @@ export default function InstructorCourseQuizzes() {
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Max Points</label>
-                            <input type="number" value={maxGrade} onChange={(e) => setMaxGrade(e.target.value)} placeholder="e.g., 100" min="1" className="mt-1 block w-full rounded-lg border px-3 py-2" />
+                            <NumberInput value={maxGrade} onChange={(e) => setMaxGrade(e.target.value)} placeholder="e.g., 100" min="1" className="mt-1" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Duration (minutes)</label>
-                            <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} placeholder="e.g., 60" min="1" className="mt-1 block w-full rounded-lg border px-3 py-2" />
+                            <NumberInput value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} placeholder="e.g., 60" min="1" className="mt-1" />
                         </div>
                     </div>
                     <DateTimeInput label="Due Date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />

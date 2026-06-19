@@ -5,17 +5,18 @@ import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import { XIcon } from "../../../components/ui/icons";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const emptyInstructorOption = { value: "", label: "No head instructor" };
 
 export default function DepartmentForm({ onClose, onSubmit, initialData = {}, instructors = [], isLoading = false, isOpen = true }) {
+    const { showError } = useError();
     const isEdit = !!initialData.id;
-    const professors = instructors.filter((instructor) => instructor.role === "Professor");
     const instructorOptions = [
         emptyInstructorOption,
-        ...professors.map((instructor) => ({
+        ...instructors.map((instructor) => ({
             value: String(instructor.instructorId),
-            label: instructor.name,
+            label: instructor.fullName || instructor.name,
         })),
     ];
 
@@ -25,16 +26,13 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
         }
         return emptyInstructorOption;
     });
-    const [error, setError] = useState(null);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
         const formData = Object.fromEntries(new FormData(e.target));
         const departmentName = (formData.departmentName || "").trim();
 
         if (!departmentName) {
-            setError("Department name is required");
+            showError("Department name is required");
             return;
         }
 
@@ -43,11 +41,12 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
                 departmentName,
                 departmentNameAr: (formData.departmentNameAr || "").trim(),
                 description: (formData.description || "").trim(),
+                descriptionAr: (formData.descriptionAr || "").trim(),
                 instructorId: selectedInstructor.value || null,
             });
             onClose();
         } catch (err) {
-            setError(err.message || "An error occurred");
+            showError(err.message || "An error occurred");
         }
     };
 
@@ -62,12 +61,6 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
             submitLoading={isLoading}
         >
             <div className="space-y-6 mb-6">
-                {error && (
-                    <div className="bg-bg-status-error-light dark:bg-bg-status-error-dark text-text-status-error-light dark:text-text-status-error-dark p-3 rounded-lg text-sm">
-                        {error}
-                    </div>
-                )}
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem
                         label="Department Name"
@@ -78,25 +71,26 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
                         required
                     />
 
-                    <InputItem
-                        label="Department Name (Arabic)"
-                        type="text"
-                        name="departmentNameAr"
-                        placeholder="مثال: علوم الحاسب"
-                        defaultValue={initialData.departmentNameAr || ""}
-                        dir="rtl"
-                    />
-
-                    <SelectBox
-                        className="w-full"
-                        label="Head Instructor"
-                        name="instructorId"
-                        labelDirection="flex-col"
-                        options={instructorOptions}
-                        selectedOption={selectedInstructor}
-                        onChange={setSelectedInstructor}
-                    />
+                    <div dir="rtl">
+                        <InputItem
+                            label="اسم القسم"
+                            type="text"
+                            name="departmentNameAr"
+                            placeholder="علوم الحاسب"
+                            defaultValue={initialData.departmentNameAr || ""}
+                        />
+                    </div>
                 </div>
+
+                <SelectBox
+                    className="w-full"
+                    label="Head Instructor"
+                    name="instructorId"
+                    labelDirection="flex-col"
+                    options={instructorOptions}
+                    selectedOption={selectedInstructor}
+                    onChange={setSelectedInstructor}
+                />
 
                 <div>
                     <label htmlFor="description" className="block text-sm font-medium mb-2 text-text-primary-default-light dark:text-text-primary-default-dark">
@@ -108,6 +102,19 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
                         className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
                         placeholder="Describe the department focus and scope"
                         defaultValue={initialData.description || ""}
+                    />
+                </div>
+
+                <div dir="rtl">
+                    <label htmlFor="descriptionAr" className="block text-sm font-medium mb-2 text-text-primary-default-light dark:text-text-primary-default-dark">
+                        الوصف
+                    </label>
+                    <TextArea
+                        id="descriptionAr"
+                        name="descriptionAr"
+                        className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
+                        placeholder="وصف مجال القسم ونطاقه"
+                        defaultValue={initialData.descriptionAr || ""}
                     />
                 </div>
             </div>

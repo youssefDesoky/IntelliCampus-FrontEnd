@@ -3,13 +3,14 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
 import { XIcon } from "../../../components/ui/icons";
 import { fetchUserRoles, assignUserRoles, fetchAssignableRoles } from "../services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function AssignRoleModal({ userId, userName, onClose, onRolesUpdated }) {
+    const { showError } = useError();
     const [availableRoles, setAvailableRoles] = useState([]);
     const [selectedRoles, setSelectedRoles] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -22,13 +23,13 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
             })
             .catch(err => {
                 if (cancelled) return;
-                setError(err.message);
+                showError(err.message);
             })
             .finally(() => {
                 if (!cancelled) setIsLoading(false);
             });
         return () => { cancelled = true; };
-    }, [userId]);
+    }, [userId, showError]);
 
     const toggleRole = (roleValue) => {
         setSelectedRoles(prev =>
@@ -45,7 +46,7 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
             onRolesUpdated?.();
             onClose();
         } catch (err) {
-            setError(err.message);
+            showError(err.message);
         } finally {
             setIsSaving(false);
         }
@@ -67,8 +68,6 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
                 <div className="p-6 overflow-y-auto flex-1">
                     {isLoading ? (
                         <p className="text-center py-8 text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading roles...</p>
-                    ) : error ? (
-                        <p className="text-center py-8 text-red-500">{error}</p>
                     ) : (
                         <div className="space-y-4">
                             {availableRoles.map(role => {

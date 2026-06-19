@@ -1,10 +1,12 @@
 import { useState, useCallback, useMemo } from "react";
 import ManageEntity from "../../../components/ui/ManageEntity";
 import DepartmentForm from "../../../feature/admin/components/DepartmentForm";
+import DepartmentSpecializationsForm from "../../../feature/admin/components/DepartmentSpecializationsForm";
 import { fetchDepartments, createDepartment, updateDepartment, deleteDepartment, fetchInstructors } from "../../../feature/admin/services/adminApi";
 
 export default function ManageDepartments() {
   const [instructors, setInstructors] = useState([]);
+  const [specDepartment, setSpecDepartment] = useState(null);
 
   const instructorLookup = useMemo(() =>
     instructors.reduce((lookup, instructor) => {
@@ -73,6 +75,7 @@ export default function ManageDepartments() {
       buildRow={(item) => buildDepartmentRow(item)}
       rowActions={(item, { onEdit, onDelete }) => [
         { label: "Edit", onClick: () => onEdit(item) },
+        { label: "Set Specializations", onClick: () => setSpecDepartment(item) },
         { label: "Delete", onClick: () => onDelete(item) },
       ]}
       getDeleteMessage={(item) => (
@@ -90,6 +93,15 @@ export default function ManageDepartments() {
         )
       }
       extraDeps={[instructorLookup]}
+      renderExtraDialogs={({ loadItems }) => (
+        specDepartment && (
+          <DepartmentSpecializationsForm
+            department={specDepartment}
+            onClose={() => setSpecDepartment(null)}
+            onUpdate={loadItems}
+          />
+        )
+      )}
     />
   );
 }

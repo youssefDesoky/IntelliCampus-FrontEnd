@@ -7,6 +7,7 @@ import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import MaterialPreview from "../../../components/ui/MaterialPreview";
 import DateTimeInput from "../../../components/form/DateTimeInput";
+import NumberInput from "../../../components/form/NumberInput";
 import { PlusIcon, TrashIcon, EyeIcon, DownloadIcon, XIcon } from "../../../components/ui/icons";
 
 import {
@@ -16,6 +17,7 @@ import {
     updateInstructorAssignment,
     fetchAssignmentSubmissions,
 } from "../../../feature/instructor/components/assignments/instructorAssignmentsApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function formatDueDate(value) {
     const date = new Date(value);
@@ -35,8 +37,8 @@ export default function InstructorCourseAssignments() {
     
     const [assignments, setAssignments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { showError } = useError();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState(null);
     
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [title, setTitle] = useState("");
@@ -55,7 +57,6 @@ export default function InstructorCourseAssignments() {
     const loadPageData = useCallback(async () => {
         if (!courseId) return;
         setIsLoading(true);
-        setError(null);
         
         try {
             const data = await fetchInstructorAssignmentsByCourse(courseId);
@@ -70,7 +71,7 @@ export default function InstructorCourseAssignments() {
             }));
             setAssignments(mapped);
         } catch (err) {
-            setError(err.message || "Failed to load assignments.");
+            showError(err.message || "Failed to load assignments.");
             setAssignments([]);
         } finally {
             setIsLoading(false);
@@ -95,12 +96,12 @@ export default function InstructorCourseAssignments() {
     
     const handleCreateAssignment = async () => {
         if (!courseId) {
-            alert("No course context found.");
+            showError("No course context found.");
             return;
         }
         
         if (!title.trim() || !dueDate) {
-            alert("Title and due date are required.");
+            showError("Title and due date are required.");
             return;
         }
         
@@ -134,7 +135,7 @@ export default function InstructorCourseAssignments() {
             
             handleCloseForm();
         } catch (err) {
-            alert(err.message || "Failed to create assignment.");
+            showError(err.message || "Failed to create assignment.");
         } finally {
             setIsSubmitting(false);
         }
@@ -144,12 +145,12 @@ export default function InstructorCourseAssignments() {
         if (!editingAssignmentId) return;
         
         if (!courseId) {
-            alert("No course context found.");
+            showError("No course context found.");
             return;
         }
         
         if (!title.trim() || !dueDate) {
-            alert("Title and due date are required.");
+            showError("Title and due date are required.");
             return;
         }
         
@@ -180,7 +181,7 @@ export default function InstructorCourseAssignments() {
             
             handleCloseForm();
         } catch (err) {
-            alert(err.message || "Failed to update assignment.");
+            showError(err.message || "Failed to update assignment.");
         } finally {
             setIsSubmitting(false);
         }
@@ -199,11 +200,11 @@ export default function InstructorCourseAssignments() {
                 submittedAt: s.submittedAt || s.SubmittedAt || s.SubmittedDate || null,
                 note: s.note || s.Note || null,
                 files: s.files || s.Files || [],
-                student: s.studentName || s.studentFullName || s.student || null,
+                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (s.student.fullName || s.student.name) : s.student) || null,
             }));
             setSubmissions(normalized);
         } catch (err) {
-            alert(err.message || "Failed to load submissions.");
+            showError(err.message || "Failed to load submissions.");
         } finally {
             setIsLoadingSubmissions(false);
         }
@@ -236,16 +237,12 @@ export default function InstructorCourseAssignments() {
             await deleteInstructorAssignment(assignmentId);
             setAssignments((prev) => prev.filter((a) => String(a.id) !== String(assignmentId)));
         } catch (err) {
-            alert(err.message || "Failed to delete assignment.");
+            showError(err.message || "Failed to delete assignment.");
         }
     };
     
     if (isLoading) {
         return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading assignments...</p>;
-    }
-    
-    if (error) {
-        return <p className="text-sm text-text-danger-default-light dark:text-text-danger-default-dark">{error}</p>;
     }
     
     return (
@@ -308,16 +305,7 @@ export default function InstructorCourseAssignments() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DateTimeInput label="Due Date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
         
-        <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Total Points</label>
-        <input
-        type="number"
-        min={1}
-        value={totalPoints}
-        onChange={(event) => setTotalPoints(event.target.value)}
-        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
-        />
-        </div>
+        <NumberInput label="Total Points" min={1} value={totalPoints} onChange={(event) => setTotalPoints(event.target.value)} />
         </div>
         </BaseFormComponent>
         
@@ -442,7 +430,7 @@ export default function InstructorCourseAssignments() {
                         <div key={s.id} className="p-3 border rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark">
                         <div className="flex items-center justify-between gap-3">
                         <div>
-                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{s.student || `Student ${s.id}`}</p>
+                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{typeof s.student === 'string' ? s.student : `Student ${s.id}`}</p>
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{s.submittedAt}</p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -504,7 +492,7 @@ export default function InstructorCourseAssignments() {
             {previewFile.name}
             </p>
             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-            {selectedSubmission?.student || "Selected submission"}
+            {typeof selectedSubmission?.student === 'string' ? selectedSubmission.student : "Selected submission"}
             </p>
             </div>
             </div>

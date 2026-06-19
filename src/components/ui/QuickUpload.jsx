@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import Button from "./Button";
 import TextArea from "./TextArea";
 import { CloudUploadIcon, XIcon, FileIcon, TrashIcon, PaperPlaneIcon } from "./icons";
+import { useError } from '../../contexts/ErrorContext.jsx';
 
 const MAX_SIZE_MB = 50;
 
@@ -23,7 +24,7 @@ export default function QuickUpload({
     const [note, setNote] = useState("");
     const [dragOver, setDragOver] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const [error, setError] = useState("");
+    const { showError } = useError();
     const inputRef = useRef(null);
 
     const addFiles = (incoming) => {
@@ -45,13 +46,12 @@ export default function QuickUpload({
 
     const handleSubmit = async () => {
         if (files.length === 0) return;
-        setError("");
         setUploading(true);
         try {
             await onSubmit?.({ files, note });
             onClose?.();
         } catch (err) {
-            setError(err.message || "Failed to submit assignment.");
+            showError(err.message || "Failed to submit assignment.");
         } finally {
             setUploading(false);
         }
@@ -94,11 +94,7 @@ export default function QuickUpload({
             </div>
 
             <div className="p-5 space-y-5">
-                {error && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
-                        {error}
-                    </div>
-                )}
+
 
                 {noteEnabled && (
                     <div className="space-y-2">

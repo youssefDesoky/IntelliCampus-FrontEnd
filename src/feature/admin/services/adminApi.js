@@ -1,318 +1,344 @@
-import { API_URL } from "../../../config/api";
+import apiClient from "../../../utils/apiClient";
 
 // ─── Students ───────────────────────────────────────────────
 
 export async function fetchStudents() {
-    const res = await fetch(`${API_URL}/api/students`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch students: ${res.status}`);
-    return res.json();
+    return apiClient('/api/students');
 }
 
 export async function fetchStudentById(id) {
-    const res = await fetch(`${API_URL}/api/students/${id}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch student: ${res.status}`);
-    return res.json();
+    return apiClient(`/api/students/${id}`);
 }
 
 export async function createStudent(data) {
-    console.log("[API] POST /api/students →", JSON.stringify(data, null, 2));
-    const res = await fetch(`${API_URL}/api/students`, {
+    return apiClient('/api/students', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("[API] POST /api/students error response:", JSON.stringify(err, null, 2));
-        const msg = err.errors
-            ? Object.entries(err.errors).map(([k, v]) => `${k}: ${v.join(", ")}`).join("; ")
-            : err.message || err.title || `Failed to create student: ${res.status}`;
-        throw new Error(msg);
-    }
-    return res.json();
 }
 
 export async function deleteStudent(id) {
-    const res = await fetch(`${API_URL}/api/students/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to delete student: ${res.status}`);
-    }
-    return true;
+    await apiClient(`/api/students/${id}`, { method: "DELETE" });
 }
 
 // ─── Instructors ────────────────────────────────────────────
 
 export async function fetchInstructors() {
-    const res = await fetch(`${API_URL}/api/instructors`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch instructors: ${res.status}`);
-    return res.json();
+    return apiClient('/api/instructors');
 }
 
 export async function fetchInstructorById(id) {
-    const res = await fetch(`${API_URL}/api/instructors/${id}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch instructor: ${res.status}`);
-    return res.json();
+    return apiClient(`/api/instructors/${id}`);
 }
 
 export async function createInstructor(data) {
-    console.log("[API] POST /api/instructors →", JSON.stringify(data, null, 2));
-    const res = await fetch(`${API_URL}/api/instructors`, {
+    return apiClient('/api/instructors', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to create instructor: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function deleteInstructor(id) {
-    const res = await fetch(`${API_URL}/api/instructors/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to delete instructor: ${res.status}`);
-    }
+    await apiClient(`/api/instructors/${id}`, { method: "DELETE" });
     return true;
 }
 
 // ─── Admins ─────────────────────────────────────────────────
 
 export async function fetchAdmins() {
-    const res = await fetch(`${API_URL}/api/admins`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch admins: ${res.status}`);
-    return res.json();
+    return apiClient('/api/admins');
 }
 
 export async function createAdmin(data) {
-    console.log("[API] POST /api/admins \u2192", JSON.stringify(data, null, 2));
-    const res = await fetch(`${API_URL}/api/admins`, {
+    return apiClient('/api/admins', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to create admin: ${res.status}`);
-    }
-    return res.json();
+}
+
+export async function fetchAdminById(id) {
+    return apiClient(`/api/admins/${id}`);
+}
+
+export async function updateAdmin(id, data) {
+    return apiClient(`/api/admins/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
 }
 
 export async function deleteAdmin(id) {
-    const res = await fetch(`${API_URL}/api/admins/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to delete admin: ${res.status}`);
-    }
-    if (res.status === 204) return true;
+    await apiClient(`/api/admins/${id}`, { method: "DELETE" });
     return true;
 }
 
 // ─── User Roles (Super Admin) ──────────────────────────────
 
+const ROLE_GROUP_MAP = {
+    student_undergrad: { label: "UnderGrad Student", group: "student" },
+    student_masters: { label: "Masters Student", group: "student" },
+    student_phd: { label: "PhD Student", group: "student" },
+    student_diploma: { label: "Diploma Student", group: "student" },
+    instructor: { label: "Instructor", group: "instructor" },
+    admin_undergrad: { label: "UnderGrad Admin", group: "admin" },
+    admin_postgrad: { label: "PostGrad Admin", group: "admin" },
+    admin_academicstaff: { label: "Academic Staff Admin", group: "admin" },
+    superadmin: { label: "Super Admin", group: "admin" },
+};
+
+/** Fetch current roles for a user (returns array of role name strings) */
 export async function fetchUserRoles(userId) {
-    const res = await fetch(`${API_URL}/api/users/${userId}/roles`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch user roles: ${res.status}`);
-    return res.json();
+    const data = await apiClient(`/api/Roles/user/${userId}`);
+    return (data || []).map(r => r.roleName?.toLowerCase());
 }
 
-export async function assignUserRoles(userId, roles) {
-    const res = await fetch(`${API_URL}/api/users/${userId}/roles`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roles }),
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to assign roles: ${res.status}`);
-    }
-    return res.json();
-}
-
+/** Fetch all available roles for assignment */
 export async function fetchAssignableRoles() {
-    const res = await fetch(`${API_URL}/api/roles/assignable`, {
-        credentials: "include",
+    const data = await apiClient('/api/Roles');
+    return (data || []).map(r => {
+        const key = r.roleName?.toLowerCase();
+        const meta = ROLE_GROUP_MAP[key] || {};
+        return {
+            value: key,
+            label: meta.label || r.roleName,
+            group: meta.group || "",
+        };
     });
-    if (!res.ok) throw new Error(`Failed to fetch assignable roles: ${res.status}`);
-    return res.json();
 }
 
-// ─── Roles ──────────────────────────────────────────────────
+/** Assign a single role to a user */
+export async function assignUserRole(userId, roleName) {
+    return apiClient('/api/Roles/assign', {
+        method: "POST",
+        body: JSON.stringify({ userId, roleName }),
+    });
+}
 
+/** Remove a single role from a user */
+export async function removeUserRole(userId, roleId) {
+    try {
+        await apiClient(`/api/Roles/user/${userId}/role/${roleId}`, { method: "DELETE" });
+    } catch (err) {
+        if (err.status !== 404) throw err;
+    }
+    return true;
+}
+
+/** Fetch admin-specific roles for form dropdowns */
 export async function fetchAdminRoles() {
-    const res = await fetch(`${API_URL}/api/roles/admin`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch admin roles: ${res.status}`);
-    return res.json();
+    const data = await apiClient('/api/Roles');
+    return (data || [])
+        .filter(r => r.roleName?.toLowerCase().startsWith("admin_"))
+        .map(r => ({
+            value: r.roleName,
+            label: r.roleName.replace("Admin_", "").replace(/([A-Z])/g, " $1").trim() + " Admin",
+        }));
 }
 
+/** Fetch instructor-specific roles for form dropdowns */
 export async function fetchInstructorRoles() {
-    const res = await fetch(`${API_URL}/api/roles/instructor`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch instructor roles: ${res.status}`);
-    return res.json();
+    const data = await apiClient('/api/Roles');
+    return (data || [])
+        .filter(r => r.roleName?.toLowerCase() === "instructor")
+        .map(r => ({ value: r.roleName, label: "Instructor" }));
+}
+
+/** Bulk assign/remove roles for a user (syncs selectedRoles with backend) */
+export async function assignUserRoles(userId, selectedRoles) {
+    const currentRoles = await fetchUserRoles(userId);
+
+    const rolesToAdd = selectedRoles.filter(r => !currentRoles.includes(r));
+    const rolesToRemove = currentRoles.filter(r => !selectedRoles.includes(r));
+
+    const allRoles = await apiClient('/api/Roles');
+
+    for (const roleName of rolesToAdd) {
+        const role = allRoles.find(r => r.roleName?.toLowerCase() === roleName);
+        if (role) {
+            await assignUserRole(userId, role.roleName);
+        }
+    }
+
+    for (const roleName of rolesToRemove) {
+        const role = allRoles.find(r => r.roleName?.toLowerCase() === roleName);
+        if (role) {
+            await removeUserRole(userId, role.roleId);
+        }
+    }
+
+    return true;
 }
 
 // ─── Bylaws ─────────────────────────────────────────────────
 
 export async function fetchBylaws() {
-    const res = await fetch(`${API_URL}/api/Bylaw`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch bylaws: ${res.status}`);
-    return res.json();
+    return apiClient('/api/Bylaw');
 }
 
 export async function fetchBylawById(id) {
-    const res = await fetch(`${API_URL}/api/Bylaw/${id}`, {
-        credentials: "include",
+    return apiClient(`/api/Bylaw/${id}`);
+}
+
+export async function updateBylaw(id, data) {
+    return apiClient(`/api/Bylaw/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(`Failed to fetch bylaw: ${res.status}`);
-    return res.json();
 }
 
 export async function createBylaw(data) {
-    const res = await fetch(`${API_URL}/api/Bylaw`, {
+    return apiClient('/api/Bylaw', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to create bylaw: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function deleteBylaw(id) {
-    const res = await fetch(`${API_URL}/api/Bylaw/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to delete bylaw: ${res.status}`);
+    await apiClient(`/api/Bylaw/${id}`, { method: "DELETE" });
     return true;
 }
 
 export async function toggleBylawActive(id) {
-    const res = await fetch(`${API_URL}/api/Bylaw/${id}/toggle-active`, {
-        method: "PATCH",
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to toggle bylaw: ${res.status}`);
+    await apiClient(`/api/Bylaw/${id}/toggle-active`, { method: "PATCH" });
     return true;
 }
 
 export async function uploadBylawDocument(id, file) {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(`${API_URL}/api/Bylaw/${id}/upload`, {
+    return apiClient(`/api/Bylaw/${id}/upload`, {
         method: "POST",
-        credentials: "include",
         body: formData,
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to upload bylaw document: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function setBylawGradeScales(id, items) {
-    const res = await fetch(`${API_URL}/api/Bylaw/${id}/grade-scales`, {
+    return apiClient(`/api/Bylaw/${id}/grade-scales`, {
         method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(items),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to set grade scales: ${res.status}`);
-    }
-    return res.json();
+}
+
+export async function setBylawLevelScales(id, items) {
+    return apiClient(`/api/Bylaw/${id}/level-scales`, {
+        method: "PUT",
+        body: JSON.stringify(items),
+    });
+}
+
+export async function setBylawMinHoursDepartment(id, minHours) {
+    return apiClient(`/api/Bylaw/${id}/min-hours-department`, {
+        method: "PUT",
+        body: JSON.stringify({ minHours }),
+    });
+}
+
+export async function setBylawMinHoursSpecialization(id, minHours) {
+    return apiClient(`/api/Bylaw/${id}/min-hours-specialization`, {
+        method: "PUT",
+        body: JSON.stringify({ minHours }),
+    });
+}
+
+export async function updateBylawRequirements(id, data) {
+    return apiClient(`/api/Bylaw/${id}/requirements`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateBylawPassingGrade(id, data) {
+    return apiClient(`/api/Bylaw/${id}/passing-grade`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateBylawProbation(id, data) {
+    return apiClient(`/api/Bylaw/${id}/probation`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateBylawMinHours(id, data) {
+    return apiClient(`/api/Bylaw/${id}/minhours-departmentAndSpecialization`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function mapCourseToBylaw(bylawId, data) {
+    return apiClient(`/api/Bylaw/${bylawId}/courses`, {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function unmapCourseFromBylaw(bylawCourseId) {
+    await apiClient(`/api/Bylaw/courses/${bylawCourseId}`, { method: "DELETE" });
+    return true;
+}
+
+export async function setCoursePrerequisites(bylawCourseId, data) {
+    return apiClient(`/api/Bylaw/courses/${bylawCourseId}/prerequisites`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
+// ─── Elective Buckets ──────────────────────────────────────
+
+export async function fetchBucketsByBylaw(bylawId) {
+    return apiClient(`/api/ElectiveBuckets/bylaw/${bylawId}`);
+}
+
+export async function createBucket(data) {
+    return apiClient('/api/ElectiveBuckets', {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateBucket(bucketId, data) {
+    return apiClient(`/api/ElectiveBuckets/${bucketId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function deleteBucket(bucketId) {
+    await apiClient(`/api/ElectiveBuckets/${bucketId}`, { method: "DELETE" });
+    return true;
 }
 
 // ─── Exams ─────────────────────────────────────────────────
 
 export async function fetchExams() {
-    const res = await fetch(`${API_URL}/api/exams`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch exams: ${res.status}`);
-    return res.json();
+    return apiClient('/api/exams');
 }
 
 export async function deleteExam(id) {
-    const res = await fetch(`${API_URL}/api/exams/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to delete exam: ${res.status}`);
-    }
+    await apiClient(`/api/exams/${id}`, { method: "DELETE" });
     return true;
 }
 
 export async function updateExam(id, data) {
-    const res = await fetch(`${API_URL}/api/exams/${id}`, {
+    return apiClient(`/api/exams/${id}`, {
         method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || err.title || `Failed to update exam: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function uploadExams(file, examType) {
     const formData = new FormData();
     formData.append("file", file);
-    let url = `${API_URL}/api/ExcelImport/exams`;
+    let url = '/api/ExcelImport/exams';
     if (examType) url += `?examType=${examType}`;
-    const res = await fetch(url, {
+    return apiClient(url, {
         method: "POST",
-        credentials: "include",
         body: formData,
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        const msg = err.message || (err.errors && err.errors.join("; ")) || `Failed to upload exams: ${res.status}`;
-        throw new Error(msg);
-    }
-    return res.json();
 }
 
 // ─── Student Upload ─────────────────────────────────────────
@@ -320,261 +346,177 @@ export async function uploadExams(file, examType) {
 export async function uploadStudents(file, bylawId) {
     const formData = new FormData();
     formData.append("file", file);
-    let url = `${API_URL}/api/ExcelImport/students`;
+    let url = '/api/ExcelImport/students';
     if (bylawId) url += `?bylawId=${bylawId}`;
-
-    const res = await fetch(url, {
+    return apiClient(url, {
         method: "POST",
-        credentials: "include",
         body: formData,
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to upload students: ${res.status}`);
-    }
-    return res.json();
 }
 
 // ─── Departments ────────────────────────────────────────────
 
 export async function fetchDepartments() {
-    const res = await fetch(`${API_URL}/api/departments`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch departments: ${res.status}`);
-    return res.json();
+    return apiClient('/api/departments');
 }
 
 export async function fetchDepartmentById(id) {
-    const res = await fetch(`${API_URL}/api/departments/${id}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch department: ${res.status}`);
-    return res.json();
+    return apiClient(`/api/departments/${id}`);
 }
 
 export async function createDepartment(data) {
-    console.log("[API] POST /api/departments →", JSON.stringify(data, null, 2));
-    const res = await fetch(`${API_URL}/api/departments`, {
+    return apiClient('/api/departments', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to create department: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function updateDepartment(id, data) {
-    console.log(`[API] PUT /api/departments/${id} →`, JSON.stringify(data, null, 2));
-    const res = await fetch(`${API_URL}/api/departments/${id}`, {
+    return apiClient(`/api/departments/${id}`, {
         method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to update department: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function deleteDepartment(id) {
-    const res = await fetch(`${API_URL}/api/departments/${id}`, {
-        method: "DELETE",
-        credentials: "include",
+    await apiClient(`/api/departments/${id}`, { method: "DELETE" });
+    return true;
+}
+
+// ─── Department Specializations ────────────────────────────
+
+export async function fetchSpecializations(departmentId) {
+    return apiClient(`/api/Specialization/department/${departmentId}`);
+}
+
+export async function createSpecialization(departmentId, data) {
+    const payload = {
+        name: data.name,
+        nameAr: data.nameAr || null,
+        departmentId: parseInt(departmentId),
+    };
+    return apiClient('/api/Specialization', {
+        method: "POST",
+        body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to delete department: ${res.status}`);
-    }
+}
+
+export async function deleteSpecialization(departmentId, specId) {
+    await apiClient(`/api/Specialization/${specId}`, { method: "DELETE" });
     return true;
 }
 
 // ─── Courses ────────────────────────────────────────────────
 
 export async function fetchCourses() {
-    const res = await fetch(`${API_URL}/api/courses`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch courses: ${res.status}`);
-    return res.json();
+    return apiClient('/api/courses');
 }
 
 export async function fetchCourseById(id) {
-    const res = await fetch(`${API_URL}/api/courses/${id}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch course: ${res.status}`);
-    return res.json();
+    return apiClient(`/api/courses/${id}`);
 }
 
 /** Maps frontend course fields to the backend CreateCourseDto JSON property names */
 function toCoursePayload(data) {
     return {
-        title: data.courseName,
+        courseName: data.courseName,
         courseNameAr: data.courseNameAr,
-        id: data.courseId,
-        creditHours: data.creditHours,
-        department: data.departmentId,
-        description: data.description,
-        prerequisites: data.prerequisites,
+        courseCode: data.courseId,
+        departmentName: data.departmentId,
+        creditHours: Number(data.creditHours) || 0,
     };
 }
 
 export async function createCourse(data) {
     const payload = toCoursePayload(data);
-    console.log("[API] POST /api/courses →", JSON.stringify(payload, null, 2));
-    const res = await fetch(`${API_URL}/api/courses`, {
+    return apiClient('/api/courses', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("[API] POST /api/courses error response:", JSON.stringify(err, null, 2));
-        const msg = err.errors
-            ? Object.entries(err.errors).map(([k, v]) => `${k}: ${v.join(", ")}`).join("; ")
-            : err.message || err.title || `Failed to create course: ${res.status}`;
-        throw new Error(msg);
-    }
-    return res.json();
 }
 
 export async function updateCourse(id, data) {
     const payload = toCoursePayload(data);
-    console.log(`[API] PUT /api/courses/${id} →`, JSON.stringify(payload, null, 2));
-    const res = await fetch(`${API_URL}/api/courses/${id}`, {
+    return apiClient(`/api/courses/${id}`, {
         method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to update course: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function deleteCourse(id) {
-    const res = await fetch(`${API_URL}/api/courses/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to delete course: ${res.status}`);
-    }
+    await apiClient(`/api/courses/${id}`, { method: "DELETE" });
     return true;
 }
 
 export async function activateCourse(id) {
-    const res = await fetch(`${API_URL}/api/courses/${id}/activate`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to activate course: ${res.status}`);
-    }
-    if (res.status === 204) return true;
-    return res.json();
+    const result = await apiClient(`/api/courses/${id}/activate`, { method: "PATCH" });
+    return result ?? true;
 }
 
 export async function deactivateCourse(id) {
-    const res = await fetch(`${API_URL}/api/courses/${id}/deactivate`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to deactivate course: ${res.status}`);
-    }
-    if (res.status === 204) return true;
-    return res.json();
+    const result = await apiClient(`/api/courses/${id}/deactivate`, { method: "PATCH" });
+    return result ?? true;
 }
 
 // ─── Course Classes ─────────────────────────────────────────
 
 export async function fetchCourseClasses(courseId) {
-    const res = await fetch(`${API_URL}/api/classes/course/${courseId}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch classes: ${res.status}`);
-    return res.json();
+    return apiClient(`/api/classes/course/${courseId}`);
 }
 
 export async function addClassToCourse(courseId, data) {
     const payload = { ...data, courseId: String(courseId) };
-    console.log("[API] POST /api/classes →", JSON.stringify(payload, null, 2));
-    const res = await fetch(`${API_URL}/api/classes`, {
+    return apiClient('/api/classes', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-        let err = {};
-        const text = await res.text().catch(() => "");
-        try { err = JSON.parse(text); } catch { /* not JSON */ }
-        console.error(`[API] POST /api/classes ${res.status} response:`, text || "(empty)");
-        const msg = err.errors
-            ? Object.entries(err.errors).map(([k, v]) => `${k}: ${v.join(", ")}`).join("; ")
-            : err.message || err.title || text || `Failed to add class: ${res.status}`;
-        throw new Error(msg);
-    }
-    return res.json();
+}
+
+export async function createLecture(courseId, data) {
+    const payload = { ...data, courseId: Number(courseId) };
+    return apiClient('/api/classes/lecture', {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function createSection(courseId, data) {
+    const payload = { ...data, courseId: Number(courseId) };
+    return apiClient('/api/classes/section', {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
 }
 
 export async function updateClass(classId, data) {
     const payload = { ...data };
-    console.log(`[API] PUT /api/classes/${classId} →`, JSON.stringify(payload, null, 2));
-    const res = await fetch(`${API_URL}/api/classes/${classId}`, {
+    const result = await apiClient(`/api/classes/${classId}`, {
         method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-        let err = {};
-        const text = await res.text().catch(() => "");
-        try { err = JSON.parse(text); } catch { /* not JSON */ }
-        console.error(`[API] PUT /api/classes/${classId} ${res.status} response:`, text || "(empty)");
-        const msg = err.errors
-            ? Object.entries(err.errors).map(([k, v]) => `${k}: ${v.join(", ")}`).join("; ")
-            : err.message || err.title || text || `Failed to update class: ${res.status}`;
-        throw new Error(msg);
-    }
-    if (res.status === 204) return true;
-    return res.json();
+    return result ?? true;
+}
+
+export async function fetchLectureInstructors() {
+    return apiClient('/api/classes/lecture-instructors');
+}
+
+export async function fetchSectionInstructors() {
+    return apiClient('/api/classes/section-instructors');
+}
+
+export async function fetchLectureRooms() {
+    return apiClient('/api/classes/lecture-rooms');
+}
+
+export async function fetchSectionRooms() {
+    return apiClient('/api/classes/section-rooms');
 }
 
 // ─── Course Students ────────────────────────────────────────
 
-const mockCourseStudents = [
-    { studentId: "STU001", fullName: "Ahmed Mohamed", email: "ahmed@example.com", gpa: 3.5, section: "A" },
-    { studentId: "STU002", fullName: "Sara Ali", email: "sara@example.com", gpa: 3.8, section: "A" },
-    { studentId: "STU003", fullName: "Khaled Hassan", email: "khaled@example.com", gpa: 3.2, section: "B" },
-    { studentId: "STU004", fullName: "Nadia Ibrahim", email: "nadia@example.com", gpa: 3.9, section: "B" },
-    { studentId: "STU005", fullName: "Omar Farouk", email: "omar@example.com", gpa: 2.9, section: "A" },
-];
-
 export async function fetchCourseStudents(courseId) {
-    try {
-        const res = await fetch(`${API_URL}/api/courses/${courseId}/students`, {
-            credentials: "include",
-        });
-        if (res.ok) return res.json();
-    } catch { /* fall through to mock */ }
-    return [...mockCourseStudents];
+    return apiClient(`/api/courses/${courseId}/students`);
 }
 
 // ─── Course Grades ──────────────────────────────────────────
@@ -582,211 +524,97 @@ export async function fetchCourseStudents(courseId) {
 export async function uploadCourseGrades(courseId, file) {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(`${API_URL}/api/courses/${courseId}/grades/upload`, {
+    return apiClient(`/api/courses/${courseId}/grades/upload`, {
         method: "POST",
-        credentials: "include",
         body: formData,
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to upload grades: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function deleteClassFromCourse(courseId, classId) {
-    const res = await fetch(`${API_URL}/api/classes/${classId}`, {
-        method: "DELETE",
-        credentials: "include",
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to delete class: ${res.status}`);
-    }
-    if (res.status === 204) return true;
+    await apiClient(`/api/classes/${classId}`, { method: "DELETE" });
     return true;
 }
 
 // ─── Rooms ──────────────────────────────────────────────────
 
 export async function fetchRooms() {
-    const res = await fetch(`${API_URL}/api/rooms`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch rooms: ${res.status}`);
-    return res.json();
+    return apiClient('/api/rooms');
 }
 
 export async function fetchRoomById(id) {
-    const res = await fetch(`${API_URL}/api/rooms/${id}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch room: ${res.status}`);
-    return res.json();
+    return apiClient(`/api/rooms/${id}`);
 }
 
 function toRoomPayload(data) {
     return {
         roomName: data.name,
-        nameAr: data.nameAr,
-        type: data.type,
+        roomNameAr: data.nameAr,
         capacity: data.capacity,
-        location: data.location,
     };
 }
 
 export async function createRoom(data) {
     const payload = toRoomPayload(data);
-    console.log("[API] POST /api/rooms →", JSON.stringify(payload, null, 2));
-    const res = await fetch(`${API_URL}/api/rooms`, {
+    return apiClient('/api/rooms', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("[API] POST /api/rooms error response:", JSON.stringify(err, null, 2));
-        const msg = err.errors
-            ? Object.entries(err.errors).map(([k, v]) => `${k}: ${v.join(", ")}`).join("; ")
-            : err.message || err.title || `Failed to create room: ${res.status}`;
-        throw new Error(msg);
-    }
-    return res.json();
 }
 
 export async function updateRoom(id, data) {
     const payload = toRoomPayload(data);
-    console.log(`[API] PUT /api/rooms/${id} →`, JSON.stringify(payload, null, 2));
-    const res = await fetch(`${API_URL}/api/rooms/${id}`, {
+    return apiClient(`/api/rooms/${id}`, {
         method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to update room: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function deleteRoom(id) {
-    const res = await fetch(`${API_URL}/api/rooms/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to delete room: ${res.status}`);
-    }
+    await apiClient(`/api/rooms/${id}`, { method: "DELETE" });
     return true;
 }
 
-// ─── Student Courses (mock/fallback) ───────────────────────
-// NOTE: The backend endpoints for these may not exist yet.
-// Functions try the real API first, then fall back to mock data.
-
-const mockRegisteredCourses = [
-    { _id: "c1", title: "Data Structures", code: "CS201", creditHours: 3, schedule: "Sun/Tue 10:00-11:30", instructor: "Dr. Ahmed", section: "A" },
-    { _id: "c2", title: "Algorithms", code: "CS202", creditHours: 3, schedule: "Mon/Wed 10:00-11:30", instructor: "Dr. Sara", section: "B" },
-    { _id: "c3", title: "Database Systems", code: "CS301", creditHours: 3, schedule: "Sun/Tue 12:00-13:30", instructor: "Dr. Khaled", section: "A" },
-    { _id: "c4", title: "Operating Systems", code: "CS302", creditHours: 3, schedule: "Mon/Wed 12:00-13:30", instructor: "Dr. Nadia", section: "C" },
-    { _id: "c5", title: "Software Engineering", code: "CS401", creditHours: 3, schedule: "Tue/Thu 10:00-11:30", instructor: "Dr. Yasser", section: "B" },
-];
-
-const mockSections = ["A", "B", "C", "D"];
-
-const mockCompletedCourses = [
-    { _id: "c6", title: "Introduction to Programming", code: "CS101", creditHours: 3, grade: "A", gradePercent: 92, attendance: 95, courseWork: 88 },
-    { _id: "c7", title: "Calculus I", code: "MATH101", creditHours: 3, grade: "B+", gradePercent: 87, attendance: 90, courseWork: 82 },
-    { _id: "c8", title: "Linear Algebra", code: "MATH201", creditHours: 3, grade: "A-", gradePercent: 89, attendance: 93, courseWork: 85 },
-    { _id: "c9", title: "Discrete Mathematics", code: "MATH202", creditHours: 3, grade: "B", gradePercent: 82, attendance: 88, courseWork: 78 },
-    { _id: "c10", title: "Probability & Statistics", code: "MATH301", creditHours: 3, grade: "A", gradePercent: 94, attendance: 97, courseWork: 91 },
-    { _id: "c11", title: "Computer Networks", code: "CS303", creditHours: 3, grade: "B+", gradePercent: 86, attendance: 91, courseWork: 80 },
-];
-
-const mockAvailableCourses = [
-    { _id: "c12", title: "Machine Learning", code: "CS402", creditHours: 3 },
-    { _id: "c13", title: "Computer Vision", code: "CS403", creditHours: 3 },
-    { _id: "c14", title: "Natural Language Processing", code: "CS404", creditHours: 3 },
-    { _id: "c15", title: "Cryptography", code: "CS405", creditHours: 3 },
-    { _id: "c16", title: "Compiler Design", code: "CS406", creditHours: 3 },
-];
+// ─── Student Courses ────────────────────────────────────────
 
 export async function fetchStudentRegisteredCourses(studentId) {
-    try {
-        const res = await fetch(`${API_URL}/api/students/${studentId}/courses/registered`, {
-            credentials: "include",
-        });
-        if (res.ok) return res.json();
-    } catch { /* fall through to mock */ }
-    return [...mockRegisteredCourses];
+    return apiClient(`/api/Courses/student/${studentId}?status=inprogress`);
 }
 
 export async function fetchStudentCompletedCourses(studentId) {
-    try {
-        const res = await fetch(`${API_URL}/api/students/${studentId}/courses/completed`, {
-            credentials: "include",
-        });
-        if (res.ok) return res.json();
-    } catch { /* fall through to mock */ }
-    return [...mockCompletedCourses];
+    return apiClient(`/api/Courses/student/${studentId}?status=completed`);
 }
 
 export async function fetchAvailableCoursesForStudent(studentId) {
-    try {
-        const res = await fetch(`${API_URL}/api/students/${studentId}/courses/available`, {
-            credentials: "include",
-        });
-        if (res.ok) return res.json();
-    } catch { /* fall through to mock */ }
-    return [...mockAvailableCourses];
+    return apiClient('/api/Courses/active');
 }
 
-export async function registerStudentCourse(studentId, courseId) {
-    const res = await fetch(`${API_URL}/api/students/${studentId}/courses/register`, {
+export async function registerStudentCourse(studentId, courseId, classId = null) {
+    const payload = { courseId: Number(courseId) };
+    if (classId) {
+        payload.classId = Number(classId);
+    }
+    return await apiClient(`/api/Students/${studentId}/register`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId }),
+        body: JSON.stringify(payload),
     });
-    if (res.ok) return res.json();
-    if (res.status === 404) return { success: true, mock: true };
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Failed to change section: ${res.status}`);
 }
 
 // ─── Email ───────────────────────────────────────────────────
 
 export async function sendEmail({ to, subject, body }) {
-    const res = await fetch(`${API_URL}/api/email/send`, {
+    return apiClient('/api/email/send', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to, subject, body }),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `Failed to send email: ${res.status}`);
-    }
-    return res.json();
 }
 
 // ─── Auto Exam Scheduling ───────────────────────────────────
 
 export async function autoSchedule(request) {
-    const res = await fetch(`${API_URL}/api/ExamScheduling/auto-schedule`, {
+    return apiClient('/api/ExamScheduling/auto-schedule', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.errorMessage || err.message || `Auto-schedule failed: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function detectConflicts({ courseId, date, startTime, endTime, excludeExamId }) {
@@ -797,151 +625,79 @@ export async function detectConflicts({ courseId, date, startTime, endTime, excl
         endTime,
     });
     if (excludeExamId) params.append("excludeExamId", excludeExamId);
-    const res = await fetch(`${API_URL}/api/ExamScheduling/detect-conflicts?${params}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to detect conflicts: ${res.status}`);
-    return res.json();
+    return apiClient(`/api/ExamScheduling/detect-conflicts?${params}`);
 }
 
 export async function getConflictGraph() {
-    const res = await fetch(`${API_URL}/api/ExamScheduling/conflict-graph`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to get conflict graph: ${res.status}`);
-    return res.json();
+    return apiClient('/api/ExamScheduling/conflict-graph');
 }
 
 export async function assignHalls(examId, examHallIds) {
-    const res = await fetch(`${API_URL}/api/ExamScheduling/assign-halls/${examId}`, {
+    return apiClient(`/api/ExamScheduling/assign-halls/${examId}`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ examId, examHallIds }),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.errorMessage || err.message || `Failed to assign halls: ${res.status}`);
-    }
-    return res.json();
 }
 
 export async function getHallAssignments(examId) {
-    const res = await fetch(`${API_URL}/api/ExamScheduling/hall-assignments/${examId}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to get hall assignments: ${res.status}`);
-    return res.json();
+    return apiClient(`/api/ExamScheduling/hall-assignments/${examId}`);
 }
 
 export async function getSeatAssignments(examId) {
-    const res = await fetch(`${API_URL}/api/ExamScheduling/seat-assignments/${examId}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to get seat assignments: ${res.status}`);
-    return res.json();
+    return apiClient(`/api/ExamScheduling/seat-assignments/${examId}`);
 }
 
 export async function getAvailableSlots(request) {
-    const res = await fetch(`${API_URL}/api/ExamScheduling/available-slots`, {
+    return apiClient('/api/ExamScheduling/available-slots', {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
     });
-    if (!res.ok) throw new Error(`Failed to get available slots: ${res.status}`);
-    return res.json();
 }
 
 export async function unregisterStudentCourse(studentId, courseId) {
-    const res = await fetch(`${API_URL}/api/students/${studentId}/courses/${courseId}`, {
-        method: "DELETE",
-        credentials: "include",
-    });
-    if (res.ok) return true;
-    if (res.status === 404) return { success: true, mock: true };
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Failed to unregister course: ${res.status}`);
+    await apiClient(`/api/Registration/${courseId}`, { method: "DELETE" });
+    return true;
 }
 
 export async function fetchStudentCourseSections(studentId, courseId) {
-    try {
-        const res = await fetch(`${API_URL}/api/students/${studentId}/courses/${courseId}/sections`, {
-            credentials: "include",
-        });
-        if (res.ok) return res.json();
-    } catch { /* fall through to mock */ }
-    return [...mockSections];
+    return await apiClient(`/api/Classes/course/${courseId}`);
 }
 
 export async function changeStudentCourseSection(studentId, courseId, section) {
-    const res = await fetch(`${API_URL}/api/students/${studentId}/courses/${courseId}/section`, {
+    return await apiClient(`/api/students/${studentId}/courses/${courseId}/section`, {
         method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ section }),
     });
-    if (res.ok) return res.json();
-    if (res.status === 404) return { success: true, mock: true };
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Failed to change section: ${res.status}`);
 }
 
-// ─── Instructor Courses (mock/fallback) ───────────────────
+// ─── Constants ──────────────────────────────────────────────────
 
-const mockInstructorCourses = [
-    { _id: "ic1", title: "Data Structures", code: "CS201", creditHours: 3, section: "A", schedule: "Sun/Tue 10:00-11:30", room: "Hall 101" },
-    { _id: "ic2", title: "Algorithms", code: "CS202", creditHours: 3, section: "B", schedule: "Mon/Wed 10:00-11:30", room: "Lab 2" },
-    { _id: "ic3", title: "Database Systems", code: "CS301", creditHours: 3, section: "A", schedule: "Sun/Tue 12:00-13:30", room: "Hall 102" },
-    { _id: "ic4", title: "Operating Systems", code: "CS302", creditHours: 3, section: "C", schedule: "Mon/Wed 12:00-13:30", room: "Lab 3" },
-];
+export async function fetchStudentTypes() {
+    return apiClient('/api/students/types');
+}
 
-const mockTASections = [
-    { _id: "ts1", courseTitle: "Data Structures", courseCode: "CS201", section: "A" },
-    { _id: "ts2", courseTitle: "Algorithms", courseCode: "CS202", section: "B" },
-];
+export async function fetchNationalities() {
+    return apiClient('/api/Constants/nationalities');
+}
 
-const mockAvailableSections = ["A", "B", "C", "D"];
+// ─── Instructor Courses ─────────────────────────────────────
 
 export async function fetchInstructorCourses(instructorId) {
-    try {
-        const res = await fetch(`${API_URL}/api/instructors/${instructorId}/courses`, {
-            credentials: "include",
-        });
-        if (res.ok) return res.json();
-    } catch { /* fall through to mock */ }
-    return [...mockInstructorCourses];
+    return apiClient(`/api/Courses/instructor/${instructorId}`);
 }
 
 export async function fetchInstructorTASections(instructorId) {
-    try {
-        const res = await fetch(`${API_URL}/api/instructors/${instructorId}/ta-sections`, {
-            credentials: "include",
-        });
-        if (res.ok) return res.json();
-    } catch { /* fall through to mock */ }
-    return [...mockTASections];
+    return apiClient(`/api/instructors/${instructorId}/ta-sections`);
 }
 
 export async function fetchInstructorAvailableSections(instructorId, courseId) {
-    try {
-        const res = await fetch(`${API_URL}/api/instructors/${instructorId}/courses/${courseId}/sections`, {
-            credentials: "include",
-        });
-        if (res.ok) return res.json();
-    } catch { /* fall through to mock */ }
-    return [...mockAvailableSections];
+    return apiClient(`/api/instructors/${instructorId}/courses/${courseId}/sections`);
 }
 
 export async function changeInstructorSection(instructorId, courseId, section) {
-    const res = await fetch(`${API_URL}/api/instructors/${instructorId}/courses/${courseId}/section`, {
+    await apiClient(`/api/instructors/${instructorId}/courses/${courseId}/section`, {
         method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ section }),
     });
-    if (res.ok) return res.json();
-    if (res.status === 404) return { success: true, mock: true };
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Failed to change section: ${res.status}`);
+    return true;
 }

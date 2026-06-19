@@ -18,7 +18,6 @@ export default function ChatUsersHeader({
         {/* Right Side: Action Buttons */}
         <div className="flex items-center gap-1">
           <button
-            onClick={() => { console.log('Add Friend clicked'); onAddFriend && onAddFriend(); }}
             title="Add Friend"
             aria-label="Add Friend"
             className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/15 rounded-lg transition-all duration-200"

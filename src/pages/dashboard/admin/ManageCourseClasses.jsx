@@ -23,12 +23,15 @@ import {
     fetchCourseById,
     fetchCourseClasses,
     addClassToCourse,
+    createLecture,
+    createSection,
     updateClass,
     deleteClassFromCourse,
     updateCourse,
     deactivateCourse,
     fetchCourses,
 } from "../../../feature/admin/services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const tabs = [
     { key: "classes", label: "Classes" },
@@ -57,54 +60,113 @@ function formatSchedule(cls) {
 
 function ClassCard({ cls, onEdit, onDelete }) {
     const isLecture = cls.classTypeName === "Lecture";
+    
+    // Modernized theme configuration preserving your exact custom design tokens
+    const theme = isLecture ? {
+        text: "text-purple-600 dark:text-purple-400",
+        bg: "bg-purple-600 dark:bg-purple-500",
+        badge: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200/60 dark:border-purple-800/50",
+        glow: "shadow-purple-500/[0.02] dark:shadow-purple-500/[0.05]",
+        bar: "bg-purple-500"
+    } : {
+        text: "text-emerald-600 dark:text-emerald-400",
+        bg: "bg-emerald-600 dark:bg-emerald-500",
+        badge: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/50",
+        glow: "shadow-emerald-500/[0.02] dark:shadow-emerald-500/[0.05]",
+        bar: "bg-emerald-500"
+    };
+
+    const capacityPercentage = cls.capacity ? Math.min((cls.enrolledCount ?? 0) / cls.capacity * 100, 100) : 0;
+    const isFull = capacityPercentage >= 100;
+    const instructorInitial = cls.instructorName ? cls.instructorName.trim().charAt(0) : "?";
 
     return (
-        <div className="relative border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark hover:shadow-md hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark transition-all overflow-hidden group">
-            <div className={`absolute top-0 left-0 w-1 h-full rounded-l-xl ${isLecture ? 'bg-purple-500' : 'bg-emerald-500'}`} />
+        <div className={`group relative flex flex-col justify-between p-5 rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark hover:shadow-xl ${theme.glow} hover:-translate-y-1 transition-all duration-300 ease-out overflow-hidden`}>
+            
+            {/* Subtle card-glare ambient texture on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-br from-transparent via-transparent to-neutral-500/[0.02] dark:to-white/[0.02] transition-opacity duration-300 pointer-events-none" />
 
-            <div className="p-4 pl-5">
-                <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2 flex-wrap min-w-0">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white shrink-0 ${isLecture ? 'bg-purple-500/90' : 'bg-emerald-500/90'}`}>
-                            {cls.classTypeName || "Class"}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-0.5 -mr-1.5 -mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div>
+                {/* Header: Class Type Status & Floating Actions */}
+                <div className="flex items-center justify-between mb-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide border ${theme.badge}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${theme.bg} animate-pulse`} />
+                        {cls.classTypeName || "Class"}
+                    </span>
+                    
+                    {/* Hover actions menu */}
+                    <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         <button
                             onClick={() => onEdit(cls)}
                             className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark transition-colors"
+                            title="Edit class"
                         >
                             <FilePenIcon className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => onDelete(cls)}
-                            className="p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                            className="p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                            title="Delete class"
                         >
                             <TrashIcon className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
-                        <UserTieIcon className="w-4 h-4 shrink-0 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
-                        <span className="truncate">{cls.instructorName || "Unassigned"}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
-                        <CalendarIcon className="w-4 h-4 shrink-0 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
-                        <span className="truncate">{formatSchedule(cls)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
-                        <LocationDotIcon className="w-4 h-4 shrink-0 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
-                        <span className="truncate">{cls.room || "—"}</span>
+                {/* Main Session Content */}
+                <div className="mb-5">
+                    <h4 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark tracking-tight line-clamp-2 leading-snug">
+                        {formatSchedule(cls)}
+                    </h4>
+                    <div className="flex items-center gap-1.5 mt-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <LocationDotIcon className="w-3.5 h-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                        <span className="truncate font-medium">{cls.room || "No room details"}</span>
                     </div>
                 </div>
+            </div>
+
+            {/* Bottom Row: Metadata Grid & Embedded Progress */}
+            <div className="relative pt-3.5 border-t border-border-primary-default-light/60 dark:border-border-primary-default-dark/60">
+                <div className="flex items-center justify-between gap-4">
+                    
+                    {/* Compact Instructor Profile Block */}
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 font-bold text-xs shrink-0 select-none">
+                            {instructorInitial}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-text-secondary-default-light dark:text-text-secondary-default-dark leading-none mb-0.5">Instructor</p>
+                            <p className="text-xs font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                                {cls.instructorName || "Unassigned"}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Compact Capacity Counter */}
+                    {cls.capacity != null && (
+                        <div className="text-right shrink-0">
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-text-secondary-default-light dark:text-text-secondary-default-dark leading-none mb-0.5">Enrolled</p>
+                            <p className={`text-xs font-bold ${isFull ? 'text-red-500' : 'text-text-primary-default-light dark:text-text-primary-default-dark'}`}>
+                                {cls.enrolledCount ?? 0} <span className="text-neutral-400 font-normal">/</span> {cls.capacity}
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Minimalist Flush Bottom Progress Ribbon */}
+                {cls.capacity != null && (
+                    <div className="absolute -bottom-5 -left-5 -right-5 h-1 bg-neutral-100 dark:bg-neutral-800/40 overflow-hidden">
+                        <div
+                            className={`h-full transition-all duration-500 ease-out ${isFull ? 'bg-red-500' : theme.bar}`}
+                            style={{ width: `${capacityPercentage}%` }}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );
 }
-
-function ClassSection({ icon: Icon, title, classes, onEdit, onDelete }) {
+function ClassSection({ icon: Icon, title, classes, onEdit, onDelete, onAdd }) {
     const isLecture = title === "Lectures";
 
     return (
@@ -121,6 +183,15 @@ function ClassSection({ icon: Icon, title, classes, onEdit, onDelete }) {
                 <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">
                     ({classes.length})
                 </span>
+                <div className="ml-auto">
+                    <button
+                        onClick={onAdd}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark hover:bg-bg-fill-accent-default-light dark:hover:bg-bg-fill-accent-default-dark hover:text-white"
+                    >
+                        <PlusIcon className="w-3.5 h-3.5" />
+                        Add {isLecture ? "Lecture" : "Section"}
+                    </button>
+                </div>
             </div>
 
             {classes.length > 0 ? (
@@ -142,13 +213,15 @@ export default function ManageCourseClasses() {
     const { courseId } = useParams();
     const navigate = useNavigate();
 
+    const { showError } = useError();
+
     const [course, setCourse] = useState(null);
     const [classes, setClasses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState("classes");
 
     const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+    const [createClassType, setCreateClassType] = useState(null);
     const [editingClass, setEditingClass] = useState(null);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
@@ -159,7 +232,6 @@ export default function ManageCourseClasses() {
 
     const loadData = useCallback(async () => {
         try {
-            setError(null);
             const [courseData, classesData] = await Promise.all([
                 fetchCourseById(courseId),
                 fetchCourseClasses(courseId),
@@ -167,8 +239,7 @@ export default function ManageCourseClasses() {
             setCourse(courseData);
             setClasses(Array.isArray(classesData) ? classesData : []);
         } catch (err) {
-            console.error("Failed to load course data:", err);
-            setError(err.message);
+            showError(err.message);
         } finally {
             setIsLoading(false);
         }
@@ -179,13 +250,15 @@ export default function ManageCourseClasses() {
     const handleAddClass = async (payloads) => {
         const arr = Array.isArray(payloads) ? payloads : [payloads];
         try {
+            const apiFn = createClassType === "Lecture" ? createLecture : createSection;
             for (const data of arr) {
-                await addClassToCourse(courseId, data);
+                await apiFn(courseId, data);
             }
             setIsCreateFormOpen(false);
+            setCreateClassType(null);
             await loadData();
         } catch (err) {
-            console.error("Failed to add class:", err);
+            showError(err.message);
         }
     };
 
@@ -208,7 +281,7 @@ export default function ManageCourseClasses() {
             setEditingClass(null);
             await loadData();
         } catch (err) {
-            console.error("Failed to update class:", err);
+            showError(err.message);
         }
     };
 
@@ -218,7 +291,7 @@ export default function ManageCourseClasses() {
             await deleteClassFromCourse(courseId, deleteTarget.classId);
             await loadData();
         } catch (err) {
-            console.error("Failed to delete class:", err);
+            showError(err.message);
         }
         setDeleteTarget(null);
     };
@@ -229,7 +302,7 @@ export default function ManageCourseClasses() {
             setIsEditCourseOpen(false);
             await loadData();
         } catch (err) {
-            console.error("Failed to update course:", err);
+            showError(err.message);
         }
     };
 
@@ -238,7 +311,7 @@ export default function ManageCourseClasses() {
             await deactivateCourse(courseId);
             navigate("/admin/courses");
         } catch (err) {
-            console.error("Failed to deactivate course:", err);
+            showError(err.message);
         }
         setIsDeactivateOpen(false);
     };
@@ -248,7 +321,7 @@ export default function ManageCourseClasses() {
             const courses = await fetchCourses();
             setAllCourses(Array.isArray(courses) ? courses : []);
         } catch (err) {
-            console.error("Failed to load courses for edit:", err);
+            showError(err.message);
         }
         setIsEditCourseOpen(true);
     };
@@ -262,10 +335,6 @@ export default function ManageCourseClasses() {
                 Loading course...
             </p>
         );
-    }
-
-    if (error) {
-        return <p className="text-center py-10 text-red-500">Error: {error}</p>;
     }
 
     return (
@@ -319,15 +388,15 @@ export default function ManageCourseClasses() {
 
             {/* ─── Tab: Classes ─── */}
             {activeTab === "classes" && (
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2">
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl px-4 py-3 border border-border-primary-default-light dark:border-border-primary-default-dark">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Manage Class Sessions</p>
+                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Create individual lectures/sections or bulk-import from a file.</p>
+                        </div>
                         <Button variant="secondary" size="sm" onClick={() => setIsImportOpen(true)}>
-                            <ImportIcon size={20} />
-                            <span className="hidden sm:inline"> Import Classes</span>
-                        </Button>
-                        <Button variant="primary" size="sm" onClick={() => setIsCreateFormOpen(true)}>
-                            <PlusIcon size={20} />
-                            <span className="hidden sm:inline"> Create Class</span>
+                            <ImportIcon size={18} />
+                            <span className="hidden sm:inline"> Import</span>
                         </Button>
                     </div>
 
@@ -337,6 +406,7 @@ export default function ManageCourseClasses() {
                         classes={lectures}
                         onEdit={handleEditClick}
                         onDelete={setDeleteTarget}
+                        onAdd={() => { setCreateClassType("Lecture"); setIsCreateFormOpen(true); }}
                     />
 
                     <ClassSection
@@ -345,6 +415,7 @@ export default function ManageCourseClasses() {
                         classes={sections}
                         onEdit={handleEditClick}
                         onDelete={setDeleteTarget}
+                        onAdd={() => { setCreateClassType("Section"); setIsCreateFormOpen(true); }}
                     />
                 </div>
             )}
@@ -362,9 +433,10 @@ export default function ManageCourseClasses() {
             {/* Add Class Form */}
             {isCreateFormOpen && (
                 <ClassForm
-                    onClose={() => setIsCreateFormOpen(false)}
+                    onClose={() => { setIsCreateFormOpen(false); setCreateClassType(null); }}
                     onSubmit={handleAddClass}
                     courseDepartment={course?.departmentName || course?.department || ""}
+                    classType={createClassType}
                 />
             )}
 
@@ -395,7 +467,6 @@ export default function ManageCourseClasses() {
                     title="Import Classes"
                     subtitle="Upload a file to bulk-import classes for this course."
                     onClose={() => setIsImportOpen(false)}
-                    onImport={(file) => { console.log("Importing classes from:", file.name); setIsImportOpen(false); }}
                 />
             )}
 

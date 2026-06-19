@@ -59,6 +59,7 @@ export default function CustomCursor() {
             if (input) {
                 const src = input.getAttribute("data-cursor-src") || inputFallback;
                 imgRef.current.src = src;
+                imgRef.current.style.transform = "";
                 cursorRef.current.classList.remove("clickable");
             } else if (target.closest(clickableSelector)) {
                 imgRef.current.src = defaultSrc;

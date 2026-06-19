@@ -10,6 +10,7 @@ import ViewSubmission from "./ViewSubmission";
 import ViewInstructions from "./ViewInstructions";
 import ModelOverlay from "../../../../../components/ui/ModelOverlay";
 import { fetchAssignmentsByCourse, submitAssignment, fetchAssignmentStats } from "../../assignmentsApi";
+import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
 const PAGE_SIZE = 2;
 
@@ -22,7 +23,7 @@ export default function CourseAssignments() {
     const [submissionModal, setSubmissionModal] = useState(null);
     const [instructionsModal, setInstructionsModal] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError } = useError();
     const [assignments, setAssignments] = useState([]);
     const [stats, setStats] = useState({ pending: 0, submitted: 0, graded: 0, averageGrade: null });
 
@@ -30,7 +31,6 @@ export default function CourseAssignments() {
         if (!course?.id) return;
         try {
             setIsLoading(true);
-            setError(null);
             const assignmentsData = await fetchAssignmentsByCourse(course.id);
             const normalized = (Array.isArray(assignmentsData) ? assignmentsData : []).map((a) => {
                 // normalize property names and derived flags for frontend components
@@ -90,11 +90,9 @@ export default function CourseAssignments() {
                     averageGrade: statsData.averageGrade
                 });
             } catch (statsErr) {
-                console.error("Failed to load assignment stats:", statsErr);
             }
         } catch (err) {
-            console.error("Failed to load assignments:", err);
-            setError(err.message);
+            showError(err.message);
         } finally {
             setIsLoading(false);
         }
@@ -112,14 +110,6 @@ export default function CourseAssignments() {
         return (
             <div className="text-center py-10">
                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading assignments...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="text-center py-10">
-                <p className="text-red-500">Failed to load assignments: {error}</p>
             </div>
         );
     }

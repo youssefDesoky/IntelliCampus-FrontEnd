@@ -6,6 +6,7 @@ import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
 import ExamSchedule from "../../../feature/student/schedule/ExamSchedule";
 import { fetchMySchedule, exportSchedulePdf } from "../../../feature/student/schedule/scheduleApi";
 import { fetchMyExams, exportExamSchedulePdf } from "../../../feature/student/schedule/examScheduleApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const scheduleStorageKey = "studentCurrSchedule";
 const allowedTypeFilters = ["lecture", "section", "activity"];
@@ -16,13 +17,12 @@ export default function Schedule() {
     const [scheduleData, setScheduleData] = useState([]);
     const [examsData, setExamsData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
     const { isMobile } = useDeviceType();
+    const { showError } = useError();
 
     const loadScheduleData = useCallback(async () => {
         try {
             setIsLoading(true);
-            setError(null);
             const [schedule, exams] = await Promise.all([
                 fetchMySchedule(),
                 fetchMyExams(),
@@ -30,8 +30,7 @@ export default function Schedule() {
             setScheduleData(Array.isArray(schedule) ? schedule : []);
             setExamsData(Array.isArray(exams) ? exams : []);
         } catch (err) {
-            console.error("Failed to load schedule data:", err);
-            setError(err.message);
+            showError(err.message);
             setScheduleData([]);
             setExamsData([]);
         } finally {
@@ -71,8 +70,7 @@ export default function Schedule() {
                 await exportExamSchedulePdf();
             }
         } catch (err) {
-            console.error("Export failed:", err);
-            alert("Failed to export PDF. Please try again.");
+            showError("Failed to export PDF. Please try again.");
         }
     };
 
@@ -84,22 +82,6 @@ export default function Schedule() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <p className="text-gray-600">Loading schedule...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <p className="text-red-600 mb-4">Failed to load schedule: {error}</p>
-                    <button
-                        onClick={loadScheduleData}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                        Try Again
-                    </button>
-                </div>
             </div>
         );
     }
@@ -120,7 +102,7 @@ export default function Schedule() {
                 <WeeklySchedule
                     schedule={filteredSchedule}
                     isMobile={isMobile}
-                    onEventClick={(event) => alert(`Clicked on event: ${event.title}`)}
+                    onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
                 />
             ) : (
                 <ExamSchedule exams={examsData} />

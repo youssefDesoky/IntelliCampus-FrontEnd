@@ -7,6 +7,7 @@ import Timeline from "../../../feature/student/reminders/Timeline";
 import CalenderWidget from "../../../components/ui/CalendarWidget"
 import AddReminderForm from "../../../feature/student/reminders/AddReminderForm";
 import { fetchRemindersByDay, createReminder as createReminderApi, updateReminder as updateReminderApi, deleteReminder as deleteReminderApi } from "../../../feature/student/remindersApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const categoryOptions = [
     { value: "all", label: "All Categories" },
@@ -17,6 +18,7 @@ const categoryOptions = [
 ];
 
 export default function Reminders() {
+    const { showError } = useError();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(categoryOptions[0]);
@@ -30,7 +32,6 @@ export default function Reminders() {
             const data = await fetchRemindersByDay(selectedDate);
             setReminders(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error("Failed to load reminders:", err);
             setReminders([]);
         } finally {
             setIsLoading(false);
@@ -52,7 +53,7 @@ export default function Reminders() {
             await loadReminders();
             setIsFormOpen(false);
         } catch (err) {
-            console.error("Failed to create reminder:", err);
+            showError(err.message);
         }
     };
 
@@ -63,7 +64,7 @@ export default function Reminders() {
             setEditingReminder(null);
             setIsFormOpen(false);
         } catch (err) {
-            console.error("Failed to update reminder:", err);
+            showError(err.message);
         }
     };
 
@@ -77,7 +78,7 @@ export default function Reminders() {
             await deleteReminderApi(reminderToDelete.id);
             await loadReminders();
         } catch (err) {
-            console.error("Failed to delete reminder:", err);
+            showError(err.message);
         }
     };
 

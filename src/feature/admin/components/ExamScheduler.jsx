@@ -5,6 +5,7 @@ import DateInput from "../../../components/form/DateInput";
 import TimeInput from "../../../components/form/TimeInput";
 import { CalendarIcon } from "../../../components/ui/icons";
 import { autoSchedule, getAvailableSlots, updateExam, fetchExams, deleteExam } from "../services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function to12Hour(t) {
   const [h, m] = t.split(":").map(Number);
@@ -163,7 +164,7 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
               </button>
             )}
           </div>
-          <div className="max-h-56 overflow-y-auto space-y-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg p-3">
+          <div className="space-y-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg p-3">
             {slotDefs.map(s => (
               <div key={s.id} className="flex items-center gap-2">
                 <TimeInput
@@ -416,11 +417,11 @@ function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose
 }
 
 const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, ref) {
+  const { showError } = useError();
   const [scheduleResult, setScheduleResult] = useState(null);
   const [lastAutoConfig, setLastAutoConfig] = useState(null);
   const [showAutoDialog, setShowAutoDialog] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
 
   const schedule = useMemo(() => {
@@ -483,7 +484,6 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
 
   const handleAutoConfirm = useCallback(async (request) => {
     setLoading(true);
-    setError(null);
     try {
       const result = await autoSchedule(request);
       setScheduleResult(result);
@@ -494,11 +494,11 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
       });
       setShowAutoDialog(false);
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   const handleReset = useCallback(async () => {
     try {
@@ -508,13 +508,12 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
       setScheduleResult(null);
       setLastAutoConfig(null);
       setEditing(null);
-      setError(null);
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   const handleEventClick = useCallback((ev) => {
     const exam = scheduleResult?.scheduled?.find(e => String(e.examId) === ev.id);
@@ -571,19 +570,7 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
         </div>
       )}
 
-      {error && (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <p className="text-sm text-red-400 m-0">{error}</p>
-          <button
-            onClick={() => setError(null)}
-            className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {!loading && !error && !ready && (
+      {!loading && !ready && (
         <div className="flex flex-col items-center justify-center py-24 gap-3 text-text-secondary-default-light dark:text-text-secondary-default-dark">
           <span className="text-5xl"><CalendarIcon size={64} /></span>
           <p className="text-sm m-0">No schedule yet</p>
@@ -591,7 +578,7 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
         </div>
       )}
 
-      {!loading && !error && ready && (
+      {!loading && ready && (
         <WeeklySchedule schedule={schedule} isMobile={false} variant="exam" examDays={examDays} onEventClick={handleEventClick} />
       )}
 

@@ -7,7 +7,7 @@ import AssignRoleModal from "../../../feature/admin/components/AssignRoleModal";
 import Button from "../../../components/ui/Button";
 import { UserIcon, XIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
-import { fetchAdmins, createAdmin, deleteAdmin } from "../../../feature/admin/services/adminApi";
+import { fetchAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../feature/admin/services/adminApi";
 
 export default function ManageAdmins() {
   const { isDesktop, isTablet } = useDeviceType();
@@ -70,6 +70,7 @@ export default function ManageAdmins() {
       entityIdField="userId"
       fetchItems={fetchAdmins}
       createItem={createAdmin}
+      updateItem={updateAdmin}
       deleteItem={deleteAdmin}
       headerType="user"
       headerRole="admin"
@@ -95,10 +96,10 @@ export default function ManageAdmins() {
       getDeleteMessage={(item) => (
         <>Are you sure you want to delete <strong>{item?.fullName}</strong> ({item?.adminId})? This action cannot be undone.</>
       )}
-      renderForm={({ isFormOpen, editingItem, closeForm, handleCreate }) => {
+      renderForm={({ isFormOpen, editingItem, closeForm, handleCreate, handleFormSubmit }) => {
         if (!isFormOpen) return null;
         if (editingItem) {
-          return <AdminForm method="put" initialData={editingItem} onClose={closeForm} />;
+          return <AdminForm method="put" initialData={editingItem} onClose={closeForm} onSubmit={handleFormSubmit} />;
         }
         return <AdminForm method="post" onClose={closeForm} onSubmit={handleCreate} />;
       }}

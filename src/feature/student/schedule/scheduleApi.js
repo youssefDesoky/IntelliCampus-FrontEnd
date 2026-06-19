@@ -1,61 +1,40 @@
-import { API_URL } from "../../../config/api";
+import apiClient from "../../../utils/apiClient";
 
-/**
- * Get student's schedule
- * GET /api/schedule/my-schedule
- * GET /api/schedule/my-schedule?type=Lecture&type=Lab (optional types filter)
- */
 export async function fetchMySchedule(types = []) {
-    let url = `${API_URL}/api/schedule/my-schedule`;
-    
-    if (types && types.length > 0) {
-        const typeParams = types.map((t) => `type=${encodeURIComponent(t)}`).join("&");
-        url += `?${typeParams}`;
-    }
+  let url = '/api/schedule/my-schedule';
 
-    const res = await fetch(url, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch schedule: ${res.status}`);
-    return res.json();
+  if (types && types.length > 0) {
+    const typeParams = types.map((t) => `type=${encodeURIComponent(t)}`).join("&");
+    url += `?${typeParams}`;
+  }
+
+  return apiClient(url);
 }
 
-/**
- * Get schedule by ID
- * GET /api/schedule/{scheduleId}
- */
 export async function fetchScheduleById(scheduleId) {
-    const res = await fetch(`${API_URL}/api/schedule/${scheduleId}`, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to fetch schedule: ${res.status}`);
-    return res.json();
+  return apiClient(`/api/schedule/${scheduleId}`);
 }
 
-/**
- * Export schedule as PDF and trigger download
- * GET /api/schedule/my-schedule/export
- */
 export async function exportSchedulePdf(types = []) {
-    let url = `${API_URL}/api/schedule/my-schedule/export`;
-    
-    if (types && types.length > 0) {
-        const typeParams = types.map((t) => `type=${encodeURIComponent(t)}`).join("&");
-        url += `?${typeParams}`;
-    }
+  let url = '/api/schedule/my-schedule/export';
 
-    const res = await fetch(url, {
-        credentials: "include",
-    });
-    if (!res.ok) throw new Error(`Failed to export schedule: ${res.status}`);
+  if (types && types.length > 0) {
+    const typeParams = types.map((t) => `type=${encodeURIComponent(t)}`).join("&");
+    url += `?${typeParams}`;
+  }
 
-    const blob = await res.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = "WeeklySchedule.pdf";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
+  const res = await fetch(`${import.meta.env.VITE_API_URL || ''}${url}`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`Failed to export schedule: ${res.status}`);
+
+  const blob = await res.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = "WeeklySchedule.pdf";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(blobUrl);
 }

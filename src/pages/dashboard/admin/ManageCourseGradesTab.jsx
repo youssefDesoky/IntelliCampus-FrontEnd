@@ -2,22 +2,22 @@ import { useState } from "react";
 import Button from "../../../components/ui/Button";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import Dialog from "../../../components/ui/Dialog";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 import { uploadCourseGrades } from "../../../feature/admin/services/adminApi";
 
 export default function ManageCourseGradesTab({ courseId, courseName }) {
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const { showError } = useError();
     const [uploadResult, setUploadResult] = useState(null);
-    const [uploadError, setUploadError] = useState(null);
     const handleUpload = async (file) => {
         setUploading(true);
-        setUploadError(null);
         try {
             const result = await uploadCourseGrades(courseId, file);
             setUploadResult(result?.message || "Grades uploaded successfully.");
             setIsUploadOpen(false);
         } catch (err) {
-            setUploadError(err.message);
+            showError(err.message);
         } finally {
             setUploading(false);
         }
@@ -42,12 +42,6 @@ export default function ManageCourseGradesTab({ courseId, courseName }) {
                     <Button variant="primary" onClick={() => setIsUploadOpen(true)} disabled={uploading}>
                         {uploading ? "Uploading..." : "Upload Grades"}
                     </Button>
-
-                    {uploadError && (
-                        <p className="mt-4 text-sm text-text-danger-default-light dark:text-text-danger-default-dark">
-                            {uploadError}
-                        </p>
-                    )}
                 </div>
             </div>
 

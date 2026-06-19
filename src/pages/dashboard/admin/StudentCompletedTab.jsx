@@ -18,8 +18,8 @@ export default function StudentCompletedTab({ courses, loading, page, totalPages
     const { isPhone } = useDeviceType();
 
     const headers = useMemo(() => {
-        if (isPhone) return ["Course", "Percentage", "Grade"];
-        return ["Code", "Course", "Credit Hours", "Course Work", "Percentage", "Grade"];
+        if (isPhone) return ["Course", "Total Grade", "Grade"];
+        return ["Code", "Course", "Credit Hours", "Course Work", "Total Grade", "Grade"];
     }, [isPhone]);
 
     const buildRow = useMemo(() => (c) => {
@@ -27,22 +27,24 @@ export default function StudentCompletedTab({ courses, loading, page, totalPages
         if (!isPhone) {
             row.code = c.code || c.courseCode || "—";
         }
-        row.course = c.title || c.name || "—";
+        row.course = c.title || c.name || c.courseName || "—";
         if (!isPhone) {
             row.creditHours = c.creditHours ?? "—";
         }
         if (!isPhone) {
-            row.courseWork = c.courseWork != null ? `${c.courseWork}` : "—";
+            row.courseWork = c.courseWork != null ? `${Math.round(Number(c.courseWork))}` : "—";
         }
-        row.percentage = c.gradePercent != null ? `${c.gradePercent}%` : "—";
+        const gradeNum = c.grade != null ? Number(c.grade) : null;
+        const letterGrade = toGradeLetter(gradeNum);
+        const gradeColor =
+            letterGrade === "A" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" :
+            letterGrade === "B" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" :
+            letterGrade === "C" ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" :
+            "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300";
+        row.percentage = gradeNum != null ? `${Math.round(gradeNum)}` : "—";
         row.grade = (
-            <span className={"px-2 py-0.5 rounded font-semibold text-xs " + (
-                c.grade?.startsWith("A") ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" :
-                c.grade?.startsWith("B") ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" :
-                c.grade?.startsWith("C") ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" :
-                "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
-            )}>
-                {c.grade || toGradeLetter(c.gradePercent)}
+            <span className={`px-2 py-0.5 rounded font-semibold text-xs ${gradeColor}`}>
+                {letterGrade}
             </span>
         );
         return row;

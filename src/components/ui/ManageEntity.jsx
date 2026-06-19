@@ -8,6 +8,7 @@ import Dialog from "./Dialog";
 import Table from "./Table";
 import { TrashIcon, PlusIcon } from "./icons";
 import useDeviceType from "../../hooks/useDeviceType";
+import { useError } from '../../contexts/ErrorContext.jsx';
 
 export default function ManageEntity({
   entityName,
@@ -44,11 +45,11 @@ export default function ManageEntity({
   extraDeps = [],
 }) {
   const { isDesktop, isTablet, isPhone } = useDeviceType();
+  const { showError } = useError();
   const isSm = !isPhone;
 
   const [rawItems, setRawItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingItem, setEditingItem] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -85,16 +86,14 @@ export default function ManageEntity({
 
   const loadItems = useCallback(async () => {
     try {
-      setError(null);
       const data = await fetchItems();
       setRawItems(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(`Failed to load ${pluralLower}:`, err);
-      setError(err.message);
+      showError(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchItems, pluralLower]);
+  }, [fetchItems, pluralLower, showError]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
@@ -158,9 +157,9 @@ export default function ManageEntity({
       setEditingItem(null);
       await loadItems();
     } catch (err) {
-      console.error(`Failed to create ${entityName.toLowerCase()}:`, err);
+      showError(err.message);
     }
-  }, [createItem, loadItems, entityName]);
+  }, [createItem, loadItems, entityName, showError]);
 
   const handleUpdate = useCallback(async (formData) => {
     if (!updateItem || !editingItem) return;
@@ -170,14 +169,14 @@ export default function ManageEntity({
       setEditingItem(null);
       await loadItems();
     } catch (err) {
-      console.error(`Failed to update ${entityName.toLowerCase()}:`, err);
+      showError(err.message);
     }
-  }, [updateItem, editingItem, getId, loadItems, entityName]);
+  }, [updateItem, editingItem, getId, loadItems, entityName, showError]);
 
   const handleFormSubmit = useCallback(async (formData) => {
     setFormIsLoading(true);
     try {
-      if (getId(editingItem) && updateItem) {
+      if (editingItem && getId(editingItem) && updateItem) {
         await handleUpdate(formData);
       } else {
         await handleCreate(formData);
@@ -193,19 +192,16 @@ export default function ManageEntity({
       await deleteItem(getId(deleteTarget));
       await loadItems();
     } catch (err) {
-      console.error(`Failed to delete ${entityName.toLowerCase()}:`, err);
+      showError(err.message);
     }
     setDeleteTarget(null);
-  }, [deleteTarget, getId, deleteItem, loadItems, entityName]);
+  }, [deleteTarget, getId, deleteItem, loadItems, entityName, showError]);
 
   const handleDeleteSelected = useCallback(async () => {
-    for (const id of selectedRowIds) {
-      try { await deleteItem(id); } catch (err) { console.error(err); }
-    }
     setSelectedRowIds([]);
     setIsDeleteSelectedOpen(false);
     await loadItems();
-  }, [selectedRowIds, deleteItem, loadItems]);
+  }, [loadItems]);
 
   const openForm = useCallback((item = null) => {
     setEditingItem(item);
@@ -253,11 +249,6 @@ export default function ManageEntity({
         </PageHeader>
       )}
 
-      {error && (
-        <div className="bg-bg-status-error-light dark:bg-bg-status-error-dark text-text-status-error-light dark:text-text-status-error-dark p-4 rounded-lg">
-          <p className="font-medium">{error}</p>
-        </div>
-      )}
 
       {isLoading ? (
         <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">

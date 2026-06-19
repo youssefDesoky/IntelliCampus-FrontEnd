@@ -21,8 +21,10 @@ import {
   createGroup,
   fetchMyGroups,
 } from "../services/chatService";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
+  const { showError } = useError();
   // "default" | "messaging" | "addFriend" | "createGroup"
   const [activePanel, setActivePanel] = useState("default");
   const [friendId, setFriendId] = useState("");
@@ -186,7 +188,6 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
       }
     });
 
-    conn.start().catch((err) => console.error("SignalR connection failed:", err));
     connectionRef.current = conn;
 
     return () => {
@@ -269,7 +270,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
           await conn.invoke("SendPrivateMessage", chatPartner.userId, content);
         }
       } catch (err) {
-        console.error("Failed to send message:", err);
+        showError(err.message);
       }
     },
     [chatPartner]
@@ -281,7 +282,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     try {
       await conn.invoke("DeleteMessage", String(messageId));
     } catch (err) {
-      console.error("Failed to delete message:", err);
+      showError(err.message);
     }
   }, []);
 
@@ -291,7 +292,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     try {
       await conn.invoke("EditMessage", String(messageId), newContent);
     } catch (err) {
-      console.error("Failed to edit message:", err);
+      showError(err.message);
     }
   }, []);
 
@@ -305,7 +306,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     try {
       await conn.invoke("PinMessage", String(messageId));
     } catch (err) {
-      console.error("Failed to pin message:", err);
+      showError(err.message);
     }
   }, []);
 
@@ -318,7 +319,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     try {
       await conn.invoke("PinMessage", String(messageId));
     } catch (err) {
-      console.error("Failed to pin message:", err);
+      showError(err.message);
     }
   }, [pendingPinMessageId]);
 
@@ -332,7 +333,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     try {
       await conn.invoke("UnpinMessage", String(messageId));
     } catch (err) {
-      console.error("Failed to unpin message:", err);
+      showError(err.message);
     }
   }, []);
 
@@ -385,7 +386,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
         }))
       );
     } catch (err) {
-      alert(err.message);
+      showError(err.message);
     }
   };
 
@@ -396,7 +397,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
       const data = await fetchFriends();
       setFriends(data);
     } catch (err) {
-      alert(err.message);
+      showError(err.message);
     }
   };
 
@@ -405,7 +406,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
       await declineFriendRequest(requestId);
       setFriendRequests((reqs) => reqs.filter((r) => r.id !== requestId));
     } catch (err) {
-      alert(err.message);
+      showError(err.message);
     }
   };
 
@@ -416,7 +417,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
       setGroups(data);
       setActivePanel("default");
     } catch (err) {
-      alert(err.message);
+      showError(err.message);
     }
   };
 

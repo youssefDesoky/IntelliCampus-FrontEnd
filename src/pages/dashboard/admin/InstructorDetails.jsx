@@ -22,6 +22,7 @@ import {
     changeInstructorSection,
     sendEmail,
 } from "../../../feature/admin/services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 
 const tabs = [
@@ -42,9 +43,10 @@ export default function InstructorDetails() {
     const { instructorId } = useParams();
     const navigate = useNavigate();
 
+    const { showError } = useError();
+
     const [instructor, setInstructor] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState("info");
 
     const [courses, setCourses] = useState([]);
@@ -69,7 +71,7 @@ export default function InstructorDetails() {
             setEmailSubject("");
             setEmailBody("");
         } catch (err) {
-            console.error("Failed to send email:", err);
+            showError(err.message);
         } finally {
             setSendingEmail(false);
         }
@@ -77,11 +79,10 @@ export default function InstructorDetails() {
 
     const loadInstructor = useCallback(async () => {
         try {
-            setError(null);
             const data = await fetchInstructorById(instructorId);
             setInstructor(data);
         } catch (err) {
-            setError(err.message);
+            showError(err.message);
         } finally {
             setLoading(false);
         }
@@ -96,14 +97,14 @@ export default function InstructorDetails() {
             setCourses(instrCourses);
             setTaSections(tas);
         } catch (err) {
-            console.error("Failed to load courses:", err);
+            showError(err.message);
         }
     }, [instructorId]);
 
     useEffect(() => { loadInstructor(); }, [loadInstructor]);
     useEffect(() => { loadCourses(); }, [loadCourses]);
 
-    const isTA = (instructor?.role || "").toLowerCase().includes("teaching assistant") || (instructor?.role || "").toLowerCase().includes("ta");
+    const isTA = (instructor?.instructorRole || "").toLowerCase().includes("teaching assistant") || (instructor?.instructorRole || "").toLowerCase().includes("ta");
 
     const handleOpenSectionChange = async (item) => {
         setSectionChangeTarget(item);
@@ -119,7 +120,9 @@ export default function InstructorDetails() {
         try {
             await changeInstructorSection(instructorId, sectionChangeTarget._id || sectionChangeTarget.courseId, newSection);
             await loadCourses();
-        } catch (err) { console.error("Failed to change section:", err); }
+        } catch (err) {
+            showError(err.message);
+        }
         setSectionChangeTarget(null);
     };
 
@@ -127,19 +130,6 @@ export default function InstructorDetails() {
         return (
             <div className="p-6">
                 <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading instructor details...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="p-6">
-                <div className="flex items-center gap-4 mb-6">
-                    <Button variant="outline" size="sm" onClick={() => navigate("/admin/instructors")}>
-                        <ArrowRightIcon className="w-4 h-4 rotate-180" /> Back
-                    </Button>
-                </div>
-                <p className="text-center py-10 text-red-500">Error: {error}</p>
             </div>
         );
     }
@@ -272,7 +262,7 @@ export default function InstructorDetails() {
                             { label: "Department", value: instructor.departmentName || instructor.department || "—", color: "text-blue-500", icon: BookIcon },
                             { label: "Role", value: instructor.role || "—", color: "text-purple-500", icon: StarIcon },
                             { label: "Courses", value: courses.length, color: "text-amber-500", icon: CheckIcon },
-                            { label: isTA ? "TA Sections" : instructor.role === "Professor" ? "Status" : "—", value: isTA ? taSections.length : instructor.role === "Professor" ? (instructor.employmentStatus || instructor.professorStatus || "—") : "—", color: "text-emerald-500", icon: CheckIcon },
+                            { label: isTA ? "TA Sections" : "Status", value: isTA ? taSections.length : (instructor.status || "—"), color: "text-emerald-500", icon: CheckIcon },
                         ].map((stat) => (
                             <div key={stat.label} className="flex items-center gap-3 p-4 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color} bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark`}>
@@ -299,7 +289,7 @@ export default function InstructorDetails() {
                                     )}
                                 </div>
                                 <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-[11px] font-bold text-text-accent-active-light dark:text-text-accent-active-dark shadow-sm">
-                                    {instructor.role || "—"}
+                                    {instructor.instructorRole || "—"}
                                 </div>
                             </div>
 
@@ -317,7 +307,7 @@ export default function InstructorDetails() {
                                     </div>
                                     <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
                                         <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Specialization</span>
-                                        <span className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{instructor.specialization || "—"}</span>
+                                        <span className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{instructor.specialization || instructor.specializationName || "—"}</span>
                                     </div>
                                 </div>
                             </div>
@@ -332,13 +322,13 @@ export default function InstructorDetails() {
                                 <div className="p-5">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                                         <InfoField label="Department" value={instructor.departmentName || instructor.department} />
-                                        <InfoField label="Role" value={instructor.role} />
-                                        <InfoField label="Specialization" value={instructor.specialization} />
-                                        <InfoField label="Office" value={instructor.office} />
-                                        <InfoField label="Office Hours" value={instructor.officeHours} />
-                                        {(instructor.role === "Professor") && (
-                                            <InfoField label="Status" value={instructor.employmentStatus || instructor.professorStatus} />
-                                        )}
+                                        <InfoField label="Role" value={instructor.instructorRole} />
+                                        <InfoField label="Specialization" value={instructor.specialization || instructor.specializationName} />
+                                        <InfoField label="Instructor Code" value={instructor.instructorCode} />
+                                        <InfoField label="Nationality" value={instructor.nationality} />
+                                        <InfoField label="Office" value={instructor.officeHoursRoomName} />
+                                        <InfoField label="Status" value={instructor.status} />
+                                        <InfoField label="Hire Date" value={instructor.hireDate ? new Date(instructor.hireDate).toLocaleDateString() : null} />
                                     </div>
                                 </div>
                             </div>
@@ -351,7 +341,8 @@ export default function InstructorDetails() {
                                 <div className="p-5">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                                         <InfoField label="Email" value={instructor.email} />
-                                        <InfoField label="Phone" value={instructor.phone} />
+                                        <InfoField label="Phone" value={instructor.phoneNumber} />
+                                        <InfoField label="National ID" value={instructor.nationalId} />
                                         <div className="space-y-0.5 sm:col-span-2">
                                             <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark block">Address</span>
                                             <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark break-words">{instructor.address || "—"}</span>

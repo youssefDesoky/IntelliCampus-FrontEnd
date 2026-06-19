@@ -7,6 +7,7 @@ export { default as ManageCourseClasses } from './ManageCourseClasses';
 export { default as ManageRooms } from './ManageRooms';
 export { default as ManageDepartments } from './ManageDepartments';
 export { default as ManageBylaws } from './ManageBylaws';
+export { default as ManageBylawDetailsPage } from './ManageBylawDetailsPage';
 export { default as ManageExams } from './ManageExams';
 export { default as StudentDetails } from './StudentDetails';
 export { default as InstructorDetails } from './InstructorDetails';

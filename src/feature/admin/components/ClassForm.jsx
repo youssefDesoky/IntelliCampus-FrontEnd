@@ -1,16 +1,18 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Button from "../../../components/ui/Button";
 import InputItem from "../../../components/form/InputItem";
+import NumberInput from "../../../components/form/NumberInput";
 import TimeInput from "../../../components/form/TimeInput";
 import SelectBox from "../../../components/ui/SelectBox";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import { PlusIcon, XIcon } from "../../../components/ui/icons";
-import { fetchInstructors, fetchRooms } from "../services/adminApi";
-
-const classTypeOptions = [
-    { value: "Lecture", label: "Lecture" },
-    { value: "Section", label: "Section" },
-];
+import {
+    fetchLectureInstructors,
+    fetchSectionInstructors,
+    fetchLectureRooms,
+    fetchSectionRooms,
+} from "../services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const dayOptions = [
     { value: "Sun", label: "Sunday" },
@@ -34,13 +36,11 @@ function parseSchedule(schedule) {
     }).filter((s) => s.day);
 }
 
-export default function ClassForm({ onClose, onSubmit, initialData = null, isOpen = true, courseDepartment = "" }) {
+export default function ClassForm({ onClose, onSubmit, initialData = null, isOpen = true, courseDepartment = "", classType }) {
+    const { showError } = useError();
     const isEdit = !!initialData;
 
     const [instructorOptions, setInstructorOptions] = useState([]);
-    const [selectedType, setSelectedType] = useState(
-        classTypeOptions.find((o) => o.value === initialData?.type) || classTypeOptions[0]
-    );
     const [selectedInstructor, setSelectedInstructor] = useState(null);
 
     const [scheduleSlots, setScheduleSlots] = useState(() => {
@@ -50,18 +50,18 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
 
     const [roomOptions, setRoomOptions] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState(null);
-    const [roomText, setRoomText] = useState(initialData?.room || "");
 
     const [capacity, setCapacity] = useState(initialData?.capacity ?? "");
 
-    const maxSlots = isEdit ? 1 : (selectedType.value === "Section" ? 1 : 2);
+    const maxSlots = isEdit ? 1 : (classType === "Section" ? 1 : 2);
 
     useEffect(() => {
         async function loadData() {
             try {
+                const isLecture = classType === "Lecture";
                 const [instructorsData, roomsData] = await Promise.all([
-                    fetchInstructors(),
-                    fetchRooms(),
+                    isLecture ? fetchLectureInstructors() : fetchSectionInstructors(),
+                    isLecture ? fetchLectureRooms() : fetchSectionRooms(),
                 ]);
 
                 const instList = Array.isArray(instructorsData) ? instructorsData : [];
@@ -69,95 +69,58 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                     value: i.fullName,
                     label: i.fullName,
                     instructorId: i.instructorId,
-                    role: i.role,
-                    departmentName: i.departmentName || i.department || "",
+                    role: i.instructorRole,
+                    departmentName: i.departmentName || "",
                 }));
                 setInstructorOptions(instOpts);
 
                 if (initialData?.instructor) {
                     const match = instOpts.find((o) => o.value === initialData.instructor);
                     if (match) setSelectedInstructor(match);
-                    else setSelectedInstructor(instOpts[0] || null);
+                    else if (instOpts.length > 0) setSelectedInstructor(instOpts[0]);
                 } else if (instOpts.length > 0) {
                     setSelectedInstructor(instOpts[0]);
                 }
 
                 const roomList = Array.isArray(roomsData) ? roomsData : [];
                 const roomOpts = roomList.map((r) => ({
-                    value: r.name || r.roomName || r.id,
-                    label: `${r.name || r.roomName || r.id}${r.building ? ` — ${r.building}` : ""}`,
+                    value: r.roomName,
+                    label: `${r.roomName}${r.type ? ` (${r.type})` : ""}${r.capacity ? ` - Cap: ${r.capacity}` : ""}`,
+                    roomType: r.type,
                 }));
                 setRoomOptions(roomOpts);
                 if (initialData?.room && roomOpts.length > 0) {
                     const match = roomOpts.find((o) => o.value === initialData.room);
                     if (match) setSelectedRoom(match);
+                } else if (roomOpts.length > 0) {
+                    setSelectedRoom(roomOpts[0]);
                 }
-            } catch (err) {
-                console.error("Failed to load form data:", err);
-            }
+            } catch { /* silently ignored */ }
         }
         loadData();
-    }, [initialData]);
-
-    const filteredInstructorOptions = useMemo(() => {
-        const isLecture = selectedType.value === "Lecture";
-        const roleMatch = (opt) => {
-            const role = (opt.role || "").toLowerCase();
-            return isLecture ? role.includes("professor") : role.includes("ta") || role.includes("assistant");
-        };
-        const deptMatch = (opt) => {
-            if (!courseDepartment) return true;
-            return (opt.departmentName || "").toLowerCase() === courseDepartment.toLowerCase();
-        };
-
-        const byRole = instructorOptions.filter(roleMatch);
-        const byBoth = byRole.filter(deptMatch);
-
-        if (byBoth.length > 0) return byBoth;
-        if (byRole.length > 0) {
-            console.warn(
-                `[ClassForm] No instructors matched department "${courseDepartment}". ` +
-                `Showing all ${byRole.length} matching instructor(s) by role only.`
-            );
-            return byRole;
-        }
-        return [];
-    }, [selectedType, instructorOptions, courseDepartment]);
-
-    useEffect(() => {
-        if (filteredInstructorOptions.length === 0) {
-            if (selectedInstructor !== null) setSelectedInstructor(null);
-        } else if (!selectedInstructor || !filteredInstructorOptions.some((o) => o.value === selectedInstructor.value)) {
-            setSelectedInstructor(filteredInstructorOptions[0]);
-        }
-    }, [filteredInstructorOptions, selectedInstructor]);
+    }, [classType, initialData]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        const room = selectedRoom?.value || roomText;
-        if (!room) { alert("Please select a room."); return; }
-        if (!capacity || Number(capacity) < 1) { alert("Please enter a valid capacity."); return; }
-        if (!selectedInstructor) { alert("Please select an instructor."); return; }
+        const room = selectedRoom?.value || "";
+        if (!room) { showError("Please select a room."); return; }
+        if (!selectedInstructor) { showError("Please select an instructor."); return; }
 
         const validSlots = scheduleSlots.filter((s) => s.day && s.time);
-        if (validSlots.length === 0) { alert("Please add at least one schedule slot with a time."); return; }
+        if (validSlots.length === 0) { showError("Please add at least one schedule slot with a time."); return; }
 
         const payloads = validSlots.map((slot) => ({
-            type: selectedType.value,
             instructorName: selectedInstructor.value,
-            schedule: `${slot.day} ${slot.time.padStart(5, "0")}:00`,
+            schedule: `${slot.day} ${slot.time.padStart(5, "0") + ":00"}`,
             room,
-            capacity: Number(capacity),
         }));
-        console.log("[ClassForm] Submitting:", JSON.stringify(payloads, null, 2));
-        onSubmit(payloads);
-    };
 
-    const handleTypeChange = (option) => {
-        setSelectedType(option);
-        const nextMax = option.value === "Section" ? 1 : 2;
-        setScheduleSlots((prev) => prev.slice(0, nextMax));
+        if (isEdit && payloads.length > 0) {
+            onSubmit(payloads[0]);
+        } else {
+            onSubmit(payloads);
+        }
     };
 
     const updateSlot = (index, field, value) => {
@@ -180,30 +143,21 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
     return (
         <BaseFormComponent
             isOpen={isOpen}
-            title={isEdit ? "Edit Class" : "Add Class"}
-            description={isEdit ? "Update this class details." : "Add a new lecture or section to this course."}
+            title={isEdit ? "Edit Class" : classType ? `Add ${classType}` : "Add Class"}
+            description={isEdit ? "Update this class details." : classType ? `Add a new ${classType.toLowerCase()} to this course.` : "Add a new lecture or section to this course."}
             onClose={onClose}
             onSubmit={handleSubmit}
-            submitText={isEdit ? "Save Changes" : "Add Class"}
+            submitText={isEdit ? "Save Changes" : classType ? `Add ${classType}` : "Add Class"}
         >
             <div className="space-y-5 mb-6">
-                {/* Row 1: Type + Instructor */}
+                {/* Row 1: Instructor */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <SelectBox
-                        className="w-full"
-                        label="Class Type"
-                        labelDirection="flex-col"
-                        options={classTypeOptions}
-                        selectedOption={selectedType}
-                        onChange={handleTypeChange}
-                    />
-
-                    {filteredInstructorOptions.length > 0 ? (
+                    {instructorOptions.length > 0 ? (
                         <SelectBox
                             className="w-full"
-                            label={selectedType.value === "Lecture" ? "Professor" : "Teaching Assistant"}
+                            label={classType === "Lecture" ? "Professor" : "Teaching Assistant"}
                             labelDirection="flex-col"
-                            options={filteredInstructorOptions}
+                            options={instructorOptions}
                             selectedOption={selectedInstructor}
                             onChange={setSelectedInstructor}
                         />
@@ -211,8 +165,8 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                         <div className="self-end pb-1">
                             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 {courseDepartment
-                                    ? `No ${selectedType.value === "Lecture" ? "professors" : "TAs"} available for ${courseDepartment}`
-                                    : `No ${selectedType.value === "Lecture" ? "professors" : "TAs"} available`}
+                                    ? `No ${classType === "Lecture" ? "professors" : "TAs"} available for ${courseDepartment}`
+                                    : `No ${classType === "Lecture" ? "professors" : "TAs"} available`}
                             </p>
                         </div>
                     )}
@@ -270,38 +224,19 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                     </div>
                 </div>
 
-                {/* Row 3: Room + Capacity */}
+                {/* Row 3: Room */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {roomOptions.length > 0 ? (
-                        <SelectBox
-                            className="w-full"
-                            label="Room"
-                            labelDirection="flex-col"
-                            options={roomOptions}
-                            selectedOption={selectedRoom}
-                            onChange={(opt) => {
-                                setSelectedRoom(opt);
-                                setRoomText(opt?.value || "");
-                            }}
-                        />
-                    ) : (
-                        <InputItem
-                            label="Room"
-                            type="text"
-                            name="room"
-                            placeholder="e.g. Hall A-201"
-                            value={roomText}
-                            onChange={(e) => {
-                                setRoomText(e.target.value);
-                                setSelectedRoom(null);
-                            }}
-                            required
-                        />
-                    )}
+                    <SelectBox
+                        className="w-full"
+                        label="Room"
+                        labelDirection="flex-col"
+                        options={roomOptions}
+                        selectedOption={selectedRoom}
+                        onChange={setSelectedRoom}
+                    />
 
-                    <InputItem
+                    <NumberInput
                         label="Capacity"
-                        type="number"
                         name="capacity"
                         placeholder="e.g. 30"
                         value={capacity}

@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import ManageEntity from "../../../components/ui/ManageEntity";
 import Dialog from "../../../components/ui/Dialog";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import BylawForm from "../../../feature/admin/components/BylawForm";
-import GradeScalesForm from "../../../feature/admin/components/GradeScalesForm";
 import MaterialPreview from "../../../components/ui/MaterialPreview";
 import { API_URL } from "../../../config/api";
 import {
@@ -13,19 +13,20 @@ import {
 import {
   fetchBylaws,
   createBylaw,
+  updateBylaw,
   deleteBylaw,
   toggleBylawActive,
   uploadBylawDocument,
-  setBylawGradeScales,
 } from "../../../feature/admin/services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const tableHeaders = ["Bylaw", "Description", "Version", "Status", "Students", "Document"];
 
 export default function ManageBylaws() {
-  const [gradeScalesTarget, setGradeScalesTarget] = useState(null);
+  const navigate = useNavigate();
+  const { showError } = useError();
   const [uploadTarget, setUploadTarget] = useState(null);
   const [documentPreviewTarget, setDocumentPreviewTarget] = useState(null);
-  const [gradeScalesLoading, setGradeScalesLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleDocumentPreview = useCallback((bylaw) => {
@@ -65,6 +66,14 @@ export default function ManageBylaws() {
     }
   }, []);
 
+  const updateBylawWithDoc = useCallback(async (id, formData) => {
+    const { _file, ...bylawData } = formData;
+    const updated = await updateBylaw(id, bylawData);
+    if (_file && updated?.bylawId) {
+      await uploadBylawDocument(updated.bylawId, _file);
+    }
+  }, []);
+
   return (
     <ManageEntity
       entityName="Bylaw"
@@ -72,6 +81,7 @@ export default function ManageBylaws() {
       entityIdField={(item) => item.bylawId ?? item.id}
       fetchItems={fetchBylaws}
       createItem={createBylawWithDoc}
+      updateItem={updateBylawWithDoc}
       deleteItem={deleteBylaw}
       headerTitle="Manage Bylaws"
       headerSubtitle="Administer academic bylaws, grade scales, and documents"
@@ -88,14 +98,19 @@ export default function ManageBylaws() {
       buildRow={(item) => buildBylawRow(item)}
       rowActions={(item, { onEdit, onDelete, loadItems }) => [
         { label: "Edit", onClick: () => onEdit(item) },
-        { label: "Grades", onClick: () => setGradeScalesTarget(item) },
+        {
+          label: "Manage Bylaw",
+          onClick: () => navigate(`/admin/bylaws/${item.bylawId}`),
+        },
         {
           label: "Toggle Active",
           onClick: async () => {
             try {
               await toggleBylawActive(item.bylawId);
               await loadItems();
-            } catch (err) { console.error(err); }
+            } catch (err) {
+              showError(err.message);
+            }
           },
         },
         { label: "Delete", onClick: () => onDelete(item) },
@@ -118,26 +133,6 @@ export default function ManageBylaws() {
       }
       renderExtraDialogs={({ loadItems }) => (
         <>
-          {gradeScalesTarget && (
-            <GradeScalesForm
-              onClose={() => setGradeScalesTarget(null)}
-              onSubmit={async (data) => {
-                setGradeScalesLoading(true);
-                try {
-                  await setBylawGradeScales(gradeScalesTarget.bylawId, data.gradeScales);
-                  await loadItems();
-                  setGradeScalesTarget(null);
-                } catch (err) {
-                  console.error(err);
-                } finally {
-                  setGradeScalesLoading(false);
-                }
-              }}
-              initialData={gradeScalesTarget}
-              isLoading={gradeScalesLoading}
-            />
-          )}
-
           {documentPreviewTarget && (
             <ModelOverlay onClose={() => setDocumentPreviewTarget(null)} maxWidth="max-w-5xl">
               <div className="relative z-50 w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">

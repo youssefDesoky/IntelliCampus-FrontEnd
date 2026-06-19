@@ -226,6 +226,31 @@ app.delete('/api/instructors/:id', (req, res) => {
 app.get('/api/rooms', (req, res) => res.json(rooms));
 // For rooms, since it's not an array, skipping CRUD for simplicity
 
+// ─── Specializations (per-department) ────────────────────────
+const specializations = {};
+
+app.get('/api/departments/:departmentId/specializations', (req, res) => {
+    res.json(specializations[req.params.departmentId] || []);
+});
+
+app.post('/api/departments/:departmentId/specializations', (req, res) => {
+    const deptId = req.params.departmentId;
+    if (!specializations[deptId]) specializations[deptId] = [];
+    const maxId = specializations[deptId].reduce((max, s) => Math.max(max, parseInt(s.id.split('-')[1]) || 0), 0);
+    const newSpec = { id: `spec-${String(maxId + 1).padStart(3, '0')}`, name: req.body.name, departmentId: deptId };
+    specializations[deptId].push(newSpec);
+    res.status(201).json(newSpec);
+});
+
+app.delete('/api/departments/:departmentId/specializations/:specId', (req, res) => {
+    const { departmentId, specId } = req.params;
+    if (!specializations[departmentId]) return res.status(404).json({ error: 'Department not found' });
+    const index = specializations[departmentId].findIndex(s => s.id === specId);
+    if (index === -1) return res.status(404).json({ error: 'Specialization not found' });
+    specializations[departmentId].splice(index, 1);
+    res.status(204).send();
+});
+
 // Students routes
 app.get('/api/students', (req, res) => res.json(students));
 app.get('/api/students/:id', (req, res) => {

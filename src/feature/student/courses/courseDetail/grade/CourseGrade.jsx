@@ -6,6 +6,7 @@ import CurrentGrade from "./CurrentGrade";
 import GradeComplaint from "./GradeComplaint";
 import GradeHistory from "./GradeHistory";
 import { fetchCourseGrade } from "../../gradeApi";
+import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
 const PAGE_SIZE = 3;
 
@@ -14,17 +15,15 @@ export default function CourseGrade() {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [gradeData, setGradeData] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState(null);
+	const { showError } = useError();
 
 	const loadGradeData = useCallback(async () => {
 		try {
 			setIsLoading(true);
-			setError(null);
 			const data = await fetchCourseGrade(course.id);
 			setGradeData(data || null);
 		} catch (err) {
-			console.error("Failed to load grade data:", err);
-			setError(err.message);
+			showError(err.message);
 			setGradeData(null);
 		} finally {
 			setIsLoading(false);
@@ -41,22 +40,6 @@ export default function CourseGrade() {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
 				<p className="text-gray-600">Loading grade data...</p>
-			</div>
-		);
-	}
-
-	if (error) {
-		return (
-			<div className="flex items-center justify-center min-h-screen">
-				<div className="text-center">
-					<p className="text-red-600 mb-4">Failed to load grade data: {error}</p>
-					<button
-						onClick={loadGradeData}
-						className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-					>
-						Try Again
-					</button>
-				</div>
 			</div>
 		);
 	}

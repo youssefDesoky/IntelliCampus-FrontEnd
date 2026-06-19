@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
@@ -6,6 +6,7 @@ import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
 import { fetchAdminRoles } from "../services/adminApi";
+import countryList from "react-select-country-list";
 
 export default function AdminForm({ onClose, method = "post", onSubmit, initialData = {} }) {
     const isEdit = method === "put";
@@ -15,22 +16,40 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
     const [photoFile, setPhotoFile] = useState(null);
     const [roleOptions, setRoleOptions] = useState([]);
 
+    // Synchronous — no fetch needed
+    const nationalities = useMemo(() => countryList().getData(), []);
+
+    const [selectedNationality, setSelectedNationality] = useState(() => {
+        if (initialData.nationality) {
+            return (
+                nationalities.find(
+                    n => n.value === initialData.nationality || n.label === initialData.nationality
+                ) || nationalities[0] || null
+            );
+        }
+        return nationalities[0] || null;
+    });
+
+    const [selectedRole, setSelectedRole] = useState(null);
+
     useEffect(() => {
         fetchAdminRoles()
             .then(data => {
                 const options = data.map(r => ({ value: r.value, label: r.label }));
                 setRoleOptions(options);
+                if (initialData.adminRole) {
+                    const match = options.find(o => o.value === initialData.adminRole);
+                    if (match) setSelectedRole(match);
+                }
             })
             .catch(() => {
                 setRoleOptions([
                     { value: "undergrad", label: "Under Grad Affairs Admin" },
                     { value: "postgrad", label: "Post Grad Affairs Admin" },
-                    { value: "academicstaff", label: "Academic Staff Admin" }
+                    { value: "academicstaff", label: "Academic Staff Admin" },
                 ]);
             });
     }, []);
-
-    const [selectedRole, setSelectedRole] = useState(null);
 
     const handlePhotoClick = () => {
         fileInputRef.current?.click();
@@ -56,6 +75,9 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
         const form = e.target;
         const formData = Object.fromEntries(new FormData(form));
         formData.profileImage = photoPreview;
+        formData.adminRole = selectedRole?.value || formData.role;
+        formData.nationality = selectedNationality?.value;
+        delete formData.role;
         onSubmit?.(formData);
     };
 
@@ -93,7 +115,7 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                                 onClick={handleRemovePhoto}
                                 className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark flex items-center justify-center shadow-sm hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3 fill-current"><path d="M18.3 5.71 12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3 fill-current"><path d="M18.3 5.71 12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z" /></svg>
                             </button>
                         )}
                     </div>
@@ -121,8 +143,18 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
                             <InputItem label="Full Name" type="text" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
                             <InputItem label="National ID" type="text" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
-                            <InputItem label="Email Address" type="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
                             <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
+                            <div>
+                                <SelectBox
+                                    className="w-full"
+                                    label="Nationality"
+                                    name="nationality"
+                                    labelDirection="flex-col"
+                                    options={nationalities}
+                                    selectedOption={selectedNationality}
+                                    onChange={setSelectedNationality}
+                                />
+                            </div>
                             <div className="col-span-1 sm:col-span-2">
                                 <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Address</label>
                                 <TextArea

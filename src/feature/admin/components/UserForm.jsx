@@ -1,18 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
 import { PlusIcon, FilePenIcon } from "../../../components/ui/icons";
 import InputItem from "../../../components/form/InputItem";
-import SelectBox from "../../../components/ui/SelectBox";
+import Select from 'react-select'; // react-select for better country list
+import countryList from 'react-select-country-list';
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
-
-const nationalities = [
-    { value: 'us', label: 'United States' },
-    { value: 'ca', label: 'Canada' },
-    { value: 'uk', label: 'United Kingdom' },
-    { value: 'au', label: 'Australia' },
-    { value: 'in', label: 'India' },
-];
 
 const adminRoleOptions = [
     { value: 'Post Grad Affairs Admin', label: 'Post Grad Affairs Admin' },
@@ -24,12 +17,26 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
     const isEdit = method === "put";
     const roleIdField = `${role}Id`;
 
+    const options = useMemo(() => countryList().getData(), []);
+
     const [selectedNationality, setSelectedNationality] = useState(() => {
-        if (initialData.nationality) {
-            return nationalities.find(n => n.value === initialData.nationality || n.label === initialData.nationality) || nationalities[0];
+        const initialNationality = initialData.nationality;
+        if (initialNationality) {
+            const match = options.find(n => n.value === initialNationality || n.label === initialNationality);
+            return match || options[0];
         }
-        return nationalities[0];
+        return options[0];
     });
+
+    useEffect(() => {
+        const initialNationality = initialData.nationality;
+        if (initialNationality) {
+            const match = options.find(n => n.value === initialNationality || n.label === initialNationality);
+            if (match) setSelectedNationality(match);
+        } else if (options.length > 0) {
+            setSelectedNationality(options[0]);
+        }
+    }, [initialData.nationality, options]);
 
     const [selectedAdminRole, setSelectedAdminRole] = useState(() => {
         if (initialData.role) {
@@ -51,7 +58,10 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
         const form = e.target;
         const formData = Object.fromEntries(new FormData(form));
         if (formData.level) formData.level = Number(formData.level);
-        console.log(`[UserForm] Submitting ${roleLabel}:`, JSON.stringify(formData, null, 2));
+        // Add selected nationality to formData
+        if (selectedNationality) {
+            formData.nationality = selectedNationality.value;
+        }
         if (onSubmit) onSubmit(formData);
     };
 
@@ -75,32 +85,40 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem label="National ID" type="text" id="nationalId" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
-
-                    {role === "admin" ? (
-                        <SelectBox
-                            className="w-full"
-                            label="Role"
-                            name="role"
-                            labelDirection="flex-col"
-                            options={adminRoleOptions}
-                            selectedOption={selectedAdminRole}
-                            onChange={handleAdminRoleChange}
-                        />
-                    ) : (
-                        <SelectBox
-                            className="w-full"
-                            label="Nationality"
-                            name="nationality"
-                            labelDirection="flex-col"
-                            options={nationalities}
-                            selectedOption={selectedNationality}
-                            onChange={handleNationalityChange}
-                        />
-                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputItem label="Email Address" type="email" id="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
+                    {role === "admin" ? (
+                        <div className="flex flex-col w-full">
+                            <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1" htmlFor="role">
+                                Role
+                            </label>
+                            <Select
+                                id="role"
+                                name="role"
+                                options={adminRoleOptions}
+                                value={selectedAdminRole}
+                                onChange={handleAdminRoleChange}
+                                classNamePrefix="react-select"
+                                placeholder="Select role"
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex flex-col w-full">
+                            <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1" htmlFor="nationality">
+                                Nationality
+                            </label>
+                            <Select
+                                id="nationality"
+                                name="nationality"
+                                options={options}
+                                value={selectedNationality}
+                                onChange={handleNationalityChange}
+                                classNamePrefix="react-select"
+                                placeholder="Select nationality"
+                            />
+                        </div>
+                    )}
 
                     <InputItem label="Phone Number" type="tel" id="phoneNumber" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
                 </div>

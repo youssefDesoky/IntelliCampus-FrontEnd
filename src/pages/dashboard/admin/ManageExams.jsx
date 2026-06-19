@@ -6,6 +6,7 @@ import Dialog from "../../../components/ui/Dialog";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import { ArrowRotateRightIcon, CalendarCheckIcon, DownloadIcon, ImportIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 import { uploadExams } from "../../../feature/admin/services/adminApi";
 import ExamScheduler from "../../../feature/admin/components/ExamScheduler";
 
@@ -37,6 +38,7 @@ function downloadCSV(data, filename) {
 
 export default function ManageExams() {
     const { isPhone } = useDeviceType();
+    const { showError } = useError();
     const schedulerRef = useRef(null);
     const [hasSchedule, setHasSchedule] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
@@ -56,13 +58,12 @@ export default function ManageExams() {
                     `✅ ${res.successCount} imported, ❌ ${res.failCount} failed`,
                     ...res.errors.slice(0, 20),
                 ].join("\n");
-                alert(msg);
+                showError(msg);
             } else {
-                alert(`✅ Successfully imported ${res.successCount} exams`);
+                showError(`Successfully imported ${res.successCount} exams`);
             }
         } catch (err) {
-            console.error("Failed to upload exams:", err);
-            alert(err.message);
+            showError(err.message);
         } finally {
             setIsUploading(false);
             setIsImportOpen(false);

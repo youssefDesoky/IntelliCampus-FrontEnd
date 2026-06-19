@@ -3,23 +3,22 @@ import Button from "../../../../../components/ui/Button";
 import TextArea from "../../../../../components/ui/TextArea";
 import BaseComponent from "../../../../../components/ui/BaseComponent";
 import BaseFormComponent from "../../../../../components/ui/BaseFormComponent";
-import { CloudUploadIcon, FileLinesIcon, FileIcon, TrashIcon, PaperclipIcon, ExclamationIcon } from "../../../../../components/ui/icons";
+import { CloudUploadIcon, FileLinesIcon, FileIcon, TrashIcon, PaperclipIcon } from "../../../../../components/ui/icons";
+import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
 export default function AttendanceExcuseCard() {
     const fileInputRef = useRef(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [reason, setReason] = useState("");
-    const [error, setError] = useState("");
+    const { showError } = useError();
 
     const openForm = () => {
-        setError("");
         setIsFormOpen(true);
     };
 
     const closeForm = () => {
         setIsFormOpen(false);
-        setError("");
         setSelectedFile(null);
         setReason("");
         if (fileInputRef.current) {
@@ -30,16 +29,14 @@ export default function AttendanceExcuseCard() {
     const handleFileChange = (event) => {
         const file = event.target.files?.[0] || null;
         setSelectedFile(file);
-        if (file) setError("");
     };
 
     const handleSubmit = () => {
         if (!reason.trim() || !selectedFile) {
-            setError("Please add a reason and attach a supporting file before submitting.");
+            showError("Please add a reason and attach a supporting file before submitting.");
             return;
         }
 
-        setError("");
         closeForm();
     };
 
@@ -92,13 +89,6 @@ export default function AttendanceExcuseCard() {
                 maxWidth="max-w-xl"
                 contentClassName="space-y-6"
             >
-                {error && (
-                    <div className="flex items-start gap-3 rounded-2xl border border-border-danger-default-light bg-bg-surface-danger-default-light px-4 py-3 text-sm text-text-danger-default-light dark:border-border-danger-default-dark dark:bg-bg-surface-danger-default-dark dark:text-text-danger-default-dark">
-                        <ExclamationIcon size={18} className="shrink-0 mt-0.5" />
-                        <p>{error}</p>
-                    </div>
-                )}
-
                 <div className="space-y-4">
                     <label className="block">
                         <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">

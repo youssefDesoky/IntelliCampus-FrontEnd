@@ -1,38 +1,40 @@
 import { useState, useRef } from "react";
 import InputItem from "../../../components/form/InputItem";
+
 import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import { CloudUploadIcon } from "../../../components/ui/icons";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoading = false, isOpen = true }) {
+    const { showError } = useError();
     const isEdit = !!initialData.bylawId;
     const [selectedFile, setSelectedFile] = useState(null);
-    const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
         const formData = Object.fromEntries(new FormData(e.target));
         const name = (formData.name || "").trim();
 
         if (!name) {
-            setError("Bylaw name is required");
+            showError("Bylaw name is required");
             return;
         }
 
         const payload = {
             name,
-            version: parseInt(formData.version || "1", 10),
+            nameAr: (formData.nameAr || "").trim(),
             description: (formData.description || "").trim(),
+            descriptionAr: (formData.descriptionAr || "").trim(),
         };
 
         try {
             await onSubmit({ ...payload, _file: selectedFile || null });
             onClose();
         } catch (err) {
-            setError(err.message || "An error occurred");
+            showError(err.message || "An error occurred");
         }
     };
 
@@ -47,12 +49,6 @@ export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoadi
             submitLoading={isLoading}
         >
             <div className="space-y-6 mb-6">
-                {error && (
-                    <div className="bg-bg-status-error-light dark:bg-bg-status-error-dark text-text-status-error-light dark:text-text-status-error-dark p-3 rounded-lg text-sm">
-                        {error}
-                    </div>
-                )}
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InputItem
                         label="Bylaw Name"
@@ -62,14 +58,15 @@ export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoadi
                         defaultValue={initialData.name || ""}
                         required
                     />
-                    <InputItem
-                        label="Version"
-                        type="number"
-                        name="version"
-                        placeholder="1"
-                        defaultValue={initialData.version ?? 1}
-                        required
-                    />
+                    <div dir="rtl">
+                        <InputItem
+                            label="اسم اللائحة"
+                            type="text"
+                            name="nameAr"
+                            placeholder="نظام الساعات المعتمدة"
+                            defaultValue={initialData.nameAr || ""}
+                        />
+                    </div>
                 </div>
 
                 <div>
@@ -82,6 +79,19 @@ export default function BylawForm({ onClose, onSubmit, initialData = {}, isLoadi
                         className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
                         placeholder="Describe the bylaw purpose and scope"
                         defaultValue={initialData.description || ""}
+                    />
+                </div>
+
+                <div dir="rtl">
+                    <label htmlFor="descriptionAr" className="block text-sm font-medium mb-2 text-text-primary-default-light dark:text-text-primary-default-dark">
+                        الوصف
+                    </label>
+                    <TextArea
+                        id="descriptionAr"
+                        name="descriptionAr"
+                        className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
+                        placeholder="وصف الغرض من اللائحة ونطاقها"
+                        defaultValue={initialData.descriptionAr || ""}
                     />
                 </div>
 

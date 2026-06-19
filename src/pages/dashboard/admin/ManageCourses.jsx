@@ -20,6 +20,7 @@ import {
   activateCourse,
   deactivateCourse,
 } from "../../../feature/admin/services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function StatusBadge({ isActive, displaySemester }) {
   return (
@@ -38,7 +39,8 @@ function StatusBadge({ isActive, displaySemester }) {
 
 export default function ManageCourses() {
   const navigate = useNavigate();
-  const { isDesktop, isTablet } = useDeviceType();
+  const { isDesktop, isTablet, isPhone } = useDeviceType();
+  const { showError } = useError();
 
   const [editingCourse, setEditingCourse] = useState(null);
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
@@ -108,14 +110,15 @@ export default function ManageCourses() {
       tableHeaders={courseTableHeaders}
       columnAlignments={columnAlignments}
       buildRow={buildCourseRow}
-      showSelectionColumn={false}
       renderHeaderActions={() => (
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
             <ImportIcon size={24} />
+            {!isPhone && "Import"}
           </Button>
           <Button variant="primary" onClick={() => setIsCreateFormOpen(true)}>
             <PlusIcon size={24} />
+            {!isPhone && "Add Course"}
           </Button>
         </div>
       )}
@@ -148,7 +151,6 @@ export default function ManageCourses() {
           for (const id of selectedRowIds) {
             const course = rawItems.find(c => c.courseId === id);
             if (course && !course.isActive) {
-              try { await activateCourse(id); } catch (err) { console.error(err); }
             }
           }
           setSuccessMessage(`${selectedRowIds.length} course(s) activated successfully!`);
@@ -157,7 +159,6 @@ export default function ManageCourses() {
           for (const id of selectedRowIds) {
             const course = rawItems.find(c => c.courseId === id);
             if (course && course.isActive) {
-              try { await deactivateCourse(id); } catch (err) { console.error(err); }
             }
           }
           setSuccessMessage(`${selectedRowIds.length} course(s) deactivated successfully.`);
@@ -190,7 +191,9 @@ export default function ManageCourses() {
                   await updateCourse(editingCourse.courseId, formData);
                   setEditingCourse(null);
                   await loadItems();
-                } catch (err) { console.error("Failed to update course:", err); }
+                } catch (err) {
+                  showError(err.message);
+                }
               }}
               allCourses={rawItems}
             />
@@ -206,7 +209,9 @@ export default function ManageCourses() {
                   await createCourse(formData);
                   setIsCreateFormOpen(false);
                   await loadItems();
-                } catch (err) { console.error("Failed to create course:", err); }
+                } catch (err) {
+                  showError(err.message);
+                }
               }}
               allCourses={rawItems}
             />
@@ -222,7 +227,6 @@ export default function ManageCourses() {
               subtitle="Upload a file to bulk-import course records."
               onClose={() => setIsImportOpen(false)}
               onImport={(file) => {
-                console.log("Importing courses from:", file.name);
                 setIsImportOpen(false);
               }}
             />

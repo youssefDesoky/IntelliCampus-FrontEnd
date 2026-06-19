@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { fetchCourseAnnouncements } from "../../../../course/components/announcements";
 import CourseAnnouncementCard from "../../../../course/components/announcements/CourseAnnouncementCard";
+import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
 
 export default function CourseAnnouncements() {
@@ -10,19 +11,18 @@ export default function CourseAnnouncements() {
     const courseId = outletContext?.courseId;
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError } = useError();
 
     const loadAnnouncements = useCallback(async () => {
         if (!courseId) return;
 
         setLoading(true);
-        setError(null);
 
         try {
             const data = await fetchCourseAnnouncements(courseId);
             setAnnouncements(Array.isArray(data) ? data : []);
         } catch (err) {
-            setError(err.message || "Failed to load announcements.");
+            showError(err.message || "Failed to load announcements.");
             setAnnouncements([]);
         } finally {
             setLoading(false);
@@ -36,10 +36,6 @@ export default function CourseAnnouncements() {
 
     if (loading) {
         return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading announcements...</p>;
-    }
-
-    if (error) {
-        return <p className="text-sm text-text-danger-default-light dark:text-text-danger-default-dark">{error}</p>;
     }
 
     if (announcements.length === 0) {

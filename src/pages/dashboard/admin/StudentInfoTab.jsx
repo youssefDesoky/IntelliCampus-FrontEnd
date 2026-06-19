@@ -16,12 +16,16 @@ function InfoField({ label, value }) {
 }
 
 export default function StudentInfoTab({ student, completedCount, registeredCount }) {
+    const isUnderGrad = student.studentType === "UnderGrad";
     return (
         <div className="space-y-6">
             <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
                     { label: "GPA", value: student.gpa ?? "—", color: "text-emerald-500", icon: ChartLineIcon },
-                    { label: "Level", value: student.level ?? "—", color: "text-blue-500", icon: BookIcon },
+                    ...(isUnderGrad
+                        ? [{ label: "Level", value: student.level ?? "—", color: "text-blue-500", icon: BookIcon }]
+                        : [{ label: "Type", value: student.studentType ?? "—", color: "text-blue-500", icon: BookIcon }]
+                    ),
                     { label: "Completed", value: completedCount, color: "text-purple-500", icon: CheckIcon },
                     { label: "Registered", value: registeredCount, color: "text-amber-500", icon: FilePenIcon },
                 ].map((stat) => (
@@ -50,7 +54,7 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                             )}
                         </div>
                         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-[11px] font-bold text-text-accent-active-light dark:text-text-accent-active-dark shadow-sm">
-                            Level {student.level ?? "—"}
+                            {isUnderGrad ? `Level ${student.level ?? "—"}` : student.studentType ?? "—"}
                         </div>
                     </div>
 
@@ -67,8 +71,8 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                                 <span className="text-2xl font-extrabold text-emerald-500">{student.gpa ?? "—"}</span>
                             </div>
                             <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Program</span>
-                                <span className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{student.program ?? "—"}</span>
+                                <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{isUnderGrad ? "Program" : "Specialization"}</span>
+                                <span className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{isUnderGrad ? (student.program ?? "—") : (student.specializationName ?? "—")}</span>
                             </div>
                         </div>
                     </div>
@@ -101,7 +105,11 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                         </div>
                         <div className="p-3 sm:p-5">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                                <InfoField label="Program" value={student.program} />
+                                {isUnderGrad ? (
+                                    <InfoField label="Program" value={student.program} />
+                                ) : (
+                                    <InfoField label="Specialization" value={student.specializationName} />
+                                )}
                                 <InfoField label="Department" value={student.department ?? student.departmentName ?? student.faculty} />
                                 <InfoField label="Bylaw" value={student.bylawName ?? student.bylaw} />
                                 <InfoField label="Enrollment Date" value={student.enrollmentDate ?? student.enrolledAt} />

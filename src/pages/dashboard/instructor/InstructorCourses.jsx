@@ -7,13 +7,14 @@ import useDeviceType from "../../../hooks/useDeviceType";
 import MyCourse from "../../../feature/student/courses/myCourses/MyCourse";
 import InstructorCoursesHeader from "../../../feature/instructor/components/courses/InstructorCoursesHeader";
 import { fetchMyTeachingCourses } from "../../../feature/course/services/coursesApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 
 export default function InstructorCourses() {
     const { isMobile } = useDeviceType();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError } = useError();
 
     const [viewMode, setViewMode] = useState(() => {
         return isMobile ? "list" : localStorage.getItem("instructorCoursesViewMode") || "grid";
@@ -31,8 +32,7 @@ export default function InstructorCourses() {
                 const data = await fetchMyTeachingCourses();
                 if (!cancelled) setCourses(data);
             } catch (err) {
-                if (!cancelled) setError(err.message);
-                console.error("Failed to load teaching courses:", err);
+                showError(err.message);
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -72,13 +72,7 @@ export default function InstructorCourses() {
                 </div>
             )}
 
-            {error && (
-                <div className="flex justify-center py-12">
-                    <p className="text-red-500">Failed to load courses: {error}</p>
-                </div>
-            )}
-
-            {!loading && !error && courses.length === 0 && (
+            {!loading && courses.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                         No courses assigned
@@ -89,7 +83,7 @@ export default function InstructorCourses() {
                 </div>
             )}
 
-            {!loading && !error && courses.length > 0 && (
+            {!loading && courses.length > 0 && (
                 <Section className={`mb-6 ${viewMode === "grid" ? "grid grid-cols-2 gap-4" : "flex flex-col gap-4"}`}>
                     {courses.map((course) => (
                         <MyCourse key={course.courseId} course={course} role="instructor" viewMode={viewMode} isMobile={isMobile} />

@@ -1,26 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
 import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
+import RadioToggle from "../../../components/form/RadioToggle";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
-import { fetchInstructorRoles } from "../services/adminApi";
-
-const departments = [
-    { value: "CS", label: "Computer Science" },
-    { value: "IS", label: "Information Systems" },
-    { value: "IT", label: "Information Technology" },
-    { value: "AI", label: "Artificial Intelligence" },
-];
-
-const nationalities = [
-    { value: "us", label: "United States" },
-    { value: "ca", label: "Canada" },
-    { value: "uk", label: "United Kingdom" },
-    { value: "au", label: "Australia" },
-    { value: "in", label: "India" },
-];
+import { fetchInstructorRoles, fetchDepartments, fetchSpecializations } from "../services/adminApi";
+import countryList from "react-select-country-list";
 
 export default function InstructorForm({ onClose, method = "post", onSubmit, initialData = {} }) {
     const isEdit = method === "put";
@@ -30,11 +17,43 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
     const [photoFile, setPhotoFile] = useState(null);
     const [roleOptions, setRoleOptions] = useState([]);
 
+    // Synchronous — no fetch needed
+    const nationalities = useMemo(() => countryList().getData(), []);
+
+    // Single declaration — nationalities is available synchronously from useMemo
+    const [selectedNationality, setSelectedNationality] = useState(() => {
+        if (initialData.nationality) {
+            return (
+                nationalities.find(
+                    n => n.value === initialData.nationality || n.label === initialData.nationality
+                ) || nationalities[0] || null
+            );
+        }
+        return nationalities[0] || null;
+    });
+
+    const [selectedRole, setSelectedRole] = useState(null);
+    const [secondment, setSecondment] = useState(initialData.secondment || "no");
+
+    const [departments, setDepartments] = useState([]);
+    const [selectedDepartment, setSelectedDepartment] = useState(null);
+    const [specializations, setSpecializations] = useState([]);
+    const [selectedSpecialization, setSelectedSpecialization] = useState(null);
+
+    const isProfessor = selectedRole && ["professor", "associateprofessor"].includes(selectedRole.value);
+
     useEffect(() => {
         fetchInstructorRoles()
             .then(data => {
-                const options = data.map(r => ({ value: r.value, label: r.label }));
+                const options = data.map(r => ({
+                    value: r.roleName,
+                    label: r.roleName.charAt(0).toUpperCase() + r.roleName.slice(1).replace(/([A-Z])/g, ' $1').trim()
+                }));
                 setRoleOptions(options);
+                if (initialData.instructorRole) {
+                    const match = options.find(o => o.value === initialData.instructorRole);
+                    if (match) setSelectedRole(match);
+                }
             })
             .catch(() => {
                 setRoleOptions([
@@ -47,21 +66,41 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
             });
     }, []);
 
-    const [selectedNationality, setSelectedNationality] = useState(() => {
-        if (initialData.nationality) {
-            return nationalities.find(n => n.value === initialData.nationality || n.label === initialData.nationality) || nationalities[0];
-        }
-        return nationalities[0];
-    });
+    useEffect(() => {
+        fetchDepartments()
+            .then(data => {
+                const options = data.map(d => ({ value: d.departmentId, label: d.departmentName }));
+                setDepartments(options);
+                if (initialData.department) {
+                    const match = options.find(o => o.value === initialData.department || o.label === initialData.department);
+                    if (match) setSelectedDepartment(match);
+                } else if (options.length > 0) {
+                    setSelectedDepartment(options[0]);
+                }
+            })
+            .catch(console.error);
+    }, [initialData.department]);
 
-    const [selectedRole, setSelectedRole] = useState(null);
-
-    const [selectedDepartment, setSelectedDepartment] = useState(() => {
-        if (initialData.department) {
-            return departments.find(d => d.value === initialData.department || d.label === initialData.department) || departments[0];
+    useEffect(() => {
+        if (!selectedDepartment?.value) {
+            setSpecializations([]);
+            setSelectedSpecialization(null);
+            return;
         }
-        return departments[0];
-    });
+        fetchSpecializations(selectedDepartment.value)
+            .then(data => {
+                const options = (Array.isArray(data) ? data : []).map(s => ({
+                    value: s.id ?? s.specializationId,
+                    label: s.name,
+                }));
+                setSpecializations(options);
+                if (initialData.specializationId) {
+                    const match = options.find(o => o.value === initialData.specializationId);
+                    if (match) setSelectedSpecialization(match);
+                }
+            })
+            .catch(() => setSpecializations([]));
+    }, [selectedDepartment]);
 
     const handlePhotoClick = () => {
         fileInputRef.current?.click();
@@ -87,6 +126,12 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
         const form = e.target;
         const formData = Object.fromEntries(new FormData(form));
         formData.profileImage = photoPreview;
+        formData.instructorRole = selectedRole?.value || formData.role;
+        formData.nationality = selectedNationality?.value;
+        formData.departmentName = selectedDepartment?.label;
+        formData.specializationId = selectedSpecialization?.value || null;
+        delete formData.role;
+        delete formData.departmentId;
         onSubmit?.(formData);
     };
 
@@ -124,7 +169,7 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                                 onClick={handleRemovePhoto}
                                 className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark flex items-center justify-center shadow-sm hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3 fill-current"><path d="M18.3 5.71 12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3 fill-current"><path d="M18.3 5.71 12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z" /></svg>
                             </button>
                         )}
                     </div>
@@ -152,9 +197,8 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
                             <InputItem label="Full Name" type="text" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
                             <InputItem label="National ID" type="text" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
-                            <InputItem label="Email Address" type="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
                             <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
-                            <div className="col-span-1 sm:col-span-2">
+                            <div>
                                 <SelectBox
                                     className="w-full"
                                     label="Nationality"
@@ -204,7 +248,44 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                                 selectedOption={selectedDepartment}
                                 onChange={setSelectedDepartment}
                             />
-                            <DateInput label="Hire Date" name="hireDate" defaultValue={(initialData.hireDate || new Date().toISOString()).split("T")[0]} required />
+                            <SelectBox
+                                className="w-full"
+                                label="Specialization"
+                                name="specializationId"
+                                labelDirection="flex-col"
+                                options={specializations}
+                                selectedOption={selectedSpecialization}
+                                onChange={setSelectedSpecialization}
+                            />
+                            {isProfessor ? (
+                                <div className="flex flex-col">
+                                    <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Secondment</label>
+                                    <RadioToggle
+                                        name="secondment"
+                                        options={[
+                                            { value: "yes", label: "Yes" },
+                                            { value: "no", label: "No" },
+                                        ]}
+                                        value={secondment}
+                                        onChange={setSecondment}
+                                        className="w-full"
+                                    />
+                                </div>
+                            ) : (
+                                <div>
+                                    <DateInput label="Hire Date" name="hireDate" defaultValue={(initialData.hireDate || new Date().toISOString()).split("T")[0]} required />
+                                </div>
+                            )}
+                            {isProfessor && (
+                                <>
+                                    <div>
+                                        <DateInput label="Contract Start Date" name="contractStartDate" defaultValue={(initialData.contractStartDate || new Date().toISOString()).split("T")[0]} required />
+                                    </div>
+                                    <div>
+                                        <DateInput label="Contract End Date" name="contractEndDate" defaultValue={(initialData.contractEndDate || "").split("T")[0]} required />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

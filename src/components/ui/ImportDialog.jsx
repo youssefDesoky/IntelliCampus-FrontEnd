@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import BaseFormComponent from "./BaseFormComponent";
 import { CloudUploadIcon, FileIcon, TrashIcon, CheckIcon } from "./icons";
+import { useError } from '../../contexts/ErrorContext.jsx';
 
 const ACCEPTED_EXTENSIONS = [".csv", ".xlsx", ".xls", ".json"];
 
@@ -27,7 +28,7 @@ export default function ImportDialog({
 }) {
     const [file, setFile] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [error, setError] = useState("");
+    const { showError } = useError();
     const fileInputRef = useRef(null);
 
     const acceptString = acceptedFormats.join(",");
@@ -37,12 +38,11 @@ export default function ImportDialog({
     const validateFile = useCallback((f) => {
         const ext = `.${f.name.split(".").pop().toLowerCase()}`;
         if (!acceptedFormats.includes(ext)) {
-            setError(`Unsupported format. Accepted: ${acceptedFormats.join(", ")}`);
+            showError(`Unsupported format. Accepted: ${acceptedFormats.join(", ")}`);
             return false;
         }
-        setError("");
         return true;
-    }, [acceptedFormats]);
+    }, [acceptedFormats, showError]);
 
     const handleFile = useCallback((f) => {
         if (validateFile(f)) setFile(f);
@@ -63,7 +63,6 @@ export default function ImportDialog({
     };
     const handleRemoveFile = () => {
         setFile(null);
-        setError("");
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
     const handleSubmit = () => {
@@ -192,12 +191,7 @@ export default function ImportDialog({
                         )}
                     </div>
 
-                    {error && (
-                        <div className="mt-3 flex items-center gap-2 text-[12px] text-text-danger-default-light dark:text-text-danger-default-dark">
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
-                            {error}
-                        </div>
-                    )}
+
                 </div>
             </div>
         </BaseFormComponent>

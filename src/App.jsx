@@ -13,7 +13,7 @@ import SidebarProvider from "./contexts/SidebarProvider";
 import CourseShell from "./feature/course/component/CourseShell";
 
 // Auth Pages
-import { LoginPage, ForgetPassword, ResetPassword, UnauthorizedPage } from "./pages/auth";
+import { LoginPage, ForgetPassword, ResetPassword, UnauthorizedPage, InternalServerErrorPage, ResourceNotFoundPage } from "./pages/auth";
 
 // Student Pages
 import { 
@@ -27,6 +27,7 @@ import {
     CourseMaterials as StudentCourseMaterials, 
     CoursePrerequisites as StudentCoursePrerequisites, 
     CoursesRegistration as StudentCoursesRegistration,
+    Inbox as StudentInbox,
 } from "./pages/dashboard/student";
 
 import CourseAttendance from "./feature/student/courses/courseDetail/courseAttendance/CourseAttendance";
@@ -37,13 +38,14 @@ import CourseQuizPractice from "./feature/student/courses/courseDetail/quizzes/C
 import CourseAnnouncements from "./feature/student/courses/courseDetail/announcements/CourseAnnouncements";
 
 // Admin Pages
-import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, StudentDetails, InstructorDetails, ManageAdmins, ManageCourses, ManageCourseClasses, ManageRooms, ManageDepartments, ManageBylaws, ManageExams } from "./pages/dashboard/admin";
+import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, StudentDetails, InstructorDetails, ManageAdmins, ManageCourses, ManageCourseClasses, ManageRooms, ManageDepartments, ManageBylaws, ManageBylawDetailsPage, ManageExams } from "./pages/dashboard/admin";
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
 import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes } from "./pages/dashboard/instructor"
 import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
 import { InstructorMeetingRoom } from "./pages/dashboard/instructor"
+import InstructorCommunity from "./feature/student/courses/courseDetail/community/MyCommunities"
 
 
 export default function App() {    
@@ -75,7 +77,7 @@ export default function App() {
         children: [
             // ================= STUDENT =================
             {
-                element: <RoleGuard allow={["student"]} />,
+                element: <RoleGuard allow={["student_undergrad", "student_masters", "student_phd", "student_diploma", "student"]} />,
                 children: [
                     { index: true, element: <StudentDashboard /> },
                     { path: "profile", element: <StudentProfile /> },
@@ -104,6 +106,7 @@ export default function App() {
                     { path: "reminders", element: <StudentReminders /> },
                     { path: "smart-notes", element: <StudentSmartNotes /> },
                     { path: "schedule", element: <StudentSchedule /> },
+                    { path: "inbox", element: <StudentInbox /> },
                 ],
             },
 
@@ -125,7 +128,7 @@ export default function App() {
                             { path: "quizzes", element: <InstructorCourseQuizzes /> },
                             { path: "attendance", element: <InstructorCourseAttendance /> },
                             { path: "grades", element: <div>Course Grades Content</div> },
-                            { path: "community", element: <div>Course Community Content</div> },
+                            { path: "community", element: <InstructorCommunity /> },
                             { path: "smart-notes", element: <StudentSmartNotes /> },
                             { path: "meeting", element: <InstructorMeetingRoom /> },
                         ],
@@ -136,7 +139,7 @@ export default function App() {
             // ================= ADMIN =================
             {
                 path: "admin",
-                element: <RoleGuard allow={["admin", "superadmin"]} />,
+                element: <RoleGuard allow={["admin", "superadmin", "admin_undergrad", "admin_postgrad", "admin_academicstaff"]} />,
                 children: [
                     { index: true, element: <AdminDashboard /> },
                     { path: "analytics", element: <Attendance /> },
@@ -150,6 +153,7 @@ export default function App() {
                     { path: "courses/:courseId", element: <ManageCourseClasses /> },
                     { path: "rooms", element: <ManageRooms /> },
                     { path: "bylaws", element: <ManageBylaws /> },
+                    { path: "bylaws/:bylawId", element: <ManageBylawDetailsPage /> },
                     { path: "exams", element: <ManageExams /> },
                 ],
             },
@@ -161,6 +165,8 @@ export default function App() {
     { path: "/forgot-password", element: <ForgetPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/unauthorized", element: <UnauthorizedPage /> },
+    { path: "/internal-server-error", element: <InternalServerErrorPage /> },
+    { path: "/resource-not-found", element: <ResourceNotFoundPage /> },
     { path: "/logout", action: logoutAction },
     ]);
 

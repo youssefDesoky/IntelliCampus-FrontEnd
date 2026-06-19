@@ -9,6 +9,7 @@ import MaterialPreview from "../../../../components/ui/MaterialPreview";
 import CourseAnnouncementAttachment from "./CourseAnnouncementAttachment";
 import CourseAnnouncementCommentItem from "./CourseAnnouncementCommentItem";
 import { createAnnouncementComment, deleteCourseAnnouncement, pinCourseAnnouncement, unpinCourseAnnouncement } from "./announcementsApi";
+import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 function formatAnnouncementDate(value) {
     const date = new Date(value);
@@ -46,6 +47,7 @@ export default function CourseAnnouncementCard({
     const actionsButtonRef = useRef(null);
     const inputRef = useRef(null);
     const location = useLocation();
+    const { showError } = useError();
 
     const isHighlighted = location.hash === `#announcement-${announcement.id}`;
     const isInstructor = userRole === "instructor";
@@ -162,7 +164,7 @@ export default function CourseAnnouncementCard({
 
             setNewComment("");
         } catch (error) {
-            console.error("Failed to post announcement comment:", error);
+            showError(error.message);
         } finally {
             setPosting(false);
         }
@@ -179,8 +181,7 @@ export default function CourseAnnouncementCard({
             await deleteCourseAnnouncement(courseId, announcement.id);
             onDelete?.(announcement.id);
         } catch (error) {
-            console.error("Failed to delete announcement:", error);
-            alert("Failed to delete announcement");
+            showError("Failed to delete announcement");
         } finally {
             setIsDeleting(false);
         }
@@ -193,8 +194,7 @@ export default function CourseAnnouncementCard({
             await pinCourseAnnouncement(courseId, announcement.id);
             onPin?.(announcement.id);
         } catch (error) {
-            console.error("Failed to pin announcement:", error);
-            alert("Failed to pin announcement");
+            showError("Failed to pin announcement");
         } finally {
             setIsPinning(false);
             setShowActionsMenu(false);
@@ -208,8 +208,7 @@ export default function CourseAnnouncementCard({
             await unpinCourseAnnouncement(courseId, announcement.id);
             onUnpin?.(announcement.id);
         } catch (error) {
-            console.error("Failed to unpin announcement:", error);
-            alert("Failed to unpin announcement");
+            showError("Failed to unpin announcement");
         } finally {
             setIsPinning(false);
             setShowActionsMenu(false);

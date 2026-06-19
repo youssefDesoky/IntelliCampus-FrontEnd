@@ -13,6 +13,7 @@ import {
     recordManualAttendance,
     scanAttendanceQr,
 } from "../../../feature/instructor/components/attendance/instructorAttendanceApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function formatTime(value) {
     if (!value) return null;
@@ -95,7 +96,7 @@ export default function InstructorCourseAttendance() {
     const [isLoadingClasses, setIsLoadingClasses] = useState(true);
     const [isLoadingReport, setIsLoadingReport] = useState(false);
     const [isLoadingSessions, setIsLoadingSessions] = useState(false);
-    const [error, setError] = useState(null);
+    const { showError } = useError();
     const [sessions, setSessions] = useState([]);
     const [selectedSessionId, setSelectedSessionId] = useState(null);
     const [creatingSession, setCreatingSession] = useState(false);
@@ -111,14 +112,12 @@ export default function InstructorCourseAttendance() {
 
     const loadClasses = useCallback(async () => {
         if (!courseId || !currentInstructorId) {
-            setError("No course context or instructor ID found.");
+            showError("No course context or instructor ID found.");
             setIsLoadingClasses(false);
             return;
         }
 
         setIsLoadingClasses(true);
-        setError(null);
-
         try {
             const data = await fetchClassesByCourse(courseId);
             const allClasses = Array.isArray(data) ? data : [];
@@ -130,7 +129,7 @@ export default function InstructorCourseAttendance() {
             setClasses(filteredClasses);
             setSelectedClassId(filteredClasses.length > 0 ? (filteredClasses[0].classId || filteredClasses[0].id) : null);
         } catch (err) {
-            setError(err.message || "Failed to load classes.");
+            showError(err.message || "Failed to load classes.");
             setClasses([]);
         } finally {
             setIsLoadingClasses(false);
@@ -173,7 +172,7 @@ export default function InstructorCourseAttendance() {
         } catch (err) {
             setSessions([]);
             setSelectedSessionId(null);
-            setError(err.message || "Failed to load sessions.");
+            showError(err.message || "Failed to load sessions.");
         } finally {
             setIsLoadingSessions(false);
         }
@@ -214,11 +213,11 @@ export default function InstructorCourseAttendance() {
 
     const startScanner = async () => {
         if (!selectedSessionId) {
-            alert("Select a session first to scan attendance.");
+            showError("Select a session first to scan attendance.");
             return;
         }
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("Camera API not available in this browser.");
+            showError("Camera API not available in this browser.");
             return;
         }
 
@@ -233,7 +232,6 @@ export default function InstructorCourseAttendance() {
                     await videoRef.current.play();
                 } catch (playErr) {
                     // some browsers block autoplay; user can press Start in the modal to begin playback
-                    console.warn('Video play() failed', playErr);
                 }
             }
             setScanning(true);
@@ -251,7 +249,7 @@ export default function InstructorCourseAttendance() {
                 }, 500);
             }
         } catch (err) {
-            alert(err.message || 'Failed to access camera.');
+            showError(err.message || 'Failed to access camera.');
         }
     };
 
@@ -282,17 +280,16 @@ export default function InstructorCourseAttendance() {
             setTimeout(() => startScanner(), 800);
         } catch (err) {
             setRecentScans(prev => [{ id: value, timestamp, status: 'error' }, ...prev.slice(0, 9)]);
-            console.error('Failed to record attendance:', err);
             setTimeout(() => startScanner(), 1000);
         }
     };
 
     const submitManualAttendance = async () => {
-        if (!selectedSessionId) { alert('Select a session first.'); return; }
-        if (!manualId.trim()) { alert('Enter a student ID.'); return; }
+        if (!selectedSessionId) { showError('Select a session first.'); return; }
+        if (!manualId.trim()) { showError('Enter a student ID.'); return; }
         const parsedStudentId = Number(manualId.trim());
         if (!Number.isFinite(parsedStudentId)) {
-            alert('Student ID must be a valid number.');
+            showError('Student ID must be a valid number.');
             return;
         }
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -305,9 +302,9 @@ export default function InstructorCourseAttendance() {
             setRecentScans(prev => [{ id: manualId.trim(), timestamp, status: 'success' }, ...prev.slice(0, 9)]);
             setManualId('');
             await loadAttendanceReport();
-            alert('Attendance recorded for ' + manualId.trim());
+            showError('Attendance recorded for ' + manualId.trim());
         } catch (err) {
-            alert(err.message || 'Failed to record attendance.');
+            showError(err.message || 'Failed to record attendance.');
         }
     };
 
@@ -318,12 +315,11 @@ export default function InstructorCourseAttendance() {
     const loadAttendanceReport = useCallback(async () => {
         if (!selectedClassId) return;
         setIsLoadingReport(true);
-        setError(null);
         try {
             const data = await fetchAttendanceReport(selectedClassId);
             setReport(data);
         } catch (err) {
-            setError(err.message || "Failed to load attendance report.");
+            showError(err.message || "Failed to load attendance report.");
             setReport(null);
         } finally {
             setIsLoadingReport(false);
@@ -359,8 +355,6 @@ export default function InstructorCourseAttendance() {
     };
 
     if (isLoadingClasses) return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading classes...</p>;
-    if (error && classes.length === 0) return <p className="text-sm text-text-danger-default-light dark:text-text-danger-default-dark">{error}</p>;
-
     if (!selectedClassId) {
         return (
             <div className="space-y-6">
@@ -499,7 +493,7 @@ export default function InstructorCourseAttendance() {
                             await ensureSelectedSession();
                             setIsAttendanceOpen(true);
                         } catch (err) {
-                            alert(err?.message || 'Failed to prepare session.');
+                            showError(err?.message || 'Failed to prepare session.');
                         }
                     }}
                     startIcon={<QRCodeIcon size={16} />}

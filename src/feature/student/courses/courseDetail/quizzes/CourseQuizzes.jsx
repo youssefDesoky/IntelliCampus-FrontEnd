@@ -7,6 +7,7 @@ import Button from "../../../../../components/ui/Button";
 import PaginationButtons from "../../../../../components/ui/PaginationButtons";
 import { CalendarDaysIcon, ClockIcon, PlayIcon, EyeIcon, ChartBarIcon, StarIcon } from "../../../../../components/ui/icons";
 import { fetchCourseQuizzesOverview } from "../../quizzesApi";
+import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
 const PAGE_SIZE = 3;
 
@@ -134,18 +135,17 @@ export default function CourseQuizzes() {
     const [currentPage, setCurrentPage] = useState(1);
     const [showAllUpcoming, setShowAllUpcoming] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError } = useError();
     const [overview, setOverview] = useState(null);
 
     const loadOverview = useCallback(async () => {
         if (!course?.id) return;
         try {
             setIsLoading(true);
-            setError(null);
             const data = await fetchCourseQuizzesOverview(course.id);
             setOverview(data);
         } catch (err) {
-            setError(err.message || "Failed to load quizzes");
+            showError(err.message || "Failed to load quizzes");
         } finally {
             setIsLoading(false);
         }
@@ -212,14 +212,6 @@ export default function CourseQuizzes() {
         return (
             <div className="text-center py-10">
                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading quizzes...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="text-center py-10">
-                <p className="text-red-500">Failed to load quizzes: {error}</p>
             </div>
         );
     }

@@ -4,11 +4,13 @@ import Section from "../../../../components/ui/Section";
 import Button from "../../../../components/ui/Button";
 import { fetchTranscript, exportTranscriptPdf } from "../gradeApi";
 import { DownloadIcon } from "../../../../components/ui/icons";
+import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 export default function TranscriptView() {
     const [transcript, setTranscript] = useState([]);
     const [loading, setLoading] = useState(true);
     const [exporting, setExporting] = useState(false);
+    const { showError } = useError();
 
     useEffect(() => {
         let cancelled = false;
@@ -18,7 +20,7 @@ export default function TranscriptView() {
                 const data = await fetchTranscript();
                 if (!cancelled) setTranscript(data);
             } catch (err) {
-                console.error("Failed to load transcript:", err);
+                showError(err.message);
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -32,7 +34,7 @@ export default function TranscriptView() {
         try {
             await exportTranscriptPdf();
         } catch (err) {
-            console.error("Failed to export transcript:", err);
+            showError(err.message);
         } finally {
             setExporting(false);
         }

@@ -39,7 +39,7 @@ export default function InputItem({
                     onFocus={() => setIsInputFocused(true)}
                     onBlur={() => setIsInputFocused(false)}
                     onChange={(e) => setHasValue(e.target.value.length > 0)}
-                    className="w-full px-3 py-2 outline-none text-text-primary-active-light dark:text-text-primary-active-dark"
+                    className="w-full px-3 py-2 outline-none text-text-primary-active-light dark:text-text-primary-active-dark placeholder:text-text-tertiary-default-light dark:placeholder:text-text-tertiary-default-dark"
                     {...props}
                 />
 

@@ -5,6 +5,7 @@ import Dialog from "../../../../components/ui/Dialog";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import InstructorWeekMaterialContent from "./InstructorWeekMaterialContent";
 import { CloudUploadIcon, DownloadIcon, FileLinesIcon, FilePenIcon, PlusIcon, TrashIcon, XIcon } from "../../../../components/ui/icons";
+import { useError } from '../../../../contexts/ErrorContext.jsx';
 import { getMaterialDownloadUrl } from "../../../course/services/materialsApi";
     // Download all materials logic
     function downloadAllMaterials(materials) {
@@ -32,6 +33,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
     const [isEditSubmitting, setIsEditSubmitting] = useState(false);
     const fileInputRef = useRef(null);
     const materials = folder.materials || [];
+    const { showError } = useError();
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -74,7 +76,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
             await onEditFolder?.(folder.materialFolderId, editName.trim(), editDescription.trim() || null);
             setShowEditModal(false);
         } catch (err) {
-            console.error("Failed to edit folder:", err);
+            showError(err.message);
         } finally {
             setIsEditSubmitting(false);
         }

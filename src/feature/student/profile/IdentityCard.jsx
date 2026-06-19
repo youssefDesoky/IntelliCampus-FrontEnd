@@ -14,12 +14,13 @@ import {
 } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import { API_URL } from "../../../config/api";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function IdentityCard({ user, className = "" }) {
     const [isFlipped, setIsFlipped] = useState(false);
     const [qrImageSrc, setQrImageSrc] = useState(user.qrCode || "");
     const [isGeneratingQr, setIsGeneratingQr] = useState(false);
-    const [qrError, setQrError] = useState("");
+    const { showError } = useError();
     const [isExpired, setIsExpired] = useState(false);
     const [countdown, setCountdown] = useState(30);
 
@@ -41,7 +42,6 @@ export default function IdentityCard({ user, className = "" }) {
         if (isGeneratingQr) return;
 
         setIsGeneratingQr(true);
-        setQrError("");
         setIsExpired(false);
 
         try {
@@ -71,8 +71,7 @@ export default function IdentityCard({ user, className = "" }) {
             setCountdown(expiresInSeconds);
             setIsFlipped(true);
         } catch (error) {
-            const errorMessage = error.message || "Failed to generate QR code.";
-            setQrError(errorMessage);
+            showError(error.message || "Failed to generate QR code.");
         } finally {
             setIsGeneratingQr(false);
         }
@@ -198,9 +197,6 @@ export default function IdentityCard({ user, className = "" }) {
                             </div>
                         </div>
 
-                        {qrError && (
-                            <p className="mt-3 text-xs text-red-500 text-center">{qrError}</p>
-                        )}
                     </div>
                 </div>
             </div>

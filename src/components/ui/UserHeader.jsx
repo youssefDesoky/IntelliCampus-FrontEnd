@@ -4,6 +4,7 @@ import Button from "./Button";
 import ImportDialog from "./ImportDialog";
 import { ImportIcon, PlusIcon } from "./icons";
 import { fetchBylaws, uploadStudents } from "../../feature/admin/services/adminApi";
+import { useError } from '../../contexts/ErrorContext.jsx';
 
 const roleLabels = {
     student: { plural: "Students", singular: "Student" },
@@ -17,6 +18,7 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
     const [selectedBylaw, setSelectedBylaw] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isLoadingBylaws, setIsLoadingBylaws] = useState(false);
+    const { showError } = useError();
     const labels = roleLabels[role] || roleLabels.student;
 
     const openImport = useCallback(() => {
@@ -47,14 +49,13 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
                     `✅ ${result.successCount} imported, ❌ ${result.failCount} failed`,
                     ...result.errors.slice(0, 20),
                 ].join("\n");
-                alert(msg);
+                showError(msg);
             } else {
-                alert(`✅ Successfully imported ${result.successCount} students`);
+                showError(`✅ Successfully imported ${result.successCount} students`);
             }
             if (onImportComplete) onImportComplete(result);
         } catch (err) {
-            console.error("Failed to upload students:", err);
-            alert(err.message);
+            showError(err.message);
         } finally {
             setIsUploading(false);
             setIsImportOpen(false);

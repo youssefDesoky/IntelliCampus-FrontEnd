@@ -16,7 +16,8 @@ import {
     PaperclipIcon,
     PaperPlaneIcon,
 } from "../../../components/ui/icons";
-import { API_URL } from "../../../config/api";
+import { fetchCommunityPosts, createCommunityPost, toggleUpvote } from "../../../feature/student/courses/courseDetail/community/communityService";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const FILTERS = [
     { id: "all", label: "All posts" },
@@ -66,22 +67,46 @@ function PromptCard({ title, description, icon, to }) {
 
 export default function StudyGroup() {
     const { course } = useOutletContext();
-    const [studyGroupsData, setStudyGroupsData] = useState([]);
+    const courseId = course?.id;
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState("all");
     const [postDraft, setPostDraft] = useState("");
     const [attachments, setAttachments] = useState([]);
+    const { showError } = useError();
 
     useEffect(() => {
+        if (!courseId) return;
         let ignore = false;
+
+        function mapPost(raw) {
+            return {
+                id: raw.postId,
+                sender: raw.authorName,
+                title: raw.content?.split('\n')[0] || "Question",
+                content: raw.content,
+                createdAt: raw.createdAt,
+                likes: raw.upvoteCount || 0,
+                comments: (raw.comments || []).map(c => ({
+                    id: c.commentId,
+                    sender: c.authorName,
+                    content: c.content,
+                    createdAt: c.createdAt,
+                })),
+                pinned: raw.isPinned || false,
+                saved: false,
+            };
+        }
 
         async function loadCommunities() {
             try {
-                const res = await fetch(`${API_URL}/api/communities`, { credentials: "include" });
-                if (!res.ok) throw new Error(`Failed to fetch communities: ${res.status}`);
-                const data = await res.json();
-                if (!ignore) setStudyGroupsData(Array.isArray(data) ? data : []);
+                setLoading(true);
+                const data = await fetchCommunityPosts(courseId);
+                if (!ignore) setPosts(Array.isArray(data) ? data.map(mapPost) : []);
             } catch {
-                if (!ignore) setStudyGroupsData([]);
+                if (!ignore) setPosts([]);
+            } finally {
+                if (!ignore) setLoading(false);
             }
         }
 
@@ -89,25 +114,12 @@ export default function StudyGroup() {
         return () => {
             ignore = true;
         };
-    }, []);
-
-    const studyGroup = useMemo(() => {
-        if (!course) {
-            return null;
-        }
-
-        return studyGroupsData.find((community) => community.courseId === course.id);
-    }, [course]);
+    }, [courseId]);
 
     const summary = useMemo(() => {
-        if (!studyGroup) {
-            return null;
-        }
-
-        const posts = studyGroup.posts || [];
-        const pinnedPosts = posts.filter((post) => post.pinned);
+        const pinnedPosts = posts.filter((post) => post.isPinned);
         const commentsCount = posts.reduce((total, post) => total + (post.comments?.length || 0), 0);
-        const likesCount = posts.reduce((total, post) => total + (post.likes || 0), 0);
+        const likesCount = posts.reduce((total, post) => total + (post.upvoteCount || 0), 0);
         const latestPosts = [...posts]
             .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
             .slice(0, 3);
@@ -119,12 +131,10 @@ export default function StudyGroup() {
             likesCount,
             latestPosts,
         };
-    }, [studyGroup]);
+    }, [posts]);
 
     const filteredPosts = useMemo(() => {
-        if (!summary) {
-            return [];
-        }
+        if (!summary) return [];
 
         switch (activeFilter) {
             case "pinned":
@@ -136,6 +146,33 @@ export default function StudyGroup() {
         }
     }, [activeFilter, summary]);
 
+    const handleCreatePost = async () => {
+        if (!postDraft.trim() || !courseId) return;
+        try {
+            await createCommunityPost(courseId, postDraft);
+            setPostDraft("");
+            const data = await fetchCommunityPosts(courseId);
+            setPosts(Array.isArray(data) ? data.map(p => ({
+                id: p.postId,
+                sender: p.authorName,
+                title: p.content?.split('\n')[0] || "Question",
+                content: p.content,
+                createdAt: p.createdAt,
+                likes: p.upvoteCount || 0,
+                comments: (p.comments || []).map(c => ({
+                    id: c.commentId,
+                    sender: c.authorName,
+                    content: c.content,
+                    createdAt: c.createdAt,
+                })),
+                pinned: p.isPinned || false,
+                saved: false,
+            })) : []);
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
     if (!course) {
         return (
             <div className="py-10 text-center">
@@ -144,14 +181,10 @@ export default function StudyGroup() {
         );
     }
 
-    if (!studyGroup || !summary) {
+    if (loading) {
         return (
-            <div className="rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-10 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-default-light dark:text-text-accent-default-dark">
-                    <UsersIcon className="h-7 w-7" />
-                </div>
-                <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No study group for this course</h3>
-                <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">There are no study group posts configured for this course yet.</p>
+            <div className="py-10 text-center">
+                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading community...</p>
             </div>
         );
     }
@@ -229,7 +262,6 @@ export default function StudyGroup() {
                                 <StudyGroupPost
                                     key={post.id}
                                     postData={post}
-                                    department={studyGroup.department}
                                 />
                             ))}
                         </menu>
@@ -276,7 +308,7 @@ export default function StudyGroup() {
             <aside className="space-y-6 xl:sticky xl:top-20 xl:self-start">
                 <BaseComponent
                     title="Start a thread"
-                    description={`Posting as a student in ${studyGroup.department}`}
+                    description={`Posting in ${course.title || "this course"}`}
                     componentButton={<PaperPlaneIcon className="h-5 w-5 text-text-accent-default-light dark:text-text-accent-default-dark" />}
                     contentClassName="space-y-4"
                 >
@@ -347,7 +379,8 @@ export default function StudyGroup() {
 
                     <button
                         type="button"
-                        disabled={!postDraft.trim()}
+                        disabled={!postDraft.trim() || !courseId}
+                        onClick={handleCreatePost}
                         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-text-accent-default-light px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-text-accent-hover-light disabled:opacity-50 dark:bg-text-accent-default-dark dark:hover:bg-text-accent-hover-dark"
                     >
                         <PaperPlaneIcon className="h-4 w-4" />

@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 import { fetchCourseStudents } from "../../../feature/admin/services/adminApi";
 import { SearchIcon, UserIcon } from "../../../components/ui/icons";
 
 export default function ManageCourseStudentsTab({ courseId }) {
+    const { showError } = useError();
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -12,7 +14,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
             const data = await fetchCourseStudents(courseId);
             setStudents(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error("Failed to load students:", err);
+            showError(err.message);
         } finally {
             setLoading(false);
         }

@@ -8,7 +8,8 @@ import DropdownMenu from "../../ui/DropdownMenu";
 import ToggleViewMode from "../../ui/ToggleViewMode";
 import ToggleTheme from "../../ui/ToggleTheme";
 
-import { IntelliCampusIcon, BellIconLight, TranslateIcon, SignOutIcon, UserIcon } from "../../ui/icons";
+import { IntelliCampusIcon, BellIconLight, TranslateIcon, SignOutIcon, UserIcon, InboxIcon } from "../../ui/icons";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 
 const viewLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
@@ -23,6 +24,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
     const notificationsRef = useRef(null);
     const profileMenuRef = useRef(null);
     const eventSourceRef = useRef(null);
+    const { showError } = useError();
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -38,48 +40,47 @@ export default function Header({ avatar, notifications: initialNotifications, is
         return () => document.removeEventListener('click', handleClick);
     }, []);
 
-    
-
     // Connect to SSE stream for real-time notifications
     useEffect(() => {
         try {
-            // Close any existing connection
             if (eventSourceRef.current) {
                 eventSourceRef.current.close();
             }
 
-            // Create new EventSource connection
             const eventSource = new EventSource('/api/notifications/stream', { withCredentials: true });
             eventSourceRef.current = eventSource;
 
-            // Handle incoming SSE messages
             eventSource.onmessage = (event) => {
                 try {
                     const notification = JSON.parse(event.data);
                     setNotifications(prevNotifications => {
-                        // Avoid duplicates
                         const exists = prevNotifications.some(n => n.userNotificationId === notification.userNotificationId);
                         if (exists) return prevNotifications;
                         return [notification, ...prevNotifications];
                     });
                 } catch (err) {
-                    console.error('Failed to parse SSE notification:', err);
+                    showError(err.message);
                 }
             };
 
-            // Handle errors
-            eventSource.onerror = (err) => {
-                console.error('SSE connection error:', err);
+            eventSource.onerror = () => {
+                eventSource.close();
+                eventSourceRef.current = null;
+                setTimeout(() => {
+                    const newEventSource = new EventSource('/api/notifications/stream', { withCredentials: true });
+                    eventSourceRef.current = newEventSource;
+                    newEventSource.onmessage = eventSource.onmessage;
+                    newEventSource.onerror = eventSource.onerror;
+                }, 3000);
             };
 
-            // Cleanup function
             return () => {
                 eventSource.close();
             };
         } catch (err) {
-            console.error('Failed to initialize SSE:', err);
+            showError(err.message);
         }
-    }, []);
+    }, [showError]);
 
     useEffect(() => {
         const refreshNotifications = async () => {
@@ -87,12 +88,12 @@ export default function Header({ avatar, notifications: initialNotifications, is
                 const fresh = await fetchMyNotifications();
                 setNotifications(fresh || []);
             } catch (err) {
-                console.error('Failed to refresh notifications after action:', err);
+                showError(err.message);
             }
         };
 
         return subscribeNotificationsChanged(refreshNotifications);
-    }, []);
+    }, [showError]);
 
     const handleMarkAsRead = async (notificationId) => {
         try {
@@ -100,7 +101,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
             const fresh = await fetchMyNotifications();
             setNotifications(fresh || []);
         } catch (err) {
-            console.error('Failed to mark notification as read:', err);
+            showError(err.message);
         }
     };
 
@@ -111,7 +112,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
             const fresh = await fetchMyNotifications();
             setNotifications(fresh || []);
         } catch (err) {
-            console.error('Failed to mark all as read:', err);
+            showError(err.message);
         } finally {
             setIsMarkingAllRead(false);
         }
@@ -174,6 +175,13 @@ export default function Header({ avatar, notifications: initialNotifications, is
                         />
                     </div>
                 )}
+
+                <Link
+                  to="/inbox"
+                  className="transition-colors duration-200 p-2 rounded-md text-text-secondary-active-light hover:text-text-secondary-hover-light hover:bg-bg-fill-primary-hover-light dark:text-text-secondary-active-dark dark:hover:text-text-primary-active-dark dark:hover:bg-bg-fill-primary-hover-dark"
+                >
+                  <InboxIcon className={isMobile ? 'w-5 h-5' : 'w-6 h-6'} />
+                </Link>
 
                 <div id="notifications-button" className="relative" ref={notificationsRef}>
                     <button 

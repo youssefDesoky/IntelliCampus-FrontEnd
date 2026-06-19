@@ -14,7 +14,6 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 	const [actionButtonClicked, setActionButtonClicked] = useState(null);
 	const [dropdownStyle, setDropdownStyle] = useState({});
 	const buttonRefs = useRef({});
-
 	useEffect(() => {
 		if (selectAll) {
 			if (selectedRows.length !== rowData.length) {
@@ -128,7 +127,7 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 						</td>
 					)}
 
-					{Object.values(row).slice(0, columnCount).map((cell, cellIndex) => (
+					{Object.entries(row).filter(([key]) => !key.startsWith('_')).slice(0, columnCount).map(([key, cell], cellIndex) => (
 						<td key={cellIndex} className={`px-1 sm:px-3 py-2 align-middle ${columnAlignments?.[cellIndex] || "text-center"}`}>
 							{cell}
 						</td>
@@ -204,8 +203,6 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 				onConfirm={() => {
 					if (onDelete) {
 						onDelete(deleteButtonClicked);
-					} else {
-						console.log(`Deleting ${role} at index:`, deleteButtonClicked);
 					}
 					setDeleteButtonClicked(false);
 					return true;

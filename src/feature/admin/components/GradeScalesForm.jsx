@@ -1,7 +1,9 @@
 import { useState } from "react";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import Button from "../../../components/ui/Button";
+import NumberInput from "../../../components/form/NumberInput";
 import { PlusIcon, TrashIcon } from "../../../components/ui/icons";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const defaultGradeScale = { gradeLetter: "", minPercentage: 0, gpaValue: 0, sortOrder: 0 };
 
@@ -16,15 +18,15 @@ function GradeScaleCard({ scale, index, onChange, onRemove }) {
             </div>
             <div>
                 <label className="block text-xs font-medium mb-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">Min %</label>
-                <input type="number" step="0.01" value={scale.minPercentage} onChange={(e) => onChange(index, "minPercentage", e.target.value)} placeholder="90" className={inputClass} />
+                <NumberInput step="0.01" value={scale.minPercentage} onChange={(e) => onChange(index, "minPercentage", e.target.value)} placeholder="90" className="w-full" />
             </div>
             <div>
                 <label className="block text-xs font-medium mb-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">GPA</label>
-                <input type="number" step="0.01" value={scale.gpaValue} onChange={(e) => onChange(index, "gpaValue", e.target.value)} placeholder="4.0" className={inputClass} />
+                <NumberInput step="0.01" value={scale.gpaValue} onChange={(e) => onChange(index, "gpaValue", e.target.value)} placeholder="4.0" className="w-full" />
             </div>
             <div>
                 <label className="block text-xs font-medium mb-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">Order</label>
-                <input type="number" value={scale.sortOrder} onChange={(e) => onChange(index, "sortOrder", parseInt(e.target.value) || 0)} className={inputClass} />
+                <NumberInput value={scale.sortOrder} onChange={(e) => onChange(index, "sortOrder", parseInt(e.target.value) || 0)} className="w-full" />
             </div>
             <div className="flex justify-center">
                 <Button variant="danger" type="button" onClick={() => onRemove(index)}>
@@ -36,14 +38,13 @@ function GradeScaleCard({ scale, index, onChange, onRemove }) {
 }
 
 export default function GradeScalesForm({ onClose, onSubmit, initialData = {}, isLoading = false, isOpen = true }) {
+    const { showError } = useError();
     const [gradeScales, setGradeScales] = useState(() => {
         if (initialData.gradeScales && initialData.gradeScales.length > 0) {
             return initialData.gradeScales.map((g, i) => ({ ...g, sortOrder: i + 1 }));
         }
         return [];
     });
-    const [error, setError] = useState(null);
-
     const addGradeScale = () => {
         setGradeScales(prev => [...prev, { ...defaultGradeScale, sortOrder: prev.length + 1 }]);
     };
@@ -58,11 +59,10 @@ export default function GradeScalesForm({ onClose, onSubmit, initialData = {}, i
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
 
         const validGradeScales = gradeScales.filter(g => g.gradeLetter.trim() !== "");
         if (validGradeScales.length === 0) {
-            setError("At least one grade scale is required");
+            showError("At least one grade scale is required");
             return;
         }
 
@@ -75,7 +75,7 @@ export default function GradeScalesForm({ onClose, onSubmit, initialData = {}, i
             })) });
             onClose();
         } catch (err) {
-            setError(err.message || "An error occurred");
+            showError(err.message || "An error occurred");
         }
     };
 
@@ -90,12 +90,6 @@ export default function GradeScalesForm({ onClose, onSubmit, initialData = {}, i
             submitLoading={isLoading}
         >
             <div className="mb-6">
-                {error && (
-                    <div className="mb-3 bg-bg-status-error-light dark:bg-bg-status-error-dark text-text-status-error-light dark:text-text-status-error-dark p-3 rounded-lg text-sm">
-                        {error}
-                    </div>
-                )}
-
                 <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
                         {gradeScales.length} grade scale{gradeScales.length !== 1 ? "s" : ""}

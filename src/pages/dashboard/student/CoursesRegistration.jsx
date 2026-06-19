@@ -19,6 +19,7 @@ import {
     registerForCourse,
     unregisterFromCourse,
 } from "../../../feature/student/courses/courseRegister/registrationApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 
 const sampleSchedule = [
@@ -107,8 +108,8 @@ export default function CoursesRegistration() {
     const [sectionOptionsByCourseId, setSectionOptionsByCourseId] = useState({});
     const [selectedSectionByCourseId, setSelectedSectionByCourseId] = useState({});
     const [pendingRemovalCourseIds, setPendingRemovalCourseIds] = useState([]);
+    const { showError } = useError();
     const [loading, setLoading]   = useState(true);
-    const [error, setError]       = useState(null);
 
     const [selectedCoursesPage, setSelectedCoursesPage]   = useState(1);
     const [availableCoursesPage, setAvailableCoursesPage] = useState(1);
@@ -120,7 +121,6 @@ export default function CoursesRegistration() {
     /* ── Fetch data on mount ── */
     const loadData = useCallback(async () => {
         setLoading(true);
-        setError(null);
         try {
             const [registrations, activeCourses] = await Promise.all([
                 getMyRegistrations(),
@@ -138,7 +138,7 @@ export default function CoursesRegistration() {
                     .map(mapActiveCourseToCard)
             );
         } catch (err) {
-            setError(err.message || "Failed to load courses");
+            showError(err.message || "Failed to load courses");
         } finally {
             setLoading(false);
         }
@@ -207,7 +207,7 @@ export default function CoursesRegistration() {
                 });
             } catch (err) {
                 if (!isMounted) return;
-                setError(err.message || "Failed to load sections");
+                showError(err.message || "Failed to load sections");
             }
         }
 
@@ -261,7 +261,7 @@ export default function CoursesRegistration() {
         for (const course of pending) {
             const section = selectedSectionByCourseId[course.courseId];
             if (!section?.value) {
-                setError(`Please select a section for ${course.title}.`);
+                showError(`Please select a section for ${course.title}.`);
                 return;
             }
         }
@@ -284,21 +284,13 @@ export default function CoursesRegistration() {
             setResultDialogMessage(msgs.join(" and ") + " successfully!");
             setShowResultDialog(true);
         } catch (err) {
-            setResultDialogVariant("error");
-            setResultDialogMessage(err.message || "Failed to confirm registration.");
-            setShowResultDialog(true);
+            showError(err.message || "Failed to confirm registration.");
         }
     };
 
     return (
         <>
             <CourseRegistrationHeader deviceType={isDesktop ? "desktop" : "mobile"} selectedCourses={selectedCourses} />
-
-            {error && (
-                <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                    {error}
-                </div>
-            )}
 
             {loading ? (
                 <p className="text-center py-10 text-text-secondary-active-light dark:text-text-secondary-active-dark">

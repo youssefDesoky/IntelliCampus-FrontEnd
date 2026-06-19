@@ -14,7 +14,7 @@ export default function ManageStudents() {
   const user = useRouteLoaderData("root");
   const isSuperAdmin = (user?.roles || []).some(r => r.toLowerCase() === 'superadmin');
   const isPostgradAdmin = (user?.roles || []).some(r => r.toLowerCase() === 'admin_postgrad');
-  const defaultStudentType = isPostgradAdmin ? 'postgrad' : 'undergrad';
+  const defaultStudentType = isPostgradAdmin ? 'masters' : 'undergrad';
 
   const [assignRoleTarget, setAssignRoleTarget] = useState(null);
   const [filterLevel, setFilterLevel] = useState([]);
@@ -98,7 +98,10 @@ export default function ManageStudents() {
           { label: 'Edit', onClick: () => onEdit(item) },
           { label: 'Delete', className: 'text-text-danger-default-light dark:text-text-danger-default-dark', onClick: () => onDelete(item) },
         ];
-        if (isSuperAdmin && !isTargetUndergrad && !isTargetSuperAdmin) {
+        const isTargetMasters = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_masters';
+        const isTargetPhD = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_phd';
+        const isTargetDiploma = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_diploma';
+        if (isSuperAdmin && !isTargetUndergrad && !isTargetMasters && !isTargetPhD && !isTargetDiploma && !isTargetSuperAdmin) {
           items.push({ label: 'Assign Role', onClick: () => setAssignRoleTarget(item) });
         }
         return items;
@@ -126,10 +129,10 @@ export default function ManageStudents() {
           </>
         );
       }}
-      renderForm={({ isFormOpen, editingItem, closeForm, handleCreate }) => {
+      renderForm={({ isFormOpen, editingItem, closeForm, handleCreate, handleFormSubmit }) => {
         if (!isFormOpen) return null;
         if (editingItem) {
-          return <StudentForm method="put" initialData={editingItem} onClose={closeForm} />;
+          return <StudentForm method="put" initialData={editingItem} onClose={closeForm} onSubmit={handleFormSubmit} isSuperAdmin={isSuperAdmin} defaultStudentType={defaultStudentType} />;
         }
         return <StudentForm method="post" onClose={closeForm} onSubmit={handleCreate} isSuperAdmin={isSuperAdmin} defaultStudentType={defaultStudentType} />;
       }}

@@ -6,6 +6,7 @@ import Button from "../../../../components/ui/Button";
 import TextArea from "../../../../components/ui/TextArea";
 import { PlusIcon, XIcon } from "../../../../components/ui/icons";
 import BaseFormComponent from "../../../../components/ui/BaseFormComponent";
+import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 export default function InstructorCourseAnnouncements() {
     const outletContext = useOutletContext();
@@ -13,7 +14,7 @@ export default function InstructorCourseAnnouncements() {
     const courseId = outletContext?.courseId;
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError } = useError();
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [content, setContent] = useState("");
     const [attachments, setAttachments] = useState([]);
@@ -24,13 +25,12 @@ export default function InstructorCourseAnnouncements() {
         if (!courseId) return;
 
         setLoading(true);
-        setError(null);
 
         try {
             const data = await fetchCourseAnnouncements(courseId);
             setAnnouncements(Array.isArray(data) ? data : []);
         } catch (err) {
-            setError(err.message || "Failed to load announcements.");
+            showError(err.message || "Failed to load announcements.");
             setAnnouncements([]);
         } finally {
             setLoading(false);
@@ -58,7 +58,7 @@ export default function InstructorCourseAnnouncements() {
 
         const text = content.trim();
         if (!text) {
-            alert("Please enter announcement content");
+            showError("Please enter announcement content");
             return;
         }
 
@@ -77,8 +77,7 @@ export default function InstructorCourseAnnouncements() {
             setShowCreateForm(false);
             await loadAnnouncements();
         } catch (err) {
-            console.error("Failed to create/update announcement:", err);
-            alert(`Failed to ${editingAnnouncement ? "update" : "create"} announcement: ${err.message}`);
+            showError(`Failed to ${editingAnnouncement ? "update" : "create"} announcement: ${err.message}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -128,10 +127,6 @@ export default function InstructorCourseAnnouncements() {
 
     if (loading) {
         return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading announcements...</p>;
-    }
-
-    if (error) {
-        return <p className="text-sm text-text-danger-default-light dark:text-text-danger-default-dark">{error}</p>;
     }
 
     return (

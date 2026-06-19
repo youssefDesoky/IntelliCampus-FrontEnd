@@ -45,7 +45,6 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
         const formData = Object.fromEntries(new FormData(form));
         formData.type = selectedType.value;
         formData.capacity = parseInt(selectedCapacity.value);
-        console.log(`[RoomForm] Submitting room:`, JSON.stringify(formData, null, 2));
         if (onSubmit) onSubmit(formData);
     };
 
@@ -79,14 +78,16 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                         required
                     />
 
-                    <InputItem
-                        label="Room Name Arabic"
-                        type="text"
-                        id="nameAr"
-                        name="nameAr"
-                        placeholder="e.g., قاعة 1، معمل أ، مكتب 101"
-                        defaultValue={initialData.nameAr || ""}
-                    />
+                    <div dir="rtl">
+                        <InputItem
+                            label="اسم الغرفة"
+                            type="text"
+                            id="nameAr"
+                            name="nameAr"
+                            placeholder="قاعة 1، معمل أ، مكتب 101"
+                            defaultValue={initialData.nameAr || ""}
+                        />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -119,6 +120,17 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                     placeholder="e.g., Building A, Floor 2"
                     defaultValue={initialData.location || ""}
                 />
+
+                <div dir="rtl">
+                    <InputItem
+                        label="الموقع"
+                        type="text"
+                        id="locationAr"
+                        name="locationAr"
+                        placeholder="المبنى أ، الطابق 2"
+                        defaultValue={initialData.locationAr || ""}
+                    />
+                </div>
             </div>
         </BaseFormComponent>
     );

@@ -14,6 +14,7 @@ import VolumeXIcon from "../../../../components/ui/icons/VolumeXIcon";
 import PhoneSlashIcon from "../../../../components/ui/icons/PhoneSlashIcon";
 import HandIcon from "../../../../components/ui/icons/HandIcon";
 import RecordIcon from "../../../../components/ui/icons/RecordIcon";
+import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 
 function ControlButton({ active, danger, onClick, label, children }) {
@@ -55,6 +56,7 @@ export default function MeetingRoom() {
     const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
     const [isHandRaised, setIsHandRaised] = useState(false);
 
+    const { showError } = useError();
     const containerRef = useRef(null);
     const apiRef = useRef(null);
 
@@ -64,7 +66,7 @@ export default function MeetingRoom() {
             const data = await fetchCourseMeetings(courseId);
             setMeetings(data);
         } catch (err) {
-            console.error("Failed to load meetings:", err);
+            showError(err.message);
         } finally {
             setLoading(false);
         }
@@ -154,8 +156,7 @@ export default function MeetingRoom() {
             await loadMeetings();
             setActiveMeeting(meeting);
         } catch (err) {
-            console.error("Failed to create meeting:", err);
-            alert("Failed to create meeting. Please try again.");
+            showError("Failed to create meeting. Please try again.");
         } finally {
             setCreating(false);
         }

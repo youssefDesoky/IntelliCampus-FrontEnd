@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
+import { useError } from "../../../../../contexts/ErrorContext.jsx";
 
 import PaginationButtons from "../../../../../components/ui/PaginationButtons";
 import QuestionCard from "./QuestionCard";
@@ -15,9 +16,9 @@ export default function CourseQuizPractice() {
 	const [searchParams] = useSearchParams();
 	const reviewMode = searchParams.get("review") || null;
 	const selectedQuizId = searchParams.get("quizId");
+	const { showError } = useError();
 	const [practiceQuizData, setPracticeQuizData] = useState(null);
 	const [isQuizLoading, setIsQuizLoading] = useState(true);
-	const [quizError, setQuizError] = useState(null);
 	const submissionLockRef = useRef(false);
 
 	const [currentPage, setCurrentPage] = useState(1);
@@ -30,11 +31,10 @@ export default function CourseQuizPractice() {
 		if (!courseId) return;
 		try {
 			setIsQuizLoading(true);
-			setQuizError(null);
 			const data = await fetchPracticeQuiz(courseId, selectedQuizId);
 			setPracticeQuizData(data);
 		} catch (err) {
-			setQuizError(err.message || "Failed to load quiz");
+			showError(err.message || "Failed to load quiz");
 		} finally {
 			setIsQuizLoading(false);
 		}
@@ -148,12 +148,6 @@ export default function CourseQuizPractice() {
 		<div className="relative overflow-hidden">
 			<div className="absolute -top-24 right-0 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl dark:bg-amber-900/20" />
 			<div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-sky-200/30 blur-3xl dark:bg-sky-900/20" />
-
-			{(isQuizLoading || quizError) && (
-				<div className="relative mb-4 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark px-4 py-3 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-					{isQuizLoading ? "Loading practice quiz..." : "Quiz service unavailable right now."}
-				</div>
-			)}
 
 			<div className="relative">
 				<QuizHeader

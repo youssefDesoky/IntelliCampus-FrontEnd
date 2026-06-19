@@ -60,6 +60,7 @@ export { default as ItalicIcon } from './ItalicIcon.jsx';
 export { default as InfoIcon } from './InfoIcon.jsx';
 export { default as ImportIcon } from './ImportIcon.jsx';
 export { default as ImageIcon } from './ImageIcon.jsx';
+export { default as InboxIcon } from './InboxIcon.jsx';
 
 export { default as KeyIcon } from './KeyIcon.jsx';
 

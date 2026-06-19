@@ -18,6 +18,7 @@ import {
     fetchAvailableCoursesForStudent,
     sendEmail,
 } from "../../../feature/admin/services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 import StudentForm from "../../../feature/admin/components/StudentForm";
 import StudentInfoTab from "./StudentInfoTab";
 import StudentCompletedTab from "./StudentCompletedTab";
@@ -35,9 +36,10 @@ export default function StudentDetails() {
     const { studentId } = useParams();
     const navigate = useNavigate();
 
+    const { showError } = useError();
+
     const [student, setStudent] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState("info");
 
     const [registeredCourses, setRegisteredCourses] = useState([]);
@@ -62,7 +64,6 @@ export default function StudentDetails() {
             setEmailSubject("");
             setEmailBody("");
         } catch (err) {
-            console.error("Failed to send email:", err);
         } finally {
             setSendingEmail(false);
         }
@@ -70,11 +71,10 @@ export default function StudentDetails() {
 
     const loadStudent = useCallback(async () => {
         try {
-            setError(null);
             const data = await fetchStudentById(studentId);
             setStudent(data);
         } catch (err) {
-            setError(err.message);
+            showError(err.message);
         } finally {
             setLoading(false);
         }
@@ -92,7 +92,6 @@ export default function StudentDetails() {
             setCompletedCourses(completed);
             setAvailableCourses(available);
         } catch (err) {
-            console.error("Failed to load courses:", err);
         } finally {
             setCoursesLoading(false);
         }
@@ -110,19 +109,6 @@ export default function StudentDetails() {
         return (
             <div className="p-6">
                 <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading student details...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="p-6">
-                <div className="flex items-center gap-4 mb-6">
-                    <Button variant="outline" size="sm" onClick={() => navigate("/admin/students")}>
-                        <ArrowRightIcon className="w-4 h-4 rotate-180" /> Back
-                    </Button>
-                </div>
-                <p className="text-center py-10 text-red-500">Error: {error}</p>
             </div>
         );
     }
