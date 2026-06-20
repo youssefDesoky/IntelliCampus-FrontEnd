@@ -11,7 +11,7 @@ const emptyInstructorOption = { value: "", label: "No head instructor" };
 
 export default function DepartmentForm({ onClose, onSubmit, initialData = {}, instructors = [], isLoading = false, isOpen = true }) {
     const { showError } = useError();
-    const isEdit = !!initialData.id;
+    const isEdit = !!(initialData.id ?? initialData.departmentId);
     const instructorOptions = [
         emptyInstructorOption,
         ...instructors.map((instructor) => ({
@@ -44,7 +44,6 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
                 descriptionAr: (formData.descriptionAr || "").trim(),
                 instructorId: selectedInstructor.value || null,
             });
-            onClose();
         } catch (err) {
             showError(err.message || "An error occurred");
         }
@@ -57,7 +56,7 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
             description={isEdit ? "Update the department details below." : "Fill in the details below to add a new department to the system."}
             onClose={onClose}
             onSubmit={handleSubmit}
-            submitText={isEdit ? (isLoading ? "Saving..." : "Update Department") : (isLoading ? "Saving..." : "Create Department")}
+            submitText={isEdit ? (isLoading ? "Saving..." : "Save Changes") : (isLoading ? "Saving..." : "Create Department")}
             submitLoading={isLoading}
         >
             <div className="space-y-6 mb-6">

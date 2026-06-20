@@ -23,7 +23,7 @@ const capacityOptions = [
 ];
 
 export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoading = false, isOpen = true }) {
-    const isEdit = !!initialData.id;
+    const isEdit = !!(initialData.id ?? initialData.roomId);
 
     const [selectedType, setSelectedType] = useState(() => {
         if (initialData.type) {
@@ -63,7 +63,7 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
             description={isEdit ? "Update the details below to edit this room." : "Fill in the details below to add a new room to the system."}
             onClose={onClose}
             onSubmit={handleSubmit}
-            submitText={isEdit ? (isLoading ? "Saving..." : "Update Room") : (isLoading ? "Saving..." : "Create Room")}
+            submitText={isEdit ? (isLoading ? "Saving..." : "Save Changes") : (isLoading ? "Saving..." : "Create Room")}
             submitLoading={isLoading}
         >
             <div className="space-y-6 mb-6">
@@ -85,7 +85,7 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                             id="nameAr"
                             name="nameAr"
                             placeholder="قاعة 1، معمل أ، مكتب 101"
-                            defaultValue={initialData.nameAr || ""}
+                            defaultValue={initialData.nameAr || initialData.roomNameAr || ""}
                         />
                     </div>
                 </div>
@@ -118,7 +118,7 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                     id="location"
                     name="location"
                     placeholder="e.g., Building A, Floor 2"
-                    defaultValue={initialData.location || ""}
+                    defaultValue={initialData.location || initialData.roomLocation || initialData.Location || initialData.RoomLocation || ""}
                 />
 
                 <div dir="rtl">
@@ -128,7 +128,7 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                         id="locationAr"
                         name="locationAr"
                         placeholder="المبنى أ، الطابق 2"
-                        defaultValue={initialData.locationAr || ""}
+                        defaultValue={initialData.locationAr || initialData.roomLocationAr || ""}
                     />
                 </div>
             </div>

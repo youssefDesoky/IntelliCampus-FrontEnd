@@ -58,10 +58,11 @@ export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", c
                 <div className="flex flex-col justify-center
                                 bg-transparent lg:bg-bg-surface-primary-default-light dark:lg:bg-bg-surface-primary-default-dark
                                 col-span-100 p-6 rounded-2xl lg:rounded-bl-none lg:col-span-55 lg:p-8">
-                    <div className="w-full h-[80%] mx-auto
+                    <div className="w-full mx-auto
                                     bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark
                                     border border-border-primary-default-light dark:border-border-primary-default-dark
-                                    p-6 lg:p-12 rounded-2xl shadow-2xl min-h-125 max-w-125">
+                                    p-6 lg:p-12 rounded-2xl shadow-2xl min-h-125 max-w-125
+                                    flex flex-col justify-center">
                         <div className="mb-6 space-y-2 md:space-y-3">
                             <h2 className="text-2xl lg:text-3xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
                                 {title}

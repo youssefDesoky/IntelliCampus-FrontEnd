@@ -16,6 +16,7 @@ import {
     fetchStudentRegisteredCourses,
     fetchStudentCompletedCourses,
     fetchAvailableCoursesForStudent,
+    updateStudent,
     sendEmail,
 } from "../../../feature/admin/services/adminApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
@@ -54,6 +55,16 @@ export default function StudentDetails() {
     const [emailBody, setEmailBody] = useState("");
     const [sendingEmail, setSendingEmail] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+
+    const handleUpdateStudent = async (formData) => {
+        try {
+            await updateStudent(studentId, formData);
+            setIsEditOpen(false);
+            await loadStudent();
+        } catch (err) {
+            showError(err.message);
+        }
+    };
 
     const handleSendEmail = async () => {
         if (!emailSubject.trim() || !emailBody.trim()) return;
@@ -153,7 +164,7 @@ export default function StudentDetails() {
                             </h1>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs font-mono tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                    {student.studentId}
+                                    {student.studentCode || student.studentId}
                                 </span>
                             </div>
                         </div>
@@ -264,7 +275,7 @@ export default function StudentDetails() {
                 />
             )}
             {isEditOpen && (
-                <StudentForm method="put" initialData={student} onClose={() => setIsEditOpen(false)} />
+                <StudentForm method="put" initialData={student} onClose={() => setIsEditOpen(false)} onSubmit={handleUpdateStudent} />
             )}
         </div>
     );

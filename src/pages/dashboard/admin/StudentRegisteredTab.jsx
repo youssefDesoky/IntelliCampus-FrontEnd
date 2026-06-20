@@ -42,7 +42,7 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
             row.code = c.courseCode || c.code || "-";
         }
         row.course = <span className="font-medium text-sm">{c.courseName || c.title || c.name}</span>;
-        row.section = "Section " + (c.section || c.className || "-");
+        row.section = c.className || c.groupCode || `Section ${c.classId}` || "-";
         row.actions = (
             <div className="flex items-center justify-center gap-1 sm:gap-3">
                 <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); onSectionChange(c); }}>
@@ -351,7 +351,7 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                 </div>
                             </div>
                             <div className="flex justify-end gap-2 pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <Button variant="outline" size="sm" onClick={() => setSectionChangeTarget(null)}>Cancel</Button>
+                                <Button variant="secondary" size="sm" onClick={() => setSectionChangeTarget(null)}>Cancel</Button>
                                 <Button variant="primary" size="sm" onClick={handleChangeSection} disabled={changingSection || !selectedSection}>
                                     {changingSection ? "Saving..." : "Save Changes"}
                                 </Button>

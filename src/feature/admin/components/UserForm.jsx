@@ -5,6 +5,7 @@ import { PlusIcon, FilePenIcon } from "../../../components/ui/icons";
 import InputItem from "../../../components/form/InputItem";
 import Select from 'react-select'; // react-select for better country list
 import countryList from 'react-select-country-list';
+import { EXCLUDED_COUNTRIES } from "../utils/validation";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 
 const adminRoleOptions = [
@@ -17,7 +18,7 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
     const isEdit = method === "put";
     const roleIdField = `${role}Id`;
 
-    const options = useMemo(() => countryList().getData(), []);
+    const options = useMemo(() => countryList().getData().filter(c => !EXCLUDED_COUNTRIES.includes(c.value)), []);
 
     const [selectedNationality, setSelectedNationality] = useState(() => {
         const initialNationality = initialData.nationality;

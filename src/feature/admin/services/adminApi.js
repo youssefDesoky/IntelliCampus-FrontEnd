@@ -17,6 +17,13 @@ export async function createStudent(data) {
     });
 }
 
+export async function updateStudent(id, data) {
+    return apiClient(`/api/students/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
 export async function deleteStudent(id) {
     await apiClient(`/api/students/${id}`, { method: "DELETE" });
 }
@@ -29,6 +36,13 @@ export async function fetchInstructors() {
 
 export async function fetchInstructorById(id) {
     return apiClient(`/api/instructors/${id}`);
+}
+
+export async function updateInstructor(id, data) {
+    return apiClient(`/api/instructors/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
 }
 
 export async function createInstructor(data) {
@@ -256,6 +270,13 @@ export async function updateBylawPassingGrade(id, data) {
 
 export async function updateBylawProbation(id, data) {
     return apiClient(`/api/Bylaw/${id}/probation`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateBylawGradeWeights(id, data) {
+    return apiClient(`/api/Bylaw/${id}/grade-weights`, {
         method: "PUT",
         body: JSON.stringify(data),
     });
@@ -549,7 +570,10 @@ function toRoomPayload(data) {
     return {
         roomName: data.name,
         roomNameAr: data.nameAr,
+        type: data.type,
         capacity: data.capacity,
+        location: data.location,
+        locationAr: data.locationAr,
     };
 }
 
@@ -655,7 +679,7 @@ export async function getAvailableSlots(request) {
 }
 
 export async function unregisterStudentCourse(studentId, courseId) {
-    await apiClient(`/api/Registration/${courseId}`, { method: "DELETE" });
+    await apiClient(`/api/Students/${studentId}/courses/${courseId}`, { method: "DELETE" });
     return true;
 }
 
@@ -663,10 +687,10 @@ export async function fetchStudentCourseSections(studentId, courseId) {
     return await apiClient(`/api/Classes/course/${courseId}`);
 }
 
-export async function changeStudentCourseSection(studentId, courseId, section) {
-    return await apiClient(`/api/students/${studentId}/courses/${courseId}/section`, {
+export async function changeStudentCourseSection(studentId, courseId, classId) {
+    return await apiClient(`/api/Students/${studentId}/courses/${courseId}/section`, {
         method: "PATCH",
-        body: JSON.stringify({ section }),
+        body: JSON.stringify({ classId: Number(classId) }),
     });
 }
 

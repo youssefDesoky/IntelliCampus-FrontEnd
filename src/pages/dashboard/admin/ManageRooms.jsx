@@ -5,11 +5,12 @@ import useDeviceType from "../../../hooks/useDeviceType";
 import { fetchRooms, createRoom, updateRoom, deleteRoom } from "../../../feature/admin/services/adminApi";
 
 function buildRoomRow(room, isDesktop, isTablet) {
+  const nameAr = room.nameAr || room.roomNameAr;
   return {
     roomName: (
       <div className="flex flex-col text-left">
         <p className="font-medium">{room.name || room.roomName || "—"}</p>
-        {(isDesktop || isTablet) && <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{room.type || ""}</p>}
+        {nameAr && <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark" dir="rtl">{nameAr}</p>}
       </div>
     ),
         type: room.type || "—",

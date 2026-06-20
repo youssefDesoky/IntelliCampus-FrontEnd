@@ -5,11 +5,14 @@ import App from './App.jsx'
 import './index.css'
 import './i18n'
 import { ErrorProvider } from './contexts/ErrorContext.jsx'
+import { ToastProvider } from './contexts/ToastContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorProvider>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </ErrorProvider>
   </StrictMode>,
 )

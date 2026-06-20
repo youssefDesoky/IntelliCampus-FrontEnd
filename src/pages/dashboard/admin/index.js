@@ -2,6 +2,7 @@ export { default as Dashboard } from './Dashboard';
 export { default as ManageStudents } from './ManageStudents';
 export { default as ManageInstructors } from './ManageInstructors';
 export { default as ManageAdmins } from './ManageAdmins';
+export { default as AdminProfile } from './AdminProfile';
 export { default as ManageCourses } from './ManageCourses';
 export { default as ManageCourseClasses } from './ManageCourseClasses';
 export { default as ManageRooms } from './ManageRooms';
