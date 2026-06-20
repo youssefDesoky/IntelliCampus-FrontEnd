@@ -15,9 +15,11 @@ import CourseShell from "./feature/course/component/CourseShell";
 // Auth Pages
 import { LoginPage, ForgetPassword, ResetPassword, UnauthorizedPage, InternalServerErrorPage, ResourceNotFoundPage } from "./pages/auth";
 
+// Profile (shared across all roles)
+import Profile from "./pages/dashboard/Profile";
+
 // Student Pages
 import { 
-    Profile as StudentProfile,
     Schedule as StudentSchedule,
     MyCourses as StudentCourses,
     Dashboard as StudentDashboard, 
@@ -42,7 +44,7 @@ import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, Student
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
-import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes } from "./pages/dashboard/instructor"
+import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorReminders, InstructorSchedule } from "./pages/dashboard/instructor"
 import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
 import { InstructorMeetingRoom } from "./pages/dashboard/instructor"
 import InstructorCommunity from "./feature/student/courses/courseDetail/community/MyCommunities"
@@ -75,12 +77,14 @@ export default function App() {
         loader: rootAuthLoader,
         element: <AppLayout />,
         children: [
+            // ================= SHARED (all authenticated users) =================
+            { path: "profile", element: <Profile /> },
+
             // ================= STUDENT =================
             {
                 element: <RoleGuard allow={["student_undergrad", "student_masters", "student_phd", "student_diploma", "student"]} />,
                 children: [
                     { index: true, element: <StudentDashboard /> },
-                    { path: "profile", element: <StudentProfile /> },
                     { path: "fahim", element: <div>Fahim AI Content</div> },
                     { path: "courses", element: <StudentCourses /> },
 
@@ -116,6 +120,8 @@ export default function App() {
                 element: <RoleGuard allow={["instructor"]} />,
                 children: [
                     { index: true, element: <div>Instructor Dashboard Content</div> },
+                    { path: "reminders", element: <InstructorReminders /> },
+                    { path: "schedule", element: <InstructorSchedule /> },
                     { path: "courses", element: <InstructorCourses /> },
 
                     {

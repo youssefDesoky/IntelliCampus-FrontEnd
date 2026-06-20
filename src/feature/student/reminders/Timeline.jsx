@@ -6,43 +6,43 @@ import { addDays, format, isSameDay } from "date-fns";
 const categoryStyles = {
     assignments: {
         badge: "ASSIGNMENT",
-        badgeColor: "bg-red-100 text-red-600",
-        cardBorder: "border-red-200",
-        cardBg: "bg-red-50",
+        badgeColor: "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300",
+        cardBorder: "border-red-200 dark:border-red-800/60",
+        cardBg: "bg-red-50 dark:bg-red-950/40",
         icon: FileLinesIcon,
-        iconBg: "bg-red-100 text-red-500",
+        iconBg: "bg-red-100 text-red-500 dark:bg-red-900/50 dark:text-red-300",
     },
     classes: {
         badge: "CLASS",
-        badgeColor: "bg-blue-100 text-blue-600",
-        cardBorder: "border-blue-200",
-        cardBg: "bg-blue-50",
+        badgeColor: "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300",
+        cardBorder: "border-blue-200 dark:border-blue-800/60",
+        cardBg: "bg-blue-50 dark:bg-blue-950/40",
         icon: BookIcon,
-        iconBg: "bg-blue-100 text-blue-500",
+        iconBg: "bg-blue-100 text-blue-500 dark:bg-blue-900/50 dark:text-blue-300",
     },
     exams: {
         badge: "EXAM",
-        badgeColor: "bg-yellow-100 text-yellow-700",
-        cardBorder: "border-yellow-200",
-        cardBg: "bg-yellow-50",
+        badgeColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+        cardBorder: "border-yellow-200 dark:border-yellow-800/60",
+        cardBg: "bg-yellow-50 dark:bg-yellow-950/40",
         icon: ClipboardCheckIcon,
-        iconBg: "bg-yellow-100 text-yellow-600",
+        iconBg: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-300",
     },
     personal: {
         badge: "PERSONAL",
-        badgeColor: "bg-purple-100 text-purple-600",
-        cardBorder: "border-purple-200",
-        cardBg: "bg-purple-50",
+        badgeColor: "bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300",
+        cardBorder: "border-purple-200 dark:border-purple-800/60",
+        cardBg: "bg-purple-50 dark:bg-purple-950/40",
         icon: FileIcon,
-        iconBg: "bg-purple-100 text-purple-500",
+        iconBg: "bg-purple-100 text-purple-500 dark:bg-purple-900/50 dark:text-purple-300",
     },
     default: {
         badge: "REMINDER",
-        badgeColor: "bg-gray-100 text-gray-700",
-        cardBorder: "border-gray-200",
-        cardBg: "bg-gray-50",
+        badgeColor: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+        cardBorder: "border-gray-200 dark:border-gray-700",
+        cardBg: "bg-gray-50 dark:bg-gray-900/60",
         icon: EllipsisVerticalIcon,
-        iconBg: "bg-gray-100 text-gray-500",
+        iconBg: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
     }
 };
 
@@ -162,10 +162,11 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                     </div>
                 )}
 
-                {groups.map((group) => (
+                {groups.map((group) => {
+                    if (group.items.length === 0) return null;
+
+                    return (
                     <div key={group.key}>
-                        {group.items.length === 0 ? null : (
-                            <>
                         {/* Group header */}
                         <div className="flex items-center gap-3 mb-4">
                             <span className={`w-2.5 h-2.5 ${group.color} rounded-full shrink-0`} />
@@ -173,7 +174,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                 <p className="font-semibold text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                     {group.title}
                                 </p>
-                                <p className="text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                                <p className="text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark whitespace-nowrap">
                                     {group.subtitle}
                                 </p>
                             </div>
@@ -193,47 +194,47 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                 return (
                                     <div
                                         key={itemKey}
-                                        className="grid grid-cols-[64px_minmax(0,1fr)] gap-4 items-start"
+                                        className="flex flex-col md:grid md:grid-cols-[64px_minmax(0,1fr)] gap-1 md:gap-4 items-start w-full"
                                     >
-                                        <div className="pt-3 text-right leading-tight">
-                                            <p className="text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                                        <div className="flex md:block items-center gap-1 pt-0 md:pt-3 text-right leading-tight">
+                                            <p className="text-xs md:text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">
                                                 {timeLabel}
                                             </p>
-                                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                                            <p className="text-[10px] md:text-[11px] uppercase tracking-wide text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                                                 {meridiemLabel}
                                             </p>
                                         </div>
 
                                         <div
-                                            className={`flex items-center justify-between gap-3 p-4 rounded-xl border ${visual.cardBorder} ${visual.cardBg} transition-shadow md:hover:shadow-sm`}
+                                            className={`flex items-center justify-between gap-2 md:gap-3 p-3 md:p-4 rounded-xl border w-full ${visual.cardBorder} ${visual.cardBg} transition-shadow md:hover:shadow-sm`}
                                         >
                                         {/* Left: icon + info */}
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${visual.iconBg}`}>
-                                                <Icon size={18} />
+                                        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                                            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center shrink-0 ${visual.iconBg}`}>
+                                                <Icon size={14} />
                                             </div>
                                             <div className="min-w-0">
                                                 <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100 truncate">
                                                     {item.title}
                                                 </h3>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                                    {getSubtitle(item.dueAt)}
-                                                    <span className="mx-1.5">•</span>
-                                                    {item.location || "No location"}
-                                                </p>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                    <span className="block md:inline truncate">{getSubtitle(item.dueAt)}</span>
+                                                    <span className="hidden md:inline mx-1.5">•</span>
+                                                    <span className="block md:inline truncate">{item.location || "No location"}</span>
+                                                </div>
                                             </div>
                                         </div>
 
                                         {/* Right: badge + menu */}
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <span className={`px-3 py-1 text-xs font-bold rounded-md ${visual.badgeColor}`}>
+                                        <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                                            <span className={`px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold rounded-md ${visual.badgeColor}`}>
                                                 {visual.badge}
                                             </span>
                                             {isPersonal && (
                                                 <div className="relative z-20" data-personal-actions-menu>
                                                     <button
                                                         type="button"
-                                                        className="relative z-20 inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 transition-colors touch-manipulation md:hover:bg-black/5 dark:md:hover:bg-white/10 active:bg-black/5 dark:active:bg-white/10"
+                                                        className="relative z-20 inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg text-gray-400 transition-colors touch-manipulation md:hover:bg-black/5 dark:md:hover:bg-white/10 active:bg-black/5 dark:active:bg-white/10"
                                                         data-cursor="clickable"
                                                         aria-label="Open reminder actions"
                                                         onPointerUp={(event) => {
@@ -242,7 +243,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                                             setActiveMenuId((prev) => (prev === itemKey ? null : itemKey));
                                                         }}
                                                     >
-                                                        <EllipsisVerticalIcon size={16} />
+                                                        <EllipsisVerticalIcon size={14} />
                                                     </button>
 
                                                     {activeMenuId === itemKey && (
@@ -281,10 +282,9 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                 );
                             })}
                         </div>
-                            </>
-                        )}
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </Section>
     );

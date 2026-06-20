@@ -10,6 +10,7 @@ import ToggleTheme from "../../ui/ToggleTheme";
 
 import { IntelliCampusIcon, BellIconLight, TranslateIcon, SignOutIcon, UserIcon, InboxIcon } from "../../ui/icons";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 
 const viewLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
@@ -25,6 +26,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
     const profileMenuRef = useRef(null);
     const eventSourceRef = useRef(null);
     const { showError } = useError();
+    const { showToast } = useToast();
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -56,6 +58,11 @@ export default function Header({ avatar, notifications: initialNotifications, is
                     setNotifications(prevNotifications => {
                         const exists = prevNotifications.some(n => n.userNotificationId === notification.userNotificationId);
                         if (exists) return prevNotifications;
+                        showToast({
+                            title: notification.typeLabel || 'Notification',
+                            message: notification.message,
+                            type: 'info',
+                        });
                         return [notification, ...prevNotifications];
                     });
                 } catch (err) {

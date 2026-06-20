@@ -7,6 +7,12 @@ import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
 import { fetchAdminRoles } from "../services/adminApi";
 import countryList from "react-select-country-list";
+import {
+  validateNationalIdOrPassport,
+  validatePhoneNumber,
+  EGYPT_NATIONALITY,
+  EXCLUDED_COUNTRIES,
+} from "../utils/validation";
 
 export default function AdminForm({ onClose, method = "post", onSubmit, initialData = {} }) {
     const isEdit = method === "put";
@@ -17,7 +23,7 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
     const [roleOptions, setRoleOptions] = useState([]);
 
     // Synchronous — no fetch needed
-    const nationalities = useMemo(() => countryList().getData(), []);
+    const nationalities = useMemo(() => countryList().getData().filter(c => !EXCLUDED_COUNTRIES.includes(c.value)), []);
 
     const [selectedNationality, setSelectedNationality] = useState(() => {
         if (initialData.nationality) {
@@ -31,6 +37,15 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
     });
 
     const [selectedRole, setSelectedRole] = useState(null);
+
+    const [errors, setErrors] = useState({});
+    const isEgyptian = selectedNationality?.label === EGYPT_NATIONALITY;
+    const idLabel = isEgyptian ? "National ID" : "Passport Number";
+    const idPlaceholder = isEgyptian ? "Enter 14-digit national ID" : "Enter passport number (e.g. A12345678)";
+
+    useEffect(() => {
+        if (errors.nationalId) setErrors((prev) => ({ ...prev, nationalId: "" }));
+    }, [selectedNationality]);
 
     useEffect(() => {
         fetchAdminRoles()
@@ -72,8 +87,19 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const form = e.target;
-        const formData = Object.fromEntries(new FormData(form));
+        const form = e.currentTarget;
+        const fd = new FormData(form);
+        const nationalId = fd.get("nationalId") || "";
+        const phoneNumber = fd.get("phoneNumber") || "";
+        const nationality = selectedNationality?.label || "";
+        const newErrors = {};
+        const idErr = validateNationalIdOrPassport(nationalId, nationality);
+        if (idErr) newErrors.nationalId = idErr;
+        const phoneErr = validatePhoneNumber(phoneNumber);
+        if (phoneErr) newErrors.phoneNumber = phoneErr;
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) return;
+        const formData = Object.fromEntries(fd);
         formData.profileImage = photoPreview;
         formData.adminRole = selectedRole?.value || formData.role;
         formData.nationality = selectedNationality?.value;
@@ -142,8 +168,8 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
                             <InputItem label="Full Name" type="text" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
-                            <InputItem label="National ID" type="text" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
-                            <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
+                            <InputItem label={idLabel} type="text" name="nationalId" placeholder={idPlaceholder} defaultValue={initialData.nationalId || ""} errorMessage={errors.nationalId} required />
+                            <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} errorMessage={errors.phoneNumber} required />
                             <div>
                                 <SelectBox
                                     className="w-full"

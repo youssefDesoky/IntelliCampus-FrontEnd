@@ -31,6 +31,7 @@ import {
   updateBucket as apiUpdateBucket,
   fetchDepartments,
   deleteBucket as apiDeleteBucket,
+  updateBylawGradeWeights,
 } from "../../../feature/admin/services/adminApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
@@ -210,6 +211,8 @@ export default function ManageBylawDetailsPage() {
   const [gradeScales, setGradeScales] = useState([]);
   const [minPassingGradeLetter, setMinPassingGradeLetter] = useState("");
   const [minPassingGpa, setMinPassingGpa] = useState("");
+  const [courseWorkGrade, setCourseWorkGrade] = useState("");
+  const [finalExamGrade, setFinalExamGrade] = useState("");
 
   // ── Academic Probation Rules ──
   const [probationThreshold, setProbationThreshold] = useState("");
@@ -300,6 +303,8 @@ export default function ManageBylawDetailsPage() {
         : []);
       setMinPassingGradeLetter(data.minPassingGradeLetter ?? "");
       setMinPassingGpa(data.minPassingGpa ?? "");
+      setCourseWorkGrade(data.courseWorkGrade ?? "");
+      setFinalExamGrade(data.finalExamGrade ?? "");
 
       setProbationThreshold(data.probationThreshold ?? "");
       setProbationRegistrationLimit(data.probationRegistrationLimit ?? "");
@@ -479,6 +484,10 @@ export default function ManageBylawDetailsPage() {
       await updateBylawPassingGrade(bylawId, {
         minPassingGradeLetter: minPassingGradeLetter || null,
         minPassingGpa: parseFloat(minPassingGpa) || null,
+      });
+      await updateBylawGradeWeights(bylawId, {
+        courseWorkGrade: parseFloat(courseWorkGrade) || null,
+        finalExamGrade: parseFloat(finalExamGrade) || null,
       });
       showSuccess("Grading configuration saved successfully");
       await loadData();
@@ -1049,6 +1058,20 @@ export default function ManageBylawDetailsPage() {
               <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Minimum Graduation GPA</label>
               <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">The minimum cumulative GPA to graduate</p>
               <NumberInput step="0.01" min="0" max="4" value={minPassingGpa} onChange={(e) => setMinPassingGpa(e.target.value)} placeholder="e.g., 2.0" className="w-full" />
+            </div>
+          </div>
+
+          {/* Course Work & Final Exam Grade Weights */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Course Work Grade (%)</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Percentage weight of course work in the total grade</p>
+              <NumberInput step="0.1" min="0" max="100" value={courseWorkGrade} onChange={(e) => setCourseWorkGrade(e.target.value)} placeholder="e.g., 40" className="w-full" />
+            </div>
+            <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Final Exam Grade (%)</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Percentage weight of the final exam in the total grade</p>
+              <NumberInput step="0.1" min="0" max="100" value={finalExamGrade} onChange={(e) => setFinalExamGrade(e.target.value)} placeholder="e.g., 60" className="w-full" />
             </div>
           </div>
 

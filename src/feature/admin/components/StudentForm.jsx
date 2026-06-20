@@ -8,6 +8,12 @@ import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
 import { fetchBylaws, fetchSpecializations, fetchDepartments, fetchStudentTypes } from "../services/adminApi";
+import {
+  validateNationalIdOrPassport,
+  validatePhoneNumber,
+  EGYPT_NATIONALITY,
+  EXCLUDED_COUNTRIES,
+} from "../utils/validation";
 
 const programs = [
     { value: "General", label: "General" },
@@ -29,7 +35,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
     );
 
     // Synchronous — no fetch needed
-    const nationalities = useMemo(() => countryList().getData(), []);
+    const nationalities = useMemo(() => countryList().getData().filter(c => !EXCLUDED_COUNTRIES.includes(c.value)), []);
 
     const isPostgrad = isSuperAdmin
         ? ["masters", "phd", "diploma"].includes(selectedStudentType?.value)
@@ -61,6 +67,12 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
         }
         return nationalities[0] || null;
     });
+
+    const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        if (errors.nationalId) setErrors((prev) => ({ ...prev, nationalId: "" }));
+    }, [selectedNationality]);
 
     useEffect(() => {
         fetchStudentTypes()
@@ -144,9 +156,29 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
+    const isEgyptian = selectedNationality?.label === EGYPT_NATIONALITY;
+    const idLabel = isEgyptian ? "National ID" : "Passport Number";
+    const idPlaceholder = isEgyptian ? "Enter 14-digit national ID" : "Enter passport number (e.g. A12345678)";
+
+    const validate = (form) => {
+        const fd = new FormData(form);
+        const nationalId = fd.get("nationalId") || "";
+        const phoneNumber = fd.get("phoneNumber") || "";
+        const nationality = selectedNationality?.label || "";
+
+        const newErrors = {};
+        const idErr = validateNationalIdOrPassport(nationalId, nationality);
+        if (idErr) newErrors.nationalId = idErr;
+        const phoneErr = validatePhoneNumber(phoneNumber);
+        if (phoneErr) newErrors.phoneNumber = phoneErr;
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        const form = e.target;
+        if (!validate(e.currentTarget)) return;
+        const form = e.currentTarget;
         const formData = Object.fromEntries(new FormData(form));
         formData.level = 1;
         formData.profileImage = photoPreview;
@@ -222,8 +254,8 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
                             <InputItem label="Full Name" type="text" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
-                            <InputItem label="National ID" type="text" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
-                            <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
+                            <InputItem label={idLabel} type="text" name="nationalId" placeholder={idPlaceholder} defaultValue={initialData.nationalId || ""} errorMessage={errors.nationalId} required />
+                            <InputItem label="Phone Number" type="tel" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} errorMessage={errors.phoneNumber} required />
                             <div>
                                 <SelectBox
                                     className="w-full"
@@ -297,28 +329,32 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                 onChange={setSelectedBylaw}
                             />
 
-                            {!isPostgrad ? (
-                                <>
-                                    {!isEdit && (
-                                        <div className="flex flex-col">
-                                            <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Program</label>
-                                            <RadioToggle
-                                                name="program"
-                                                options={programs}
-                                                value={selectedProgram.value}
-                                                onChange={(value) => {
-                                                    const selected = programs.find(p => p.value === value) || programs[0];
-                                                    setSelectedProgram(selected);
-                                                }}
-                                                className="w-full"
-                                            />
-                                        </div>
-                                    )}
-                                    <div className="col-span-1 sm:col-span-2">
-                                        <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
-                                    </div>
-                                </>
-                            ) : (
+                            {!isPostgrad && isEdit && (
+                                <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
+                            )}
+                            {!isPostgrad && !isEdit && (
+                                <div className="flex flex-col">
+                                    <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Program</label>
+                                    <RadioToggle
+                                        name="program"
+                                        options={programs}
+                                        value={selectedProgram.value}
+                                        onChange={(value) => {
+                                            const selected = programs.find(p => p.value === value) || programs[0];
+                                            setSelectedProgram(selected);
+                                        }}
+                                        className="w-full"
+                                    />
+                                </div>
+                            )}
+
+                            {!isPostgrad && !isEdit && (
+                                <div className="col-span-1 sm:col-span-2">
+                                    <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
+                                </div>
+                            )}
+
+                            {isPostgrad && (
                                 <>
                                     <SelectBox
                                         className="w-full"
@@ -338,9 +374,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                         selectedOption={selectedSpecialization}
                                         onChange={setSelectedSpecialization}
                                     />
-                                    <div className="w-full">
-                                        <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
-                                    </div>
+                                    <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
                                 </>
                             )}
                         </div>

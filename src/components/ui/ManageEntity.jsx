@@ -358,7 +358,7 @@ export default function ManageEntity({
 
       <Dialog
         isOpen={deleteTarget !== null}
-        variant="error"
+        variant="warning"
         title={`Delete ${entityName}`}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => { handleDeleteConfirm(); return true; }}

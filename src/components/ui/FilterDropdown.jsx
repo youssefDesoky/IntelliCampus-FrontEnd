@@ -45,7 +45,7 @@ export default function FilterDropdown({
                 disabled={disabled}
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
-                className="inline-flex items-center rounded-md border border-border-primary-default-light bg-bg-surface-primary-default-light px-4 py-2 text-sm font-medium text-text-secondary-active-light transition-colors hover:bg-bg-fill-primary-hover-light disabled:opacity-60 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-secondary-active-dark dark:hover:bg-bg-fill-primary-hover-dark"
+                className="inline-flex gap-2 items-center rounded-md border border-border-primary-default-light bg-bg-surface-primary-default-light p-2 text-sm font-medium text-text-secondary-active-light transition-colors hover:bg-bg-fill-primary-hover-light disabled:opacity-60 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-secondary-active-dark dark:hover:bg-bg-fill-primary-hover-dark"
             >
                 <FilterIcon size={18} className="shrink-0" />
                 <span className="flex-1 text-center">{label}{selectedValues.length > 0 ? ` (${selectedValues.length})` : ""}</span>

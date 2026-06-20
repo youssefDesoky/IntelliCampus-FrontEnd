@@ -49,13 +49,13 @@ export default function ManageCourses() {
   const [successMessage, setSuccessMessage] = useState(null);
 
   const courseTableHeaders = useMemo(() => {
-    if (isDesktop) return ["Course Code", "Course", "Department", "Credit Hours", "Professor", "Status"];
+    if (isDesktop) return ["Course Code", "Course", "Department", "Credit Hours", "Status"];
     if (isTablet) return ["Course Code", "Course", "Department", "Status"];
     return ["Course", "Status"];
   }, [isDesktop, isTablet]);
 
   const columnAlignments = useMemo(() => {
-    if (isDesktop) return ["text-center", "text-left", "text-center", "text-center", "text-center", "text-center"];
+    if (isDesktop) return ["text-center", "text-left", "text-center", "text-center", "text-center"];
     if (isTablet) return ["text-center", "text-left", "text-center", "text-center"];
     return ["text-left", "text-center"];
   }, [isDesktop, isTablet]);
@@ -77,11 +77,12 @@ export default function ManageCourses() {
     row.course = (
       <div className="flex flex-col text-left">
         <p className="font-medium">{course.courseName}</p>
+        {course.courseNameAr && <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark" dir="rtl">{course.courseNameAr}</p>}
         {isDesktop && <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-50 truncate">{course.description}</p>}
       </div>
     );
     if (isDesktop || isTablet) row.department = course.departmentName || "—";
-    if (isDesktop) { row.creditHours = course.creditHours || "—"; row.professor = course.professor || "—"; }
+    if (isDesktop) { row.creditHours = course.creditHours || "—"; }
     row.status = <StatusBadge isActive={course.isActive} displaySemester={course.semester} />;
     return row;
   }, []);
@@ -274,10 +275,6 @@ export default function ManageCourses() {
                     <div>
                       <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Semester</p>
                       <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{viewingCourse.semester || viewingCourse.level || viewingCourse.term || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Professor</p>
-                      <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{viewingCourse.professor || viewingCourse.instructor || "—"}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg p-4">

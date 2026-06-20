@@ -6,7 +6,7 @@ import AssignRoleModal from "../../../feature/admin/components/AssignRoleModal";
 import FilterDropdown from "../../../components/ui/FilterDropdown";
 import { UserIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
-import { fetchInstructors, createInstructor, deleteInstructor } from "../../../feature/admin/services/adminApi";
+import { fetchInstructors, createInstructor, updateInstructor, deleteInstructor } from "../../../feature/admin/services/adminApi";
 
 export default function ManageInstructors() {
   const { isDesktop, isTablet } = useDeviceType();
@@ -69,6 +69,7 @@ export default function ManageInstructors() {
       entityIdField="userId"
       fetchItems={fetchInstructors}
       createItem={createInstructor}
+      updateItem={updateInstructor}
       deleteItem={deleteInstructor}
       headerType="user"
       headerRole="instructor"

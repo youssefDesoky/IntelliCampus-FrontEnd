@@ -4,3 +4,6 @@ export { default as InstructorCourseAssignments } from "./InstructorCourseAssign
 export { default as InstructorCourseAttendance } from "./InstructorCourseAttendance";
 export { default as InstructorCourseQuizzes } from "./InstructorCourseQuizzes";
 export { default as InstructorMeetingRoom } from "./InstructorMeetingRoom";
+export { default as InstructorProfile } from "./InstructorProfile";
+export { default as InstructorReminders } from "./InstructorReminders";
+export { default as InstructorSchedule } from "./InstructorSchedule";
