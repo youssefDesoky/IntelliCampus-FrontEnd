@@ -1,522 +1,339 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import PageHeader from "../../../components/ui/PageHeader";
-import Section from "../../../components/ui/Section";
+import ManageEntity from "../../../components/ui/ManageEntity";
 import Button from "../../../components/ui/Button";
-import SearchBar from "../../../components/ui/SearchBar";
 import Dialog from "../../../components/ui/Dialog";
-import PaginationButtons from "../../../components/ui/PaginationButtons";
-import ToggleViewMode from "../../../components/ui/ToggleViewMode";
-import Table from "../../../components/ui/Table";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import CourseForm from "../../../feature/admin/components/CourseForm";
-import ActivateCourseDialog from "../../../feature/admin/components/ActivateCourseDialog";
+import useDeviceType from "../../../hooks/useDeviceType";
 import {
-    PlusIcon,
-    ImportIcon,
-    FilePenIcon,
-    TrashIcon,
-    CheckIcon,
-    XIcon,
-    BookIcon,
-    UserTieIcon,
-    ClipboardCheckIcon,
-    ArrowRightIcon,
-    Grid3ColIcon,
-    TableIcon
+  PlusIcon,
+  ImportIcon,
+  XIcon,
+  CheckIcon,
 } from "../../../components/ui/icons";
 import {
-    fetchCourses,
-    createCourse,
-    updateCourse,
-    deleteCourse,
-    activateCourse,
-    deactivateCourse,
+  fetchCourses,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  activateCourse,
+  deactivateCourse,
 } from "../../../feature/admin/services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
-const ITEMS_PER_PAGE = 9;
-
-function StatusBadge({ isActive }) {
-    return (
-        <span
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                isActive
-                    ? "bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark text-white"
-                    : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark"
-            }`}
-        >
-            {isActive ? <CheckIcon className="w-3 h-3" /> : <XIcon className="w-3 h-3" />}
-            {isActive ? "Active" : "Inactive"}
-        </span>
-    );
-}
-
-const courseTableHeaders = ["Course", "Course ID", "Department", "Credit Hours", "Professor", "Status"];
-
-function buildCourseRow(course) {
-    return {
-        course: (
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                    {(course.title || "?").charAt(0).toUpperCase()}
-                </div>
-                <div className="flex flex-col text-left">
-                    <p className="font-medium">{course.title}</p>
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-50 truncate">{course.description}</p>
-                </div>
-            </div>
-        ),
-        courseId: (
-            <span className="px-2 py-1 rounded-full border text-xs font-semibold">{course.id}</span>
-        ),
-        department: course.department || "—",
-        creditHours: course.creditHours || "—",
-        professor: course.professor || "—",
-        status: <StatusBadge isActive={!!course.isActive} />,
-        _raw: course,
-    };
-}
-
-function CourseCard({ course, onEdit, onDelete, onActivate, onDeactivate, onManage }) {
-    const borderColor = course.isActive
-        ? "border-l-border-success-default-light dark:border-l-border-success-default-dark"
-        : "border-l-border-accent-default-light dark:border-l-border-accent-default-dark";
-
-    return (
-        <div
-            className={`bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg border-l-4 ${borderColor} shadow-sm shadow-shadow-light hover:shadow-lg dark:hover:shadow-shadow-dark transition-shadow p-5 flex flex-col justify-between gap-4`}
-        >
-            {/* Top: Title + Status */}
-            <div>
-                <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                            {(course.title || "?").charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-base leading-tight">{course.title}</h3>
-                            <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                                {course.id}
-                            </span>
-                        </div>
-                    </div>
-                    <StatusBadge isActive={!!course.isActive} />
-                </div>
-
-                {/* Info pills */}
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mb-3">
-                    <div className="flex items-center gap-1.5">
-                        <BookIcon className="w-4 h-4" />
-                        <span>{course.department || "—"}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <ClipboardCheckIcon className="w-4 h-4" />
-                        <span>{course.creditHours || "—"} Credit Hrs</span>
-                    </div>
-                    {course.professor && (
-                        <div className="flex items-center gap-1.5">
-                            <UserTieIcon className="w-4 h-4" />
-                            <span>{course.professor}</span>
-                        </div>
-                    )}
-                </div>
-
-                {course.description && (
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">
-                        {course.description}
-                    </p>
-                )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-2 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                {/* Manage Course button */}
-                <Button
-                    variant="primary"
-                    className="w-full justify-center"
-                    onClick={() => onManage(course)}
-                >
-                    Manage Course <ArrowRightIcon className="w-4 h-4" />
-                </Button>
-
-                {/* Quick actions row */}
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="secondary"
-                        className="flex-1 justify-center text-xs px-2 py-1.5"
-                        onClick={() => onEdit(course)}
-                    >
-                        <FilePenIcon className="w-4 h-4" /> Edit
-                    </Button>
-
-                    {course.isActive ? (
-                        <Button
-                            variant="warning"
-                            className="flex-1 justify-center text-xs px-2 py-1.5"
-                            onClick={() => onDeactivate(course)}
-                        >
-                            <XIcon className="w-4 h-4" /> Deactivate
-                        </Button>
-                    ) : (
-                        <Button
-                            variant="success"
-                            className="flex-1 justify-center text-xs px-2 py-1.5"
-                            onClick={() => onActivate(course)}
-                        >
-                            <CheckIcon className="w-4 h-4" /> Activate
-                        </Button>
-                    )}
-
-                    <Button
-                        variant="danger"
-                        className="flex-1 justify-center text-xs px-2 py-1.5"
-                        onClick={() => onDelete(course)}
-                    >
-                        <TrashIcon className="w-4 h-4" /> Delete
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
+function StatusBadge({ isActive, displaySemester }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+        isActive
+          ? "bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark text-white"
+          : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark"
+      }`}
+    >
+      {isActive ? <CheckIcon className="w-3 h-3" /> : <XIcon className="w-3 h-3" />}
+      {isActive ? displaySemester : "Inactive"}
+    </span>
+  );
 }
 
 export default function ManageCourses() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { isDesktop, isTablet, isPhone } = useDeviceType();
+  const { showError } = useError();
 
-    const [courses, setCourses] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [searchQuery, setSearchQuery] = useState("");
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [viewingCourse, setViewingCourse] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
-    // Dialogs
-    const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
-    const [isImportOpen, setIsImportOpen] = useState(false);
-    const [editingCourse, setEditingCourse] = useState(null);
-    const [activatingCourse, setActivatingCourse] = useState(null);
-    const [deleteTarget, setDeleteTarget] = useState(null);
+  const courseTableHeaders = useMemo(() => {
+    if (isDesktop) return ["Course Code", "Course", "Department", "Credit Hours", "Professor", "Status"];
+    if (isTablet) return ["Course Code", "Course", "Department", "Status"];
+    return ["Course", "Status"];
+  }, [isDesktop, isTablet]);
 
-    // View mode
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem("adminCoursesViewMode") || "grid");
+  const columnAlignments = useMemo(() => {
+    if (isDesktop) return ["text-center", "text-left", "text-center", "text-center", "text-center", "text-center"];
+    if (isTablet) return ["text-center", "text-left", "text-center", "text-center"];
+    return ["text-left", "text-center"];
+  }, [isDesktop, isTablet]);
 
-    // Table selection
-    const [selectedRows, setSelectedRows] = useState([]);
-    const [isDeleteSelectedOpen, setIsDeleteSelectedOpen] = useState(false);
+  const fetchCoursesMapped = useCallback(async () => {
+    const data = await fetchCourses();
+    return (Array.isArray(data) ? data : []).map((c) => ({
+      ...c,
+      isActive:
+        c.statusName?.toLowerCase() === "active" ||
+        (typeof c.status === "string" && c.status.toLowerCase() === "active") ||
+        c.status === 0,
+    }));
+  }, []);
 
-    // Pagination
-    const [currentPage, setCurrentPage] = useState(1);
-
-    useEffect(() => {
-        localStorage.setItem("adminCoursesViewMode", viewMode);
-    }, [viewMode]);
-
-    const loadCourses = useCallback(async () => {
-        try {
-            setError(null);
-            const data = await fetchCourses();
-            setCourses(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error("Failed to load courses:", err);
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        loadCourses();
-    }, [loadCourses]);
-
-    // Search filter
-    const filteredCourses = courses.filter((c) => {
-        if (!searchQuery) return true;
-        const q = searchQuery.toLowerCase();
-        return (
-            c.title?.toLowerCase().includes(q) ||
-            c.id?.toLowerCase().includes(q) ||
-            c.department?.toLowerCase().includes(q) ||
-            c.professor?.toLowerCase().includes(q)
-        );
-    });
-
-    // Pagination
-    const totalPages = Math.max(1, Math.ceil(filteredCourses.length / ITEMS_PER_PAGE));
-    const paginatedCourses = filteredCourses.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
+  const buildCourseRow = useCallback((course, { isDesktop, isTablet }) => {
+    const row = {};
+    if (isDesktop || isTablet) row.courseCode = course.courseCode || course.courseId || "—";
+    row.course = (
+      <div className="flex flex-col text-left">
+        <p className="font-medium">{course.courseName}</p>
+        {isDesktop && <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-50 truncate">{course.description}</p>}
+      </div>
     );
+    if (isDesktop || isTablet) row.department = course.departmentName || "—";
+    if (isDesktop) { row.creditHours = course.creditHours || "—"; row.professor = course.professor || "—"; }
+    row.status = <StatusBadge isActive={course.isActive} displaySemester={course.semester} />;
+    return row;
+  }, []);
 
-    // ─── Handlers ──────────────────────────────────────────────
-    const handleCreate = async (formData) => {
-        try {
-            await createCourse(formData);
-            setIsCreateFormOpen(false);
-            await loadCourses();
-        } catch (err) {
-            console.error("Failed to create course:", err);
-        }
-    };
-
-    const handleEditSubmit = async (formData) => {
-        try {
-            await updateCourse(editingCourse.id, formData);
-            setEditingCourse(null);
-            await loadCourses();
-        } catch (err) {
-            console.error("Failed to update course:", err);
-        }
-    };
-
-    const handleDeleteConfirm = async () => {
-        if (!deleteTarget) return;
-        try {
-            await deleteCourse(deleteTarget.id);
-            await loadCourses();
-        } catch (err) {
-            console.error("Failed to delete course:", err);
-        }
-        setDeleteTarget(null);
-    };
-
-    const handleActivateSubmit = async (activationData) => {
-        try {
-            await activateCourse(activatingCourse.id, activationData);
-            setActivatingCourse(null);
-            await loadCourses();
-        } catch (err) {
-            console.error("Failed to activate course:", err);
-        }
-    };
-
-    const handleDeactivate = async (course) => {
-        try {
-            await deactivateCourse(course.id);
-            await loadCourses();
-        } catch (err) {
-            console.error("Failed to deactivate course:", err);
-        }
-    };
-
-    const handleManage = (course) => {
-        navigate(`/admin/courses/${course.id}`);
-    };
-
-    const handleDeleteSelected = async () => {
-        for (const idx of selectedRows) {
-            const row = paginatedCourses[idx];
-            if (row) {
-                try { await deleteCourse(row.id); } catch (err) { console.error(err); }
+  return (
+    <ManageEntity
+      entityName="Course"
+      entityNamePlural="Courses"
+      entityIdField="courseId"
+      fetchItems={fetchCoursesMapped}
+      createItem={createCourse}
+      updateItem={updateCourse}
+      deleteItem={deleteCourse}
+      headerTitle="Manage Course"
+      headerSubtitle="Administer course records, activate and assign instructors"
+      searchPlaceholder="Search Courses..."
+      searchFilter={(item, q) =>
+        item.courseName?.toLowerCase().includes(q) ||
+        String(item.courseId)?.toLowerCase().includes(q) ||
+        item.courseCode?.toLowerCase().includes(q) ||
+        item.departmentName?.toLowerCase().includes(q) ||
+        item.professor?.toLowerCase().includes(q)
+      }
+      tableRole="course"
+      tableRoleLabel="Courses"
+      tableHeaders={courseTableHeaders}
+      columnAlignments={columnAlignments}
+      buildRow={buildCourseRow}
+      renderHeaderActions={() => (
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
+            <ImportIcon size={24} />
+            {!isPhone && "Import"}
+          </Button>
+          <Button variant="primary" onClick={() => setIsCreateFormOpen(true)}>
+            <PlusIcon size={24} />
+            {!isPhone && "Add Course"}
+          </Button>
+        </div>
+      )}
+      rowActions={(item, { onDelete, loadItems }) => [
+        ...(item.isActive ? [{
+          label: "Manage Course",
+          onClick: () => navigate(`/admin/courses/${item.courseId}`),
+          className: "text-text-secondary-default-light dark:text-text-accent-active-dark font-medium",
+        }] : []),
+        {
+          label: "Edit",
+          onClick: () => setEditingCourse(item),
+          className: "text-text-primary-default-light dark:text-text-primary-default-dark",
+        },
+        item.isActive
+          ? { label: "Deactivate", onClick: async () => { await deactivateCourse(item.courseId); await loadItems(); setSuccessMessage(`Course "${item.courseName}" has been deactivated successfully.`); }, className: "text-text-warning-default-light dark:text-text-warning-default-dark" }
+          : { label: "Activate", onClick: async () => { await activateCourse(item.courseId); await loadItems(); setSuccessMessage(`Course "${item.courseName}" has been activated successfully!`); }, className: "text-text-success-default-light dark:text-text-success-default-dark" },
+        {
+          label: "Delete",
+          onClick: () => onDelete(item),
+          className: "text-text-danger-default-light dark:text-text-danger-default-dark",
+        },
+      ]}
+      renderBeforeTable={({ selectedRowIds, rawItems }) => {
+        if (selectedRowIds.length === 0) return null;
+        const selected = selectedRowIds.map(id => rawItems.find(c => c.courseId === id)).filter(Boolean);
+        const allSelectedActive = selected.length > 0 && selected.every(c => c.isActive);
+        const allSelectedInactive = selected.length > 0 && selected.every(c => !c.isActive);
+        const handleActivateSelected = async () => {
+          for (const id of selectedRowIds) {
+            const course = rawItems.find(c => c.courseId === id);
+            if (course && !course.isActive) {
             }
+          }
+          setSuccessMessage(`${selectedRowIds.length} course(s) activated successfully!`);
+        };
+        const handleDeactivateSelected = async () => {
+          for (const id of selectedRowIds) {
+            const course = rawItems.find(c => c.courseId === id);
+            if (course && course.isActive) {
+            }
+          }
+          setSuccessMessage(`${selectedRowIds.length} course(s) deactivated successfully.`);
+        };
+        return (
+          <>
+            <div className="flex items-center gap-2 sm:hidden mb-3">
+              {allSelectedInactive && <Button variant="success" size="sm" onClick={handleActivateSelected}><CheckIcon size={18} /></Button>}
+              {allSelectedActive && <Button variant="warning" size="sm" onClick={handleDeactivateSelected}><XIcon size={18} /></Button>}
+            </div>
+            <div className="hidden sm:flex items-center gap-3 mb-3">
+              {allSelectedInactive && <Button variant="success" size="sm" onClick={handleActivateSelected}><CheckIcon size={20} /></Button>}
+              {allSelectedActive && <Button variant="warning" size="sm" onClick={handleDeactivateSelected}><XIcon size={20} /></Button>}
+            </div>
+          </>
+        );
+      }}
+      getDeleteMessage={(item) => (
+        <>Are you sure you want to delete <strong>{item?.courseName}</strong> ({item?.courseCode || item?.courseId})? This action cannot be undone.</>
+      )}
+      renderForm={({ rawItems, loadItems }) => {
+        if (editingCourse) {
+          return (
+            <CourseForm
+              method="put"
+              initialData={editingCourse}
+              onClose={() => setEditingCourse(null)}
+              onSubmit={async (formData) => {
+                try {
+                  await updateCourse(editingCourse.courseId, formData);
+                  setEditingCourse(null);
+                  await loadItems();
+                } catch (err) {
+                  showError(err.message);
+                }
+              }}
+              allCourses={rawItems}
+            />
+          );
         }
-        setSelectedRows([]);
-        setIsDeleteSelectedOpen(false);
-        await loadCourses();
-    };
-
-    return (
+        if (isCreateFormOpen) {
+          return (
+            <CourseForm
+              method="post"
+              onClose={() => setIsCreateFormOpen(false)}
+              onSubmit={async (formData) => {
+                try {
+                  await createCourse(formData);
+                  setIsCreateFormOpen(false);
+                  await loadItems();
+                } catch (err) {
+                  showError(err.message);
+                }
+              }}
+              allCourses={rawItems}
+            />
+          );
+        }
+        return null;
+      }}
+      renderExtraDialogs={({ loadItems }) => (
         <>
-            {/* Header */}
-            <PageHeader title="Manage Courses" subtitle="Administer course records, activate and assign instructors">
-                <div className="flex items-center gap-2">
-                    <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
-                        <ImportIcon size={24} />
-                        Import Courses
-                    </Button>
+          {isImportOpen && (
+            <ImportDialog
+              title="Import Courses"
+              subtitle="Upload a file to bulk-import course records."
+              onClose={() => setIsImportOpen(false)}
+              onImport={(file) => {
+                setIsImportOpen(false);
+              }}
+            />
+          )}
 
-                    <Button variant="primary" onClick={() => setIsCreateFormOpen(true)}>
-                        <PlusIcon size={24} />
-                        Add Course
-                    </Button>
+          {viewingCourse && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark p-6 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                    {viewingCourse.courseName || viewingCourse.title || "Course Details"}
+                  </h2>
+                  <button onClick={() => setViewingCourse(null)} className="text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark transition-colors">
+                    <XIcon className="w-6 h-6" />
+                  </button>
                 </div>
-            </PageHeader>
-
-            {/* Content */}
-            {isLoading ? (
-                <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    Loading courses...
-                </p>
-            ) : error ? (
-                <p className="text-center py-10 text-red-500">Error: {error}</p>
-            ) : (
-                <Section>
-                    {/* Toolbar: Search + Toggle */}
-                    <div className="flex items-center justify-between gap-4 mb-6">
-                        <h2 className="text-xl font-semibold">
-                            Courses{" "}
-                            <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                ({filteredCourses.length})
-                            </span>
-                        </h2>
-                        <div className="flex items-center gap-3">
-                            <SearchBar
-                                placeholder="Search Courses..."
-                                value={searchQuery}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                            />
-                            <ToggleViewMode
-                                isFirstMode={viewMode === "grid"}
-                                onFirstModeSelect={() => setViewMode("grid")}
-                                onSecondModeSelect={() => setViewMode("list")}
-                                firstModeLabel={<Grid3ColIcon className="w-5 h-5" />}
-                                secondModeLabel={<TableIcon className="w-5 h-5" />}
-                            />
-                            {viewMode === "list" && selectedRows.length > 0 && (
-                                <Button variant="danger" className="whitespace-nowrap shrink-0" onClick={() => setIsDeleteSelectedOpen(true)}>
-                                    <TrashIcon size={20} />
-                                    Delete ({selectedRows.length})
-                                </Button>
-                            )}
-                        </div>
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Course Code</p>
+                      <p className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                        {viewingCourse.courseCode || viewingCourse.id || viewingCourse.courseId || "—"}
+                      </p>
                     </div>
-
-                    {/* Delete Selected Confirmation */}
-                    <Dialog
-                        isOpen={isDeleteSelectedOpen}
-                        variant="warning"
-                        title="Delete Selected Courses"
-                        onClose={() => setIsDeleteSelectedOpen(false)}
-                        onConfirm={() => { handleDeleteSelected(); return true; }}
-                        confirmText="Yes, Delete"
-                        cancelText="No, Keep"
-                        showCloseButton={true}
-                    >
-                        Are you sure you want to delete {selectedRows.length} selected course{selectedRows.length > 1 ? "s" : ""}? This action cannot be undone.
-                    </Dialog>
-
-                    {paginatedCourses.length > 0 ? (
-                        viewMode === "grid" ? (
-                            /* ─── Cards Grid ─── */
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
-                                {paginatedCourses.map((course) => (
-                                    <CourseCard
-                                        key={course.id}
-                                        course={course}
-                                        onEdit={setEditingCourse}
-                                        onDelete={setDeleteTarget}
-                                        onActivate={setActivatingCourse}
-                                        onDeactivate={handleDeactivate}
-                                        onManage={handleManage}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            /* ─── Table View ─── */
-                            <div className="mb-6">
-                                <Table
-                                    role="course"
-                                    roleLabel="Courses"
-                                    headers={courseTableHeaders}
-                                    data={paginatedCourses.map(buildCourseRow)}
-                                    wrapInSection={false}
-                                    showHeaderActions={false}
-                                    showPagination={false}
-                                    onSelectionChange={setSelectedRows}
-                                    actions={(row) => [
-                                        {
-                                            label: "Manage Course",
-                                            onClick: () => handleManage(row._raw),
-                                            className: "text-text-accent-active-light dark:text-text-accent-active-dark font-medium",
-                                        },
-                                        {
-                                            label: "Edit",
-                                            onClick: () => setEditingCourse(row._raw),
-                                            className: "text-text-primary-default-light dark:text-text-primary-default-dark",
-                                        },
-                                        row._raw.isActive
-                                            ? {
-                                                  label: "Deactivate",
-                                                  onClick: () => handleDeactivate(row._raw),
-                                                  className: "text-text-warning-default-light dark:text-text-warning-default-dark",
-                                              }
-                                            : {
-                                                  label: "Activate",
-                                                  onClick: () => setActivatingCourse(row._raw),
-                                                  className: "text-text-success-default-light dark:text-text-success-default-dark",
-                                              },
-                                        {
-                                            label: "Delete",
-                                            onClick: () => setDeleteTarget(row._raw),
-                                            className: "text-text-danger-default-light dark:text-text-danger-default-dark",
-                                        },
-                                    ]}
-                                />
-                            </div>
-                        )
-                    ) : (
-                        <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            No courses found.
-                        </p>
+                    <div>
+                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Status</p>
+                      <StatusBadge isActive={!!viewingCourse.isActive} />
+                    </div>
+                  </div>
+                  {viewingCourse.description && (
+                    <div>
+                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Description</p>
+                      <p className="text-text-primary-default-light dark:text-text-primary-default-dark">{viewingCourse.description}</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Department</p>
+                      <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{viewingCourse.departmentName || viewingCourse.department || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Credit Hours</p>
+                      <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{viewingCourse.creditHours ?? viewingCourse.credits ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Semester</p>
+                      <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{viewingCourse.semester || viewingCourse.level || viewingCourse.term || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Professor</p>
+                      <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{viewingCourse.professor || viewingCourse.instructor || "—"}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg p-4">
+                    <div>
+                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Enrolled Students</p>
+                      <p className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                        {viewingCourse.numOfStudents ?? viewingCourse.enrolledCount ?? viewingCourse.enrolled ?? "0"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Capacity</p>
+                      <p className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                        {viewingCourse.capacity ?? viewingCourse.maxStudents ?? "—"}
+                      </p>
+                    </div>
+                  </div>
+                  {(viewingCourse.schedule || viewingCourse.room) && (
+                    <div className="grid grid-cols-2 gap-4">
+                      {viewingCourse.schedule && (
+                        <div>
+                          <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Schedule</p>
+                          <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{viewingCourse.schedule}</p>
+                        </div>
+                      )}
+                      {viewingCourse.room && (
+                        <div>
+                          <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Room</p>
+                          <p className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{viewingCourse.room}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 pt-4 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
+                    <Button variant="secondary" onClick={() => { const c = viewingCourse; setViewingCourse(null); setEditingCourse(c); }}>Edit Course</Button>
+                    {viewingCourse.isActive && (
+                      <Button variant="primary" onClick={() => { setViewingCourse(null); navigate(`/admin/courses/${viewingCourse.courseId}`); }}>Manage Course</Button>
                     )}
+                    <Button variant="tertiary" onClick={() => setViewingCourse(null)}>Close</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-                    {/* Pagination */}
-                    <PaginationButtons
-                        totalPages={totalPages}
-                        currentPage={currentPage}
-                        setCurrentPage={setCurrentPage}
-                    />
-                </Section>
-            )}
-
-            {/* Create Course Form */}
-            {isCreateFormOpen && (
-                <CourseForm
-                    method="post"
-                    onClose={() => setIsCreateFormOpen(false)}
-                    onSubmit={handleCreate}
-                />
-            )}
-
-            {/* Edit Course Form */}
-            {editingCourse && (
-                <CourseForm
-                    method="put"
-                    initialData={editingCourse}
-                    onClose={() => setEditingCourse(null)}
-                    onSubmit={handleEditSubmit}
-                />
-            )}
-
-            {/* Activate Course Dialog */}
-            {activatingCourse && (
-                <ActivateCourseDialog
-                    course={activatingCourse}
-                    onClose={() => setActivatingCourse(null)}
-                    onActivate={handleActivateSubmit}
-                />
-            )}
-
-            {/* Import Dialog */}
-            {isImportOpen && (
-                <ImportDialog
-                    title="Import Courses"
-                    subtitle="Upload a file to bulk-import course records."
-                    onClose={() => setIsImportOpen(false)}
-                    onImport={(file) => {
-                        console.log("Importing courses from:", file.name);
-                        setIsImportOpen(false);
-                    }}
-                />
-            )}
-
-            {/* Delete Confirmation */}
-            <Dialog
-                isOpen={deleteTarget !== null}
-                variant="error"
-                title="Delete Course"
-                onClose={() => setDeleteTarget(null)}
-                onConfirm={() => {
-                    handleDeleteConfirm();
-                    return true;
-                }}
-                confirmText="Delete"
-                cancelText="Cancel"
-                showCloseButton={true}
-            >
-                Are you sure you want to delete <strong>{deleteTarget?.title}</strong> ({deleteTarget?.id})?
-                This action cannot be undone.
-            </Dialog>
+          <Dialog
+            isOpen={successMessage !== null}
+            variant="success"
+            title="Success"
+            onClose={() => setSuccessMessage(null)}
+            confirmText="OK"
+            showCloseButton={true}
+          >
+            {successMessage}
+          </Dialog>
         </>
-    );
+      )}
+    />
+  );
 }

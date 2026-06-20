@@ -19,13 +19,13 @@ export default async function authAction({ request }) {
 
     if (response.ok) {
         const data = await response.json();
-        const role = data.role?.toLowerCase();
+        const roles = (data.roles || []).map(r => r.toLowerCase());
         // Redirect based on role
-        if (role === 'student') {
+        if (roles.some(r => r.startsWith('student'))) {
             return redirect('/');
-        } else if (role === 'instructor') {
+        } else if (roles.some(r => r === 'instructor')) {
             return redirect('/instructor');
-        } else if (role === 'admin' || role === 'superadmin') {
+        } else if (roles.some(r => r.startsWith('admin') || r === 'superadmin')) {
             return redirect('/admin');
         }
         return json({ message: "Unknown role" }, { status: 403 });

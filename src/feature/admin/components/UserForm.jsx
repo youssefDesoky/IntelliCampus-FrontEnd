@@ -1,115 +1,142 @@
-import { Form } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Button from "../../../components/ui/Button";
-import { PlusIcon, FilePenIcon, XIcon } from "../../../components/ui/icons";
+import TextArea from "../../../components/ui/TextArea";
+import { PlusIcon, FilePenIcon } from "../../../components/ui/icons";
 import InputItem from "../../../components/form/InputItem";
-import ModelOverlay from "../../../components/ui/ModelOverlay";
-import SelectBox from "../../../components/ui/SelectBox";
+import Select from 'react-select'; // react-select for better country list
+import countryList from 'react-select-country-list';
+import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 
-const nationalities = [
-    { value: 'us', label: 'United States' },
-    { value: 'ca', label: 'Canada' },
-    { value: 'uk', label: 'United Kingdom' },
-    { value: 'au', label: 'Australia' },
-    { value: 'in', label: 'India' },
+const adminRoleOptions = [
+    { value: 'Post Grad Affairs Admin', label: 'Post Grad Affairs Admin' },
+    { value: 'Under Grad Affairs Admin', label: 'Under Grad Affairs Admin' },
 ];
 
-export default function UserForm({ role, method = "post", action, onClose, initialData = {}, children }) {
+export default function UserForm({ role, method = "post", onClose, onSubmit, initialData = {}, children, isOpen = true }) {
     const roleLabel = role === "admin" ? "Admin" : role === "student" ? "Student" : "Instructor";
     const isEdit = method === "put";
-    const roleIdField = `${role}ID`;
+    const roleIdField = `${role}Id`;
+
+    const options = useMemo(() => countryList().getData(), []);
 
     const [selectedNationality, setSelectedNationality] = useState(() => {
-        if (initialData.nationality) {
-            return nationalities.find(n => n.value === initialData.nationality || n.label === initialData.nationality) || nationalities[0];
+        const initialNationality = initialData.nationality;
+        if (initialNationality) {
+            const match = options.find(n => n.value === initialNationality || n.label === initialNationality);
+            return match || options[0];
         }
-        return nationalities[0];
+        return options[0];
+    });
+
+    useEffect(() => {
+        const initialNationality = initialData.nationality;
+        if (initialNationality) {
+            const match = options.find(n => n.value === initialNationality || n.label === initialNationality);
+            if (match) setSelectedNationality(match);
+        } else if (options.length > 0) {
+            setSelectedNationality(options[0]);
+        }
+    }, [initialData.nationality, options]);
+
+    const [selectedAdminRole, setSelectedAdminRole] = useState(() => {
+        if (initialData.role) {
+            return adminRoleOptions.find(o => o.value === initialData.role) || adminRoleOptions[0];
+        }
+        return adminRoleOptions[0];
     });
 
     const handleNationalityChange = (option) => {
         setSelectedNationality(option);
     };
 
+    const handleAdminRoleChange = (option) => {
+        setSelectedAdminRole(option);
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = Object.fromEntries(new FormData(form));
+        if (formData.level) formData.level = Number(formData.level);
+        // Add selected nationality to formData
+        if (selectedNationality) {
+            formData.nationality = selectedNationality.value;
+        }
+        if (onSubmit) onSubmit(formData);
+    };
+
     return (
-        <ModelOverlay onClose={onClose}>
-            <Form className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark w-full p-6 rounded-lg shadow-md" method={method} action={action}>
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-1 mb-6">
-                        <h2 className="text-2xl font-semibold">{isEdit ? "Edit" : "Create New"} {roleLabel}</h2>
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            {isEdit 
-                                ? `Update the details below to edit this ${roleLabel.toLowerCase()}.` 
-                                : `Fill in the details below to add a new ${roleLabel.toLowerCase()} to the system.`
-                            }
-                        </p>
-                    </div>
+        <BaseFormComponent
+            isOpen={isOpen}
+            title={`${isEdit ? "Edit" : "Create New"} ${roleLabel}`}
+            description={isEdit ? `Update the details below to edit this ${roleLabel.toLowerCase()}.` : `Fill in the details below to add a new ${roleLabel.toLowerCase()} to the system.`}
+            onClose={onClose}
+            onSubmit={handleSubmit}
+            submitText={isEdit ? `Edit ${roleLabel}` : `Create ${roleLabel}`}
+        >
+            <div className="space-y-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputItem label="Full Name" type="text" id="fullName" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
 
-                    <button type="button" onClick={onClose} className="p-2 place-self-start rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 hover:text-gray-800">
-                        <XIcon className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <div className="space-y-6 mb-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <InputItem label="Full Name" type="text" id="fullName" name="fullName" placeholder="Enter full name" defaultValue={initialData.fullName || ""} required />
-
+                    {role !== "student" && role !== "admin" && (
                         <InputItem label={`${roleLabel} ID`} type="text" id={roleIdField} name={roleIdField} placeholder={`Enter ${roleLabel.toLowerCase()} ID`} defaultValue={initialData[roleIdField] || ""} required />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <InputItem label="National ID" type="text" id="nationalID" name="nationalID" placeholder="Enter national ID" defaultValue={initialData.nationalID || ""} required />
-
-                        <SelectBox
-                            className="w-full"
-                            label="Nationality"
-                            labelDirection="flex-col"
-                            options={nationalities}
-                            selectedOption={selectedNationality}
-                            onChange={handleNationalityChange}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <InputItem label="Email Address" type="email" id="email" name="email" placeholder="Enter email address" defaultValue={initialData.email || ""} required />
-
-                        <InputItem label="Phone Number" type="tel" id="phone" name="phone" placeholder="Enter phone number" defaultValue={initialData.phone || ""} required />
-                    </div>
-
-                    {children}
-
-                    <div>
-                        <label htmlFor="address">Address</label>
-                        <textarea
-                            id="address"
-                            name="address"
-                            rows="4"
-                            className="mt-1 block w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark rounded-md focus:outline-none"
-                            placeholder="Enter address"
-                            defaultValue={initialData.address || ""}
-                            required
-                        />
-                    </div>
+                    )}
                 </div>
 
-                <div className="flex items-center justify-end gap-4">
-                    <Button 
-                        variant="secondary"
-                        type="reset"
-                    >
-                        Reset Form
-                    </Button>
-
-                    <Button
-                        variant="primary"
-                        type="submit"
-                    >
-                        {isEdit 
-                            ? <><FilePenIcon className="w-5 h-5" /> Edit {roleLabel}</>
-                            : <><PlusIcon className="w-6 h-6" /> Create {roleLabel}</>
-                        }
-                    </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputItem label="National ID" type="text" id="nationalId" name="nationalId" placeholder="Enter national ID" defaultValue={initialData.nationalId || ""} required />
                 </div>
-            </Form>
-        </ModelOverlay>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {role === "admin" ? (
+                        <div className="flex flex-col w-full">
+                            <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1" htmlFor="role">
+                                Role
+                            </label>
+                            <Select
+                                id="role"
+                                name="role"
+                                options={adminRoleOptions}
+                                value={selectedAdminRole}
+                                onChange={handleAdminRoleChange}
+                                classNamePrefix="react-select"
+                                placeholder="Select role"
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex flex-col w-full">
+                            <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1" htmlFor="nationality">
+                                Nationality
+                            </label>
+                            <Select
+                                id="nationality"
+                                name="nationality"
+                                options={options}
+                                value={selectedNationality}
+                                onChange={handleNationalityChange}
+                                classNamePrefix="react-select"
+                                placeholder="Select nationality"
+                            />
+                        </div>
+                    )}
+
+                    <InputItem label="Phone Number" type="tel" id="phoneNumber" name="phoneNumber" placeholder="Enter phone number" defaultValue={initialData.phoneNumber || initialData.phone || ""} required />
+                </div>
+
+                {children}
+
+                <div>
+                    <label htmlFor="address">Address</label>
+                    <TextArea
+                        id="address"
+                        name="address"
+                        className="mt-1 block w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark rounded-md focus:outline-none"
+                        placeholder="Enter address"
+                        defaultValue={initialData.address || ""}
+                        required
+                    />
+                </div>
+            </div>
+        </BaseFormComponent>
     );
 }

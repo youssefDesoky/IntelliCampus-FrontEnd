@@ -1,151 +1,111 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import WeeklySchedule from "../../../components/ui/WeeklySchedule";
 import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
 import ExamSchedule from "../../../feature/student/schedule/ExamSchedule";
+import { fetchMySchedule, exportSchedulePdf } from "../../../feature/student/schedule/scheduleApi";
+import { fetchMyExams, exportExamSchedulePdf } from "../../../feature/student/schedule/examScheduleApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
-const sampleSchedule = [
-    {
-        id: 1,
-        title: "Data Structures",
-        day: "sat",
-        startTime: "8:00 AM",
-        endTime: "10:00 AM",
-        type: "lecture",
-        location: "Room 101",
-        instructor: "Dr. Ahmed"
-    },
-    {
-        id: 2,
-        title: "Database Lab",
-        day: "sat",
-        startTime: "11:00 AM",
-        endTime: "1:00 PM",
-        type: "lab",
-        location: "Lab 3",
-        instructor: "Eng. Sara"
-    },
-    {
-        id: 3,
-        title: "Web Development",
-        day: "sun",
-        startTime: "9:00 AM",
-        endTime: "11:00 AM",
-        type: "lecture",
-        location: "Room 205",
-        instructor: "Dr. Mohamed"
-    },
-    {
-        id: 4,
-        title: "Algorithms Section",
-        day: "mon",
-        startTime: "2:00 PM",
-        endTime: "4:00 PM",
-        type: "section",
-        location: "Room 102",
-        instructor: "TA Fatma"
-    },
-    {
-        id: 5,
-        title: "Midterm Exam",
-        day: "wed",
-        startTime: "10:00 AM",
-        endTime: "12:00 PM",
-        type: "exam",
-        location: "Hall A"
-    },
-    {
-        id: 6,
-        title: "Office Hours",
-        day: "thu",
-        startTime: "1:00 PM",
-        endTime: "2:15 PM",
-        type: "office",
-        location: "Office 15",
-        instructor: "Dr. Ahmed"
-    },
-];
-
-const sampleExams = [
-    {
-        id: 1,
-        courseCode: "CS301",
-        courseName: "Data Structures & Algorithms",
-        date: "2026-02-06",
-        day: "Tuesday",
-        startTime: "9:00 AM",
-        endTime: "11:00 AM",
-        duration: "2 hours",
-        location: "Hall A - Building 3",
-        type: "midterm",
-        status: "upcoming",
-    },
-    {
-        id: 2,
-        courseCode: "CS305",
-        courseName: "Database Systems",
-        date: "2026-02-12",
-        day: "Thursday",
-        startTime: "1:00 PM",
-        endTime: "3:00 PM",
-        duration: "2 hours",
-        location: "Hall B - Building 2",
-        type: "midterm",
-        status: "upcoming",
-    },
-    {
-        id: 3,
-        courseCode: "CS310",
-        courseName: "Web Development",
-        date: "2026-02-15",
-        day: "Sunday",
-        startTime: "10:00 AM",
-        endTime: "12:00 PM",
-        duration: "2 hours",
-        location: "Lab 5 - Building 1",
-        type: "final",
-        status: "upcoming",
-    },
-    {
-        id: 4,
-        courseCode: "MATH201",
-        courseName: "Linear Algebra",
-        date: "2026-02-18",
-        day: "Wednesday",
-        startTime: "9:00 AM",
-        endTime: "11:30 AM",
-        duration: "2.5 hours",
-        location: "Hall C - Building 3",
-        type: "midterm",
-        status: "upcoming",
-    },
-    {
-        id: 5,
-        courseCode: "CS320",
-        courseName: "Operating Systems",
-        date: "2026-02-20",
-        day: "Friday",
-        startTime: "2:00 PM",
-        endTime: "4:00 PM",
-        duration: "2 hours",
-        location: "Hall A - Building 3",
-        type: "midterm",
-        status: "upcoming",
-    },
-];
+const scheduleStorageKey = "studentCurrSchedule";
+const allowedTypeFilters = ["lecture", "section", "activity"];
 
 export default function Schedule() {
-    const [currSchedule, setCurrSchedule] = useState(localStorage.getItem("currSchedule") || "weekly");
-    const { isPhone } = useDeviceType();
+    const [currSchedule, setCurrSchedule] = useState(localStorage.getItem(scheduleStorageKey) || "weekly");
+    const [selectedTypes, setSelectedTypes] = useState([]);
+    const [scheduleData, setScheduleData] = useState([]);
+    const [examsData, setExamsData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { isMobile } = useDeviceType();
+    const { showError } = useError();
+
+    const loadScheduleData = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const [schedule, exams] = await Promise.all([
+                fetchMySchedule(),
+                fetchMyExams(),
+            ]);
+            setScheduleData(Array.isArray(schedule) ? schedule : []);
+            setExamsData(Array.isArray(exams) ? exams : []);
+        } catch (err) {
+            showError(err.message);
+            setScheduleData([]);
+            setExamsData([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadScheduleData();
+    }, [loadScheduleData]);
+
+    const getTypeGroup = (eventType) => {
+        if (eventType === "lecture") return "lecture";
+        if (eventType === "section") return "section";
+        return "activity";
+    };
+
+    const toggleTypeFilter = (type) => {
+        if (!allowedTypeFilters.includes(type)) return;
+
+        setSelectedTypes((prev) => {
+            if (prev.includes(type)) {
+                return prev.filter((item) => item !== type);
+            }
+
+            return [...prev, type];
+        });
+    };
+
+    const clearTypeFilters = () => setSelectedTypes([]);
+
+    const handleExport = async () => {
+        try {
+            if (currSchedule === "weekly") {
+                await exportSchedulePdf(selectedTypes);
+            } else {
+                await exportExamSchedulePdf();
+            }
+        } catch (err) {
+            showError("Failed to export PDF. Please try again.");
+        }
+    };
+
+    const filteredSchedule = selectedTypes.length === 0
+        ? scheduleData
+        : scheduleData.filter((event) => selectedTypes.includes(getTypeGroup(event.type)));
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <p className="text-gray-600">Loading schedule...</p>
+            </div>
+        );
+    }
+
     return (
         <>        
-            <ScheduleHeader currSchedule={currSchedule} setCurrSchedule={setCurrSchedule} isPhone={isPhone} />
+            <ScheduleHeader
+                currSchedule={currSchedule}
+                setCurrSchedule={setCurrSchedule}
+                isMobile={isMobile}
+                selectedTypes={selectedTypes}
+                onToggleType={toggleTypeFilter}
+                onClearTypes={clearTypeFilters}
+                onExport={handleExport}
+            />
 
             {currSchedule === "weekly" ? (
-                <WeeklySchedule schedule={sampleSchedule} onEventClick={(event) => alert(`Clicked on event: ${event.title}`)} />
+                <WeeklySchedule
+                    schedule={filteredSchedule}
+                    isMobile={isMobile}
+                    onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
+                />
             ) : (
-                <ExamSchedule exams={sampleExams} />
+                <ExamSchedule exams={examsData} />
             )}
         </>
     );

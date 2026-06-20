@@ -1,87 +1,44 @@
-import AcademicInfo from "../../../feature/student/profile/AcademicInfo";
-import Interests from "../../../feature/student/profile/Interests";
-import ProfileOverview from "../../../feature/student/profile/ProfileOverview";
-import { useState } from "react";
+import IdentityCard from "../../../feature/student/profile/IdentityCard";
+import AccountControlsCard from "../../../feature/student/profile/AccountControlsCard";
+import AcademicInfoCard from "../../../feature/student/profile/AcademicInfoCard";
+import PerformanceCard from "../../../feature/student/profile/PerformanceCard";
 
-import AttendanceQRCode from "../../../feature/student/profile/AttendanceQRCode";
-import QuickStats from "../../../feature/student/profile/QuickStats";
-import UpcomingDeadlines from "../../../feature/student/profile/UpcomingDeadlines";
-import Settings from "../../../feature/student/profile/settings";
+const userData = {
+    name: "Youssef Desoky",
+    specialization: "Information Systems",
+    faculty: "Faculty of Computers and Information",
+    avatar: "/images/students/youssefDesoky/profile.png",
+    qrCode: "/images/students/youssefDesoky/attendance-qr.png",
+    gpa: "3.8",
+    attendance: "95%",
+    rank: "Top 5%",
+    year: "Senior",
+    enrolledCourses: "6",
+    completedCourses: "28",
+    nextExam: "Database Systems · Jun 15",
+    standing: "Good Standing",
+    studentSince: "2022",
+    studentId: "S12345678",
+    email: "youssef.desoky@intelicampus.edu",
+    phone: "+20 10 2345 6789",
+    address: "123 Main St, Cairo, Egypt",
+};
 
 export default function Profile() {
-    const [isProfileOverviewVisible, setIsProfileOverviewVisible] = useState(true);
-
     return (
-        <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                { isProfileOverviewVisible ? (
-                    <ProfileOverview
-                        user={{
-                            name: "Youssef Desoky",
-                            specialization: "Information Systems",
-                            avatar: "/images/students/youssefDesoky/profile.png",
-                            gpa: "3.8",
-                            attendance: "95%",
-                            faculty: "Faculty of Computers and Information"
-                        }}
-                        setIsProfileOverviewVisible={setIsProfileOverviewVisible}
-                        className="lg:col-span-1" 
-                    />
-                ) : (
-                    <AttendanceQRCode
-                        setIsProfileOverviewVisible={setIsProfileOverviewVisible}
-                        user={{
-                            qrCode: "/images/students/youssefDesoky/attendance-qr.png"
-                        }}
-                        className="lg:col-span-1" 
-                    />
-                )}
-                
-
-
-                <AcademicInfo
-                    user={{
-                        AcademicInformation: [
-                            { name: "studentId", label: "Student ID", value: "S12345678" },
-                            { name: "specialization", label: "Specialization", value: "Information Systems" },
-                            { name: "year", label: "Year", value: "Senior" },
-                            { name: "semester", label: "Semester", value: "Fall 2026" },
-                            { name: "email", label: "Email", value: "john.doe@example.com" },
-                            { name: "phone", label: "Phone Number", value: "+1 234 567 8901" },
-                        ]
-                    }}
-                    className="lg:col-span-2" 
-                />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <UpcomingDeadlines
-                        reminders={[
-                            { title: "Project Proposal", course: "IS 410", due: "Sep 15", priority: "high" },
-                            { title: "Midterm Exam", course: "CS 220", due: "Sep 20", priority: "medium" },
-                            { title: "Research Paper", course: "IS 330", due: "Sep 25", priority: "low" },
-                        ]}
-                        className="lg:col-span-2" 
-                    />
-                </div>
-
-                <div className="space-y-6">
-                    <Interests 
-                        interests ={["Artificial Intelligence", "Web Development", "Data Science", "Cybersecurity"]}
-                        className="lg:col-span-1" 
-                    />
-                    
-                    <QuickStats
-                        items={[
-                            { icon: "📚", label: "Courses Enrolled", value: 5 },
-                            { icon: "📝", label: "Assignments Due", value: 12 },
-                        ]}
-                        className="lg:col-span-1" 
-                    />
-                    <Settings className="lg:col-span-2 mt-6" />
+        <div className="px-4 lg:px-8 py-6 space-y-6">
+            <div className="mx-auto max-w-7xl space-y-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_2fr] items-stretch">
+                    <div className="flex h-full flex-col gap-6 lg:sticky lg:top-6 self-start">
+                        <IdentityCard user={userData} className="flex-1 min-h-0" />
+                        <AccountControlsCard className="shrink-0" />
+                    </div>
+                    <div className="flex h-full flex-col gap-6">
+                        <AcademicInfoCard />
+                        <PerformanceCard />
+                    </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }

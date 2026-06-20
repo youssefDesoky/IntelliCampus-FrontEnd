@@ -5,6 +5,7 @@ export default function SelectBox({
     options, 
     selectedOption, 
     label, 
+    name,
     className, 
     labelDirection = "flex-row", 
     yPadding = 'py-2',
@@ -56,9 +57,20 @@ export default function SelectBox({
     // Compact styling adjustments
     const compactClasses = compact ? "text-xs py-1.5 px-2" : "";
     const compactIconSize = compact ? "w-4 h-4" : "w-5 h-5";
+    const isFull = className?.includes('w-full');
+
+    // When w-full, skip minWidth so button stretches to fill parent
+    const buttonStyle = isFull
+        ? {}
+        : (!compact && minWidth > 0 ? { minWidth: `${Math.min(minWidth, 320)}px` } : {});
+    const dropdownStyle = isFull
+        ? { width: '100%' }
+        : (!compact && minWidth > 0 ? { minWidth: `${Math.min(minWidth, 320)}px`, maxWidth: '100%' } : { width: '100%' });
 
     return (
-        <div ref={dropdownRef} className={`relative inline-block text-left ${className} ${compact ? 'text-xs' : 'text-xs md:text-sm'}`} data-cursor="clickable">
+        <div ref={dropdownRef} className={`relative block text-left max-w-full ${className} ${compact ? 'text-xs' : 'text-xs md:text-sm'}`} data-cursor="clickable">
+            {/* Hidden input so FormData captures the selected value */}
+            {name && <input type="hidden" name={name} value={selected?.value ?? ""} />}
             {/* Hidden element to measure longest option */}
             {!compact && options && options.length > 0 && (
                 <div ref={measureRef} className="absolute invisible whitespace-nowrap px-3 py-2">
@@ -84,8 +96,8 @@ export default function SelectBox({
                 )}
                 <button
                     type="button"
-                    className={`flex-1 min-w-0 inline-flex items-center justify-between rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark shadow-sm px-3 ${yPadding} ${compactClasses} bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark font-medium text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark focus:outline-none transition-colors duration-150`}
-                    style={!compact && minWidth > 0 ? { minWidth: `${minWidth}px` } : {}}
+                    className={`${isFull ? 'w-full' : 'flex-1'} min-w-0 max-w-full inline-flex items-center justify-between rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark shadow-sm px-3 ${yPadding} ${compactClasses} bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark font-medium text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark focus:outline-none transition-colors duration-150`}
+                    style={buttonStyle}
                     onClick={toggleOpen}
                 >
                     <span className="truncate">{selected?.label || "Select"}</span>
@@ -95,14 +107,14 @@ export default function SelectBox({
 
             {isOpen && (
                 <div 
-                    className="origin-top-right absolute right-0 mt-1 rounded-md shadow-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark ring-1 ring-black ring-opacity-5 z-50 max-h-60 overflow-y-auto"
-                    style={!compact && minWidth > 0 ? { minWidth: `${minWidth}px` } : { width: '100%' }}
+                    className="origin-top-right absolute right-0 mt-1 rounded-md shadow-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark ring-1 ring-black ring-opacity-5 z-50 max-h-60 overflow-y-auto overflow-x-hidden no-scrollbar"
+                    style={dropdownStyle}
                 >
                     <div className="py-1">
                         {options.map((option) => (
                             <div
                                 key={option.value}
-                                className={`block px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark whitespace-nowrap cursor-pointer ${
+                                className={`block px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark truncate ${
                                     selected?.value === option.value 
                                         ? 'bg-bg-surface-primary-active-light dark:bg-bg-surface-primary-active-dark font-medium text-text-accent-default-light dark:text-text-accent-default-dark' 
                                         : ''

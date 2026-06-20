@@ -9,7 +9,7 @@ import { ListIcon, Grid3ColIcon, ArrowRightIcon } from "../../../components/ui/i
 export default function DashboardCourses({ studentCourses=[], className = "" }) {
     return (
         <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
-            <div id="dashboard-my-courses-header" className="flex items-center justify-between mb-4">
+            <div id="dashboard-my-courses-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <h2 className="text-2xl font-bold">My Courses</h2>
                 
                 <div className="flex items-center gap-4">
@@ -29,7 +29,7 @@ export default function DashboardCourses({ studentCourses=[], className = "" }) 
                 </div>
             </div>
 
-            <div type="class-items" className="grid grid-cols-3 gap-4">
+            <div type="class-items" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {studentCourses.map((course) => (
                     <DashboardCourse key={course.id} courseData={course} />
                 ))}

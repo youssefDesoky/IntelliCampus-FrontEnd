@@ -1,29 +1,34 @@
 import Button from "../../../../../components/ui/Button";
-import Section from "../../../../../components/ui/Section";
-import { SaveIcon } from "../../../../../components/ui/icons";
+import { exportGraph } from "./communityService";
+import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
-export default function CommunityQuickActions() {
+export default function CommunityQuickActions({ courseId, className = "" }) {
+    const { showError } = useError();
+    const handleExportGraph = async () => {
+        try {
+            const gexf = await exportGraph(courseId);
+            const blob = new Blob([gexf], { type: "application/xml" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `course_${courseId}_graph.gexf`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
     return (
-        <Section className="p-4 border bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark rounded-md">
-            <h2 className="mb-4 text-lg font-bold">Quick Actions</h2>
-            <div className="flex flex-col">
-                <Button className="w-full flex flex-row items-center gap-2 p-3 mb-4 bg-bg-surface-primary-hover-light dark:bg-bg-surface-primary-hover-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark transition-colors duration-200 ease-in-out">
-                    <SaveIcon className="w-6 h-6 text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-accent-default-light dark:hover:text-text-accent-default-dark transition-colors duration-200 ease-in-out" />
-                    <span>Create Post</span>
+        <div className={`p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark ${className}`}>
+            <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-3">
+                Quick Actions
+            </h3>
+            <div className="space-y-2">
+                <Button variant="secondary" size="sm" className="w-full" onClick={handleExportGraph}>
+                    Export Knowledge Graph
                 </Button>
-
-                <div className="grid grid-cols-2 gap-3">
-                    <Button className="w-full flex flex-row items-center gap-2 p-3 bg-bg-surface-primary-hover-light dark:bg-bg-surface-primary-hover-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark transition-colors duration-200 ease-in-out">
-                        <SaveIcon className="w-6 h-6 text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-accent-default-light dark:hover:text-text-accent-default-dark transition-colors duration-200 ease-in-out" />
-                        <span>Saved Posts</span>
-                    </Button>
-
-                    <Button className="w-full flex flex-row items-center gap-2 p-3 bg-bg-surface-primary-hover-light dark:bg-bg-surface-primary-hover-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark transition-colors duration-200 ease-in-out">
-                        <SaveIcon className="w-6 h-6 text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-accent-default-light dark:hover:text-text-accent-default-dark transition-colors duration-200 ease-in-out" />
-                        <span>My Posts</span>
-                    </Button>
-                </div>
             </div>
-        </Section>
+        </div>
     );
 }

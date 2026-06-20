@@ -1,9 +1,8 @@
 import { useState } from "react";
-import Button from "../../../components/ui/Button";
-import { PlusIcon, FilePenIcon, XIcon } from "../../../components/ui/icons";
 import InputItem from "../../../components/form/InputItem";
-import ModelOverlay from "../../../components/ui/ModelOverlay";
+import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
+import TextArea from "../../../components/ui/TextArea";
 
 const departments = [
     { value: "Computer Science", label: "Computer Science" },
@@ -13,22 +12,24 @@ const departments = [
     { value: "Data Science", label: "Data Science" },
 ];
 
-export default function CourseForm({ onClose, method = "post", onSubmit, initialData = {} }) {
+export default function CourseForm({ onClose, method = "post", onSubmit, initialData = {}, isOpen = true }) {
     const isEdit = method === "put";
 
     const [selectedDepartment, setSelectedDepartment] = useState(() => {
-        if (initialData.department) {
-            return departments.find(d => d.value === initialData.department) || departments[0];
+        const dept = initialData.departmentName || initialData.department;
+        if (dept) {
+            return departments.find(d => d.value === dept || d.label === dept) || departments[0];
         }
         return departments[0];
     });
 
     const [formData, setFormData] = useState({
-        title: initialData.title || "",
-        id: initialData.id || "",
-        creditHours: initialData.creditHours || 3,
+        title: initialData.courseName || initialData.title || "",
+        titleArabic: initialData.courseNameAr || initialData.titleArabic || "",
+        id: initialData.courseCode || initialData.id || "",
+        courseCodeAr: initialData.courseCodeAr || "",
         description: initialData.description || "",
-        prerequisites: initialData.prerequisites?.join(", ") || "",
+        descriptionAr: initialData.descriptionAr || "",
     });
 
     const handleChange = (field) => (e) => {
@@ -37,141 +38,114 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const prereqs = formData.prerequisites
-            .split(",")
-            .map(p => p.trim())
-            .filter(Boolean);
 
         const courseData = {
-            title: formData.title,
-            id: formData.id,
-            creditHours: Number(formData.creditHours),
-            department: selectedDepartment.value,
+            courseName: formData.title,
+            courseNameAr: formData.titleArabic || undefined,
+            courseCodeAr: formData.courseCodeAr || undefined,
+            courseId: formData.id,
+            departmentId: selectedDepartment.value,
             description: formData.description,
-            prerequisites: prereqs,
-            weeks: initialData.weeks || [],
+            descriptionAr: formData.descriptionAr || undefined,
         };
 
         if (onSubmit) onSubmit(courseData);
     };
 
     return (
-        <ModelOverlay onClose={onClose}>
-            <form
-                className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark w-full p-6 rounded-lg shadow-md"
-                onSubmit={handleSubmit}
-            >
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-1 mb-6">
-                        <h2 className="text-2xl font-semibold">{isEdit ? "Edit" : "Create New"} Course</h2>
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            {isEdit
-                                ? "Update the details below to edit this course."
-                                : "Fill in the details below to add a new course to the system."
-                            }
-                        </p>
-                    </div>
+        <BaseFormComponent
+            isOpen={isOpen}
+            title={`${isEdit ? "Edit" : "Create New"} Course`}
+            description={isEdit ? "Update the details below to edit this course." : "Fill in the details below to add a new course to the system."}
+            onClose={onClose}
+            onSubmit={handleSubmit}
+            submitText={isEdit ? "Update Course" : "Create Course"}
+        >
+            <div className="space-y-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputItem
+                        label="Course Title"
+                        type="text"
+                        name="title"
+                        placeholder="e.g. Introduction to Computer Science"
+                        value={formData.title}
+                        onChange={handleChange("title")}
+                        required
+                    />
 
-                    <button type="button" onClick={onClose} className="p-2 place-self-start rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 hover:text-gray-800">
-                        <XIcon className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <div className="space-y-6 mb-6">
-                    <div className="grid grid-cols-2 gap-6">
+                    <div dir="rtl">
                         <InputItem
-                            label="Course Title"
+                            label="اسم المادة"
                             type="text"
-                            name="title"
-                            placeholder="e.g. Introduction to Computer Science"
-                            value={formData.title}
-                            onChange={handleChange("title")}
-                            required
-                        />
-
-                        <InputItem
-                            label="Course ID"
-                            type="text"
-                            name="id"
-                            placeholder="e.g. CS-100"
-                            value={formData.id}
-                            onChange={handleChange("id")}
-                            isDisabled={isEdit}
-                            required
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <SelectBox
-                            className="w-full"
-                            label="Department"
-                            labelDirection="flex-col"
-                            options={departments}
-                            selectedOption={selectedDepartment}
-                            onChange={setSelectedDepartment}
-                        />
-
-                        <InputItem
-                            label="Credit Hours"
-                            type="number"
-                            name="creditHours"
-                            placeholder="3"
-                            value={formData.creditHours}
-                            onChange={handleChange("creditHours")}
-                            min="1"
-                            max="6"
-                            required
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-6">
-                        <InputItem
-                            label="Prerequisites (comma-separated IDs)"
-                            type="text"
-                            name="prerequisites"
-                            placeholder="e.g. CS-100, CS-201"
-                            value={formData.prerequisites}
-                            onChange={handleChange("prerequisites")}
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="description" className="block mb-2 font-bold text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
-                            Description
-                        </label>
-                        <textarea
-                            id="description"
-                            name="description"
-                            rows="4"
-                            className="mt-1 block w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark rounded-md focus:outline-none"
-                            placeholder="Enter course description"
-                            value={formData.description}
-                            onChange={handleChange("description")}
+                            name="titleArabic"
+                            placeholder="مقدمة في علوم الحاسوب"
+                            value={formData.titleArabic}
+                            onChange={handleChange("titleArabic")}
                             required
                         />
                     </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-4">
-                    <Button
-                        variant="secondary"
-                        type="button"
-                        onClick={() => setFormData({ title: "", id: "", creditHours: 3, description: "", prerequisites: "" })}
-                    >
-                        Reset Form
-                    </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputItem
+                        label="Course Code"
+                        type="text"
+                        name="id"
+                        placeholder="e.g. CS-100"
+                        value={formData.id}
+                        onChange={handleChange("id")}
+                        isDisabled={isEdit}
+                        required
+                    />
 
-                    <Button
-                        variant="primary"
-                        type="submit"
-                    >
-                        {isEdit
-                            ? <><FilePenIcon className="w-5 h-5" /> Update Course</>
-                            : <><PlusIcon className="w-6 h-6" /> Create Course</>
-                        }
-                    </Button>
+                    <div dir="rtl">
+                        <InputItem
+                            label="رمز المادة"
+                            type="text"
+                            name="courseCodeAr"
+                            placeholder="حاس-100"
+                            value={formData.courseCodeAr}
+                            onChange={handleChange("courseCodeAr")}
+                        />
+                    </div>
                 </div>
-            </form>
-        </ModelOverlay>
+
+                <SelectBox
+                    className="w-full"
+                    label="Department"
+                    name="department"
+                    labelDirection="flex-col"
+                    options={departments}
+                    selectedOption={selectedDepartment}
+                    onChange={setSelectedDepartment}
+                />
+
+                <div>
+                    <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1">
+                        Description
+                    </label>
+                    <TextArea
+                        name="description"
+                        placeholder="Enter course description..."
+                        value={formData.description}
+                        onChange={handleChange("description")}
+                        className="w-full px-3 py-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark resize-none"
+                    />
+                </div>
+
+                <div dir="rtl">
+                    <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1">
+                        وصف المادة
+                    </label>
+                    <TextArea
+                        name="descriptionAr"
+                        placeholder="أدخل وصف المادة..."
+                        value={formData.descriptionAr}
+                        onChange={handleChange("descriptionAr")}
+                        className="w-full px-3 py-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark resize-none"
+                    />
+                </div>
+            </div>
+        </BaseFormComponent>
     );
 }

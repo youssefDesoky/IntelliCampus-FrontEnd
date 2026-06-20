@@ -60,9 +60,9 @@ export default function DashboardCommunity({className}){
                 </NavLink>
             </div>
 
-            <menu className="grid grid-cols-2 gap-6 mb-8" aria-labelledby="smart-notes-header">
+            <menu className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" aria-labelledby="smart-notes-header">
                 {communitiesData.length === 0 ? (
-                    <div className="mb-4 col-span-2 h-full border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
+                    <div className="mb-4 md:col-span-2 h-full border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
                         <div className="flex flex-col items-center justify-center h-full p-6 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                             <ArrowRightIcon className="w-12 h-12 mb-4" />
                             <p className="text-center">No community updates till now</p>

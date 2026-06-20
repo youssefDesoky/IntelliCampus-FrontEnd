@@ -1,9 +1,11 @@
 import { useState, useRef } from "react";
 import Button from "../../../../components/ui/Button";
+import TextArea from "../../../../components/ui/TextArea";
 import Dialog from "../../../../components/ui/Dialog";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import InstructorWeekMaterialContent from "./InstructorWeekMaterialContent";
 import { CloudUploadIcon, DownloadIcon, FileLinesIcon, FilePenIcon, PlusIcon, TrashIcon, XIcon } from "../../../../components/ui/icons";
+import { useError } from '../../../../contexts/ErrorContext.jsx';
 import { getMaterialDownloadUrl } from "../../../course/services/materialsApi";
     // Download all materials logic
     function downloadAllMaterials(materials) {
@@ -31,6 +33,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
     const [isEditSubmitting, setIsEditSubmitting] = useState(false);
     const fileInputRef = useRef(null);
     const materials = folder.materials || [];
+    const { showError } = useError();
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -73,7 +76,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
             await onEditFolder?.(folder.materialFolderId, editName.trim(), editDescription.trim() || null);
             setShowEditModal(false);
         } catch (err) {
-            console.error("Failed to edit folder:", err);
+            showError(err.message);
         } finally {
             setIsEditSubmitting(false);
         }
@@ -174,7 +177,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         onClick={() => fileInputRef.current?.click()}
-                        className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200
+                        className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-all duration-200
                             ${isDragOver
                                 ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-accent-default-light/10 dark:bg-bg-surface-accent-default-dark/10"
                                 : "border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:border-border-primary-focus-light dark:hover:border-border-primary-focus-dark hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50"
@@ -256,11 +259,10 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                             <label className="block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">
                                 Description
                             </label>
-                            <textarea
+                            <TextArea
                                 value={editDescription}
                                 onChange={(e) => setEditDescription(e.target.value)}
-                                rows={3}
-                                className="w-full px-3 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark transition-colors resize-none"
+                                className="w-full px-3 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark transition-colors"
                             />
                         </div>
 

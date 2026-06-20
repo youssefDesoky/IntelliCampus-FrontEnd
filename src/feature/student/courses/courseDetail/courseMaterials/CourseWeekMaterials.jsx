@@ -1,4 +1,6 @@
 import Button from "../../../../../components/ui/Button";
+import { FileLinesIcon, DownloadIcon } from "../../../../../components/ui/icons";
+
 import CourseWeekMaterialContent from "./CourseWeekMaterialContent";
 import { getMaterialDownloadUrl } from "../../../../course/services/materialsApi";
 
@@ -17,19 +19,21 @@ function downloadAllMaterials(materials) {
     });
 }
 
-export default function CourseWeekMaterials({ folder }) {
+export default function CourseWeekMaterials({ folder, highlighted = false }) {
     const materials = folder.materials || [];
 
     return (
-        <div className="mt-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark overflow-hidden hover:shadow-lg dark:hover:shadow-shadow-dark">
+        <div
+            id={`material-folder-${folder.materialFolderId}`}
+            className={`bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border overflow-hidden hover:shadow-lg dark:hover:shadow-shadow-dark ${highlighted ? "ring-2 ring-indigo-500 ring-offset-2 ring-offset-bg-light dark:ring-offset-bg-dark border-indigo-400 dark:border-indigo-700" : "border-border-primary-default-light dark:border-border-primary-default-dark"}`}
+        >
             <div className="p-6 md:p-8 bg-linear-to-r from-bg-surface-secondary-default-light/50 to-transparent dark:from-bg-surface-secondary-default-dark/50 border-b border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex-1">
-                        <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-3 mb-2">
                             <h3 className="text-xl md:text-2xl font-bold truncate text-text-primary-default-light dark:text-text-primary-default-dark">
                                 {folder.name}
                             </h3>
-
                             <span className="px-3 py-1 w-fit text-nowrap rounded-full text-sm font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark">
                                 {materials.length} {materials.length === 1 ? 'item' : 'items'}
                             </span>
@@ -40,6 +44,18 @@ export default function CourseWeekMaterials({ folder }) {
                             </p>
                         )}
                     </div>
+                    {materials.length > 0 && (
+                        <div className="shrink-0 flex items-center self-start md:self-center mt-2 md:mt-0">
+                            <button
+                                onClick={() => downloadAllMaterials(materials)}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-text-primary-default-light dark:text-text-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark transition-colors shadow-sm"
+                                aria-label="Download All Materials"
+                            >
+                                <DownloadIcon size={18} />
+                                <span>Download All</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -68,19 +84,6 @@ export default function CourseWeekMaterials({ folder }) {
                     </ul>
                 )}
             </div>
-            
-            {materials.length > 0 && (
-                <div className="px-6 md:px-8 py-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark bg-bg-surface-secondary-default-light/30 dark:bg-bg-surface-secondary-default-dark/30">
-                    <div className="flex flex-row items-center justify-between gap-3">
-                        <p className="text-sm text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                            {materials.length} {materials.length === 1 ? 'file' : 'files'}
-                        </p>
-                        <Button variant="primary" onClick={() => downloadAllMaterials(materials)}>
-                            Download All
-                        </Button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

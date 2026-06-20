@@ -1,43 +1,290 @@
+import { useEffect, useState } from "react";
 import Section from "../../../components/ui/Section";
-import SelectBox from "../../../components/ui/SelectBox";
+import { EllipsisVerticalIcon, FileIcon, FileLinesIcon, ClipboardCheckIcon, BookIcon } from "../../../components/ui/icons";
+import { addDays, format, isSameDay } from "date-fns";
 
-export default function Timeline({ className }) {
+const categoryStyles = {
+    assignments: {
+        badge: "ASSIGNMENT",
+        badgeColor: "bg-red-100 text-red-600",
+        cardBorder: "border-red-200",
+        cardBg: "bg-red-50",
+        icon: FileLinesIcon,
+        iconBg: "bg-red-100 text-red-500",
+    },
+    classes: {
+        badge: "CLASS",
+        badgeColor: "bg-blue-100 text-blue-600",
+        cardBorder: "border-blue-200",
+        cardBg: "bg-blue-50",
+        icon: BookIcon,
+        iconBg: "bg-blue-100 text-blue-500",
+    },
+    exams: {
+        badge: "EXAM",
+        badgeColor: "bg-yellow-100 text-yellow-700",
+        cardBorder: "border-yellow-200",
+        cardBg: "bg-yellow-50",
+        icon: ClipboardCheckIcon,
+        iconBg: "bg-yellow-100 text-yellow-600",
+    },
+    personal: {
+        badge: "PERSONAL",
+        badgeColor: "bg-purple-100 text-purple-600",
+        cardBorder: "border-purple-200",
+        cardBg: "bg-purple-50",
+        icon: FileIcon,
+        iconBg: "bg-purple-100 text-purple-500",
+    },
+    default: {
+        badge: "REMINDER",
+        badgeColor: "bg-gray-100 text-gray-700",
+        cardBorder: "border-gray-200",
+        cardBg: "bg-gray-50",
+        icon: EllipsisVerticalIcon,
+        iconBg: "bg-gray-100 text-gray-500",
+    }
+};
+
+const getSubtitle = (dateStr) => {
+    const target = new Date(dateStr);
+    const now = new Date();
+    const diffMs = target - now;
+
+    if (diffMs > 0 && diffMs <= 1000 * 60 * 60 * 24) {
+        const hoursLeft = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60)));
+        return `Due in ${hoursLeft} hour${hoursLeft === 1 ? "" : "s"}`;
+    }
+
+    return target.toLocaleString("en-US", {
+        weekday: "short",
+        hour: "numeric",
+        minute: "2-digit",
+    });
+};
+
+const normalizeDate = (date) => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+};
+
+const getRelativeDayLabel = (baseDate, targetDate) => {
+    if (isSameDay(baseDate, new Date())) {
+        if (isSameDay(targetDate, baseDate)) return "Today";
+        if (isSameDay(targetDate, addDays(baseDate, 1))) return "Tomorrow";
+    }
+
+    return format(targetDate, "EEE, MMM d");
+};
+
+const sortByDate = (left, right) => new Date(left.dueAt) - new Date(right.dueAt);
+
+export default function Timeline({ className, reminders = {}, selectedCategory, selectedDate, onEditReminder, onDeleteReminder }) {
+    const [activeMenuId, setActiveMenuId] = useState(null);
+
+    useEffect(() => {
+        const handleOutsideClick = (event) => {
+            if (!(event.target instanceof Element)) return;
+            if (!event.target.closest("[data-personal-actions-menu]")) {
+                setActiveMenuId(null);
+            }
+        };
+
+        document.addEventListener("pointerdown", handleOutsideClick);
+        return () => document.removeEventListener("pointerdown", handleOutsideClick);
+    }, []);
+
+    const selectedValue = selectedCategory?.value || "all";
+    const selectedCategoryLabel = selectedCategory?.label || "All Categories";
+    const selectedDay = normalizeDate(selectedDate || new Date());
+    const nextDay = addDays(selectedDay, 1);
+    const weekEnd = addDays(selectedDay, 7);
+
+    const allReminders = [
+        ...(reminders.selectedDay || []),
+        ...(reminders.nextDay || []),
+        ...(reminders.week || []),
+    ].sort(sortByDate);
+
+    const filteredItems = selectedValue === "all"
+        ? allReminders
+        : allReminders.filter((item) => item.category === selectedValue);
+
+    const selectedDayItems = filteredItems.filter((item) => isSameDay(new Date(item.dueAt), selectedDay)).sort(sortByDate);
+    const nextDayItems = filteredItems.filter((item) => isSameDay(new Date(item.dueAt), nextDay)).sort(sortByDate);
+    const weekItems = filteredItems.filter((item) => {
+        const reminderDay = normalizeDate(item.dueAt);
+        return reminderDay > nextDay && reminderDay <= weekEnd;
+    }).sort(sortByDate);
+
+    const groups = [
+        {
+            key: "selectedDay",
+            title: `Selected Day • ${getRelativeDayLabel(selectedDay, selectedDay)}`,
+            subtitle: "Reminders on the day you selected",
+            color: "bg-blue-500",
+            items: selectedDayItems,
+        },
+        {
+            key: "nextDay",
+            title: `Next Day • ${getRelativeDayLabel(selectedDay, nextDay)}`,
+            subtitle: "Reminders for the following day",
+            color: "bg-gray-400",
+            items: nextDayItems,
+        },
+        {
+            key: "week",
+            title: `This Week • ${format(addDays(selectedDay, 2), "EEE, MMM d")} - ${format(weekEnd, "EEE, MMM d")}`,
+            subtitle: "Reminders for the rest of that week",
+            color: "bg-gray-300",
+            items: weekItems,
+        },
+    ];
+
     return (
-        <Section className={`${className}`}>
-            <div>
-                <h2>Timeline</h2>
-
-                <SelectBox
-                    options={[
-                        { value: 'all', label: 'All Categories' },
-                        { value: 'classes', label: 'Classes' },
-                        { value: 'exams', label: 'Exams' },
-                        { value: 'assignments', label: 'Assignments' },
-                        { value: 'personal', label: 'Personal' }
-                    ]}
-                    defaultValue="all"
-                />
+        <Section className={`${className} bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 md:p-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark`}>
+            {/* Header */}
+            <div className="mb-6 flex items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                    Timeline
+                </h2>
+                <span className="text-xs font-semibold text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                    Category: {selectedCategoryLabel}
+                </span>
             </div>
 
-            <div>
-                <div>
-                    <div>
-                        <span className="w-2 h-2 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark rounded-full"></span>
-                        <p>Today</p>
-                        <div className="h-px"/>
+            {/* Timeline groups */}
+            <div className="flex flex-col gap-8">
+                {filteredItems.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark px-4 py-8 text-center text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                        No reminders found for the selected date range.
                     </div>
-                    <div>
-                        <div>
-                            <h3>Data structures</h3>
-                            <p>3:00 PM</p>
-                            <span></span>
-                            <p>Room 204</p> {/* or add course id in case of assignment */}
+                )}
+
+                {groups.map((group) => (
+                    <div key={group.key}>
+                        {group.items.length === 0 ? null : (
+                            <>
+                        {/* Group header */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <span className={`w-2.5 h-2.5 ${group.color} rounded-full shrink-0`} />
+                            <div className="min-w-0">
+                                <p className="font-semibold text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                                    {group.title}
+                                </p>
+                                <p className="text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                                    {group.subtitle}
+                                </p>
+                            </div>
+                            <div className="h-px bg-gray-200 dark:bg-gray-700 w-full" />
                         </div>
-                        <button>
-                            
-                        </button>
+
+                        {/* Cards */}
+                        <div className="flex flex-col gap-4 pl-1">
+                            {group.items.map((item) => {
+                                const visual = categoryStyles[item.category] || categoryStyles.default;
+                                const Icon = visual.icon;
+                                const dueDate = new Date(item.dueAt);
+                                const timeLabel = format(dueDate, "h:mm");
+                                const meridiemLabel = format(dueDate, "a");
+                                const itemKey = item.id || item.title;
+                                const isPersonal = item.category === "personal";
+                                return (
+                                    <div
+                                        key={itemKey}
+                                        className="grid grid-cols-[64px_minmax(0,1fr)] gap-4 items-start"
+                                    >
+                                        <div className="pt-3 text-right leading-tight">
+                                            <p className="text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                                                {timeLabel}
+                                            </p>
+                                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                                                {meridiemLabel}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            className={`flex items-center justify-between gap-3 p-4 rounded-xl border ${visual.cardBorder} ${visual.cardBg} transition-shadow md:hover:shadow-sm`}
+                                        >
+                                        {/* Left: icon + info */}
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${visual.iconBg}`}>
+                                                <Icon size={18} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100 truncate">
+                                                    {item.title}
+                                                </h3>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                    {getSubtitle(item.dueAt)}
+                                                    <span className="mx-1.5">•</span>
+                                                    {item.location || "No location"}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Right: badge + menu */}
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className={`px-3 py-1 text-xs font-bold rounded-md ${visual.badgeColor}`}>
+                                                {visual.badge}
+                                            </span>
+                                            {isPersonal && (
+                                                <div className="relative z-20" data-personal-actions-menu>
+                                                    <button
+                                                        type="button"
+                                                        className="relative z-20 inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 transition-colors touch-manipulation md:hover:bg-black/5 dark:md:hover:bg-white/10 active:bg-black/5 dark:active:bg-white/10"
+                                                        data-cursor="clickable"
+                                                        aria-label="Open reminder actions"
+                                                        onPointerUp={(event) => {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            setActiveMenuId((prev) => (prev === itemKey ? null : itemKey));
+                                                        }}
+                                                    >
+                                                        <EllipsisVerticalIcon size={16} />
+                                                    </button>
+
+                                                    {activeMenuId === itemKey && (
+                                                        <div className="absolute right-0 top-full mt-2 min-w-28 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg p-1 z-50 pointer-events-auto">
+                                                            <button
+                                                                type="button"
+                                                                className="w-full text-left px-3 py-2 text-sm rounded-md touch-manipulation md:hover:bg-black/5 dark:md:hover:bg-white/10 active:bg-black/5 dark:active:bg-white/10 text-text-primary-default-light dark:text-text-primary-default-dark"
+                                                                onPointerUp={(event) => {
+                                                                    event.preventDefault();
+                                                                    event.stopPropagation();
+                                                                    setActiveMenuId(null);
+                                                                    onEditReminder?.(item);
+                                                                }}
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="w-full text-left px-3 py-2 text-sm rounded-md touch-manipulation md:hover:bg-red-50 dark:md:hover:bg-red-900/30 active:bg-red-50 dark:active:bg-red-900/30 text-red-600 dark:text-red-400"
+                                                                onPointerUp={(event) => {
+                                                                    event.preventDefault();
+                                                                    event.stopPropagation();
+                                                                    setActiveMenuId(null);
+                                                                    onDeleteReminder?.(item);
+                                                                }}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                            </>
+                        )}
                     </div>
-                </div>
+                ))}
             </div>
         </Section>
     );

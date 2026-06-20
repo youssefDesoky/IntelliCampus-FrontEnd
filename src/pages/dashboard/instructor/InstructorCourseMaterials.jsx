@@ -2,20 +2,21 @@ import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import InstructorWeekMaterials from "../../../feature/instructor/components/courseMaterials/InstructorWeekMaterials";
 import Button from "../../../components/ui/Button";
+import TextArea from "../../../components/ui/TextArea";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import { PlusIcon, XIcon } from "../../../components/ui/icons";
 import { createFolder, createMaterial, deleteMaterial, deleteFolder, updateFolder } from "../../../feature/course/services/materialsApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function InstructorCourseMaterials() {
     const { course, courseId, refreshMaterials } = useOutletContext();
     const [showAddFolder, setShowAddFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
     const [newFolderDescription, setNewFolderDescription] = useState("");
+    const { showError } = useError();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [uploadError, setUploadError] = useState(null);
 
     const handleUpload = async (folderId, files) => {
-        setUploadError(null);
         const failedFiles = [];
         for (const file of files) {
             try {
@@ -29,12 +30,11 @@ export default function InstructorCourseMaterials() {
 
                 await createMaterial(formData);
             } catch (err) {
-                console.error("Failed to upload material:", err);
                 failedFiles.push({ name: file.name, error: err.message });
             }
         }
         if (failedFiles.length > 0) {
-            setUploadError(
+            showError(
                 `Failed to upload: ${failedFiles.map((f) => `${f.name} (${f.error})`).join(", ")}`
             );
         }
@@ -47,7 +47,6 @@ export default function InstructorCourseMaterials() {
             await deleteMaterial(materialId);
             await refreshMaterials();
         } catch (err) {
-            console.error("Failed to delete material:", err);
         }
     };
 
@@ -56,7 +55,6 @@ export default function InstructorCourseMaterials() {
             await deleteFolder(folderId);
             await refreshMaterials();
         } catch (err) {
-            console.error("Failed to delete folder:", err);
         }
     };
 
@@ -65,7 +63,6 @@ export default function InstructorCourseMaterials() {
             await updateFolder(folderId, { name, description });
             await refreshMaterials();
         } catch (err) {
-            console.error("Failed to update folder:", err);
         }
     };
 
@@ -76,14 +73,13 @@ export default function InstructorCourseMaterials() {
             await createFolder({
                 name: newFolderName.trim(),
                 description: newFolderDescription.trim() || null,
-                courseId: Number(courseId),
+                courseId,
             });
             setNewFolderName("");
             setNewFolderDescription("");
             setShowAddFolder(false);
             await refreshMaterials();
         } catch (err) {
-            console.error("Failed to create folder:", err);
         } finally {
             setIsSubmitting(false);
         }
@@ -145,12 +141,11 @@ export default function InstructorCourseMaterials() {
                                 <label className="block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">
                                     Description
                                 </label>
-                                <textarea
+                                <TextArea
                                     value={newFolderDescription}
                                     onChange={(e) => setNewFolderDescription(e.target.value)}
                                     placeholder="Brief description of the folder contents..."
-                                    rows={3}
-                                    className="w-full px-3 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark transition-colors resize-none"
+                                    className="w-full px-3 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark transition-colors"
                                 />
                             </div>
 
@@ -170,19 +165,6 @@ export default function InstructorCourseMaterials() {
                         </div>
                     </div>
                 </ModelOverlay>
-            )}
-
-            {/* Upload Error Banner */}
-            {uploadError && (
-                <div className="mt-4 flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
-                    <p>{uploadError}</p>
-                    <button
-                        onClick={() => setUploadError(null)}
-                        className="shrink-0 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-                    >
-                        <XIcon size={16} />
-                    </button>
-                </div>
             )}
 
             {/* Folder List */}

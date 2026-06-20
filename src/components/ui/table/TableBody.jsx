@@ -8,207 +8,215 @@ import StudentForm from "../../../feature/admin/components/StudentForm";
 
 const buttonStyle = "w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
 
-export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, actions }) {
-    const [editingRow, setEditingRow] = useState(null);
-    const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
-    const [actionButtonClicked, setActionButtonClicked] = useState(null);
-    const [dropdownStyle, setDropdownStyle] = useState({});
-    const buttonRefs = useRef({});
+export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true, columnAlignments }) {
+	const [editingRow, setEditingRow] = useState(null);
+	const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
+	const [actionButtonClicked, setActionButtonClicked] = useState(null);
+	const [dropdownStyle, setDropdownStyle] = useState({});
+	const buttonRefs = useRef({});
+	useEffect(() => {
+		if (selectAll) {
+			if (selectedRows.length !== rowData.length) {
+				setSelectedRows(rowData.map((_, index) => index));
+			}
+		} else if (selectedRows.length === rowData.length && rowData.length > 0) {
+			setSelectedRows([]);
+		}
+	}, [selectAll, rowData, selectedRows.length, setSelectedRows]);
 
-    useEffect(() => {
-        if (selectAll) {
-            setSelectedRows(rowData.map((_, index) => index));
-        } else if (selectedRows.length === rowData.length) {
-            setSelectedRows([]);
-        }
-    }, [selectAll, rowData.length, setSelectedRows, rowData, selectedRows.length]);
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (!event.target.closest('.action-dropdown') && !event.target.closest('.action-btn')) {
+				setActionButtonClicked(null);
+			}
+		};
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (!event.target.closest('.action-dropdown') && !event.target.closest('.action-btn')) {
-                setActionButtonClicked(null);
-            }
-        };
+		document.addEventListener('click', handleClickOutside);
+		return () => {
+			document.removeEventListener('click', handleClickOutside);
+		};
+	}, []);
 
-        document.addEventListener('click', handleClickOutside);
-        return () => {
-            document.removeEventListener('click', handleClickOutside);
-        };
-    }, []);
+	const handleCheckboxChange = (index) => {
+		if (!showSelectionColumn) return;
+		if (selectedRows.includes(index)) {
+			setSelectedRows(selectedRows.filter(i => i !== index));
+			setSelectAll(false);
+		} else {
+			const newSelectedRows = [...selectedRows, index];
+			setSelectedRows(newSelectedRows);
+			if (newSelectedRows.length === rowData.length) {
+				setSelectAll(true);
+			}
+		}
+	};
 
-    const handleCheckboxChange = (index) => {
-        if (selectedRows.includes(index)) {
-            setSelectedRows(selectedRows.filter(i => i !== index));
-            setSelectAll(false);
-        } else {
-            const newSelectedRows = [...selectedRows, index];
-            setSelectedRows(newSelectedRows);
-            if (newSelectedRows.length === rowData.length) {
-                setSelectAll(true);
-            }
-        }
-    };
-
-    const handleActionClick = useCallback((e, rowIndex) => {
-        e.stopPropagation();
-        if (rowIndex === actionButtonClicked) {
-            setActionButtonClicked(null);
-            return;
-        }
-        const buttonEl = buttonRefs.current[rowIndex];
-        if (buttonEl) {
-            const rect = buttonEl.getBoundingClientRect();
-            setDropdownStyle({
-                top: rect.bottom + 8,
-                left: rect.left + rect.width / 2,
-                transform: 'translateX(-50%)',
-            });
-        }
-        setActionButtonClicked(rowIndex);
-    }, [actionButtonClicked]);
+	const handleActionClick = useCallback((e, rowIndex) => {
+		e.stopPropagation();
+		if (rowIndex === actionButtonClicked) {
+			setActionButtonClicked(null);
+			return;
+		}
+		const buttonEl = buttonRefs.current[rowIndex];
+		if (buttonEl) {
+			const rect = buttonEl.getBoundingClientRect();
+			setDropdownStyle({
+				top: rect.bottom + 8,
+				left: rect.left + rect.width / 2,
+				transform: 'translateX(-50%)',
+			});
+		}
+		setActionButtonClicked(rowIndex);
+	}, [actionButtonClicked]);
 
 
-    const handleEditClick = useCallback((rowIndex) => {
-        setEditingRow({ index: rowIndex, data: rowData[rowIndex] });
-        setActionButtonClicked(null);
-    }, [rowData]);
+	const handleEditClick = useCallback((rowIndex) => {
+		setEditingRow({ index: rowIndex, data: rowData[rowIndex] });
+		setActionButtonClicked(null);
+	}, [rowData]);
 
-    const handleDeleteClick = useCallback((rowIndex) => {
-        setDeleteButtonClicked(rowIndex);
-        setActionButtonClicked(null);
-    }, []);
+	const handleDeleteClick = useCallback((rowIndex) => {
+		setDeleteButtonClicked(rowIndex);
+		setActionButtonClicked(null);
+	}, []);
 
-    const getEditComponent = () => {
-        if (editingRow === null) return null;
+	const getEditComponent = () => {
+		if (editingRow === null) return null;
 
-        const commonProps = {
-            initialData: editingRow.data,
-            onClose: () => setEditingRow(null),
-            onSubmit: (data) => {
-                if (onEdit) onEdit(editingRow.index, data);
-                setEditingRow(null);
-            },
-        };
+		const commonProps = {
+			initialData: editingRow.data,
+			onClose: () => setEditingRow(null),
+			onSubmit: (data) => {
+				if (onEdit) onEdit(editingRow.index, data);
+				setEditingRow(null);
+			},
+		};
 
-        switch (role) {
-            case "admin":
-                return <AdminForm {...commonProps} method="put" />;
-            case "instructor":
-                return <InstructorForm {...commonProps} method="put" />;
-            case "student":
-                return <StudentForm {...commonProps} method="put" />;
-            default:
-                return null;
-        }
-    };
+		switch (role) {
+			case "admin":
+				return <AdminForm {...commonProps} method="put" />;
+			case "instructor":
+				return <InstructorForm {...commonProps} method="put" />;
+			case "student":
+				return <StudentForm {...commonProps} method="put" />;
+			default:
+				return null;
+		}
+	};
 
-    return (
-    <>
-        <tbody>
-            {rowData.map((row, rowIndex) => (
-                <tr
-                    key={rowIndex}
-                    className="text-center hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark 
-                        divide-x divide-border-primary-default-light dark:divide-border-primary-default-dark hover:divide-border-primary-hover-light dark:hover:divide-border-primary-hover-dark                
-                        border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark
-                    "
-                    onClick={() => handleCheckboxChange(rowIndex)}
-                    style={{ backgroundColor: selectedRows.includes(rowIndex) ? 'rgba(59, 130, 246, 0.1)' : 'transparent' }}
-                >
-                    <td className="p-3">
-                        <input 
-                            type="checkbox" 
-                            checked={selectedRows.includes(rowIndex)}
-                            onChange={() => handleCheckboxChange(rowIndex)}
-                        />
-                    </td>
+	return (
+	<>
+		<tbody>
+			{rowData.map((row, rowIndex) => (
+					<tr
+						key={rowIndex}
+						className={`${showSelectionColumn ? "text-center" : "text-center"} relative z-0 no-transitions hover:z-10 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark 
+							divide-x divide-border-primary-default-light dark:divide-border-primary-default-dark hover:divide-border-primary-hover-light dark:hover:divide-border-primary-hover-dark                
+							border border-border-primary-default-light dark:border-border-primary-default-dark hover:ring-1 hover:ring-inset hover:ring-border-primary-hover-light dark:hover:ring-border-primary-hover-dark
+						`}
+						onClick={showSelectionColumn ? () => handleCheckboxChange(rowIndex) : undefined}
+						style={{ backgroundColor: showSelectionColumn && selectedRows.includes(rowIndex) ? 'rgba(59, 130, 246, 0.1)' : 'transparent' }}
+					>
+					{showSelectionColumn && (
+						<td className="px-3 py-2 text-center">
+							<input 
+								type="checkbox" 
+								checked={selectedRows.includes(rowIndex)}
+								onChange={() => handleCheckboxChange(rowIndex)}
+							/>
+						</td>
+					)}
 
-                    {Object.values(row).slice(0, columnCount).map((cell, cellIndex) => (
-                        <td key={cellIndex} className="p-3">
-                            {cell}
-                        </td>
-                    ))}
+					{Object.entries(row).filter(([key]) => !key.startsWith('_')).slice(0, columnCount).map(([key, cell], cellIndex) => (
+						<td key={cellIndex} className={`px-1 sm:px-3 py-2 align-middle ${columnAlignments?.[cellIndex] || "text-center"}`}>
+							{cell}
+						</td>
+					))}
                     
-                    <td className="p-3">
-                        <button
-                            ref={(el) => (buttonRefs.current[rowIndex] = el)}
-                            onClick={(e) => handleActionClick(e, rowIndex)}
-                            className="action-btn p-2 rounded-full hover:bg-bg-fill-tertiary-hover-light dark:hover:bg-bg-fill-tertiary-hover-dark"
-                        >
-                            <EllipsisVerticalIcon size={24} className="rotate-90" />
-                        </button>
-                    </td>
-                </tr>
-            ))}
+					{showActionsColumn && (
+						<td className="px-1 sm:px-3 py-2 text-center align-middle">
+							<button
+								ref={(el) => (buttonRefs.current[rowIndex] = el)}
+								onClick={(e) => handleActionClick(e, rowIndex)}
+								className="action-btn p-2 rounded-full hover:bg-bg-fill-tertiary-hover-light dark:hover:bg-bg-fill-tertiary-hover-dark"
+							>
+								<EllipsisVerticalIcon size={24} className="rotate-90" />
+							</button>
+						</td>
+					)}
+				</tr>
+			))}
 
-            {actionButtonClicked !== null && 
-                <DropdownMenu 
-                    direction="bottom" 
-                    position="middle" 
-                    portal={true}
-                    style={dropdownStyle}
-                    className="action-dropdown"
-                >
-                    {actions ? (
-                        actions(rowData[actionButtonClicked], actionButtonClicked).map((action, i) => (
-                            <button
-                                key={i}
-                                className={`${buttonStyle} ${action.className || ""}`}
-                                onClick={() => {
-                                    action.onClick();
-                                    setActionButtonClicked(null);
-                                }}
-                            >
-                                {action.label}
-                            </button>
-                        ))
-                    ) : (
-                        <>
-                            <button className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}>
-                                View Details
-                            </button>
-                            <button 
-                                className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
-                                onClick={() => handleEditClick(actionButtonClicked)}
-                            >
-                                Edit
-                            </button>
-                            <button 
-                                className={`${buttonStyle} text-text-danger-default-light dark:text-text-danger-default-dark hover:text-text-danger-hover-light dark:hover:text-text-danger-hover-dark`}
-                                onClick={() => handleDeleteClick(actionButtonClicked)}
-                            >
-                                Delete
-                            </button>
-                        </>
-                    )}
-                </DropdownMenu>
-            }
-        </tbody>    
+			{showActionsColumn && actionButtonClicked !== null && 
+				<DropdownMenu 
+					direction="bottom" 
+					position="middle" 
+					portal={true}
+					style={dropdownStyle}
+					className="action-dropdown"
+				>
+					{actions ? (
+						actions(rowData[actionButtonClicked], actionButtonClicked).map((action, i) => (
+							<button
+								key={i}
+								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark ${action.className || ""}`}
+								onClick={() => {
+									action.onClick();
+									setActionButtonClicked(null);
+								}}
+							>
+								{action.label}
+							</button>
+						))
+					) : (
+						<>
+							<button 
+								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
+								onClick={() => { onPreview?.(rowData[actionButtonClicked]?._raw ?? rowData[actionButtonClicked]); setActionButtonClicked(null); }}
+							>
+								View Details
+							</button>
+							<button 
+								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
+								onClick={() => handleEditClick(actionButtonClicked)}
+							>
+								Edit
+							</button>
+							<button 
+								className={`${buttonStyle} text-text-danger-default-light dark:text-text-danger-default-dark hover:text-text-danger-hover-light dark:hover:text-text-danger-default-dark`}
+								onClick={() => handleDeleteClick(actionButtonClicked)}
+							>
+								Delete
+							</button>
+						</>
+					)}
+				</DropdownMenu>
+			}
+		</tbody>    
 
-        {!actions && deleteButtonClicked !== false && (
-            <Dialog
-                isOpen={deleteButtonClicked !== false}
-                variant="error"
-                title={`Delete ${role === "admin" ? "Admin" : role === "student" ? "Student" : "Instructor"}`}
-                onClose={() => setDeleteButtonClicked(false)}
-                onConfirm={() => {
-                    if (onDelete) {
-                        onDelete(deleteButtonClicked);
-                    } else {
-                        console.log(`Deleting ${role} at index:`, deleteButtonClicked);
-                    }
-                    setDeleteButtonClicked(false);
-                    return true;
-                }}
-                confirmText="Delete"
-                cancelText="Cancel"
-                showCloseButton={true}
-            >
-                Are you sure you want to delete this {role === "admin" ? "Admin" : role === "student" ? "Student" : "Instructor"}? This action cannot be undone.
-            </Dialog>
-        )}
+		{showActionsColumn && !actions && deleteButtonClicked !== false && (
+			<Dialog
+				isOpen={deleteButtonClicked !== false}
+				variant="error"
+				title={`Delete ${role === "admin" ? "Admin" : role === "student" ? "Student" : "Instructor"}`}
+				onClose={() => setDeleteButtonClicked(false)}
+				onConfirm={() => {
+					if (onDelete) {
+						onDelete(deleteButtonClicked);
+					}
+					setDeleteButtonClicked(false);
+					return true;
+				}}
+				confirmText="Delete"
+				cancelText="Cancel"
+				showCloseButton={true}
+			>
+				Are you sure you want to delete this {role === "admin" ? "Admin" : role === "student" ? "Student" : "Instructor"}? This action cannot be undone.
+			</Dialog>
+		)}
 
-        {!actions && editingRow !== null && getEditComponent()}
-    </>    
-    );
+		{showActionsColumn && !actions && editingRow !== null && getEditComponent()}
+	</>    
+	);
 }
+

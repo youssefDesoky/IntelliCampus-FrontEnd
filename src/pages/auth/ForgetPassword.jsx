@@ -2,13 +2,14 @@ import { Form, Link } from "react-router-dom";
 import AuthLayout from "../../layout/AuthLayout";
 import InputItem from "../../components/form/InputItem";
 import { MailIconLight } from "../../components/ui/icons";
+import Button from "../../components/ui/Button";
 
 export default function ForgetPassword() {
     return (
         <AuthLayout
             title="Forgot Password" 
             subtitle="Enter your email to reset your password" 
-            fahimImgSrc="/images/fahimLogin.png"
+            bgImageName="FrontLibNoPepole"
         >
             <Form className="space-y-5 mb-12">
                 <InputItem
@@ -21,9 +22,12 @@ export default function ForgetPassword() {
                     <MailIconLight className="w-5 h-5 text-gray-400" />
                 </InputItem>
 
-                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
+                <Button 
+                    type="submit" 
+                    width="w-full"
+                >
                     Send Reset Link
-                </button>
+                </Button>
             </Form>
 
             <div className="text-center space-y-2">

@@ -14,7 +14,6 @@ export default async function rootAuthLoader() {
         return await res.json();
     } catch (err) {
         if (err instanceof Response) throw err; // re-throw redirects
-        console.error("Root auth loader error:", err);
         throw redirect("/login");
     }
 }

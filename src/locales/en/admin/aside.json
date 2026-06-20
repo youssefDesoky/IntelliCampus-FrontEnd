@@ -1,10 +1,12 @@
 {
     "dashboard": "Dashboard",
     "analytics": "Analytics",
-    "admins": "Manage Admins",
-    "students": "Manage Students",
-    "instructors": "Manage Instructors",
-    "courses": "Manage Courses",
-    "rooms": "Manage Rooms",
-    "departments": "Manage Departments"
+    "admins": "Admins",
+    "students": "Students",
+    "instructors": "Instructors",
+    "courses": "Courses",
+    "rooms": "Rooms",
+    "departments": "Departments",
+    "bylaws": "Bylaws",
+    "exams": "Exams"
 }

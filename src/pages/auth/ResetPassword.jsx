@@ -4,13 +4,14 @@ import AuthLayout from "../../layout/AuthLayout";
 
 import InputItem from "../../components/form/InputItem";
 import { LockIconLight } from "../../components/ui/icons";
+import Button from "../../components/ui/Button";
 
 export default function ChangePassword() {
     return (
         <AuthLayout
-            title="Change Password" 
+            title="Reset Password" 
             subtitle="Set a new password for your account" 
-            fahimImgSrc="/images/fahimLogin.png"
+            bgImageName="FullLibNoPeople"
         >
             <Form className="space-y-5 mb-12">
                 <InputItem
@@ -31,9 +32,12 @@ export default function ChangePassword() {
                     <LockIconLight className="w-5 h-5 text-gray-400" />
                 </InputItem>
 
-                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
-                    Change Password
-                </button>
+                <Button 
+                    type="submit" 
+                    width="w-full"
+                >
+                    Reset Password
+                </Button>
             </Form>
         </AuthLayout>
     );

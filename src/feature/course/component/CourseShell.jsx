@@ -14,11 +14,13 @@ import {
     FolderOpenIconDark, 
     UserCheckIcon, 
     ChartBarIcon, 
-    CommentsIcon, 
     FilePenIcon, 
-    BrainIcon 
+    BrainIcon,
+    StickyNoteIcon,
+    VideoIcon
 } from "../../../components/ui/icons";
 import { fetchCourseMaterialsOrganized } from "../services/materialsApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const links = [
     { to: "", end: true, icon: <BullHornIcon className="w-5 h-5" />, label: "Announcements" },
@@ -27,8 +29,9 @@ const links = [
     { to: "quizzes", icon: <BrainIcon className="w-5 h-5" />, label: "Quizzes" },
     { to: "attendance", icon: <UserCheckIcon className="w-5 h-5" />, label: "Attendance" },
     { to: "grades", icon: <ChartBarIcon className="w-5 h-5" />, label: "Grades" },
-    { to: "community", icon: <UsersIcon className="w-5 h-5" />, label: "Community" },
-    { to: "study-group", icon: <CommentsIcon className="w-5 h-5" />, label: "Study Group" },
+    { to: "community", icon: <UsersIcon className="w-5 h-5" />, label: "Study Group" },
+    { to: "smart-notes", icon: <StickyNoteIcon className="w-5 h-5" />, label: "Smart Notes" },
+    { to: "meeting", icon: <VideoIcon className="w-5 h-5" />, label: "Meeting" },
 ];
 
 export default function CourseShell() {
@@ -36,23 +39,21 @@ export default function CourseShell() {
     const { isMobile } = useDeviceType();
     const [materialsData, setMaterialsData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError } = useError();
 
     const loadMaterials = useCallback(async (showLoading = true) => {
         try {
             if (showLoading) setIsLoading(true);
-            setError(null);
             const data = await fetchCourseMaterialsOrganized(courseId);
             setMaterialsData(data);
             return data;
         } catch (err) {
-            console.error("Failed to load course materials:", err);
-            setError(err.message);
+            showError(err.message);
             return null;
         } finally {
             setIsLoading(false);
         }
-    }, [courseId]);
+    }, [courseId, showError]);
 
     // Refresh without showing full-page loading (for child components)
     const refreshMaterials = useCallback(() => loadMaterials(false), [loadMaterials]);
@@ -73,10 +74,6 @@ export default function CourseShell() {
 
     if (isLoading) {
         return <p>Loading course data...</p>;
-    }
-
-    if (error) {
-        return <p>Error loading course: {error}</p>;
     }
 
     return (
