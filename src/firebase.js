@@ -1,15 +1,15 @@
-import {initializeApp} from 'firebase/app';
-import {getMessaging} from 'firebase/messaging';
+import { initializeApp } from 'firebase/app';
+import { getMessaging } from 'firebase/messaging';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDN8iQquLNQa7ntgTe0kVsg1nj3pts2R-k",
-  authDomain: "intellicampus-6078f.firebaseapp.com",
-  projectId: "intellicampus-6078f",
-  storageBucket: "intellicampus-6078f.firebasestorage.app",
-  messagingSenderId: "1035371116854",
-  appId: "1:1035371116854:web:6db5b179305652fea95b97",
-  measurementId: "G-20SKNXY20Z"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 export const messaging = getMessaging(app);
+export const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;

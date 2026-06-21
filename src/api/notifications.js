@@ -23,9 +23,23 @@ export async function markAllNotificationsAsRead() {
   return true;
 }
 
-export async function sendBulkNotification(userIds = [], message = '', type = 0) {
+export async function sendBulkNotification(userIds = [], message = '', type = 0, title = null, clickUrl = null, imageUrl = null) {
   return apiClient('/api/notifications/send', {
     method: 'POST',
-    body: JSON.stringify({ userIds, message, type }),
+    body: JSON.stringify({ userIds, message, type, title, clickUrl, imageUrl }),
+  });
+}
+
+export async function registerDeviceToken(token) {
+  return apiClient('/api/devices/register', {
+    method: 'POST',
+    body: JSON.stringify({ token, platform: navigator.platform }),
+  });
+}
+
+export async function unregisterDeviceToken(token) {
+  return apiClient('/api/devices/unregister', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
   });
 }
