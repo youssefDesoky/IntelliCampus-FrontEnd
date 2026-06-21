@@ -3,17 +3,17 @@ import { API_URL } from "../../config/api";
 
 export default async function logoutAction() {
     try {
-        const token = localStorage.getItem('fcm_token');
-        if (token) {
+        const endpoint = localStorage.getItem('push_endpoint');
+        if (endpoint) {
             await fetch(`${API_URL}/api/devices/unregister`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ token }),
+                body: JSON.stringify({ endpoint }),
             });
         }
     } catch { /* ignore */ }
-    localStorage.removeItem('fcm_token');
+    localStorage.removeItem('push_endpoint');
 
     try {
         await fetch(`${API_URL}/api/auth/logout`, {

@@ -1,3 +1,6 @@
 {
-  "gcm_sender_id": "1035371116854"
+  "name": "IntelliCampus",
+  "short_name": "IntelliCampus",
+  "start_url": "/",
+  "display": "standalone"
 }

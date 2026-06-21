@@ -30,16 +30,16 @@ export async function sendBulkNotification(userIds = [], message = '', type = 0,
   });
 }
 
-export async function registerDeviceToken(token) {
+export async function registerPushSubscription(subscription) {
   return apiClient('/api/devices/register', {
     method: 'POST',
-    body: JSON.stringify({ token, platform: navigator.platform }),
+    body: JSON.stringify(subscription),
   });
 }
 
-export async function unregisterDeviceToken(token) {
+export async function unregisterPushSubscription(endpoint) {
   return apiClient('/api/devices/unregister', {
     method: 'POST',
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ endpoint }),
   });
 }
