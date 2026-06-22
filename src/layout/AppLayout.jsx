@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useRouteLoaderData } from 'react-router-dom';
 import { useSidebar, useDeviceType } from '../hooks';
+import usePushNotifications from '../hooks/usePushNotifications';
 import { getAside, getBottomBar, getHeader } from '../utils/layoutHelper';
 import Chat from '../feature/chat/components/Chat';
 
@@ -43,6 +44,8 @@ export default function AppLayout() {
         setActiveView(view);
         localStorage.setItem('activeView', view);
     };
+
+    usePushNotifications(true);
 
     return (
         <div className="min-h-screen bg-bg-light dark:bg-bg-dark text-text-primary-active-light dark:text-text-primary-active-dark">

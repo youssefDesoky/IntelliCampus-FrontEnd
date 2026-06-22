@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Section from "./Section";
 import PaginationButtons from "./PaginationButtons";
 import BaseComponent from "./BaseComponent";
-import { TableHeader, TableHeaderActions, TableBody } from "./table";
+import { TableHeader, TableHeaderActions, TableBody } from "./table/index";
 
 
 export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments }) {
