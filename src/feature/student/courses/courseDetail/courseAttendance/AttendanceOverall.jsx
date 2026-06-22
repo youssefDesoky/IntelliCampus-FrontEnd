@@ -1,7 +1,9 @@
 import CircularProgress from "../../../../../components/ui/CircularProgress";
 import BaseComponent from "../../../../../components/ui/BaseComponent";
+import Button from "../../../../../components/ui/Button";
+import { PaperclipIcon } from "../../../../../components/ui/icons";
 
-export default function AttendanceOverall({ attendance }) {
+export default function AttendanceOverall({ attendance, onRequestExcuse }) {
     const { percentage, attendedSessions, missedSessions } = attendance;
 
     const attendanceSummary = percentage >= 75
@@ -53,6 +55,10 @@ export default function AttendanceOverall({ attendance }) {
                     <p className="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark">{missedSessions}</p>
                 </div>
             </div>
+
+            <Button variant="primary" startIcon={<PaperclipIcon size={18} />} className="mt-6 w-full justify-center" onClick={onRequestExcuse}>
+                Request Excuse
+            </Button>
         </BaseComponent>
     );
 }

@@ -75,6 +75,7 @@ export default function StudentDetails() {
             setEmailSubject("");
             setEmailBody("");
         } catch (err) {
+            showError(err.message || "Failed to send email");
         } finally {
             setSendingEmail(false);
         }
@@ -103,6 +104,7 @@ export default function StudentDetails() {
             setCompletedCourses(completed);
             setAvailableCourses(available);
         } catch (err) {
+            showError(err.message || "Failed to load courses");
         } finally {
             setCoursesLoading(false);
         }

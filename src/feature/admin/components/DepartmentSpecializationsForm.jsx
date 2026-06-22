@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
+import NumberInput from "../../../components/form/NumberInput";
 import { PlusIcon, TrashIcon, XIcon } from "../../../components/ui/icons";
 import { fetchSpecializations, createSpecialization, deleteSpecialization } from "../services/adminApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
@@ -10,6 +11,7 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
     const [specializations, setSpecializations] = useState([]);
     const [newName, setNewName] = useState("");
     const [newNameAr, setNewNameAr] = useState("");
+    const [newMaxCapacity, setNewMaxCapacity] = useState("");
     const [loading, setLoading] = useState(true);
     const [adding, setAdding] = useState(false);
 
@@ -37,10 +39,12 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
         if (!name) return;
         try {
             setAdding(true);
-            const created = await createSpecialization(departmentId, { name, nameAr: nameAr || null });
+            const maxCap = newMaxCapacity ? parseInt(newMaxCapacity) : null;
+            const created = await createSpecialization(departmentId, { name, nameAr: nameAr || null, maxCapacity: maxCap });
             setSpecializations(prev => [...prev, created]);
             setNewName("");
             setNewNameAr("");
+            setNewMaxCapacity("");
             onUpdate?.();
         } catch (err) {
             showError(err.message);
@@ -96,7 +100,7 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                     ) : (
                         <>
                             <div className="space-y-4 mb-6">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <input
                                         type="text"
                                         value={newName}
@@ -115,6 +119,13 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                                             className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm"
                                         />
                                     </div>
+                                    <NumberInput
+                                        value={newMaxCapacity}
+                                        onChange={(e) => setNewMaxCapacity(e.target.value)}
+                                        placeholder="Max capacity (optional)"
+                                        min="0"
+                                        className="w-full"
+                                    />
                                 </div>
                                 <div className="flex justify-end">
                                     <Button

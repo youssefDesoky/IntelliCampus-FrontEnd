@@ -39,16 +39,76 @@ const typeStyles = {
   },
 };
 
-function ToastItem({ toast, onDismiss, isDesktop }) {
+function ToastItem({ toast, onDismiss, onDismissAnimated, isDesktop, isExiting }) {
   const config = typeStyles[toast.type] || typeStyles.info;
+  const [translateX, setTranslateX] = useState(0);
+  const [dismissing, setDismissing] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const touchStart = useRef({ x: 0, y: 0 });
+  const swipeOffset = useRef(0);
+  const isDragging = useRef(false);
+
+  const handleTouchStart = useCallback((e) => {
+    if (isDesktop || dismissing || isExiting) return;
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    swipeOffset.current = 0;
+    isDragging.current = false;
+  }, [isDesktop, dismissing, isExiting]);
+
+  const handleTouchMove = useCallback((e) => {
+    if (isDesktop || dismissing || isExiting) return;
+    const dx = e.touches[0].clientX - touchStart.current.x;
+    const dy = e.touches[0].clientY - touchStart.current.y;
+
+    if (!isDragging.current) {
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+        isDragging.current = true;
+        setDragging(true);
+      } else {
+        return;
+      }
+    }
+
+    swipeOffset.current = dx;
+    setTranslateX(dx);
+  }, [isDesktop, dismissing, isExiting]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (isDesktop || !isDragging.current) return;
+    isDragging.current = false;
+    setDragging(false);
+
+    if (Math.abs(swipeOffset.current) > 80) {
+      setDismissing(true);
+      const dir = swipeOffset.current > 0 ? 1 : -1;
+      setTranslateX(dir * window.innerWidth);
+      setTimeout(() => onDismiss(toast.id), 200);
+    } else {
+      setTranslateX(0);
+    }
+  }, [isDesktop, onDismiss, toast.id]);
+
+  const style = {
+    transform: `translateX(${translateX}px)`,
+    transition: dragging ? 'none' : 'transform 0.2s ease, opacity 0.2s ease',
+    opacity: dismissing ? 0 : Math.max(0.4, 1 - Math.abs(translateX) / 200),
+  };
+
+  const animClass = isExiting
+    ? (isDesktop ? 'animate-slide-out-right' : 'animate-fade-out-up')
+    : (isDesktop ? 'animate-slide-in-right' : 'animate-fade-in-down');
 
   return (
     <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={style}
       className={`
-        flex items-start gap-3 p-4 rounded-lg shadow-lg pointer-events-auto
+        flex items-start gap-3 p-4 rounded-lg shadow-lg pointer-events-auto select-none
         bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark
         border-l-4 ${config.borderClass}
-        ${isDesktop ? 'w-80 animate-slide-in-right' : 'max-w-sm w-full mx-auto animate-fade-in-down'}
+        ${isDesktop ? 'w-80' : 'max-w-sm w-full mx-auto'} ${animClass}
       `}
       role="alert"
     >
@@ -66,7 +126,7 @@ function ToastItem({ toast, onDismiss, isDesktop }) {
         </p>
       </div>
       <button
-        onClick={() => onDismiss(toast.id)}
+        onClick={() => onDismissAnimated(toast.id)}
         className="flex-shrink-0 p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors"
       >
         <XIcon size={16} />
@@ -77,8 +137,44 @@ function ToastItem({ toast, onDismiss, isDesktop }) {
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const [exitingIds, setExitingIds] = useState(new Set());
   const { isDesktop } = useDeviceType();
   const timersRef = useRef({});
+  const exitingTimersRef = useRef({});
+
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+    setExitingIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    if (timersRef.current[id]) {
+      clearTimeout(timersRef.current[id]);
+      delete timersRef.current[id];
+    }
+    if (exitingTimersRef.current[id]) {
+      clearTimeout(exitingTimersRef.current[id]);
+      delete exitingTimersRef.current[id];
+    }
+  }, []);
+
+  const dismissToastAnimated = useCallback((id) => {
+    if (timersRef.current[id]) {
+      clearTimeout(timersRef.current[id]);
+      delete timersRef.current[id];
+    }
+    setExitingIds(prev => new Set(prev).add(id));
+    exitingTimersRef.current[id] = setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+      setExitingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      delete exitingTimersRef.current[id];
+    }, 300);
+  }, []);
 
   const showToast = useCallback(({ title, message, type = 'info', duration = 4000 }) => {
     const id = Date.now() + Math.random();
@@ -86,21 +182,12 @@ export function ToastProvider({ children }) {
 
     if (duration > 0) {
       timersRef.current[id] = setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-        delete timersRef.current[id];
+        dismissToastAnimated(id);
       }, duration);
     }
 
     return id;
-  }, []);
-
-  const dismissToast = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-    if (timersRef.current[id]) {
-      clearTimeout(timersRef.current[id]);
-      delete timersRef.current[id];
-    }
-  }, []);
+  }, [dismissToastAnimated]);
 
   useEffect(() => {
     globalOnToast = showToast;
@@ -110,6 +197,7 @@ export function ToastProvider({ children }) {
   useEffect(() => {
     return () => {
       Object.values(timersRef.current).forEach(clearTimeout);
+      Object.values(exitingTimersRef.current).forEach(clearTimeout);
     };
   }, []);
 
@@ -130,7 +218,9 @@ export function ToastProvider({ children }) {
             key={toast.id}
             toast={toast}
             onDismiss={dismissToast}
+            onDismissAnimated={dismissToastAnimated}
             isDesktop={isDesktop}
+            isExiting={exitingIds.has(toast.id)}
           />
         ))}
       </div>

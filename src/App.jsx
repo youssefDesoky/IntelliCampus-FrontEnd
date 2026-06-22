@@ -9,6 +9,7 @@ import { rootAuthLoader } from "./routes/loaders";
 import { authAction, logoutAction } from "./routes/actions";
 
 import CustomCursor from "./components/ui/CustomCursor";
+import ToastTester from "./components/dev/ToastTester";
 import SidebarProvider from "./contexts/SidebarProvider";
 import CourseShell from "./feature/course/component/CourseShell";
 
@@ -82,7 +83,7 @@ export default function App() {
 
             // ================= STUDENT =================
             {
-                element: <RoleGuard allow={["student_undergrad", "student_masters", "student_phd", "student_diploma", "student"]} />,
+                element: <RoleGuard allow={["student_bachelor", "student_masters", "student_phd", "student_diploma", "student"]} />,
                 children: [
                     { index: true, element: <StudentDashboard /> },
                     { path: "fahim", element: <div>Fahim AI Content</div> },
@@ -145,22 +146,57 @@ export default function App() {
             // ================= ADMIN =================
             {
                 path: "admin",
-                element: <RoleGuard allow={["admin", "superadmin", "admin_undergrad", "admin_postgrad", "admin_academicstaff"]} />,
                 children: [
-                    { index: true, element: <AdminDashboard /> },
-                    { path: "analytics", element: <Attendance /> },
-                    { path: "admins", element: <ManageAdmins /> },
-                    { path: "students", element: <ManageStudents /> },
-                    { path: "students/:studentId", element: <StudentDetails /> },
-                    { path: "instructors", element: <ManageInstructors /> },
-                    { path: "instructors/:instructorId", element: <InstructorDetails /> },
-                    { path: "departments", element: <ManageDepartments /> },
-                    { path: "courses", element: <ManageCourses /> },
-                    { path: "courses/:courseId", element: <ManageCourseClasses /> },
-                    { path: "rooms", element: <ManageRooms /> },
-                    { path: "bylaws", element: <ManageBylaws /> },
-                    { path: "bylaws/:bylawId", element: <ManageBylawDetailsPage /> },
-                    { path: "exams", element: <ManageExams /> },
+                    // Dashboard — all admin roles
+                    {
+                        element: <RoleGuard allow={["superadmin", "admin_bachelor", "admin_masters", "admin_postgrad", "admin_phd", "admin_diploma", "admin_academicstaff"]} />,
+                        children: [
+                            { index: true, element: <AdminDashboard /> },
+                        ],
+                    },
+                    // Analytics — superadmin only
+                    {
+                        element: <RoleGuard allow={["superadmin"]} />,
+                        children: [
+                            { path: "analytics", element: <Attendance /> },
+                        ],
+                    },
+                    // Students — superadmin + student-type admins
+                    {
+                        element: <RoleGuard allow={["superadmin", "admin_bachelor", "admin_masters", "admin_postgrad", "admin_phd", "admin_diploma"]} />,
+                        children: [
+                            { path: "students", element: <ManageStudents /> },
+                            { path: "students/:studentId", element: <StudentDetails /> },
+                        ],
+                    },
+                    // Instructors — superadmin + academic staff
+                    {
+                        element: <RoleGuard allow={["superadmin", "admin_academicstaff"]} />,
+                        children: [
+                            { path: "instructors", element: <ManageInstructors /> },
+                            { path: "instructors/:instructorId", element: <InstructorDetails /> },
+                        ],
+                    },
+                    // Admins — superadmin only
+                    {
+                        element: <RoleGuard allow={["superadmin"]} />,
+                        children: [
+                            { path: "admins", element: <ManageAdmins /> },
+                        ],
+                    },
+                    // SuperAdmin-only pages (departments, courses, rooms, bylaws, exams)
+                    {
+                        element: <RoleGuard allow={["superadmin"]} />,
+                        children: [
+                            { path: "departments", element: <ManageDepartments /> },
+                            { path: "courses", element: <ManageCourses /> },
+                            { path: "courses/:courseId", element: <ManageCourseClasses /> },
+                            { path: "rooms", element: <ManageRooms /> },
+                            { path: "bylaws", element: <ManageBylaws /> },
+                            { path: "bylaws/:bylawId", element: <ManageBylawDetailsPage /> },
+                            { path: "exams", element: <ManageExams /> },
+                        ],
+                    },
                 ],
             },
         ],
@@ -179,6 +215,7 @@ export default function App() {
     return (
         <>
             <CustomCursor />
+            <ToastTester />
             <SidebarProvider>
                 <RouterProvider router={router} />
             </SidebarProvider>

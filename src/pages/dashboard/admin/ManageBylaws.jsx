@@ -20,7 +20,7 @@ import {
 } from "../../../feature/admin/services/adminApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
-const tableHeaders = ["Bylaw", "Description", "Version", "Status", "Students", "Document"];
+const tableHeaders = ["Bylaw", "Description", "Type", "Status", "Students", "Document"];
 
 export default function ManageBylaws() {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ export default function ManageBylaws() {
     description: bylaw.description ? (
       <span className="truncate max-w-xs" title={bylaw.description}>{bylaw.description}</span>
     ) : "—",
-    version: `v${bylaw.version}`,
+    type: <span className="text-sm font-medium">{bylaw.type}</span>,
     status: (
       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${bylaw.isActive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
         {bylaw.isActive ? <CheckIcon className="w-3 h-3" /> : <XIcon className="w-3 h-3" />}

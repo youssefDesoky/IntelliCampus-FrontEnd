@@ -52,7 +52,7 @@ export default function DashboardStudyGroup({className}){
                         <StudyGroupPost 
                             key={index}
                             postData={sg.posts[0]} 
-                            department={sg.department} 
+                            courseTitle={sg.department} 
                         />)
                     )
                 )}

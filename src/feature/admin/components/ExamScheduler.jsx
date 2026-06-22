@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
+import useDeviceType from "../../../hooks/useDeviceType";
 import WeeklySchedule from "../../../components/ui/WeeklySchedule";
+import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import DateInput from "../../../components/form/DateInput";
 import TimeInput from "../../../components/form/TimeInput";
@@ -416,7 +418,29 @@ function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose
   );
 }
 
+const CONFIG_STORAGE_KEY = "exam_scheduler_config";
+
+function deriveConfigFromExams(scheduled) {
+  if (!scheduled || scheduled.length === 0) return null;
+  const dates = [...new Set(scheduled.map(e => e.date))].sort();
+  const slotMap = new Map();
+  scheduled.forEach(e => {
+    const key = `${e.startTime.substring(0, 5)};${e.endTime.substring(0, 5)}`;
+    if (!slotMap.has(key)) {
+      slotMap.set(key, { startTime: e.startTime, endTime: e.endTime });
+    }
+  });
+  const dailySlots = [...slotMap.values()]
+    .sort((a, b) => parseMin(a.startTime) - parseMin(b.startTime));
+  return {
+    scheduleFrom: dates[0],
+    scheduleTo: dates[dates.length - 1],
+    dailySlots,
+  };
+}
+
 const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, ref) {
+  const { isMobile } = useDeviceType();
   const { showError } = useError();
   const [scheduleResult, setScheduleResult] = useState(null);
   const [lastAutoConfig, setLastAutoConfig] = useState(null);
@@ -471,6 +495,14 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
             studentCount: 0,
           }));
           setScheduleResult({ success: true, scheduled, unscheduledCourseIds: [] });
+
+          const savedConfig = localStorage.getItem(CONFIG_STORAGE_KEY);
+          if (savedConfig) {
+            try { setLastAutoConfig(JSON.parse(savedConfig)); } catch { /* ignore */ }
+          } else {
+            const derived = deriveConfigFromExams(scheduled);
+            if (derived) setLastAutoConfig(derived);
+          }
         }
       } catch {
         // No exams exist yet, that's fine
@@ -487,11 +519,13 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
     try {
       const result = await autoSchedule(request);
       setScheduleResult(result);
-      setLastAutoConfig({
+      const config = {
         scheduleFrom: request.scheduleFrom,
         scheduleTo: request.scheduleTo,
         dailySlots: request.dailySlots,
-      });
+      };
+      setLastAutoConfig(config);
+      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
       setShowAutoDialog(false);
     } catch (err) {
       showError(err.message);
@@ -507,6 +541,7 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
       await Promise.all(exams.map(e => deleteExam(e.examId)));
       setScheduleResult(null);
       setLastAutoConfig(null);
+      localStorage.removeItem(CONFIG_STORAGE_KEY);
       setEditing(null);
     } catch (err) {
       showError(err.message);
@@ -579,7 +614,11 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
       )}
 
       {!loading && ready && (
-        <WeeklySchedule schedule={schedule} isMobile={false} variant="exam" examDays={examDays} onEventClick={handleEventClick} />
+        isMobile ? (
+          <WeeklyScheduleAgenda days={examDays} schedule={schedule} variant="exam" onEventClick={handleEventClick} />
+        ) : (
+          <WeeklySchedule schedule={schedule} isMobile={false} variant="exam" examDays={examDays} onEventClick={handleEventClick} />
+        )
       )}
 
       {showAutoDialog && !loading && (

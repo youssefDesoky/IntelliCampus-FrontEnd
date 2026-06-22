@@ -4,7 +4,7 @@ import TextArea from "../../../../components/ui/TextArea";
 import Dialog from "../../../../components/ui/Dialog";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import InstructorWeekMaterialContent from "./InstructorWeekMaterialContent";
-import { CloudUploadIcon, DownloadIcon, FileLinesIcon, FilePenIcon, PlusIcon, TrashIcon, XIcon } from "../../../../components/ui/icons";
+import { CloudUploadIcon, DownloadIcon, FileLinesIcon, FilePenIcon, PlusIcon, TrashIcon, XIcon, FileSlashIcon } from "../../../../components/ui/icons";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 import { getMaterialDownloadUrl } from "../../../course/services/materialsApi";
     // Download all materials logic
@@ -142,7 +142,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                 {materials.length === 0 && !isUploadOpen ? (
                     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
                         <div className="w-16 h-16 rounded-full bg-bg-surface-tertiary-default-light dark:bg-bg-surface-tertiary-default-dark flex items-center justify-center mb-4">
-                            <FileLinesIcon size={24} className="text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark" />
+                            <FileSlashIcon size={24} className="text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark" />
                         </div>
                         <h4 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                             No materials yet

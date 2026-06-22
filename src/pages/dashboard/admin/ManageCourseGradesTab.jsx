@@ -14,7 +14,10 @@ export default function ManageCourseGradesTab({ courseId, courseName }) {
         setUploading(true);
         try {
             const result = await uploadCourseGrades(courseId, file);
-            setUploadResult(result?.message || "Grades uploaded successfully.");
+            const msg = result?.successCount !== undefined
+                ? `${result.successCount} grades uploaded, ${result.failCount || 0} failed.`
+                : "Grades uploaded successfully.";
+            setUploadResult(msg);
             setIsUploadOpen(false);
         } catch (err) {
             showError(err.message);

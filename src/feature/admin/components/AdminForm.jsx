@@ -33,7 +33,7 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                 ) || nationalities[0] || null
             );
         }
-        return nationalities[0] || null;
+        return nationalities.find(n => n.value === "EG") || nationalities[0] || null;
     });
 
     const [selectedRole, setSelectedRole] = useState(null);
@@ -55,11 +55,17 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                 if (initialData.adminRole) {
                     const match = options.find(o => o.value === initialData.adminRole);
                     if (match) setSelectedRole(match);
+                } else if (initialData.roles) {
+                    const adminRoleName = initialData.roles.find(r => r.toLowerCase().startsWith("admin_"));
+                    if (adminRoleName) {
+                        const match = options.find(o => o.value === adminRoleName);
+                        if (match) setSelectedRole(match);
+                    }
                 }
             })
             .catch(() => {
                 setRoleOptions([
-                    { value: "undergrad", label: "Under Grad Affairs Admin" },
+                    { value: "bachelor", label: "Bachelor Affairs Admin" },
                     { value: "postgrad", label: "Post Grad Affairs Admin" },
                     { value: "academicstaff", label: "Academic Staff Admin" },
                 ]);
@@ -203,7 +209,7 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
                             <SelectBox
-                                className="w-full"
+                                className={`w-full ${isEdit ? 'sm:col-span-2' : ''}`}
                                 label="Role"
                                 name="role"
                                 labelDirection="flex-col"
@@ -211,7 +217,9 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                                 selectedOption={selectedRole}
                                 onChange={setSelectedRole}
                             />
-                            <DateInput label="Hire Date" name="hireDate" defaultValue={(initialData.hireDate || new Date().toISOString()).split("T")[0]} required />
+                            {!isEdit && (
+                                <DateInput label="Hire Date" name="hireDate" defaultValue={(initialData.hireDate || new Date().toISOString()).split("T")[0]} required />
+                            )}
                         </div>
                     </div>
                 </div>

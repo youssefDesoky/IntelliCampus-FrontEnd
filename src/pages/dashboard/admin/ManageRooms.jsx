@@ -16,7 +16,7 @@ function buildRoomRow(room, isDesktop, isTablet) {
         type: room.type || "—",
     capacity: room.capacity ?? "—",
     ...((isDesktop || isTablet) ? { location: room.location || room.roomLocation || room.Location || room.RoomLocation || "—" } : {}),
-    _id: room.id ?? room.roomId,
+    id: room.id ?? room.roomId,
   };
 }
 

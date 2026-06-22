@@ -198,10 +198,17 @@ export default function ManageEntity({
   }, [deleteTarget, getId, deleteItem, loadItems, entityName, showError]);
 
   const handleDeleteSelected = useCallback(async () => {
+    try {
+      for (const id of selectedRowIds) {
+        await deleteItem(id);
+      }
+    } catch (err) {
+      showError(err.message);
+    }
     setSelectedRowIds([]);
     setIsDeleteSelectedOpen(false);
     await loadItems();
-  }, [loadItems]);
+  }, [selectedRowIds, deleteItem, loadItems, showError]);
 
   const openForm = useCallback((item = null) => {
     setEditingItem(item);
@@ -219,7 +226,7 @@ export default function ManageEntity({
     formIsLoading, setFormIsLoading, loadItems, rawItems,
   };
 
-  const filterHelpers = { filteredItems, setCurrentPage, selectedRowIds, rawItems };
+  const filterHelpers = { filteredItems, setCurrentPage, selectedRowIds, rawItems, loadItems };
   const dialogHelpers = {
     editingItem, isFormOpen, deleteTarget, setDeleteTarget,
     openForm, closeForm, loadItems,

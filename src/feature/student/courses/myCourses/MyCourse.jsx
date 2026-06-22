@@ -1,6 +1,4 @@
 import { Link } from 'react-router-dom';
-import ProgressBox from '../../../../components/ui/ProgressBox';
-
 // Icons
 import { 
     UserTieIcon, 
@@ -62,31 +60,6 @@ export default function MyCourse({ course, role, viewMode, isMobile }) {
     const isCompact = isMobile || viewMode === "grid";
     const typeStyles = getCourseTypeStyles(course.isElective);
 
-    // --- Progress Calculation ---
-    let progress = null;
-    let isProgressMissing = false;
-
-    if (isInstructor) {
-        if (course.weeksCompleted != null && course.weeks != null) {
-            const totalWeeks = course.weeks?.length ?? 0;
-            progress = totalWeeks > 0 ? Math.round((course.weeksCompleted / totalWeeks) * 100) : 0;
-        } else {
-            isProgressMissing = true;
-        }
-    } else {
-        if (course.progress != null) {
-            progress = course.progress;
-        } else if (course.weeks > 0 && course.weeksCompleted != null) {
-            progress = Math.round((course.weeksCompleted / course.weeks) * 100);
-        } else {
-            isProgressMissing = true;
-        }
-    }
-
-    // --- Determine Completion Status ---
-    // Derived from progress, but can be updated to `course.status === 'completed'` if the backend supports it
-    const isCompleted = progress === 100;
-
     // --- Student Attendance Icon Logic ---
     const getStudentAttendanceData = (attendance) => {
         if (attendance == null) return { icon: null, color: "bg-gray-200" };
@@ -115,13 +88,8 @@ export default function MyCourse({ course, role, viewMode, isMobile }) {
                             : <MissingLabel field="semester" />
                         }
 
-                        {/* Status Badge */}
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold tracking-wide uppercase ${
-                            isCompleted 
-                                ? "bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark text-text-success-default-light dark:text-text-success-default-dark"
-                                : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark border border-border-secondary-default-light dark:border-border-secondary-default-dark"
-                        }`}>
-                            {isCompleted ? "Completed" : "In Progress"}
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold tracking-wide uppercase bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark border border-border-secondary-default-light dark:border-border-secondary-default-dark">
+                            In Progress
                         </span>
                     </div>
                     <h2 className={`${isMobile ? "text-lg" : "text-xl"} font-bold mb-2`}>{course.courseName}</h2>
@@ -149,16 +117,6 @@ export default function MyCourse({ course, role, viewMode, isMobile }) {
                         {course.room != null ? <span className="text-sm">{course.room}</span> : <MissingLabel field="room" />}
                     </div>
                 </div>
-
-                {/* Progress Box */}
-                {!isProgressMissing ? (
-                    <ProgressBox progress={progress} backgroundColor={typeStyles.bg} height={isCompact ? "h-2" : "h-2.5"}>
-                        <p className={`text-sm font-medium ${typeStyles.text}`}>Course Progress</p>
-                        <span className={`text-sm font-semibold ${typeStyles.text}`}>{progress}%</span>
-                    </ProgressBox>
-                ) : (
-                    <MissingLabel field={isInstructor ? "progress (weeksCompleted & weeks)" : "progress"} />
-                )}
 
                 {/* Statistics Row */}
                 <div className={`flex flex-row ${isCompact ? "gap-3" : "gap-6"} text-sm mt-6`}>

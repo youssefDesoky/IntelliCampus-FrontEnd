@@ -1,17 +1,14 @@
 import ScheduleLegend from "./schedule/ScheduleLegend";
 import WeeklyScheduleHeader from "./schedule/WeeklyScheduleHeader";
 import WeeklyScheduleDayRow from "./schedule/WeeklyScheduleDayRow";
+import WeeklyScheduleAgenda from "./schedule/WeeklyScheduleAgenda";
 
 const timeSlots = [
     "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
     "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"
 ];
 
-const mobileTimeSlots = [
-    "8:00 AM", "10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM", "6:00 PM"
-];
-
-export const days = [
+const days = [
     { key: "sat", label: "Saturday", short: "Sat" },
     { key: "sun", label: "Sunday", short: "Sun" },
     { key: "mon", label: "Monday", short: "Mon" },
@@ -65,69 +62,85 @@ function buildExamGrid(schedule, examDays) {
     return { sortedSlots, sortedDays, grid };
 }
 
+// CHANGED: the dense grid is now wrapped in `hidden md:block` and a
+// WeeklyScheduleAgenda is rendered in `md:hidden` above it. Pure CSS switch —
+// no JS device detection, so there's no layout flash on load/resize.
 function ExamScheduleView({ schedule, onEventClick, examDays }) {
     const { sortedSlots, sortedDays, grid } = buildExamGrid(schedule, examDays);
 
     if (sortedSlots.length === 0) return null;
 
     return (
-        <div className="overflow-x-auto">
-            <div className="min-w-190">
-                <div
-                    className="grid border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/95 dark:bg-bg-surface-secondary-default-dark/95"
-                    style={{ gridTemplateColumns: `120px repeat(${sortedSlots.length}, 1fr)` }}
-                >
-                    <div className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                        Date
+        <>
+            <div className="md:hidden">
+                <WeeklyScheduleAgenda
+                    days={examDays || days}
+                    schedule={schedule}
+                    variant="exam"
+                    onEventClick={onEventClick}
+                />
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
+                <div className="min-w-190">
+                    <div
+                        className="grid border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/95 dark:bg-bg-surface-secondary-default-dark/95"
+                        style={{ gridTemplateColumns: `120px repeat(${sortedSlots.length}, 1fr)` }}
+                    >
+                        <div className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                            Date
+                        </div>
+                        {sortedSlots.map(slot => (
+                            <div key={slot.label} className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-r last:border-r-0 border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                {slot.label}
+                            </div>
+                        ))}
                     </div>
-                    {sortedSlots.map(slot => (
-                        <div key={slot.label} className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-r last:border-r-0 border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                            {slot.label}
+
+                    {sortedDays.map((day, rowIndex) => (
+                        <div
+                            key={day.key}
+                            className={`grid ${rowIndex < sortedDays.length - 1 ? "border-b border-border-primary-default-light dark:border-border-primary-default-dark" : ""}`}
+                            style={{ gridTemplateColumns: `120px repeat(${sortedSlots.length}, 1fr)` }}
+                        >
+                            <div className="p-3 flex items-center justify-center border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                <span className="text-xs md:text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark whitespace-nowrap">
+                                    {day.label}
+                                </span>
+                            </div>
+                            {sortedSlots.map(slot => {
+                                const events = grid[slot.label]?.[day.key] || [];
+                                return (
+                                    <div key={slot.label} className="p-1.5 min-h-[4rem] flex flex-col gap-1 border-r last:border-r-0 border-border-primary-default-light dark:border-border-primary-default-dark">
+                                        {events.length > 0 ? events.map(ev => (
+                                            <div
+                                                key={ev.id}
+                                                onClick={() => onEventClick?.(ev)}
+                                                className="rounded-md border-l-2 border-border-blue-default-light dark:border-border-blue-default-dark bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark px-2 py-1 text-xs font-medium text-text-blue-default-light dark:text-text-blue-default-dark cursor-pointer hover:brightness-110 transition-all leading-tight"
+                                            >
+                                                {ev.title}
+                                            </div>
+                                        )) : (
+                                            <div className="flex-1 flex items-center justify-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-xs">
+                                                —
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     ))}
                 </div>
-
-                {sortedDays.map((day, rowIndex) => (
-                    <div
-                        key={day.key}
-                        className={`grid ${rowIndex < sortedDays.length - 1 ? "border-b border-border-primary-default-light dark:border-border-primary-default-dark" : ""}`}
-                        style={{ gridTemplateColumns: `120px repeat(${sortedSlots.length}, 1fr)` }}
-                    >
-                        <div className="p-3 flex items-center justify-center border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                            <span className="text-xs md:text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark whitespace-nowrap">
-                                {day.label}
-                            </span>
-                        </div>
-                        {sortedSlots.map(slot => {
-                            const events = grid[slot.label]?.[day.key] || [];
-                            return (
-                                <div key={slot.label} className="p-1.5 min-h-[4rem] flex flex-col gap-1 border-r last:border-r-0 border-border-primary-default-light dark:border-border-primary-default-dark">
-                                    {events.length > 0 ? events.map(ev => (
-                                        <div
-                                            key={ev.id}
-                                            onClick={() => onEventClick?.(ev)}
-                                            className="rounded-md border-l-2 border-border-blue-default-light dark:border-border-blue-default-dark bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark px-2 py-1 text-xs font-medium text-text-blue-default-light dark:text-text-blue-default-dark cursor-pointer hover:brightness-110 transition-all leading-tight"
-                                        >
-                                            {ev.title}
-                                        </div>
-                                    )) : (
-                                        <div className="flex-1 flex items-center justify-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-xs">
-                                            —
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                ))}
             </div>
-        </div>
+        </>
     );
 }
 
-export default function WeeklySchedule({ schedule = [], isMobile, variant, onEventClick, examDays }) {
+// CHANGED: dropped the `isMobile` prop entirely. The layout switch between
+// agenda and grid is now a pure `md:` breakpoint, so there's nothing to wire
+// up from a device-detection hook anymore.
+export default function WeeklySchedule({ schedule = [], variant, onEventClick, examDays }) {
     const activeDays = new Set(schedule.map((item) => item.day)).size;
-    const slots = isMobile ? mobileTimeSlots : timeSlots;
 
     return (
         <div className="w-full overflow-x-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-sm shadow-shadow-light dark:shadow-shadow-dark">
@@ -161,21 +174,18 @@ export default function WeeklySchedule({ schedule = [], isMobile, variant, onEve
             {variant === "exam" ? (
                 <ExamScheduleView schedule={schedule} onEventClick={onEventClick} examDays={examDays} />
             ) : (
-                <div className="overflow-x-auto">
-            <div className="min-w-190">
-                        <WeeklyScheduleHeader
-                            isMobile={isMobile}
-                            slots={slots}
-                        />
-
-                        <WeeklyScheduleDayRow
-                            days={days}
-                            isMobile={isMobile}
-                            schedule={schedule}
-                            slots={slots}
-                        />
+                <>
+                    <div className="md:hidden">
+                        <WeeklyScheduleAgenda days={days} schedule={schedule} variant="default" />
                     </div>
-                </div>
+
+                    <div className="hidden md:block overflow-x-auto">
+                        <div className="min-w-190">
+                            <WeeklyScheduleHeader slots={timeSlots} />
+                            <WeeklyScheduleDayRow days={days} schedule={schedule} slots={timeSlots} />
+                        </div>
+                    </div>
+                </>
             )}
 
             {/* Legend */}

@@ -4,6 +4,7 @@ import ManageEntity from "../../../components/ui/ManageEntity";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import ImportDialog from "../../../components/ui/ImportDialog";
+import FilterDropdown from "../../../components/ui/FilterDropdown";
 import CourseForm from "../../../feature/admin/components/CourseForm";
 import useDeviceType from "../../../hooks/useDeviceType";
 import {
@@ -11,6 +12,7 @@ import {
   ImportIcon,
   XIcon,
   CheckIcon,
+  CalendarIcon,
 } from "../../../components/ui/icons";
 import {
   fetchCourses,
@@ -19,7 +21,10 @@ import {
   deleteCourse,
   activateCourse,
   deactivateCourse,
+  importCourses,
+  updateCourseRegistrationSettings,
 } from "../../../feature/admin/services/adminApi";
+import CourseRegistrationSettings from "../../../feature/admin/components/CourseRegistrationSettings";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function StatusBadge({ isActive, displaySemester }) {
@@ -47,6 +52,8 @@ export default function ManageCourses() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [viewingCourse, setViewingCourse] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [filterDepartment, setFilterDepartment] = useState([]);
+  const [isRegSettingsOpen, setIsRegSettingsOpen] = useState(false);
 
   const courseTableHeaders = useMemo(() => {
     if (isDesktop) return ["Course Code", "Course", "Department", "Credit Hours", "Status"];
@@ -98,14 +105,19 @@ export default function ManageCourses() {
       deleteItem={deleteCourse}
       headerTitle="Manage Course"
       headerSubtitle="Administer course records, activate and assign instructors"
+      onPreview={(course) => setViewingCourse(course)}
       searchPlaceholder="Search Courses..."
-      searchFilter={(item, q) =>
-        item.courseName?.toLowerCase().includes(q) ||
-        String(item.courseId)?.toLowerCase().includes(q) ||
-        item.courseCode?.toLowerCase().includes(q) ||
-        item.departmentName?.toLowerCase().includes(q) ||
-        item.professor?.toLowerCase().includes(q)
-      }
+      searchFilter={(item, q) => {
+        if (q) {
+          if (!(item.courseName?.toLowerCase().includes(q) ||
+            String(item.courseId)?.toLowerCase().includes(q) ||
+            item.courseCode?.toLowerCase().includes(q) ||
+            item.departmentName?.toLowerCase().includes(q) ||
+            item.professor?.toLowerCase().includes(q))) return false;
+        }
+        if (filterDepartment.length > 0 && !filterDepartment.includes(item.departmentName)) return false;
+        return true;
+      }}
       tableRole="course"
       tableRoleLabel="Courses"
       tableHeaders={courseTableHeaders}
@@ -116,6 +128,10 @@ export default function ManageCourses() {
           <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
             <ImportIcon size={24} />
             {!isPhone && "Import"}
+          </Button>
+          <Button variant="secondary" onClick={() => setIsRegSettingsOpen(true)}>
+            <CalendarIcon size={24} />
+            {!isPhone && "Registration"}
           </Button>
           <Button variant="primary" onClick={() => setIsCreateFormOpen(true)}>
             <PlusIcon size={24} />
@@ -139,30 +155,53 @@ export default function ManageCourses() {
           : { label: "Activate", onClick: async () => { await activateCourse(item.courseId); await loadItems(); setSuccessMessage(`Course "${item.courseName}" has been activated successfully!`); }, className: "text-text-success-default-light dark:text-text-success-default-dark" },
         {
           label: "Delete",
-          onClick: () => onDelete(item),
+          onClick: async () => {
+            if (item.isActive) {
+              try {
+                await deactivateCourse(item.courseId);
+                await loadItems();
+              } catch (err) {
+                showError(err.message);
+                return;
+              }
+            }
+            onDelete(item);
+          },
           className: "text-text-danger-default-light dark:text-text-danger-default-dark",
         },
       ]}
-      renderBeforeTable={({ selectedRowIds, rawItems }) => {
+      renderBeforeTable={({ selectedRowIds, rawItems, loadItems }) => {
         if (selectedRowIds.length === 0) return null;
         const selected = selectedRowIds.map(id => rawItems.find(c => c.courseId === id)).filter(Boolean);
         const allSelectedActive = selected.length > 0 && selected.every(c => c.isActive);
         const allSelectedInactive = selected.length > 0 && selected.every(c => !c.isActive);
         const handleActivateSelected = async () => {
-          for (const id of selectedRowIds) {
-            const course = rawItems.find(c => c.courseId === id);
-            if (course && !course.isActive) {
+          try {
+            for (const id of selectedRowIds) {
+              const course = rawItems.find(c => c.courseId === id);
+              if (course && !course.isActive) {
+                await activateCourse(id);
+              }
             }
+            setSuccessMessage(`${selectedRowIds.length} course(s) activated successfully!`);
+            await loadItems();
+          } catch (err) {
+            showError(err.message);
           }
-          setSuccessMessage(`${selectedRowIds.length} course(s) activated successfully!`);
         };
         const handleDeactivateSelected = async () => {
-          for (const id of selectedRowIds) {
-            const course = rawItems.find(c => c.courseId === id);
-            if (course && course.isActive) {
+          try {
+            for (const id of selectedRowIds) {
+              const course = rawItems.find(c => c.courseId === id);
+              if (course && course.isActive) {
+                await deactivateCourse(id);
+              }
             }
+            setSuccessMessage(`${selectedRowIds.length} course(s) deactivated successfully.`);
+            await loadItems();
+          } catch (err) {
+            showError(err.message);
           }
-          setSuccessMessage(`${selectedRowIds.length} course(s) deactivated successfully.`);
         };
         return (
           <>
@@ -180,6 +219,18 @@ export default function ManageCourses() {
       getDeleteMessage={(item) => (
         <>Are you sure you want to delete <strong>{item?.courseName}</strong> ({item?.courseCode || item?.courseId})? This action cannot be undone.</>
       )}
+      extraDeps={[filterDepartment]}
+      renderFilters={({ rawItems, setCurrentPage }) => {
+        const departments = [...new Set(rawItems.map(c => c.departmentName).filter(Boolean))].sort();
+        return (
+          <FilterDropdown
+            label="Department"
+            options={departments.map(d => ({ value: d, label: d }))}
+            selectedValues={filterDepartment}
+            onChange={(v) => { setFilterDepartment(v); setCurrentPage(1); }}
+          />
+        );
+      }}
       renderForm={({ rawItems, loadItems }) => {
         if (editingCourse) {
           return (
@@ -220,15 +271,22 @@ export default function ManageCourses() {
         }
         return null;
       }}
-      renderExtraDialogs={({ loadItems }) => (
+      renderExtraDialogs={({ loadItems, rawItems }) => (
         <>
           {isImportOpen && (
             <ImportDialog
               title="Import Courses"
               subtitle="Upload a file to bulk-import course records."
               onClose={() => setIsImportOpen(false)}
-              onImport={(file) => {
-                setIsImportOpen(false);
+              onImport={async (file) => {
+                try {
+                  await importCourses(file);
+                  setIsImportOpen(false);
+                  await loadItems();
+                  setSuccessMessage("Courses imported successfully.");
+                } catch (err) {
+                  showError(err.message);
+                }
               }}
             />
           )}
@@ -329,6 +387,24 @@ export default function ManageCourses() {
           >
             {successMessage}
           </Dialog>
+
+          {isRegSettingsOpen && (
+            <CourseRegistrationSettings
+              onClose={() => setIsRegSettingsOpen(false)}
+              onSave={async (data) => {
+                try {
+                  const activeCourses = rawItems.filter(c => c.isActive);
+                  for (const c of activeCourses) {
+                    await updateCourseRegistrationSettings(c.courseId, data);
+                  }
+                  await loadItems();
+                  setSuccessMessage(`Registration settings applied to ${activeCourses.length} active course(s).`);
+                } catch (err) {
+                  showError(err.message);
+                }
+              }}
+            />
+          )}
         </>
       )}
     />

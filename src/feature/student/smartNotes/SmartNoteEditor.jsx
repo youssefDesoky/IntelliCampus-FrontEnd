@@ -75,7 +75,7 @@ function SaveBadge({ status }) {
     )
 }
 
-export default function SmartNoteEditor({ note, onClose, courseFolders = [], courseId = null, onSaveNote }) {
+export default function SmartNoteEditor({ note, onClose, courseFolders = [], courseId = null, onSaveNote, isPhone }) {
     const titleRef = useRef(note?.title ?? "")
     const bodyRef  = useRef(note?.content ?? "")
 
@@ -138,6 +138,13 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
             day: "numeric",
             year: "numeric",
         })
+        const formattedDateTime = now.toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+        })
         const isNewNote = !note?.id || note?.id === "new-note"
 
         const savedNote = {
@@ -147,7 +154,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
             content: bodyRef.current,
             linkedLecture,
             creationDate: isNewNote ? formattedDate : (note?.creationDate || formattedDate),
-            modified: formattedDate,
+            modified: formattedDateTime,
         }
 
         onSaveNote?.(savedNote)
@@ -200,7 +207,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                                 className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-500 transition-colors"
                             >
                                 <LinkIcon className="w-3 h-3" />
-                                Link lecture
+                                <span className="hidden sm:inline">Link lecture</span>
                             </button>
                         )}
 
@@ -208,10 +215,10 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                         <button
                             type="button"
                             onClick={handleSave}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-text-primary-active-light dark:bg-text-primary-active-dark text-bg-surface-primary-default-light dark:text-bg-surface-primary-default-dark hover:opacity-85 active:scale-[0.97] transition-all"
+                            className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-text-primary-active-light dark:bg-text-primary-active-dark text-bg-surface-primary-default-light dark:text-bg-surface-primary-default-dark hover:opacity-85 active:scale-[0.97] transition-all"
                         >
                             <SaveIcon />
-                            Save
+                            <span className="hidden sm:inline">Save</span>
                         </button>
 
                         {/* Close */}
@@ -262,7 +269,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
 
                 {/* ── Lecture strip (only when linked) ── */}
                 {linkedLecture && (
-                    <div className="flex items-center gap-2.5 px-4 py-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark shrink-0">
+                    <div className="flex items-center gap-2 px-4 py-1.5 sm:py-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark shrink-0">
                         <div className="w-6 h-6 rounded-md bg-linear-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shrink-0">
                             <BookIcon className="w-3 h-3 text-white" />
                         </div>
@@ -291,7 +298,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                 )}
 
                 {/* ── Title ── */}
-                <div className="px-8 pt-5 pb-2 shrink-0">
+                <div className="px-4 sm:px-8 pt-4 sm:pt-5 pb-2 shrink-0">
                     <input
                         type="text"
                         name="title"
@@ -299,9 +306,9 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                         placeholder="Untitled note…"
                         value={titleValue}
                         onChange={handleTitleChange}
-                        className="w-full bg-transparent border-none outline-none text-[1.5rem] font-semibold leading-snug tracking-tight text-text-primary-active-light dark:text-text-primary-active-dark placeholder:text-text-placeholder-default-light dark:placeholder:text-text-placeholder-default-dark placeholder:font-normal"
+                        className="w-full bg-transparent border-none outline-none text-[1.25rem] sm:text-[1.5rem] font-semibold leading-snug tracking-tight text-text-primary-active-light dark:text-text-primary-active-dark placeholder:text-text-placeholder-default-light dark:placeholder:text-text-placeholder-default-dark placeholder:font-normal"
                     />
-                    <div className="mt-3 h-px bg-border-primary-default-light dark:bg-border-primary-default-dark opacity-50" />
+                    <div className="mt-3 h-px bg-border-primary-default-light dark:border-border-primary-default-dark opacity-50" />
                 </div>
 
                 {/* ── Tiptap (toolbar + editor body) ── */}

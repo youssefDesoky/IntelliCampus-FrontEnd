@@ -1,36 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import InputItem from "../../../components/form/InputItem";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
 import TextArea from "../../../components/ui/TextArea";
-
-const departments = [
-    { value: "Computer Science", label: "Computer Science" },
-    { value: "Information Systems", label: "Information Systems" },
-    { value: "Information Technology", label: "Information Technology" },
-    { value: "Artificial Intelligence", label: "Artificial Intelligence" },
-    { value: "Data Science", label: "Data Science" },
-];
+import { fetchDepartments } from "../services/adminApi";
 
 export default function CourseForm({ onClose, method = "post", onSubmit, initialData = {}, isOpen = true }) {
     const isEdit = method === "put";
 
-    const [selectedDepartment, setSelectedDepartment] = useState(() => {
-        const dept = initialData.departmentName || initialData.department;
-        if (dept) {
-            return departments.find(d => d.value === dept || d.label === dept) || departments[0];
-        }
-        return departments[0];
-    });
+    const [departments, setDepartments] = useState([]);
+    const [selectedDepartment, setSelectedDepartment] = useState(null);
 
-    const [formData, setFormData] = useState({
-        title: initialData.courseName || initialData.title || "",
-        titleArabic: initialData.courseNameAr || initialData.titleArabic || "",
-        id: initialData.courseCode || initialData.id || "",
-        courseCodeAr: initialData.courseCodeAr || "",
-        description: initialData.description || "",
-        descriptionAr: initialData.descriptionAr || "",
-    });
+    useEffect(() => {
+        fetchDepartments()
+            .then(data => {
+                const options = data.map(d => ({ value: d.departmentId, label: d.departmentName }));
+                setDepartments(options);
+                if (initialData.departmentId) {
+                    const match = options.find(o => o.value === initialData.departmentId);
+                    if (match) setSelectedDepartment(match);
+                } else if (initialData.departmentName) {
+                    const match = options.find(o => o.label === initialData.departmentName);
+                    if (match) setSelectedDepartment(match);
+                } else if (options.length > 0) {
+                    setSelectedDepartment(options[0]);
+                }
+            })
+            .catch(console.error);
+    }, [initialData.departmentId, initialData.departmentName]);
+
+    const [formData, setFormData] = useState({ title: "", titleArabic: "", id: "", courseCodeAr: "", description: "", descriptionAr: "" });
+
+    useEffect(() => {
+        setFormData({
+            title: initialData.courseName || initialData.title || "",
+            titleArabic: initialData.courseNameAr || initialData.titleArabic || "",
+            id: initialData.courseCode || initialData.id || "",
+            courseCodeAr: initialData.courseCodeAr || "",
+            description: initialData.description || "",
+            descriptionAr: initialData.descriptionAr || "",
+        });
+    }, [initialData.courseName, initialData.title, initialData.courseNameAr, initialData.titleArabic, initialData.courseCode, initialData.id, initialData.courseCodeAr, initialData.description, initialData.descriptionAr]);
 
     const handleChange = (field) => (e) => {
         setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -44,7 +54,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             courseNameAr: formData.titleArabic || undefined,
             courseCodeAr: formData.courseCodeAr || undefined,
             courseId: formData.id,
-            departmentId: selectedDepartment.value,
+            departmentName: selectedDepartment?.label,
             description: formData.description,
             descriptionAr: formData.descriptionAr || undefined,
         };

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import CommunityPost from "../../../../../components/ui/CommunityPost";
+import StudyGroupPost from "../../../../../components/ui/StudyGroupPost";
 import Button from "../../../../../components/ui/Button";
 import { PlusIcon } from "../../../../../components/ui/icons";
 import Dialog from "../../../../../components/ui/Dialog";
@@ -100,11 +100,12 @@ export default function MyCommunities() {
                     ) : (
                         <ul className="space-y-4">
                             {posts.map(post => (
-                                <CommunityPost
+                                <StudyGroupPost
                                     key={post.postId}
                                     postData={{
                                         postId: post.postId,
                                         sender: post.authorName,
+                                        senderAvatar: post.authorProfileImage || post.authorAvatar || null,
                                         title: post.content?.split('\n')[0] || "Question",
                                         content: post.content,
                                         createdAt: new Date(post.createdAt).toLocaleDateString(),

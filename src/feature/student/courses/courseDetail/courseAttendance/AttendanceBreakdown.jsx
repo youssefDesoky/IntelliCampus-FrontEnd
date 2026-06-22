@@ -30,7 +30,7 @@ export default function AttendanceBreakdown({ breakdown }) {
 
     return (
         <BaseComponent
-            className="lg:col-span-1 h-full flex flex-col"
+            className="hidden sm:flex lg:col-span-1 h-full flex-col"
             contentClassName="flex flex-1 flex-col justify-center space-y-5"
             title="Breakdown"
             titleClassName="text-xs font-semibold uppercase tracking-[0.2em] text-text-secondary-light dark:text-text-secondary-dark"

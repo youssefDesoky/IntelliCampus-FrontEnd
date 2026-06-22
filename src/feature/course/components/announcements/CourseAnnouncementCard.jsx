@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import Button from "../../../../components/ui/Button";
 import DropdownMenu from "../../../../components/ui/DropdownMenu";
-import { CommentsIcon, DownloadIcon, EllipsisVerticalIcon, XIcon, PinIcon } from "../../../../components/ui/icons";
+import { CommentsIcon, DownloadIcon, EllipsisVerticalIcon, XIcon, PinIcon, LinkIcon } from "../../../../components/ui/icons";
 import CommentInput from "../../../../components/ui/CommentInput";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import MaterialPreview from "../../../../components/ui/MaterialPreview";
@@ -316,12 +316,13 @@ export default function CourseAnnouncementCard({
                                                 role="menuitem"
                                                 size="sm"
                                                 className="w-full justify-start"
+                                                startIcon={<LinkIcon size={16} />}
                                                 onClick={async () => {
                                                     await copyAnnouncementLink();
                                                     setShowActionsMenu(false);
                                                 }}
                                             >
-                                                Copy announcement link
+                                                Copy link
                                             </Button>
                                             <Button
                                                 type="button"
@@ -345,12 +346,13 @@ export default function CourseAnnouncementCard({
                                             role="menuitem"
                                             size="sm"
                                             className="w-full justify-start"
+                                            startIcon={<LinkIcon size={16} />}
                                             onClick={async () => {
                                                 await copyAnnouncementLink();
                                                 setShowActionsMenu(false);
                                             }}
                                         >
-                                            Copy announcement link
+                                            Copy link
                                         </Button>
                                     )}
                                 </DropdownMenu>

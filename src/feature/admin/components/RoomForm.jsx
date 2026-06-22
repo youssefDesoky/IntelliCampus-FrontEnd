@@ -1,17 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import InputItem from "../../../components/form/InputItem";
 import SelectBox from "../../../components/ui/SelectBox";
 import Button from "../../../components/ui/Button";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import { XIcon } from "../../../components/ui/icons";
-
-const roomTypes = [
-    { value: "Hall", label: "Hall" },
-    { value: "Lab", label: "Lab" },
-    { value: "Classroom", label: "Classroom" },
-    { value: "Office", label: "Office" },
-    { value: "Conference", label: "Conference Room" },
-];
+import { fetchRoomTypes } from "../services/adminApi";
 
 const capacityOptions = [
     { value: "20", label: "Up to 20" },
@@ -24,13 +17,25 @@ const capacityOptions = [
 
 export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoading = false, isOpen = true }) {
     const isEdit = !!(initialData.id ?? initialData.roomId);
+    const [roomTypes, setRoomTypes] = useState([]);
 
-    const [selectedType, setSelectedType] = useState(() => {
-        if (initialData.type) {
-            return roomTypes.find(t => t.value === initialData.type) || roomTypes[0];
+    useEffect(() => {
+        fetchRoomTypes()
+            .then(setRoomTypes)
+            .catch(() => {});
+    }, []);
+
+    const [selectedType, setSelectedType] = useState(null);
+
+    useEffect(() => {
+        if (roomTypes.length) {
+            if (initialData.type) {
+                setSelectedType(roomTypes.find(t => t.value === initialData.type) || roomTypes[0]);
+            } else {
+                setSelectedType(roomTypes[0]);
+            }
         }
-        return roomTypes[0];
-    });
+    }, [roomTypes, initialData.type]);
 
     const [selectedCapacity, setSelectedCapacity] = useState(() => {
         if (initialData.capacity) {
@@ -43,7 +48,7 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
         e.preventDefault();
         const form = e.target;
         const formData = Object.fromEntries(new FormData(form));
-        formData.type = selectedType.value;
+        formData.type = selectedType?.value || "";
         formData.capacity = parseInt(selectedCapacity.value);
         if (onSubmit) onSubmit(formData);
     };

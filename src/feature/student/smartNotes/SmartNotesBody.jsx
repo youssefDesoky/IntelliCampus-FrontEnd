@@ -41,6 +41,16 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
                     <div className="w-full lg:w-fit flex items-center justify-between gap-4">
                         <SearchBar placeholder="Search notes..." />
 
+                        {isPhone && (
+                            <button
+                                type="button"
+                                onClick={() => setIsComposerOpen(true)}
+                                className="flex items-center justify-center p-2 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark rounded-md hover:scale-[1.02] shrink-0"
+                            >
+                                <PlusIcon className="w-5 h-5" />
+                            </button>
+                        )}
+
                         {!isPhone && setViewMode && (
                             <div className="flex items-center">
                                 <ToggleViewMode
@@ -63,14 +73,16 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
                         )}
                     </div>
 
-                    <Button
-                        type="button"
-                        onClick={() => setIsComposerOpen(true)}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark rounded-md hover:scale-[1.02]"
-                    >
-                        <PlusIcon className="w-5 h-5" />
-                        {!isPhone && <span className="font-semibold">Add New Note</span>}
-                    </Button>
+                    {!isPhone && (
+                        <Button
+                            type="button"
+                            onClick={() => setIsComposerOpen(true)}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark rounded-md hover:scale-[1.02]"
+                        >
+                            <PlusIcon className="w-5 h-5" />
+                            <span className="font-semibold">Add New Note</span>
+                        </Button>
+                    )}
                 </div>
             </Section>
 
@@ -81,6 +93,7 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
                     courseFolders={courseFolders}
                     courseId={courseId}
                     onSaveNote={onSaveNote}
+                    isPhone={isPhone}
                 />
             )}
 

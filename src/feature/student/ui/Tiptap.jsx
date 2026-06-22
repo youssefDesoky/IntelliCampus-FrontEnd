@@ -91,7 +91,7 @@ export default function Tiptap({ content = '', onChange, className }) {
                 <EditorContent
                     editor={editor}
                     className="
-                        flex-1 px-8 py-3
+                        flex-1 px-4 sm:px-8 py-3
                         prose prose-sm max-w-none
                         prose-p:leading-relaxed prose-p:text-text-primary-default-light dark:prose-p:text-text-primary-default-dark
                         prose-strong:text-text-primary-active-light dark:prose-strong:text-text-primary-active-dark

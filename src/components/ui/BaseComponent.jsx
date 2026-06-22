@@ -17,8 +17,8 @@ export default function BaseComponent({
         <div className={`overflow-hidden rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-sm ${className}`}>
             {(title || description || componentButton || actions) && (
                 <div className="border-b border-border-primary-default-light dark:border-border-primary-default-dark px-5 py-4 sm:px-6 sm:py-5">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="w-full flex flex-col gap-1">
+                    <div className="flex flex-row flex-wrap items-start justify-between gap-4">
+                        <div className="flex min-w-0 flex-1 flex-col gap-1">
                             {title ? <h1 className={titleClassName}>{title}</h1> : null}
                             {description ? <p className={descriptionClassName}>{description}</p> : null}
                         </div>

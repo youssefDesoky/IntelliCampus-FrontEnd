@@ -115,7 +115,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">
-                        <div className="text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
                             {(hasPagingLimit && rawData.length > displayRowLimit)
                                 ? (itemsLabel
                                     ? `Showing ${(currentPage - 1) * displayRowLimit + 1}–${Math.min(currentPage * displayRowLimit, rawData.length)} of ${rawData.length} ${itemsLabel}`
@@ -164,7 +164,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">
-                        <div className="text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
                             {(hasPagingLimit && rawData.length > displayRowLimit)
                                 ? (itemsLabel
                                     ? `Showing ${(currentPage - 1) * displayRowLimit + 1}–${Math.min(currentPage * displayRowLimit, rawData.length)} of ${rawData.length} ${itemsLabel}`

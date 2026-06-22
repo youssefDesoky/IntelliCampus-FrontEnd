@@ -89,12 +89,12 @@ export async function deleteAdmin(id) {
 // ─── User Roles (Super Admin) ──────────────────────────────
 
 const ROLE_GROUP_MAP = {
-    student_undergrad: { label: "UnderGrad Student", group: "student" },
+    student_bachelor: { label: "Bachelor Student", group: "student" },
     student_masters: { label: "Masters Student", group: "student" },
     student_phd: { label: "PhD Student", group: "student" },
     student_diploma: { label: "Diploma Student", group: "student" },
     instructor: { label: "Instructor", group: "instructor" },
-    admin_undergrad: { label: "UnderGrad Admin", group: "admin" },
+    admin_bachelor: { label: "Bachelor Admin", group: "admin" },
     admin_postgrad: { label: "PostGrad Admin", group: "admin" },
     admin_academicstaff: { label: "Academic Staff Admin", group: "admin" },
     superadmin: { label: "Super Admin", group: "admin" },
@@ -149,12 +149,13 @@ export async function fetchAdminRoles() {
         }));
 }
 
-/** Fetch instructor-specific roles for form dropdowns */
+/** Fetch instructor-specific roles for form dropdowns (academic roles: Professor, TA, etc.) */
 export async function fetchInstructorRoles() {
-    const data = await apiClient('/api/Roles');
-    return (data || [])
-        .filter(r => r.roleName?.toLowerCase() === "instructor")
-        .map(r => ({ value: r.roleName, label: "Instructor" }));
+    const data = await apiClient('/api/instructors/roles');
+    return (Array.isArray(data) ? data : []).map(r => ({
+        value: r.toLowerCase(),
+        label: r.charAt(0).toUpperCase() + r.slice(1).replace(/([A-Z])/g, ' $1').trim()
+    }));
 }
 
 /** Bulk assign/remove roles for a user (syncs selectedRoles with backend) */
@@ -362,7 +363,65 @@ export async function uploadExams(file, examType) {
     });
 }
 
-// ─── Student Upload ─────────────────────────────────────────
+// ─── Bulk Import ────────────────────────────────────────────
+
+export async function importCourses(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient('/api/ExcelImport/courses', {
+        method: "POST",
+        body: formData,
+    });
+}
+
+export async function importClasses(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient('/api/ExcelImport/sections', {
+        method: "POST",
+        body: formData,
+    });
+}
+
+export async function importStudents(file, bylawId) {
+    const formData = new FormData();
+    formData.append("file", file);
+    let url = '/api/ExcelImport/students';
+    if (bylawId) url += `?bylawId=${bylawId}`;
+    return apiClient(url, {
+        method: "POST",
+        body: formData,
+    });
+}
+
+export async function importInstructors(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient('/api/ExcelImport/instructors', {
+        method: "POST",
+        body: formData,
+    });
+}
+
+export async function importRooms(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient('/api/ExcelImport/rooms', {
+        method: "POST",
+        body: formData,
+    });
+}
+
+export async function importDepartments(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient('/api/ExcelImport/departments', {
+        method: "POST",
+        body: formData,
+    });
+}
+
+// ─── Student Upload (legacy) ──────────────────────────────────
 
 export async function uploadStudents(file, bylawId) {
     const formData = new FormData();
@@ -404,6 +463,13 @@ export async function deleteDepartment(id) {
     return true;
 }
 
+export async function updateDepartmentRegistrationSettings(data) {
+    return apiClient('/api/departments/registration-settings', {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
 // ─── Department Specializations ────────────────────────────
 
 export async function fetchSpecializations(departmentId) {
@@ -415,6 +481,7 @@ export async function createSpecialization(departmentId, data) {
         name: data.name,
         nameAr: data.nameAr || null,
         departmentId: parseInt(departmentId),
+        maxCapacity: data.maxCapacity ?? null,
     };
     return apiClient('/api/Specialization', {
         method: "POST",
@@ -424,6 +491,18 @@ export async function createSpecialization(departmentId, data) {
 
 export async function deleteSpecialization(departmentId, specId) {
     await apiClient(`/api/Specialization/${specId}`, { method: "DELETE" });
+    return true;
+}
+
+export async function fetchSpecializationPrerequisites(specId) {
+    return apiClient(`/api/Specialization/${specId}/prerequisites`);
+}
+
+export async function setSpecializationPrerequisites(specId, prerequisites) {
+    await apiClient(`/api/Specialization/${specId}/prerequisites`, {
+        method: "PUT",
+        body: JSON.stringify({ prerequisites }),
+    });
     return true;
 }
 
@@ -442,9 +521,11 @@ function toCoursePayload(data) {
     return {
         courseName: data.courseName,
         courseNameAr: data.courseNameAr,
+        courseCodeAr: data.courseCodeAr,
         courseCode: data.courseId,
-        departmentName: data.departmentId,
-        creditHours: Number(data.creditHours) || 0,
+        departmentName: data.departmentName || data.departmentId || "",
+        description: data.description,
+        descriptionAr: data.descriptionAr,
     };
 }
 
@@ -467,6 +548,17 @@ export async function updateCourse(id, data) {
 export async function deleteCourse(id) {
     await apiClient(`/api/courses/${id}`, { method: "DELETE" });
     return true;
+}
+
+export async function fetchCourseRegistrationSettings(courseId) {
+    return apiClient(`/api/courses/${courseId}/registration-settings`);
+}
+
+export async function updateCourseRegistrationSettings(courseId, data) {
+    return apiClient(`/api/courses/${courseId}/registration-settings`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
 }
 
 export async function activateCourse(id) {
@@ -560,6 +652,10 @@ export async function deleteClassFromCourse(courseId, classId) {
 
 export async function fetchRooms() {
     return apiClient('/api/rooms');
+}
+
+export async function fetchRoomTypes() {
+    return apiClient('/api/rooms/types');
 }
 
 export async function fetchRoomById(id) {
@@ -694,28 +790,42 @@ export async function changeStudentCourseSection(studentId, courseId, classId) {
     });
 }
 
-// ─── Constants ──────────────────────────────────────────────────
-
 export async function fetchStudentTypes() {
     return apiClient('/api/students/types');
 }
 
-export async function fetchNationalities() {
-    return apiClient('/api/Constants/nationalities');
+// ─── Instructor Courses ─────────────────────────────────────
+
+export async function fetchProfessorsByDepartment(departmentId) {
+    const params = new URLSearchParams({ departmentId });
+    return apiClient(`/api/instructors/professors?${params}`);
 }
 
-// ─── Instructor Courses ─────────────────────────────────────
+export async function fetchProfessorsByFaculty(facultyId) {
+    const params = new URLSearchParams({ facultyId });
+    return apiClient(`/api/instructors/professors?${params}`);
+}
+
+export async function fetchFaculties() {
+    return apiClient('/api/faculties');
+}
 
 export async function fetchInstructorCourses(instructorId) {
     return apiClient(`/api/Courses/instructor/${instructorId}`);
 }
 
 export async function fetchInstructorTASections(instructorId) {
-    return apiClient(`/api/instructors/${instructorId}/ta-sections`);
+  return apiClient(`/api/Classes/ta-sections?instructorId=${instructorId}`);
+}
+
+export async function fetchInstructorProfessorLectures(instructorId) {
+  const all = await apiClient('/api/Classes/professor-lectures');
+  return (Array.isArray(all) ? all : []).filter(s => s.instructorId == instructorId);
 }
 
 export async function fetchInstructorAvailableSections(instructorId, courseId) {
-    return apiClient(`/api/instructors/${instructorId}/courses/${courseId}/sections`);
+  const all = await apiClient(`/api/Classes/course/${courseId}?classType=Section`);
+  return Array.isArray(all) ? all : [];
 }
 
 export async function changeInstructorSection(instructorId, courseId, section) {

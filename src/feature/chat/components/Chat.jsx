@@ -465,6 +465,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
               onSelectGroup={handleSelectGroup}
               searchMembers={searchMembers}
               onSearchMembersChange={setSearchMembers}
+              currentUser={currentUser}
             />
             <div className="col-span-2 flex flex-col min-h-0 gap-0">
               {activePanel === "default" ? (

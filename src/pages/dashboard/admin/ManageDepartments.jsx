@@ -1,12 +1,18 @@
 import { useState, useCallback, useMemo } from "react";
 import ManageEntity from "../../../components/ui/ManageEntity";
+import Button from "../../../components/ui/Button";
 import DepartmentForm from "../../../feature/admin/components/DepartmentForm";
 import DepartmentSpecializationsForm from "../../../feature/admin/components/DepartmentSpecializationsForm";
-import { fetchDepartments, createDepartment, updateDepartment, deleteDepartment, fetchInstructors } from "../../../feature/admin/services/adminApi";
+import DepartmentRegistrationSettings from "../../../feature/admin/components/DepartmentRegistrationSettings";
+import { fetchDepartments, createDepartment, updateDepartment, deleteDepartment, fetchInstructors, updateDepartmentRegistrationSettings } from "../../../feature/admin/services/adminApi";
+import { PlusIcon, CalendarIcon } from "../../../components/ui/icons";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function ManageDepartments() {
+  const { showError } = useError();
   const [instructors, setInstructors] = useState([]);
   const [specDepartment, setSpecDepartment] = useState(null);
+  const [isRegSettingsOpen, setIsRegSettingsOpen] = useState(false);
 
   const instructorLookup = useMemo(() =>
     instructors.reduce((lookup, instructor) => {
@@ -66,7 +72,18 @@ export default function ManageDepartments() {
       deleteItem={deleteDepartment}
       headerTitle="Manage Departments"
       headerSubtitle="Administer department records and ownership"
-      headerAddLabel="Add Department"
+      renderHeaderActions={({ openForm }) => (
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => setIsRegSettingsOpen(true)}>
+            <CalendarIcon size={24} />
+            <span className="hidden sm:inline"> Registration</span>
+          </Button>
+          <Button variant="primary" onClick={() => openForm(null)}>
+            <PlusIcon size={24} />
+            <span className="hidden sm:inline"> Add Department</span>
+          </Button>
+        </div>
+      )}
       searchPlaceholder="Search departments..."
       searchFilter={searchFilter}
       tableRole="department"
@@ -94,13 +111,28 @@ export default function ManageDepartments() {
       }
       extraDeps={[instructorLookup]}
       renderExtraDialogs={({ loadItems }) => (
-        specDepartment && (
-          <DepartmentSpecializationsForm
-            department={specDepartment}
-            onClose={() => setSpecDepartment(null)}
-            onUpdate={loadItems}
-          />
-        )
+        <>
+          {specDepartment && (
+            <DepartmentSpecializationsForm
+              department={specDepartment}
+              onClose={() => setSpecDepartment(null)}
+              onUpdate={loadItems}
+            />
+          )}
+          {isRegSettingsOpen && (
+            <DepartmentRegistrationSettings
+              onClose={() => setIsRegSettingsOpen(false)}
+              onSave={async (data) => {
+                try {
+                  await updateDepartmentRegistrationSettings(data);
+                  await loadItems();
+                } catch (err) {
+                  showError(err.message);
+                }
+              }}
+            />
+          )}
+        </>
       )}
     />
   );

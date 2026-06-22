@@ -4,19 +4,25 @@ import ManageEntity from "../../../components/ui/ManageEntity";
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 import AssignRoleModal from "../../../feature/admin/components/AssignRoleModal";
 import FilterDropdown from "../../../components/ui/FilterDropdown";
-import { UserIcon } from "../../../components/ui/icons";
+import ImportDialog from "../../../components/ui/ImportDialog";
+import Button from "../../../components/ui/Button";
+import { UserIcon, PlusIcon, UserTieIcon, ImportIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
-import { fetchInstructors, createInstructor, updateInstructor, deleteInstructor } from "../../../feature/admin/services/adminApi";
+import { fetchInstructors, createInstructor, updateInstructor, deleteInstructor, importInstructors } from "../../../feature/admin/services/adminApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function ManageInstructors() {
   const { isDesktop, isTablet } = useDeviceType();
   const navigate = useNavigate();
   const user = useRouteLoaderData("root");
+  const { showError } = useError();
   const isSuperAdmin = (user?.roles || []).some(r => r.toLowerCase() === 'superadmin');
 
   const [assignRoleTarget, setAssignRoleTarget] = useState(null);
   const [filterDepartment, setFilterDepartment] = useState([]);
   const [filterType, setFilterType] = useState([]);
+  const [isLoanFormOpen, setIsLoanFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const instructorTableHeaders = useMemo(() => {
     if (isDesktop) return ["Instructor ID", "Instructor", "Department", "Specialization", "Role"];
@@ -39,7 +45,7 @@ export default function ManageInstructors() {
                       (instructor.specialization || instructor.specializationName)?.toLowerCase().includes(q))) return false;
     }
     if (filterDepartment.length > 0 && !filterDepartment.includes(instructor.departmentName)) return false;
-    if (filterType.length > 0 && !filterType.includes(instructor.role)) return false;
+    if (filterType.length > 0 && !filterType.includes(instructor.instructorRole)) return false;
     return true;
   }, [filterDepartment, filterType]);
 
@@ -71,8 +77,25 @@ export default function ManageInstructors() {
       createItem={createInstructor}
       updateItem={updateInstructor}
       deleteItem={deleteInstructor}
-      headerType="user"
-      headerRole="instructor"
+      headerTitle="Manage Instructors"
+      headerSubtitle="Administer instructor records, departments and information"
+      headerAddLabel="Add Instructor"
+      renderHeaderActions={({ openForm }) => (
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
+            <ImportIcon size={24} />
+            <span className="hidden sm:inline"> Import</span>
+          </Button>
+          <Button variant="secondary" onClick={() => setIsLoanFormOpen(true)}>
+            <UserTieIcon size={24} />
+            <span className="hidden sm:inline"> Loan Instructor</span>
+          </Button>
+          <Button variant="primary" onClick={() => openForm(null)}>
+            <PlusIcon size={24} />
+            <span className="hidden sm:inline"> Add Instructor</span>
+          </Button>
+        </div>
+      )}
       searchPlaceholder="Search Instructors..."
       searchFilter={searchFilter}
       tableRole="instructor"
@@ -97,7 +120,7 @@ export default function ManageInstructors() {
       )}
       renderFilters={({ rawItems, setCurrentPage }) => {
         const departments = [...new Set(rawItems.map(i => i.departmentName).filter(Boolean))].sort();
-        const instructorTypes = [...new Set(rawItems.map(i => i.role).filter(Boolean))].sort();
+        const instructorTypes = [...new Set(rawItems.map(i => i.instructorRole).filter(Boolean))].sort();
         return (
           <>
             <FilterDropdown
@@ -123,14 +146,47 @@ export default function ManageInstructors() {
         return <InstructorForm method="post" onClose={closeForm} onSubmit={handleCreate} />;
       }}
       renderExtraDialogs={({ loadItems }) => (
-        assignRoleTarget && (
-          <AssignRoleModal
-            userId={assignRoleTarget.userId}
-            userName={assignRoleTarget.fullName}
-            onClose={() => setAssignRoleTarget(null)}
-            onRolesUpdated={loadItems}
-          />
-        )
+        <>
+          {assignRoleTarget && (
+            <AssignRoleModal
+              userId={assignRoleTarget.userId}
+              userName={assignRoleTarget.fullName}
+              onClose={() => setAssignRoleTarget(null)}
+              onRolesUpdated={loadItems}
+            />
+          )}
+          {isLoanFormOpen && (
+            <InstructorForm
+              mode="loan"
+              onClose={() => setIsLoanFormOpen(false)}
+              onSubmit={async (formData) => {
+                try {
+                  await createInstructor(formData);
+                  setIsLoanFormOpen(false);
+                  await loadItems();
+                } catch (err) {
+                  showError(err.message);
+                }
+              }}
+            />
+          )}
+          {isImportOpen && (
+            <ImportDialog
+              title="Import Instructors"
+              subtitle="Upload a file to bulk-import instructor records."
+              onClose={() => setIsImportOpen(false)}
+              onImport={async (file) => {
+                try {
+                  await importInstructors(file);
+                  setIsImportOpen(false);
+                  await loadItems();
+                } catch (err) {
+                  showError(err.message);
+                }
+              }}
+            />
+          )}
+        </>
       )}
     />
   );

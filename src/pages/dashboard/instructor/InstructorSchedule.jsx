@@ -1,20 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import useDeviceType from "../../../hooks/useDeviceType";
 
-import WeeklySchedule from "../../../components/ui/WeeklySchedule";
+import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
+import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
-import ExamSchedule from "../../../feature/student/schedule/ExamSchedule";
 import { fetchMySchedule, exportSchedulePdf } from "../../../feature/instructor/schedule/scheduleApi";
-import { fetchMyExams, exportExamSchedulePdf } from "../../../feature/instructor/schedule/examScheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const allowedTypeFilters = ["lecture", "section", "activity"];
 
 export default function InstructorSchedule() {
-    const [currSchedule, setCurrSchedule] = useState("weekly");
     const [selectedTypes, setSelectedTypes] = useState([]);
     const [scheduleData, setScheduleData] = useState([]);
-    const [examsData, setExamsData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const { isMobile } = useDeviceType();
     const { showError } = useError();
@@ -22,16 +19,11 @@ export default function InstructorSchedule() {
     const loadScheduleData = useCallback(async () => {
         try {
             setIsLoading(true);
-            const [schedule, exams] = await Promise.all([
-                fetchMySchedule(),
-                fetchMyExams(),
-            ]);
+            const schedule = await fetchMySchedule();
             setScheduleData(Array.isArray(schedule) ? schedule : []);
-            setExamsData(Array.isArray(exams) ? exams : []);
         } catch (err) {
             showError(err.message);
             setScheduleData([]);
-            setExamsData([]);
         } finally {
             setIsLoading(false);
         }
@@ -61,11 +53,7 @@ export default function InstructorSchedule() {
 
     const handleExport = async () => {
         try {
-            if (currSchedule === "weekly") {
-                await exportSchedulePdf(selectedTypes);
-            } else {
-                await exportExamSchedulePdf();
-            }
+            await exportSchedulePdf(selectedTypes);
         } catch (err) {
             showError("Failed to export PDF. Please try again.");
         }
@@ -86,23 +74,28 @@ export default function InstructorSchedule() {
     return (
         <>        
             <ScheduleHeader
-                currSchedule={currSchedule}
-                setCurrSchedule={setCurrSchedule}
+                currSchedule="weekly"
                 isMobile={isMobile}
                 selectedTypes={selectedTypes}
                 onToggleType={toggleTypeFilter}
                 onClearTypes={clearTypeFilters}
                 onExport={handleExport}
+                hideToggle
             />
 
-            {currSchedule === "weekly" ? (
+            {isMobile ? (
+                <WeeklyScheduleAgenda
+                    days={days}
+                    schedule={filteredSchedule}
+                    variant="default"
+                    onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
+                />
+            ) : (
                 <WeeklySchedule
                     schedule={filteredSchedule}
                     isMobile={isMobile}
                     onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
                 />
-            ) : (
-                <ExamSchedule exams={examsData} />
             )}
         </>
     );

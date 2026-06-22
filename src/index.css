@@ -484,6 +484,36 @@ input[type="password"]::-ms-clear {
   animation: fade-in-down 0.3s ease-out;
 }
 
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-slide-out-right {
+  animation: slide-out-right 0.3s ease-in forwards;
+}
+
+@keyframes fade-out-up {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-1rem);
+    opacity: 0;
+  }
+}
+
+.animate-fade-out-up {
+  animation: fade-out-up 0.3s ease-in forwards;
+}
+
 /* Tiptap Styles */
 .ProseMirror ul {
     list-style-type: disc;

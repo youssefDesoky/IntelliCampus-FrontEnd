@@ -83,53 +83,51 @@ export default function GradeListItem({ item = {}, toPercent }) {
         >
             <div className="relative">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                            <h3 className="truncate text-base font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark sm:text-lg">
-                                {item.title || "Untitled Assignment"}
-                            </h3>
-                        </div>
+			<div className="min-w-0 flex-1">
+				<div className="flex items-center gap-2">
+					<h3 className="truncate text-base font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark sm:text-lg">
+						{item.title || "Untitled Assignment"}
+					</h3>
+					<span className="ml-auto" />
+					<span
+						className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold tracking-wide ${statusInfo.badgeClass}`}
+						role="status"
+					>
+						<StatusIcon size={13} className="shrink-0" aria-hidden="true" />
+						{statusInfo.label}
+					</span>
+				</div>
 
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            <span>{item.date || "Date TBD"}</span>
-                            <span className="hidden h-1 w-1 rounded-full bg-current sm:inline-block" aria-hidden="true" />
-                            <span>{statusInfo.helperText}</span>
-                        </div>
-                    </div>
-
-                    <span
-                        className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold tracking-wide ${statusInfo.badgeClass}`}
-                        role="status"
-                    >
-                        <StatusIcon size={13} className="shrink-0" aria-hidden="true" />
-                        {statusInfo.label}
-                    </span>
+				<div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+					<span>{item.date || "Date TBD"}</span>
+				</div>
+			</div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="mt-4 grid grid-cols-3 gap-3">
                     <div className="rounded-xl border border-border-primary-default-light/70 bg-bg-surface-secondary-default-light/60 px-3 py-3 dark:border-border-primary-default-dark/70 dark:bg-bg-surface-secondary-default-dark/60">
-                        <dt className="text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <dt className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             Score
                         </dt>
-                        <dd className="mt-1 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
+                        <dd className="mt-1 truncate text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
                             {isGraded && item.maxScore ? `${item.score}/${item.maxScore}` : "TBD"}
                         </dd>
                     </div>
 
                     <div className="rounded-xl border border-border-primary-default-light/70 bg-bg-surface-secondary-default-light/60 px-3 py-3 dark:border-border-primary-default-dark/70 dark:bg-bg-surface-secondary-default-dark/60">
-                        <dt className="text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <dt className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             Weight
                         </dt>
-                        <dd className={`mt-1 text-sm font-semibold ${performanceInfo.metricToneClass}`}>
+                        <dd className={`mt-1 truncate text-sm font-semibold ${performanceInfo.metricToneClass}`}>
                             {item.weight ? `${item.weight}%` : "—"}
                         </dd>
                     </div>
 
                     <div className="rounded-xl border border-border-primary-default-light/70 bg-bg-surface-secondary-default-light/60 px-3 py-3 dark:border-border-primary-default-dark/70 dark:bg-bg-surface-secondary-default-dark/60">
-                        <dt className="text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <dt className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             Percentage
                         </dt>
-                        <dd className={`mt-1 text-sm font-semibold ${isComplete ? "text-text-primary-light dark:text-text-primary-dark" : "text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}>
+                        <dd className={`mt-1 truncate text-sm font-semibold ${isComplete ? "text-text-primary-light dark:text-text-primary-dark" : "text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}>
                             {calculatedPercentage !== null ? `${calculatedPercentage}%` : "—"}
                         </dd>
                     </div>

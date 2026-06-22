@@ -66,7 +66,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
 
                 const instList = Array.isArray(instructorsData) ? instructorsData : [];
                 const instOpts = instList.map((i) => ({
-                    value: i.fullName,
+                    value: i.instructorId,
                     label: i.fullName,
                     instructorId: i.instructorId,
                     role: i.instructorRole,
@@ -74,27 +74,36 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                 }));
                 setInstructorOptions(instOpts);
 
-                if (initialData?.instructor) {
-                    const match = instOpts.find((o) => o.value === initialData.instructor);
-                    if (match) setSelectedInstructor(match);
-                    else if (instOpts.length > 0) setSelectedInstructor(instOpts[0]);
-                } else if (instOpts.length > 0) {
-                    setSelectedInstructor(instOpts[0]);
+                let matchedInstructor = null;
+                if (initialData?.instructorId != null) {
+                    matchedInstructor = instOpts.find((o) => o.value === initialData.instructorId);
+                } else if (initialData?.instructor) {
+                    matchedInstructor = instOpts.find((o) => o.label === initialData.instructor);
                 }
+                if (!matchedInstructor && instOpts.length > 0) {
+                    matchedInstructor = instOpts[0];
+                }
+                setSelectedInstructor(matchedInstructor);
 
                 const roomList = Array.isArray(roomsData) ? roomsData : [];
                 const roomOpts = roomList.map((r) => ({
-                    value: r.roomName,
+                    value: r.roomId,
                     label: `${r.roomName}${r.type ? ` (${r.type})` : ""}${r.capacity ? ` - Cap: ${r.capacity}` : ""}`,
+                    roomId: r.roomId,
                     roomType: r.type,
                 }));
                 setRoomOptions(roomOpts);
-                if (initialData?.room && roomOpts.length > 0) {
-                    const match = roomOpts.find((o) => o.value === initialData.room);
-                    if (match) setSelectedRoom(match);
-                } else if (roomOpts.length > 0) {
-                    setSelectedRoom(roomOpts[0]);
+
+                let matchedRoom = null;
+                if (initialData?.roomId != null) {
+                    matchedRoom = roomOpts.find((o) => o.value === initialData.roomId);
+                } else if (initialData?.room && roomOpts.length > 0) {
+                    matchedRoom = roomOpts.find((o) => o.label.includes(initialData.room));
                 }
+                if (!matchedRoom && roomOpts.length > 0) {
+                    matchedRoom = roomOpts[0];
+                }
+                setSelectedRoom(matchedRoom);
             } catch { /* silently ignored */ }
         }
         loadData();
@@ -110,11 +119,19 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
         const validSlots = scheduleSlots.filter((s) => s.day && s.time);
         if (validSlots.length === 0) { showError("Please add at least one schedule slot with a time."); return; }
 
-        const payloads = validSlots.map((slot) => ({
-            instructorName: selectedInstructor.value,
-            schedule: `${slot.day} ${slot.time.padStart(5, "0") + ":00"}`,
-            room,
-        }));
+        const payloads = validSlots.map((slot) => {
+            const base = {
+                schedule: `${slot.day} ${slot.time.padStart(5, "0") + ":00"}`,
+                room: selectedRoom?.label?.split(" (")[0] || selectedRoom?.roomName || "",
+            };
+            if (isEdit) {
+                base.instructorId = selectedInstructor?.value;
+            } else {
+                base.instructorName = selectedInstructor?.label || selectedInstructor?.fullName || "";
+                if (capacity) base.capacity = parseInt(capacity);
+            }
+            return base;
+        });
 
         if (isEdit && payloads.length > 0) {
             onSubmit(payloads[0]);

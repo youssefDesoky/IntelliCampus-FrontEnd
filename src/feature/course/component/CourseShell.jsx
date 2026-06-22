@@ -1,11 +1,7 @@
 import { Outlet, useParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 
-import useDeviceType from "../../../hooks/useDeviceType";
-
-import CourseHeader from "./CourseHeader";
-import CourseDesktopNavBar from "./CourseDesktopNavBar";
-import CourseMobileNavBar from "./CourseMobileNavBar";
+import CourseNavBar from "./CourseNavBar";
 
 import Section from "../../../components/ui/Section";
 import { 
@@ -36,7 +32,6 @@ const links = [
 
 export default function CourseShell() {
     const { courseId } = useParams();
-    const { isMobile } = useDeviceType();
     const [materialsData, setMaterialsData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const { showError } = useError();
@@ -78,10 +73,8 @@ export default function CourseShell() {
 
     return (
         <>
-            <CourseHeader isMobile={isMobile} course={course} links={links} />
-
             <Section>
-                { isMobile ? <CourseMobileNavBar links={links} /> : <CourseDesktopNavBar links={links} /> }
+                <CourseNavBar links={links} />
                 <Outlet context={{ course, courseId, refreshMaterials }} />
             </Section>
         </>

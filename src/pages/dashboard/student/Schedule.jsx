@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import useDeviceType from "../../../hooks/useDeviceType";
 
-import WeeklySchedule from "../../../components/ui/WeeklySchedule";
+import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
+import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
 import ExamSchedule from "../../../feature/student/schedule/ExamSchedule";
 import { fetchMySchedule, exportSchedulePdf } from "../../../feature/student/schedule/scheduleApi";
@@ -99,11 +100,20 @@ export default function Schedule() {
             />
 
             {currSchedule === "weekly" ? (
-                <WeeklySchedule
-                    schedule={filteredSchedule}
-                    isMobile={isMobile}
-                    onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
-                />
+                isMobile ? (
+                    <WeeklyScheduleAgenda
+                        days={days}
+                        schedule={filteredSchedule}
+                        variant="default"
+                        onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
+                    />
+                ) : (
+                    <WeeklySchedule
+                        schedule={filteredSchedule}
+                        isMobile={isMobile}
+                        onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
+                    />
+                )
             ) : (
                 <ExamSchedule exams={examsData} />
             )}

@@ -1,5 +1,5 @@
 import Button from "../../../../../components/ui/Button";
-import { FileLinesIcon, DownloadIcon } from "../../../../../components/ui/icons";
+import { FileLinesIcon, DownloadIcon, FileSlashIcon } from "../../../../../components/ui/icons";
 
 import CourseWeekMaterialContent from "./CourseWeekMaterialContent";
 import { getMaterialDownloadUrl } from "../../../../course/services/materialsApi";
@@ -30,13 +30,17 @@ export default function CourseWeekMaterials({ folder, highlighted = false }) {
             <div className="p-6 md:p-8 bg-linear-to-r from-bg-surface-secondary-default-light/50 to-transparent dark:from-bg-surface-secondary-default-dark/50 border-b border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <div className="flex flex-wrap items-center gap-3">
                             <h3 className="text-xl md:text-2xl font-bold truncate text-text-primary-default-light dark:text-text-primary-default-dark">
                                 {folder.name}
                             </h3>
-                            <span className="px-3 py-1 w-fit text-nowrap rounded-full text-sm font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark">
-                                {materials.length} {materials.length === 1 ? 'item' : 'items'}
-                            </span>
+                            <button
+                                onClick={() => downloadAllMaterials(materials)}
+                                className="md:hidden ml-auto flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-text-primary-default-light dark:text-text-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark transition-colors shadow-sm"
+                                aria-label="Download All Materials"
+                            >
+                                <DownloadIcon size={18} />
+                            </button>
                         </div>
                         {folder.description && (
                             <p className="text-base text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-3xl">
@@ -44,18 +48,16 @@ export default function CourseWeekMaterials({ folder, highlighted = false }) {
                             </p>
                         )}
                     </div>
-                    {materials.length > 0 && (
-                        <div className="shrink-0 flex items-center self-start md:self-center mt-2 md:mt-0">
-                            <button
-                                onClick={() => downloadAllMaterials(materials)}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-text-primary-default-light dark:text-text-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark transition-colors shadow-sm"
-                                aria-label="Download All Materials"
-                            >
-                                <DownloadIcon size={18} />
-                                <span>Download All</span>
-                            </button>
-                        </div>
-                    )}
+                    <div className="hidden md:flex shrink-0 items-center gap-2 self-center">
+                        <button
+                            onClick={() => downloadAllMaterials(materials)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-text-primary-default-light dark:text-text-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark transition-colors shadow-sm"
+                            aria-label="Download All Materials"
+                        >
+                            <DownloadIcon size={18} />
+                            <span>Download All</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -63,7 +65,7 @@ export default function CourseWeekMaterials({ folder, highlighted = false }) {
                 {materials.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
                         <div className="w-16 h-16 rounded-full bg-bg-surface-tertiary-default-light dark:bg-bg-surface-tertiary-default-dark flex items-center justify-center mb-4">
-                            <FileLinesIcon size={24} className="text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark" />
+                            <FileSlashIcon size={24} className="text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark" />
                         </div>
                         <h4 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                             No materials available

@@ -1,6 +1,7 @@
 import CircularProgress from "../../../../../components/ui/CircularProgress";
+import GradeComplaint from "./GradeComplaint";
 
-export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A" }) {
+export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", items = [] }) {
     // Determine the theme variant based on the grade percentage (tiers: 85, 75, 65, 50)
     const getTheme = (pct) => {
         if (pct >= 85) return {
@@ -67,42 +68,46 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A" }) 
             <div className={`absolute -top-20 -right-20 h-40 w-40 ${theme.glow} rounded-full blur-3xl pointer-events-none`} />
             <div className={`absolute -bottom-20 -left-20 h-40 w-40 bg-sky-200/20 dark:bg-sky-900/10 rounded-full blur-3xl pointer-events-none`} />
             
-            <div className="relative flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-center sm:text-left">
-                {/* Progress Visualizer */}
-                <div 
-                    className="relative inline-flex items-center justify-center shrink-0"
-                    role="img" 
-                    aria-label={`Current grade performance: ${letterGrade} (${gradePercent}%)`}
-                >
-                    <CircularProgress
-                        progress={gradePercent}
-                        size={120}
-                        progressColor={theme.progressColor}
-                        circleColor={theme.circleColor}
-                        textColor={theme.labelColor}
-                    >
-                        <span className={`text-5xl font-black tracking-tight ${theme.labelColor}`}>
-                            {letterGrade}
-                        </span>
-                    </CircularProgress>
-                </div>
-                
-                {/* Grade Analytics */}
-                <div className="flex-1 w-full">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light/70 dark:text-text-secondary-default-dark/70">
-                        Current Standing
-                    </span>
-                    <p className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mt-0.5">
-                        {gradePercent}% <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">Overall</span>
-                    </p>
-                    
-                    <div className={`mt-3 pt-3 border-t ${theme.border}`}>
-                        <p className={`text-sm font-semibold ${theme.text}`}>
-                            {theme.message}
-                        </p>
-                    </div>
-                </div>
-            </div>
+			<div className="relative flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-center sm:text-left">
+				{/* Progress Visualizer */}
+				<div 
+					className="relative inline-flex items-center justify-center shrink-0"
+					role="img" 
+					aria-label={`Current grade performance: ${letterGrade} (${gradePercent}%)`}
+				>
+					<CircularProgress
+						progress={gradePercent}
+						size={120}
+						progressColor={theme.progressColor}
+						circleColor={theme.circleColor}
+						textColor={theme.labelColor}
+					>
+						<span className={`text-5xl font-black tracking-tight ${theme.labelColor}`}>
+							{letterGrade}
+						</span>
+					</CircularProgress>
+				</div>
+				
+				{/* Grade Analytics */}
+				<div className="flex-1 w-full">
+					<span className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light/70 dark:text-text-secondary-default-dark/70">
+						Current Standing
+					</span>
+					<p className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mt-0.5">
+						{gradePercent}% <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">Overall</span>
+					</p>
+					
+					<div className={`mt-3 pt-3 border-t ${theme.border}`}>
+						<p className={`text-sm font-semibold ${theme.text}`}>
+							{theme.message}
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<div className="mt-4">
+				<GradeComplaint items={items} compact />
+			</div>
         </div>
     );
 }

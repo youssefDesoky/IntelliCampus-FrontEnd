@@ -1,5 +1,6 @@
 import { useState } from "react";
 import InputItem from "../../../components/form/InputItem";
+import NumberInput from "../../../components/form/NumberInput";
 import SelectBox from "../../../components/ui/SelectBox";
 import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
@@ -15,7 +16,7 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
     const instructorOptions = [
         emptyInstructorOption,
         ...instructors.map((instructor) => ({
-            value: String(instructor.instructorId),
+            value: String(instructor.userId),
             label: instructor.fullName || instructor.name,
         })),
     ];
@@ -26,10 +27,10 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
         }
         return emptyInstructorOption;
     });
+    const [maxCapacity, setMaxCapacity] = useState(initialData.maxCapacity ?? "");
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const formData = Object.fromEntries(new FormData(e.target));
-        const departmentName = (formData.departmentName || "").trim();
+        const departmentName = ((e.target.departmentName?.value) || "").trim();
 
         if (!departmentName) {
             showError("Department name is required");
@@ -39,10 +40,11 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
         try {
             await onSubmit({
                 departmentName,
-                departmentNameAr: (formData.departmentNameAr || "").trim(),
-                description: (formData.description || "").trim(),
-                descriptionAr: (formData.descriptionAr || "").trim(),
+                departmentNameAr: ((e.target.departmentNameAr?.value) || "").trim(),
+                description: ((e.target.description?.value) || "").trim(),
+                descriptionAr: ((e.target.descriptionAr?.value) || "").trim(),
                 instructorId: selectedInstructor.value || null,
+                maxCapacity: maxCapacity ? parseInt(maxCapacity) : null,
             });
         } catch (err) {
             showError(err.message || "An error occurred");
@@ -89,6 +91,16 @@ export default function DepartmentForm({ onClose, onSubmit, initialData = {}, in
                     options={instructorOptions}
                     selectedOption={selectedInstructor}
                     onChange={setSelectedInstructor}
+                />
+
+                <NumberInput
+                    label="Max Capacity"
+                    name="maxCapacity"
+                    value={maxCapacity}
+                    onChange={(e) => setMaxCapacity(e.target.value)}
+                    placeholder="Maximum student capacity (optional)"
+                    min="0"
+                    className="w-full"
                 />
 
                 <div>

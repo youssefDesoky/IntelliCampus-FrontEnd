@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import Section from "../../../components/ui/Section";
-import WeeklySchedule from "../../../components/ui/WeeklySchedule";
+import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
+import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
 import Dialog from "../../../components/ui/Dialog";
 
@@ -101,7 +102,7 @@ function mapActiveCourseToCard(course) {
 const ITEMS_PER_PAGE = 3;
 
 export default function CoursesRegistration() {
-    const { isDesktop }  = useDeviceType();
+    const { isDesktop, isMobile } = useDeviceType();
 
     const [selectedCourses, setSelectedCourses]   = useState([]);
     const [availableCourses, setAvailableCourses] = useState([]);
@@ -355,9 +356,12 @@ export default function CoursesRegistration() {
                     <div>
                         <h3 className="text-md font-semibold">Weekly Schedule Preview</h3>
 
-                        <WeeklySchedule schedule={sampleSchedule} />
+                        {isMobile ? (
+                            <WeeklyScheduleAgenda days={days} schedule={sampleSchedule} variant="default" />
+                        ) : (
+                            <WeeklySchedule schedule={sampleSchedule} />
+                        )}
                     </div>
-                    
                 </Section>
 
                 <div className="md:col-span-2 flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-t-2 border-border-primary-default-light dark:border-border-primary-default-dark pt-6">
