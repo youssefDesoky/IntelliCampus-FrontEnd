@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Outlet, useRouteLoaderData } from 'react-router-dom';
 import { useSidebar, useDeviceType } from '../hooks';
 import usePushNotifications from '../hooks/usePushNotifications';
+import useScrollVisibility from '../hooks/useScrollVisibility';
 import { getAside, getBottomBar, getHeader } from '../utils/layoutHelper';
 import Chat from '../feature/chat/components/Chat';
+import CommentsIcon from '../components/ui/icons/CommentsIcon';
 
 const VIEW_TYPES = ['student', 'instructor', 'admin'];
 
@@ -28,7 +30,8 @@ function getAvailableViews(roles) {
 export default function AppLayout() {
     const ASIDEHEIGHT = 80;
     const { width } = useSidebar();
-    const { isMobile } = useDeviceType();
+    const { isMobile, isPhone } = useDeviceType();
+    const barVisible = useScrollVisibility();
     const user = useRouteLoaderData("root");
     const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -66,12 +69,23 @@ export default function AppLayout() {
                         }}
                     >
                         <Outlet context={{ user }} />
-                        
-                        {/* Chatting interface */}
-                        <Chat isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} currentUser={user} />
                     </main>
 
-                    {isMobile && getBottomBar(activeView)}
+                    {/* Chatting interface - outside main to overlay everything */}
+                    <Chat isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} currentUser={user} />
+
+                    {isMobile && !isChatOpen && getBottomBar(activeView, {
+                        visible: isPhone ? barVisible : true,
+                        floatingAction: (
+                            <button
+                                onClick={() => setIsChatOpen(true)}
+                                className="flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                                aria-label="Open chat"
+                            >
+                                <CommentsIcon size={22} />
+                            </button>
+                        )
+                    })}
             </div>
         </div>
     );

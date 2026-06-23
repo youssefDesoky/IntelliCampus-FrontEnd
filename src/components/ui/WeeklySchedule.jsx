@@ -7,10 +7,6 @@ const timeSlots = [
     "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"
 ];
 
-const mobileTimeSlots = [
-    "8:00 AM", "10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM", "6:00 PM"
-];
-
 export const days = [
     { key: "sat", label: "Saturday", short: "Sat" },
     { key: "sun", label: "Sunday", short: "Sun" },
@@ -125,9 +121,8 @@ function ExamScheduleView({ schedule, onEventClick, examDays }) {
     );
 }
 
-export default function WeeklySchedule({ schedule = [], isMobile, variant, onEventClick, examDays }) {
+export default function WeeklySchedule({ schedule = [], variant, onEventClick, examDays }) {
     const activeDays = new Set(schedule.map((item) => item.day)).size;
-    const slots = isMobile ? mobileTimeSlots : timeSlots;
 
     return (
         <div className="w-full overflow-x-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-sm shadow-shadow-light dark:shadow-shadow-dark">
@@ -162,17 +157,15 @@ export default function WeeklySchedule({ schedule = [], isMobile, variant, onEve
                 <ExamScheduleView schedule={schedule} onEventClick={onEventClick} examDays={examDays} />
             ) : (
                 <div className="overflow-x-auto">
-            <div className="min-w-190">
+                    <div className="min-w-190">
                         <WeeklyScheduleHeader
-                            isMobile={isMobile}
-                            slots={slots}
+                            slots={timeSlots}
                         />
 
                         <WeeklyScheduleDayRow
                             days={days}
-                            isMobile={isMobile}
                             schedule={schedule}
-                            slots={slots}
+                            slots={timeSlots}
                         />
                     </div>
                 </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { addDays, subDays, isSameDay, startOfDay, format } from "date-fns";
 
 import Categories from "../../../feature/student/reminders/Categories";
@@ -66,23 +66,33 @@ export default function Reminders() {
     const [selectedCategory, setSelectedCategory] = useState(categoryOptions[0]);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [reminders, setReminders] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
 
-    const loadReminders = useCallback(async () => {
+    useEffect(() => {
+        let cancelled = false;
+        async function load() {
+            try {
+                const data = await fetchRemindersByDay(selectedDate);
+                if (!cancelled) setReminders(Array.isArray(data) ? data : []);
+            } catch (err) {
+                if (!cancelled) {
+                    showError(err.message);
+                    setReminders([]);
+                }
+            }
+        }
+        load();
+        return () => { cancelled = true; };
+    }, [selectedDate, showError]);
+
+    const reloadReminders = async () => {
         try {
-            setIsLoading(true);
             const data = await fetchRemindersByDay(selectedDate);
             setReminders(Array.isArray(data) ? data : []);
         } catch (err) {
+            showError(err.message);
             setReminders([]);
-        } finally {
-            setIsLoading(false);
         }
-    }, [selectedDate]);
-
-    useEffect(() => {
-        loadReminders();
-    }, [loadReminders]);
+    };
 
     const handleSetIsFormOpen = (isOpen) => {
         if (isOpen) setEditingReminder(null);
@@ -92,7 +102,7 @@ export default function Reminders() {
     const handleAddReminder = async (reminder) => {
         try {
             await createReminderApi(reminder);
-            await loadReminders();
+            await reloadReminders();
             setIsFormOpen(false);
         } catch (err) {
             showError(err.message);
@@ -102,7 +112,7 @@ export default function Reminders() {
     const handleSaveReminder = async (updatedReminder) => {
         try {
             await updateReminderApi(updatedReminder.id, updatedReminder);
-            await loadReminders();
+            await reloadReminders();
             setEditingReminder(null);
             setIsFormOpen(false);
         } catch (err) {
@@ -118,7 +128,7 @@ export default function Reminders() {
     const handleDeleteReminder = async (reminderToDelete) => {
         try {
             await deleteReminderApi(reminderToDelete.id);
-            await loadReminders();
+            await reloadReminders();
         } catch (err) {
             showError(err.message);
         }

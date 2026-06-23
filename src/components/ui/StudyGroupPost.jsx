@@ -4,7 +4,7 @@ import CommentIcon from "./icons/CommentIcon";
 
 const CONTENT_PREVIEW_LENGTH = 240;
 
-export default function StudyGroupPost({ className = "", postData, courseTitle = null, onUpvote, onAddComment }) {
+export default function StudyGroupPost({ className = "", postData, courseTitle = null, onUpvote, onAddComment, currentUserAvatar }) {
     const [showComments, setShowComments] = useState(false);
     const [commentText, setCommentText] = useState("");
     const [hasUpvoted, setHasUpvoted] = useState(false);
@@ -36,13 +36,11 @@ export default function StudyGroupPost({ className = "", postData, courseTitle =
         >
             {/* Header */}
             <div aria-label="post-header" className="flex items-center gap-3">
-                {postData.senderAvatar ? (
-                    <img src={postData.senderAvatar} alt={postData.sender} className="w-11 h-11 rounded-full shrink-0 object-cover ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark" />
-                ) : (
-                    <div className="w-11 h-11 rounded-full shrink-0 bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center text-sm font-bold text-white">
-                        {postData.sender?.charAt(0)?.toUpperCase() || "?"}
-                    </div>
-                )}
+                <img
+                    src={postData.senderAvatar}
+                    alt={postData.sender}
+                    className="w-11 h-11 rounded-full shrink-0 object-cover ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark"
+                />
                 <div className="flex flex-col gap-1 min-w-0">
                     <h3 className="font-semibold text-[15px] text-text-primary-default-light dark:text-text-primary-default-dark leading-tight">
                         {postData.sender}
@@ -131,9 +129,11 @@ export default function StudyGroupPost({ className = "", postData, courseTitle =
                             <ul className="flex flex-col gap-2">
                                 {postData.comments.map((comment, idx) => (
                                     <li key={comment.commentId || idx} className="flex items-start gap-2">
-                                        <div className="w-7 h-7 rounded-full shrink-0 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center text-xs font-bold text-text-accent-active-light dark:text-text-accent-active-dark">
-                                            {comment.authorName?.charAt(0)?.toUpperCase() || "?"}
-                                        </div>
+                                        <img
+                                            src={comment.authorAvatar}
+                                            alt={comment.authorName}
+                                            className="w-7 h-7 rounded-full shrink-0 object-cover"
+                                        />
                                         <div className="flex flex-col gap-0.5 rounded-2xl rounded-tl-sm bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 max-w-[85%]">
                                             <span className="text-[13px] font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
                                                 {comment.authorName || "Unknown"}
@@ -153,6 +153,11 @@ export default function StudyGroupPost({ className = "", postData, courseTitle =
 
                         {onAddComment && (
                             <form onSubmit={handleSubmitComment} className="flex items-center gap-2">
+                                <img
+                                    src={currentUserAvatar}
+                                    alt="You"
+                                    className="w-7 h-7 rounded-full shrink-0 object-cover"
+                                />
                                 <input
                                     type="text"
                                     value={commentText}

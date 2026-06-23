@@ -27,7 +27,7 @@ export default function ChatUsers({ chatPartner, friends = [], groups = [], onli
   const groupList = groups.map(mapGroup).filter(filterFn);
 
   return (
-    <div className="col-span-1 border-r border-white/8 pr-4 flex flex-col min-h-0">
+    <div className="col-span-1 sm:border-r sm:border-white/8 sm:pr-4 flex flex-col min-h-0 h-full">
       <ChatUsersHeader onAddFriend={onAddFriend} onCreateGroup={onCreateGroup} searchMembers={searchMembers} onSearchMembersChange={onSearchMembersChange} />
       <div className="flex flex-col gap-2 overflow-y-auto min-h-0 no-scrollbar pt-1">
         {showFahim && (

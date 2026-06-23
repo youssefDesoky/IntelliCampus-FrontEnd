@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { AngleDownIcon } from "../ui/icons"
 
-export default function SelectBox({ 
-    options, 
-    selectedOption, 
-    label, 
+export default function SelectBox({
+    options,
+    selectedOption,
+    label,
     name,
-    className, 
-    labelDirection = "flex-row", 
+    className,
+    labelDirection = "flex-row",
     yPadding = 'py-2',
     onChange,
     compact = false,
-    showLabel = true
+    showLabel = true,
+    disabled = false
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const [minWidth, setMinWidth] = useState(0);
@@ -19,7 +20,10 @@ export default function SelectBox({
     const rowRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    const toggleOpen = () => setIsOpen(!isOpen);
+    const toggleOpen = () => {
+        if (disabled) return;
+        setIsOpen(!isOpen);
+    };
 
     const selected = selectedOption 
         ? options.find(opt => opt.value === selectedOption.value) || selectedOption
@@ -87,8 +91,8 @@ export default function SelectBox({
                 className={`flex ${labelDirection} ${labelDirection === "flex-row" ? "items-center" : "items-start"} justify-between gap-2`}
             >
                 {showLabel && label && (
-                    <label 
-                        className={`block font-semibold text-text-primary-active-light dark:text-text-primary-active-dark ${compact ? 'text-xs' : 'text-sm'}`}
+                    <label
+                        className={`block font-semibold text-text-primary-active-light dark:text-text-primary-active-dark ${compact ? 'text-xs' : 'text-sm'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                         onClick={toggleOpen}
                     >
                         {label}
@@ -96,7 +100,8 @@ export default function SelectBox({
                 )}
                 <button
                     type="button"
-                    className={`${isFull ? 'w-full' : 'flex-1'} min-w-0 max-w-full inline-flex items-center justify-between rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark shadow-sm px-3 ${yPadding} ${compactClasses} bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark font-medium text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark focus:outline-none transition-colors duration-150`}
+                    disabled={disabled}
+                    className={`${isFull ? 'w-full' : 'flex-1'} min-w-0 max-w-full inline-flex items-center justify-between rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark shadow-sm px-3 ${yPadding} ${compactClasses} bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark font-medium text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark focus:outline-none transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed`}
                     style={buttonStyle}
                     onClick={toggleOpen}
                 >

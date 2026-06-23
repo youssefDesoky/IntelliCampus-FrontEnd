@@ -8,7 +8,7 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import MaterialPreview from "../../../components/ui/MaterialPreview";
 import DateTimeInput from "../../../components/form/DateTimeInput";
 import NumberInput from "../../../components/form/NumberInput";
-import { PlusIcon, TrashIcon, EyeIcon, DownloadIcon, XIcon } from "../../../components/ui/icons";
+import { PlusIcon, TrashIcon, EyeIcon, DownloadIcon, XIcon, FilePenIcon, CalendarDaysIcon, ChartBarIcon, UsersIcon, ClockIcon } from "../../../components/ui/icons";
 
 import {
     fetchInstructorAssignmentsByCourse,
@@ -247,18 +247,17 @@ export default function InstructorCourseAssignments() {
     
     return (
         <div className="space-y-4">
-        <Button
-        type="button"
-        variant="primary"
-        onClick={() => setIsFormOpen(true)}
-        className="fixed bottom-5 right-5 z-50 group"
-        >
-        <PlusIcon size={24} />
-        <span className="max-w-0 -ml-2 group-hover:ml-0 overflow-hidden group-hover:max-w-40 transition-all! duration-300! whitespace-nowrap">
-        Add New Assignment
-        </span>
-        </Button>
-        
+        <div className="flex justify-end">
+            <Button
+                type="button"
+                variant="primary"
+                onClick={() => setIsFormOpen(true)}
+                startIcon={<PlusIcon size={18} />}
+            >
+                Create Assignment
+            </Button>
+        </div>
+
         <BaseFormComponent
         isOpen={isFormOpen}
         title={editingAssignmentId ? "Edit Assignment" : "Create Assignment"}
@@ -310,81 +309,93 @@ export default function InstructorCourseAssignments() {
         </BaseFormComponent>
         
         {sortedAssignments.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-6 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
-            <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No assignments yet</h3>
+            <div className="rounded-2xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-12 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                <FilePenIcon size={24} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
+            </div>
+            <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No assignments yet</h3>
             <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
             Create your first assignment for this course.
             </p>
             </div>
         ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
             {sortedAssignments.map((assignment) => (
                 <div
                 key={assignment.id}
-                className="rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light p-4 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark"
+                className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg transition-shadow duration-200"
                 >
-                <div className="flex items-start justify-between gap-3">
-                <div>
-                <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{assignment.title}</h3>
-                <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                Due: {formatDueDate(assignment.dueDate)}
-                </p>
-                <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                Total Points: {assignment.totalPoints}
-                </p>
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                        {assignment.title}
+                    </h3>
+                    {assignment.description && (
+                        <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">
+                        {assignment.description}
+                        </p>
+                    )}
+                    </div>
+                    {assignment.totalPoints && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap shrink-0 self-start">
+                        <ChartBarIcon size={14} />
+                        {assignment.totalPoints} pts
+                    </span>
+                    )}
                 </div>
-                
-                <div className="flex items-center">
-                <Button
-                type="button"
-                variant="text"
-                className="mr-2"
-                onClick={() => {
-                    setEditingAssignmentId(assignment.id);
-                    setTitle(assignment.title || "");
-                    setDescription(assignment.description || "");
-                    setInstructions(assignment.fullInstructions || "");
-                    try {
-                        const dt = new Date(assignment.dueDate);
-                        const tzOffset = dt.getTimezoneOffset() * 60000;
-                        const localISO = new Date(dt - tzOffset).toISOString().slice(0, 16);
-                        setDueDate(localISO);
-                    } catch {
-                        setDueDate(assignment.dueDate || "");
-                    }
-                    setTotalPoints(assignment.totalPoints || 100);
-                    setIsFormOpen(true);
-                }}
-                >
-                Edit
-                </Button>
-                
-                <Button
-                type="button"
-                variant="text"
-                className="mr-2"
-                onClick={() => openSubmissions(assignment)}
-                >
-                View Submissions
-                </Button>
-                
-                <Button
-                type="button"
-                variant="text"
-                className="text-text-danger-default-light dark:text-text-danger-default-dark"
-                startIcon={<TrashIcon size={16} />}
-                onClick={() => handleDeleteAssignment(assignment.id)}
-                >
-                Delete
-                </Button>
+
+                <div className="flex flex-wrap items-center gap-4 mt-3 text-sm">
+                    <div className="flex items-center gap-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                    <CalendarDaysIcon size={16} />
+                    <span>Due {formatDueDate(assignment.dueDate)}</span>
+                    </div>
                 </div>
+
+                <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
+                    <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    startIcon={<EyeIcon size={16} />}
+                    onClick={() => openSubmissions(assignment)}
+                    >
+                    Submissions
+                    </Button>
+                    <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    startIcon={<FilePenIcon size={16} />}
+                    onClick={() => {
+                        setEditingAssignmentId(assignment.id);
+                        setTitle(assignment.title || "");
+                        setDescription(assignment.description || "");
+                        setInstructions(assignment.fullInstructions || "");
+                        try {
+                            const dt = new Date(assignment.dueDate);
+                            const tzOffset = dt.getTimezoneOffset() * 60000;
+                            const localISO = new Date(dt - tzOffset).toISOString().slice(0, 16);
+                            setDueDate(localISO);
+                        } catch {
+                            setDueDate(assignment.dueDate || "");
+                        }
+                        setTotalPoints(assignment.totalPoints || 100);
+                        setIsFormOpen(true);
+                    }}
+                    >
+                    Edit
+                    </Button>
+                    <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    startIcon={<TrashIcon size={16} />}
+                    className="text-text-danger-default-light dark:text-text-danger-default-dark"
+                    onClick={() => handleDeleteAssignment(assignment.id)}
+                    >
+                    Delete
+                    </Button>
                 </div>
-                
-                {assignment.description ? (
-                    <p className="mt-3 text-sm text-text-primary-default-light dark:text-text-primary-default-dark whitespace-pre-line">
-                    {assignment.description}
-                    </p>
-                ) : null}
                 </div>
             ))}
             </div>

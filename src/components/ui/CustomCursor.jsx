@@ -10,6 +10,9 @@ export default function CustomCursor() {
     useEffect(() => {
         if (!hasMouse) return;
 
+        new Image().src = defaultSrc;
+        new Image().src = inputFallback;
+
         const moveCursor = (e) => {
             if (!cursorRef.current) return;
             cursorRef.current.style.transform = `translate3d(${e.clientX - 16}px, ${e.clientY - 16}px, 0)`;
@@ -24,6 +27,10 @@ export default function CustomCursor() {
         const showCursor = () => {
             if (!cursorRef.current) return;
             cursorRef.current.style.opacity = "1";
+            document.documentElement.style.cursor = "none";
+            requestAnimationFrame(() => {
+                document.documentElement.style.cursor = "";
+            });
         };
 
         const handleDocMouseOut = (e) => {
@@ -32,18 +39,22 @@ export default function CustomCursor() {
 
         window.addEventListener("mousemove", moveCursor);
         document.addEventListener("mouseout", handleDocMouseOut);
-        window.addEventListener("blur", hideCursor);
-        window.addEventListener("focus", showCursor);
+        const handleVisibility = () => {
+            if (document.hidden) hideCursor();
+            else showCursor();
+        };
+        document.addEventListener("visibilitychange", handleVisibility);
         window.addEventListener("mouseenter", showCursor);
+        window.addEventListener("focus", showCursor);
 
         return () => {
             window.removeEventListener("mousemove", moveCursor);
             document.removeEventListener("mouseout", handleDocMouseOut);
-            window.removeEventListener("blur", hideCursor);
-            window.removeEventListener("focus", showCursor);
+            document.removeEventListener("visibilitychange", handleVisibility);
             window.removeEventListener("mouseenter", showCursor);
+            window.removeEventListener("focus", showCursor);
         };
-    }, [hasMouse]);
+    }, [hasMouse, defaultSrc, inputFallback]);
 
     useEffect(() => {
         if (!hasMouse) return;

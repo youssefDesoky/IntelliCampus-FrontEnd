@@ -45,8 +45,8 @@ export async function addComment(courseId, postId, content) {
     return res.json();
 }
 
-export async function deleteComment(commentId) {
-    const res = await fetch(`${API_URL}/api/courses/0/community/comments/${commentId}`, {
+export async function deleteComment(courseId, postId, commentId) {
+    const res = await fetch(`${API_URL}/api/courses/${courseId}/community/questions/${postId}/comments/${commentId}`, {
         method: "DELETE",
         credentials: "include",
     });

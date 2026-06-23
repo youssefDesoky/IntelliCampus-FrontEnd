@@ -46,7 +46,7 @@ function QuizCard({ quiz, isUpcoming, onStartQuiz, onViewResults, onReviewResult
 
     return (
         <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg transition-shadow duration-200">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+            <div className="flex flex-row items-start justify-between gap-3 mb-4">
                 <div className="flex-1">
                     <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1">
                         {quiz.title}
@@ -64,7 +64,7 @@ function QuizCard({ quiz, isUpcoming, onStartQuiz, onViewResults, onReviewResult
                 </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3">
                     <div className="flex items-center gap-2 text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs font-semibold uppercase tracking-wide mb-2">
                         <CalendarDaysIcon size={14} />
@@ -273,7 +273,7 @@ export default function CourseQuizzes() {
                     )}
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             showing {pagedQuizzes.length} of {historyQuizzes.length} quizzes
                         </p>
 
@@ -282,7 +282,7 @@ export default function CourseQuizzes() {
                 </Section>
             </div>
 
-            <div className="space-y-6">
+            <div className="hidden lg:block space-y-6">
                 <BaseComponent title="Quiz Stats" contentClassName="px-5 py-5 sm:px-6 space-y-4">
                     <div className="flex items-center justify-between p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg">
                         <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Completed</span>

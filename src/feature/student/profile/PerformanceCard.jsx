@@ -1,48 +1,87 @@
-const performanceStats = [
-    {
-        label: "Cumulative GPA",
-        value: "3.8 / 4.0",
-        trend: "+0.1 ",
-        positive: true,
-        percentage: "95%",
-        colSpan: 1
-    },
-    {
-        label: "Current Courses",
-        value: "6",
-        trend: "Enrolled",
-        positive: true,
-        percentage: "60%",
-        colSpan: 1
-    },
-    {
-        label: "Completed Courses",
-        value: "28",
-        trend: "Total",
-        positive: true,
-        colSpan: 1,
-        percentage: "100%",
-        subStats: [
-            { label: "Zero Hours", value: "3 Courses" },
-            { label: "2 Hours", value: "10 Courses" },
-            { label: "3 Hours", value: "15 Courses" },
-        ]
-    },
-    {
-        label: "Credits Earned",
-        value: "118 / 130",
-        trend: "12 remaining",
-        colSpan: 1,
-        positive: null,
-        percentage: "90%",
-        subStats: [
-            { label: "University Required (2 Hrs)", value: "14 Credits" },
-            { label: "Specialization Required (3 Hrs)", value: "104 Credits" }
-        ]
-    },
-];
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { OpenInNewTabIcon } from "../../../components/ui/icons";
 
-export default function PerformanceCard() {
+function isStatus(course, ...statuses) {
+    const s = course.status;
+    if (s === undefined || s === null) return false;
+    return statuses.some((st) => s === st || s === String(st));
+}
+
+function buildPerformanceStats(user) {
+    const courses = user.courses || [];
+    const gpa = user.gpa ?? 0;
+
+    const inProgressCourses = courses.filter(
+        (c) => isStatus(c, "InProgress", 1) || isStatus(c, "Registered", 0)
+    );
+    const completedCourses = courses.filter((c) => isStatus(c, "Completed", 2));
+
+    const completedCredits = completedCourses.reduce((sum, c) => sum + (c.creditHours || 0), 0);
+
+    const creditBreakdown = completedCourses.reduce((acc, c) => {
+        const hours = c.creditHours || 0;
+        const key = hours === 2 ? "2 Hours" : hours === 3 ? "3 Hours" : "Other";
+        if (!acc[key]) acc[key] = 0;
+        acc[key] += 1;
+        return acc;
+    }, {});
+
+    return [
+        {
+            label: "Cumulative GPA",
+            value: `${gpa} / 4.0`,
+            trend: gpa > 0 ? "Current" : "N/A",
+            positive: gpa >= 2.0 ? true : gpa > 0 ? false : null,
+            percentage: `${Math.min(Math.round((gpa / 4.0) * 100), 100)}%`,
+            colSpan: 1,
+        },
+        {
+            label: "Current Courses",
+            value: String(inProgressCourses.length),
+            trend: "Enrolled",
+            positive: true,
+            percentage: `${inProgressCourses.length > 0 ? 60 : 0}%`,
+            colSpan: 1,
+        },
+        {
+            label: "Completed Courses",
+            value: String(completedCourses.length),
+            trend: "Total",
+            positive: true,
+            colSpan: 1,
+            percentage: completedCourses.length > 0 ? "100%" : "0%",
+            subStats: Object.entries(creditBreakdown)
+                .sort(([a], [b]) => {
+                    const order = { "2 Hours": 1, "3 Hours": 2 };
+                    return (order[a] || 99) - (order[b] || 99);
+                })
+                .map(([label, count]) => ({
+                    label,
+                    value: `${count} Course${count !== 1 ? "s" : ""}`,
+                })),
+        },
+        {
+            label: "Credits Earned",
+            value: String(completedCredits),
+            trend: completedCredits > 0 ? "Completed" : "N/A",
+            colSpan: 1,
+            positive: true,
+            percentage: completedCredits > 0 ? "100%" : "0%",
+            subStats: [
+                {
+                    label: "Completed Courses",
+                    value: `${completedCourses.length} Course${completedCourses.length !== 1 ? "s" : ""}`,
+                },
+            ],
+        },
+    ];
+}
+
+export default function PerformanceCard({ user = {} }) {
+    const navigate = useNavigate();
+    const performanceStats = useMemo(() => buildPerformanceStats(user), [user]);
+
     return (
         <div className="rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-linear-to-r from-bg-surface-secondary-default-light to-bg-surface-primary-default-light dark:from-bg-surface-secondary-default-dark dark:to-bg-surface-primary-default-dark">
@@ -54,8 +93,12 @@ export default function PerformanceCard() {
                         Current standing · cumulative
                     </p>
                 </div>
-                <button className="text-[11px] font-semibold text-text-accent-active-light dark:text-text-accent-active-dark hover:underline">
+                <button
+                    onClick={() => navigate("/courses", { state: { showTranscript: true } })}
+                    className="flex items-center gap-1 text-[11px] font-semibold text-text-accent-active-light dark:text-text-accent-active-dark hover:underline"
+                >
                     Full transcript
+                    <OpenInNewTabIcon size={12} />
                 </button>
             </div>
 

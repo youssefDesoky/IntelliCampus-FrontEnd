@@ -1,21 +1,41 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import TodayReminderItem from "./upcomingDeadlines/TodayReminderItem";
 
 import { BellIconDark, ArrowRightIcon } from "../../../components/ui/icons";
+import { fetchRemindersByDay } from "../remindersApi";
 
-export default function TodayReminders({ reminders=[], className }) {
-    // Ensure reminders is an array
-    if (!Array.isArray(reminders)) {
-        return (
-            <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
-                <div className="flex flex-col items-center justify-center h-full p-6 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                    <BellIconDark className="w-12 h-12 mb-4" />
-                    <p className="text-center">Loading reminders...</p>
-                </div>
-            </div>
-        );
-    }
+export default function TodayReminders({ className }) {
+    const [reminders, setReminders] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadReminders() {
+            try {
+                const data = await fetchRemindersByDay(new Date());
+                if (!cancelled) {
+                    setReminders(data);
+                }
+            } catch {
+                if (!cancelled) {
+                    setReminders([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setIsLoading(false);
+                }
+            }
+        }
+
+        loadReminders();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     return (
         <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
@@ -25,7 +45,12 @@ export default function TodayReminders({ reminders=[], className }) {
             </div>
 
             <menu className="flex flex-col gap-3 mb-8">
-                {reminders.length === 0 ? (
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center h-full p-6 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                        <BellIconDark className="w-12 h-12 mb-4" />
+                        <p className="text-center">Loading reminders...</p>
+                    </div>
+                ) : reminders.length === 0 ? (
                     <div className="mb-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
                         <div className="flex flex-col items-center justify-center h-full p-6 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                             <BellIconDark className="w-12 h-12 mb-4" />
@@ -34,7 +59,7 @@ export default function TodayReminders({ reminders=[], className }) {
                     </div>
                 ) : (
                     reminders.map((reminder, index) => (
-                        <TodayReminderItem key={index} reminder={reminder} />
+                        <TodayReminderItem key={reminder.id ?? index} reminder={reminder} />
                     ))
                 )}
             </menu>

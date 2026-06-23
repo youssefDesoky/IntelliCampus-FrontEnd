@@ -48,6 +48,19 @@ function ToastItem({ toast, onDismiss, onDismissAnimated, isDesktop, isExiting }
   const swipeOffset = useRef(0);
   const isDragging = useRef(false);
 
+  const isClickable = Boolean(toast.onClick || toast.actionUrl);
+
+  const handleClick = () => {
+    if (!isClickable || isDragging.current) return;
+
+    if (toast.onClick) {
+      toast.onClick();
+    } else if (toast.actionUrl) {
+      window.location.href = toast.actionUrl;
+    }
+    onDismissAnimated(toast.id);
+  };
+
   const handleTouchStart = useCallback((e) => {
     if (isDesktop || dismissing || isExiting) return;
     touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -100,6 +113,7 @@ function ToastItem({ toast, onDismiss, onDismissAnimated, isDesktop, isExiting }
 
   return (
     <div
+      onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -109,8 +123,10 @@ function ToastItem({ toast, onDismiss, onDismissAnimated, isDesktop, isExiting }
         bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark
         border-l-4 ${config.borderClass}
         ${isDesktop ? 'w-80' : 'max-w-sm w-full mx-auto'} ${animClass}
+        ${isClickable ? 'cursor-pointer' : ''}
       `}
-      role="alert"
+      role={isClickable ? 'button' : 'alert'}
+      aria-label={isClickable ? 'Click to open' : undefined}
     >
       <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white ${config.bgClass}`}>
         {config.icon}
@@ -126,7 +142,10 @@ function ToastItem({ toast, onDismiss, onDismissAnimated, isDesktop, isExiting }
         </p>
       </div>
       <button
-        onClick={() => onDismissAnimated(toast.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDismissAnimated(toast.id);
+        }}
         className="flex-shrink-0 p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors"
       >
         <XIcon size={16} />
@@ -176,9 +195,9 @@ export function ToastProvider({ children }) {
     }, 300);
   }, []);
 
-  const showToast = useCallback(({ title, message, type = 'info', duration = 4000 }) => {
+  const showToast = useCallback(({ title, message, type = 'info', duration = 4000, onClick, actionUrl }) => {
     const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, title, message, type, duration }]);
+    setToasts(prev => [...prev, { id, title, message, type, duration, onClick, actionUrl }]);
 
     if (duration > 0) {
       timersRef.current[id] = setTimeout(() => {

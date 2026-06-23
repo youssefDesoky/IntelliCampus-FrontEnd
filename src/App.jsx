@@ -9,7 +9,7 @@ import { rootAuthLoader } from "./routes/loaders";
 import { authAction, logoutAction } from "./routes/actions";
 
 import CustomCursor from "./components/ui/CustomCursor";
-import ToastTester from "./components/dev/ToastTester";
+import { ContextMenuProvider } from "./components/ui/ContextMenu";
 import SidebarProvider from "./contexts/SidebarProvider";
 import CourseShell from "./feature/course/component/CourseShell";
 
@@ -18,6 +18,9 @@ import { LoginPage, ForgetPassword, ResetPassword, UnauthorizedPage, InternalSer
 
 // Profile (shared across all roles)
 import Profile from "./pages/dashboard/Profile";
+
+// Shared Pages (all authenticated users)
+import { Inbox, ComposeMessage } from "./pages/dashboard/shared";
 
 // Student Pages
 import { 
@@ -30,7 +33,7 @@ import {
     CourseMaterials as StudentCourseMaterials, 
     CoursePrerequisites as StudentCoursePrerequisites, 
     CoursesRegistration as StudentCoursesRegistration,
-    Inbox as StudentInbox,
+    SpecializationPreference as StudentSpecializationPreference,
 } from "./pages/dashboard/student";
 
 import CourseAttendance from "./feature/student/courses/courseDetail/courseAttendance/CourseAttendance";
@@ -45,7 +48,7 @@ import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, Student
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
-import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorReminders, InstructorSchedule } from "./pages/dashboard/instructor"
+import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule } from "./pages/dashboard/instructor"
 import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
 import { InstructorMeetingRoom } from "./pages/dashboard/instructor"
 import InstructorCommunity from "./feature/student/courses/courseDetail/community/MyCommunities"
@@ -80,6 +83,8 @@ export default function App() {
         children: [
             // ================= SHARED (all authenticated users) =================
             { path: "profile", element: <Profile /> },
+            { path: "inbox", element: <Inbox /> },
+            { path: "inbox/compose", element: <ComposeMessage /> },
 
             // ================= STUDENT =================
             {
@@ -111,7 +116,7 @@ export default function App() {
                     { path: "reminders", element: <StudentReminders /> },
                     { path: "smart-notes", element: <StudentSmartNotes /> },
                     { path: "schedule", element: <StudentSchedule /> },
-                    { path: "inbox", element: <StudentInbox /> },
+                    { path: "specialization-preference", element: <StudentSpecializationPreference /> },
                 ],
             },
 
@@ -134,9 +139,10 @@ export default function App() {
                             { path: "assignments", element: <InstructorCourseAssignments /> },
                             { path: "quizzes", element: <InstructorCourseQuizzes /> },
                             { path: "attendance", element: <InstructorCourseAttendance /> },
-                            { path: "grades", element: <div>Course Grades Content</div> },
+                            { path: "grades", element: <InstructorCourseGrades /> },
                             { path: "community", element: <InstructorCommunity /> },
                             { path: "smart-notes", element: <StudentSmartNotes /> },
+                            { path: "analytics", element: <InstructorCourseAnalytics /> },
                             { path: "meeting", element: <InstructorMeetingRoom /> },
                         ],
                     },
@@ -213,12 +219,11 @@ export default function App() {
     ]);
 
     return (
-        <>
+        <ContextMenuProvider blockNative>
             <CustomCursor />
-            <ToastTester />
             <SidebarProvider>
                 <RouterProvider router={router} />
             </SidebarProvider>
-        </>
+        </ContextMenuProvider>
     );
 }

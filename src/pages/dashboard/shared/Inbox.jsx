@@ -1,0 +1,821 @@
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useError } from '../../../contexts/ErrorContext.jsx';
+import { useDeviceType } from '../../../hooks';
+import * as signalR from "@microsoft/signalr";
+import { fetchInboxMessages, fetchSentMessages, markMessageAsRead, deleteMessage, sendMessage } from "../../../api/messages";
+import { EnvelopIcon, PaperPlaneIcon, TrashIcon, ImportIcon, XIcon, PenSquareIcon, ArrowRightIcon } from "../../../components/ui/icons";
+import InputItem from "../../../components/form/InputItem";
+import BaseFormComponent from "../../../components/ui/BaseFormComponent";
+import Button from "../../../components/ui/Button";
+import TextArea from "../../../components/ui/TextArea";
+
+const FILTERS = [
+  { key: "all", label: "All", icon: EnvelopIcon },
+  { key: "unread", label: "Unread", icon: EnvelopIcon },
+  { key: "sent", label: "Sent", icon: PaperPlaneIcon },
+];
+
+function ChevronIcon({ className = "" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      width="16"
+      height="16"
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] || "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase();
+}
+
+function parseDate(raw) {
+  if (!raw) return new Date(0);
+  const t = new Date(raw).getTime();
+  return Number.isNaN(t) ? new Date(0) : new Date(t);
+}
+
+function getThreadLatestTimestamp(thread) {
+  const rootDate = parseDate(thread.sentAt);
+  if (!thread.replies?.length) return rootDate;
+  const replyDates = thread.replies.map((r) => parseDate(r.sentAt));
+  return new Date(Math.max(rootDate.getTime(), ...replyDates.map((d) => d.getTime())));
+}
+
+function getEmptyStateMessage(filter, searchQuery) {
+  if (searchQuery) return "No messages match your search";
+  switch (filter) {
+    case "unread":
+      return "You're all caught up";
+    case "sent":
+      return "You haven't sent any messages yet";
+    default:
+      return "No messages yet";
+  }
+}
+
+function getMessageDirection(msg, currentUserId) {
+  return msg.senderId === currentUserId ? "sent" : "received";
+}
+
+function decorateThread(thread, currentUserId) {
+  return {
+    ...thread,
+    direction: getMessageDirection(thread, currentUserId),
+    replies: (thread.replies || []).map((r) => ({
+      ...r,
+      direction: getMessageDirection(r, currentUserId),
+    })),
+  };
+}
+
+function ReplyBubble({ reply, onDelete }) {
+  const initials = getInitials(reply.senderName);
+  return (
+    <div className="flex items-start gap-3 py-2">
+      <div className="shrink-0 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-semibold bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark">
+        <span className="text-text-blue-default-light dark:text-text-blue-default-dark">{initials}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">
+            {reply.senderName}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-text-secondary-default-light dark:text-text-secondary-default-dark">
+              {reply.sentAt || ""}
+            </span>
+            <button
+              onClick={(e) => onDelete(e, reply)}
+              className="p-0.5 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-red-500"
+              aria-label="Delete reply"
+            >
+              <TrashIcon className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+        <p className="text-sm text-text-primary-active-light dark:text-text-primary-active-dark mt-0.5">
+          {reply.body || "No content"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function MessageRow({ thread, isExpanded, currentUserId, onToggle, onDelete, onStartReply }) {
+  const isSent = thread.direction === "sent";
+  const personName = isSent
+    ? thread.recipientName || "Unknown recipient"
+    : thread.senderName || "Unknown sender";
+  const avatarUrl = thread.senderAvatar || thread.senderImage || null;
+  const initials = getInitials(personName);
+  const replyCount = thread.replies?.length || 0;
+  const hasUnreadReplies = (thread.replies || []).some(
+    (r) => r.recipientId === currentUserId && !r.isRead
+  );
+  const hasReceivedReplies = (thread.replies || []).some(
+    (r) => r.recipientId === currentUserId
+  );
+  const isUnread = (thread.recipientId === currentUserId && !thread.isRead) || hasUnreadReplies;
+  const canReply = !isSent || hasReceivedReplies;
+
+  return (
+    <div
+      className={`overflow-hidden rounded-xl border ${
+        isSent
+          ? "border-border-accent-default-light dark:border-border-accent-default-dark"
+          : "border-border-primary-default-light dark:border-border-primary-default-dark"
+      } ${
+        isUnread
+          ? "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark"
+          : "bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark"
+      }`}
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
+        className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors"
+      >
+        <div className="shrink-0 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark">
+          {isSent ? (
+            <PaperPlaneIcon className="w-4 h-4 text-text-secondary-active-light dark:text-text-secondary-active-dark" />
+          ) : avatarUrl ? (
+            <img src={avatarUrl} alt={personName} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-text-blue-default-light dark:text-text-blue-default-dark">{initials}</span>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className={`text-sm truncate ${
+                  isUnread
+                    ? "font-semibold text-text-primary-active-light dark:text-text-primary-active-dark"
+                    : "font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark"
+                }`}
+              >
+                {personName}
+              </span>
+              <span
+                className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                  isSent
+                    ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark"
+                    : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark"
+                }`}
+              >
+                {isSent ? "Sent" : "Received"}
+              </span>
+              {replyCount > 0 && (
+                <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                  {replyCount} {replyCount === 1 ? "reply" : "replies"}
+                </span>
+              )}
+            </div>
+            <span className="shrink-0 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+              {thread.sentAt || ""}
+            </span>
+          </div>
+
+          <p
+            className={`text-sm mt-0.5 truncate ${
+              isUnread
+                ? "font-semibold text-text-primary-active-light dark:text-text-primary-active-dark"
+                : "text-text-secondary-active-light dark:text-text-secondary-active-dark"
+            }`}
+          >
+            {thread.subject || "(No subject)"}
+          </p>
+
+          {!isExpanded && (
+            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate mt-0.5">
+              {thread.preview || thread.body || ""}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={(e) => onDelete(e, thread)}
+            className="p-1 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-red-500"
+            aria-label="Delete message"
+          >
+            <TrashIcon className="w-3.5 h-3.5" />
+          </button>
+          <ChevronIcon
+            className={`text-text-secondary-default-light dark:text-text-secondary-default-dark transition-transform ${
+              isExpanded ? "rotate-180" : ""
+            }`}
+          />
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="px-4 pb-4 pt-2 text-sm leading-relaxed border-t border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span
+              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                isSent
+                  ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark"
+                  : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark"
+              }`}
+            >
+              {isSent ? "Sent" : "Received"}
+            </span>
+            {canReply && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onStartReply(thread); }}
+                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark hover:opacity-85 transition-opacity"
+              >
+                <ArrowRightIcon className="w-3 h-3 rotate-180" />
+                Reply
+              </button>
+            )}
+          </div>
+          <p className="mb-3">{thread.body || thread.preview || "No content"}</p>
+
+          {thread.replies?.length > 0 && (
+            <div className="border-t border-border-primary-default-light dark:border-border-primary-default-dark pt-2 mt-2">
+              {thread.replies.map((reply) => (
+                <ReplyBubble
+                  key={reply.messageId}
+                  reply={reply}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function Inbox() {
+  const outletContext = useOutletContext() || {};
+  const user = outletContext.user;
+  const currentUserId = user?.userId ?? null;
+  const currentUserEmail = user?.email ?? "";
+  const { showError } = useError();
+  const { isPhone } = useDeviceType();
+  const [threads, setThreads] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [expandedKey, setExpandedKey] = useState(null);
+  const [showCompose, setShowCompose] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const connectionRef = useRef(null);
+
+  const resetCompose = () => {
+    setRecipientEmail("");
+    setSubject("");
+    setBody("");
+    setSending(false);
+    setReplyingTo(null);
+    setShowCompose(false);
+  };
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!recipientEmail.trim()) {
+      showError("Recipient email is missing.");
+      return;
+    }
+    if (recipientEmail.trim().toLowerCase() === currentUserEmail.toLowerCase()) {
+      showError("You cannot send a message to yourself.");
+      return;
+    }
+    if (!subject.trim()) {
+      showError("Subject is required.");
+      return;
+    }
+    if (!body.trim()) {
+      showError("Message body is required.");
+      return;
+    }
+    setSending(true);
+    try {
+      await sendMessage({
+        recipientEmail: recipientEmail.trim(),
+        subject: subject.trim(),
+        body: body.trim(),
+        parentMessageId: replyingTo?.messageId ?? undefined,
+      });
+      resetCompose();
+      loadMessages();
+    } catch (err) {
+      showError(err.message || "Failed to send message");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleReply = (thread) => {
+    let replyEmail = "";
+    if (thread.recipientId === currentUserId && thread.senderEmail) {
+      replyEmail = thread.senderEmail;
+    } else {
+      const receivedReplies = (thread.replies || [])
+        .filter((r) => r.recipientId === currentUserId && r.senderEmail)
+        .sort((a, b) => parseDate(b.sentAt).getTime() - parseDate(a.sentAt).getTime());
+      if (receivedReplies.length > 0) {
+        replyEmail = receivedReplies[0].senderEmail;
+      }
+    }
+
+    if (!replyEmail) {
+      showError("Cannot reply: sender email is unavailable.");
+      return;
+    }
+    const replySubject = thread.subject ? `Re: ${thread.subject}` : "";
+    setRecipientEmail(replyEmail);
+    setSubject(replySubject);
+    setBody("");
+    setReplyingTo(thread);
+    setShowCompose(true);
+  };
+
+  const mergeThreads = useCallback((inboxThreads, sentThreads) => {
+    const map = new Map();
+    for (const t of inboxThreads) {
+      map.set(t.messageId, t);
+    }
+    for (const t of sentThreads) {
+      if (map.has(t.messageId)) {
+        const existing = map.get(t.messageId);
+        const existingReplyIds = new Set(existing.replies.map((r) => r.messageId));
+        for (const r of t.replies) {
+          if (!existingReplyIds.has(r.messageId)) {
+            existing.replies.push(r);
+            existingReplyIds.add(r.messageId);
+          }
+        }
+        // Re-sort replies
+        existing.replies.sort((a, b) => parseDate(a.sentAt).getTime() - parseDate(b.sentAt).getTime());
+      } else {
+        map.set(t.messageId, t);
+      }
+    }
+    return Array.from(map.values());
+  }, []);
+
+  const loadMessages = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [inboxData, sentData] = await Promise.all([
+        fetchInboxMessages(),
+        fetchSentMessages(),
+      ]);
+      const inbox = (Array.isArray(inboxData) ? inboxData : []).map((t) =>
+        decorateThread(t, currentUserId)
+      );
+      const sent = (Array.isArray(sentData) ? sentData : []).map((t) =>
+        decorateThread(t, currentUserId)
+      );
+      const merged = mergeThreads(inbox, sent);
+      merged.sort((a, b) => getThreadLatestTimestamp(b).getTime() - getThreadLatestTimestamp(a).getTime());
+      setThreads(merged);
+    } catch (err) {
+      showError(err.message || "Failed to load messages");
+      setThreads([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId, mergeThreads, showError]);
+
+  useEffect(() => {
+    loadMessages();
+  }, [loadMessages]);
+
+  useEffect(() => {
+    const conn = new signalR.HubConnectionBuilder()
+      .withUrl("/hubs/inbox", { withCredentials: true })
+      .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.Information)
+      .build();
+
+    conn.on("NewMessage", (dto) => {
+      setThreads((prev) => {
+        const direction = getMessageDirection(dto, currentUserId);
+        const newMsg = { ...dto, direction };
+
+        if (dto.parentMessageId) {
+          // It's a reply - find the thread and append
+          const idx = prev.findIndex((t) => t.messageId === dto.parentMessageId);
+          if (idx !== -1) {
+            const updated = [...prev];
+            const thread = { ...updated[idx] };
+            const replies = [...(thread.replies || [])];
+            if (!replies.some((r) => r.messageId === dto.messageId)) {
+              replies.push(newMsg);
+              replies.sort((a, b) => parseDate(a.sentAt).getTime() - parseDate(b.sentAt).getTime());
+            }
+            thread.replies = replies;
+            updated[idx] = thread;
+            // Re-sort threads by latest activity
+            updated.sort((a, b) => getThreadLatestTimestamp(b).getTime() - getThreadLatestTimestamp(a).getTime());
+            return updated;
+          }
+          // Thread not found - add as new (orphan reply)
+          return [newMsg, ...prev];
+        }
+
+        // New root thread
+        if (prev.some((t) => t.messageId === dto.messageId)) return prev;
+        const decorated = decorateThread(dto, currentUserId);
+        return [decorated, ...prev];
+      });
+    });
+
+    conn.onreconnecting((error) => {
+      console.warn("[InboxHub] Reconnecting...", error);
+    });
+
+    conn.onreconnected(async () => {
+      console.info("[InboxHub] Reconnected.");
+      try {
+        const [inboxData, sentData] = await Promise.all([
+          fetchInboxMessages(),
+          fetchSentMessages(),
+        ]);
+        const inbox = (Array.isArray(inboxData) ? inboxData : []).map((t) => decorateThread(t, currentUserId));
+        const sent = (Array.isArray(sentData) ? sentData : []).map((t) => decorateThread(t, currentUserId));
+        const merged = mergeThreads(inbox, sent);
+        merged.sort((a, b) => getThreadLatestTimestamp(b).getTime() - getThreadLatestTimestamp(a).getTime());
+        setThreads(merged);
+      } catch {
+        /* silently ignore reconnection fetch failures */
+      }
+    });
+
+    conn.onclose((error) => {
+      console.error("[InboxHub] Connection closed.", error);
+    });
+
+    let disposed = false;
+    conn
+      .start()
+      .then(() => {
+        if (disposed) conn.stop();
+      })
+      .catch((err) => {
+        if (disposed) return;
+        console.error("[InboxHub] Connection failed:", err);
+      });
+
+    connectionRef.current = conn;
+
+    return () => {
+      disposed = true;
+      if (
+        conn.state === signalR.HubConnectionState.Connected ||
+        conn.state === signalR.HubConnectionState.Reconnecting
+      ) {
+        conn.stop();
+      }
+    };
+  }, [currentUserId, mergeThreads]);
+
+  const handleToggleExpand = async (thread) => {
+    const key = `thread-${thread.messageId}`;
+    const willExpand = expandedKey !== key;
+    setExpandedKey(willExpand ? key : null);
+
+    if (!willExpand || !currentUserId) return;
+
+    const unreadIds = [];
+    if (thread.recipientId === currentUserId && !thread.isRead) {
+      unreadIds.push(thread.messageId);
+    }
+    for (const r of thread.replies || []) {
+      if (r.recipientId === currentUserId && !r.isRead) {
+        unreadIds.push(r.messageId);
+      }
+    }
+
+    if (unreadIds.length === 0) return;
+
+    try {
+      await Promise.all(unreadIds.map((id) => markMessageAsRead(id)));
+      setThreads((prev) =>
+        prev.map((t) => {
+          if (t.messageId !== thread.messageId) return t;
+          return {
+            ...t,
+            isRead: unreadIds.includes(t.messageId) ? true : t.isRead,
+            replies: (t.replies || []).map((r) =>
+              unreadIds.includes(r.messageId) ? { ...r, isRead: true } : r
+            ),
+          };
+        })
+      );
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+
+  const handleDelete = async (e, msg) => {
+    e.stopPropagation();
+    try {
+      await deleteMessage(msg.messageId);
+      if (msg.parentMessageId) {
+        // Deleting a reply
+        setThreads((prev) =>
+          prev.map((t) => {
+            if (t.messageId === msg.parentMessageId) {
+              return { ...t, replies: t.replies.filter((r) => r.messageId !== msg.messageId) };
+            }
+            return t;
+          })
+        );
+      } else {
+        // Deleting a root thread
+        setThreads((prev) => prev.filter((t) => t.messageId !== msg.messageId));
+        const key = `thread-${msg.messageId}`;
+        if (expandedKey === key) setExpandedKey(null);
+      }
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+
+  const unreadCount = threads.reduce(
+    (count, t) =>
+      count +
+      (t.recipientId === currentUserId && !t.isRead ? 1 : 0) +
+      (t.replies || []).filter((r) => r.recipientId === currentUserId && !r.isRead).length,
+    0
+  );
+
+  const filteredThreads = threads.filter((thread) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const searchInMessage = (m) =>
+        (m.subject || "").toLowerCase().includes(q) ||
+        (m.senderName || "").toLowerCase().includes(q) ||
+        (m.recipientName || "").toLowerCase().includes(q) ||
+        (m.body || "").toLowerCase().includes(q);
+      if (searchInMessage(thread)) return true;
+      if (thread.replies?.some(searchInMessage)) return true;
+      return false;
+    }
+    switch (activeFilter) {
+      case "unread": {
+        const hasUnreadRoot = thread.recipientId === currentUserId && !thread.isRead;
+        const hasUnreadReply = thread.replies?.some((r) => r.recipientId === currentUserId && !r.isRead);
+        return hasUnreadRoot || hasUnreadReply;
+      }
+      case "sent": {
+        const hasSentRoot = thread.senderId === currentUserId;
+        const hasSentReply = thread.replies?.some((r) => r.senderId === currentUserId);
+        return hasSentRoot || hasSentReply;
+      }
+      default:
+        return true;
+    }
+  });
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-14rem)] md:h-[calc(100vh-10rem)]">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <EnvelopIcon className="w-6 h-6 text-text-blue-default-light dark:text-text-blue-default-dark" />
+          <h1 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
+            Messages
+          </h1>
+          {unreadCount > 0 && (
+            <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+              ({unreadCount} unread)
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setReplyingTo(null); setRecipientEmail(""); setSubject(""); setBody(""); setShowCompose(true); }}
+            className={`flex items-center justify-center gap-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark hover:opacity-90 transition-opacity ${isPhone ? "p-2" : "px-4 py-2"}`}
+          >
+            <PenSquareIcon className="w-4 h-4" />
+            {!isPhone && "Send Email"}
+          </button>
+
+          <div className={`relative ${isPhone ? "w-40" : "sm:w-64"}`}>
+            <input
+              type="text"
+              placeholder="Search messages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-2 pr-8 text-sm rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark outline-none focus:border-text-blue-default-light dark:focus:border-text-blue-default-dark"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+                aria-label="Clear search"
+              >
+                <XIcon className="w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {FILTERS.map(({ key, label, icon: Icon }) => {
+          const count = key === "unread" ? unreadCount : 0;
+          const isActive = activeFilter === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveFilter(key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors shrink-0 ${
+                isActive
+                  ? "bg-text-blue-default-light dark:bg-text-blue-default-dark text-white"
+                  : "text-text-secondary-active-light dark:text-text-secondary-active-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+              {count > 0 && (
+                <span
+                  className={`text-xs px-1.5 rounded-full ${
+                    isActive
+                      ? "bg-white/20"
+                      : "bg-text-blue-default-light dark:bg-text-blue-default-dark text-white"
+                  }`}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full text-text-secondary-default-light dark:text-text-secondary-default-dark">
+            Loading messages...
+          </div>
+        ) : filteredThreads.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-text-secondary-default-light dark:text-text-secondary-default-dark gap-2">
+            <ImportIcon className="w-12 h-12 opacity-40" />
+            <p className="text-sm">{getEmptyStateMessage(activeFilter, searchQuery)}</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 pb-2">
+            {filteredThreads.map((thread) => (
+              <MessageRow
+                key={`thread-${thread.messageId}`}
+                thread={thread}
+                currentUserId={currentUserId}
+                isExpanded={expandedKey === `thread-${thread.messageId}`}
+                onToggle={() => handleToggleExpand(thread)}
+                onDelete={handleDelete}
+                onStartReply={handleReply}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showCompose && isPhone ? (
+        <div className="fixed inset-0 z-50 flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+            <h3 className="text-lg font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
+              {replyingTo ? "Reply" : "New Message"}
+            </h3>
+            <button
+              type="button"
+              onClick={resetCompose}
+              className="p-1.5 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark"
+              aria-label="Close"
+            >
+              <XIcon className="w-5 h-5 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+            </button>
+          </div>
+          <form onSubmit={handleSend} className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
+            {!replyingTo && (
+              <InputItem
+                label="Recipient Email"
+                type="email"
+                name="recipientEmail"
+                placeholder="Enter recipient email"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+              />
+            )}
+            <InputItem
+              label="Subject"
+              type="text"
+              name="subject"
+              placeholder="Enter subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+            />
+            <div className="flex-1 flex flex-col">
+              <label className="block text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark mb-1">
+                Message
+              </label>
+              <TextArea
+                minHeight={120}
+                maxHeight={250}
+                placeholder="Write your message..."
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                className="flex-1 w-full px-3 py-2 text-sm rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark outline-none focus:border-text-blue-default-light dark:focus:border-text-blue-default-dark"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button variant="secondary" type="button" onClick={resetCompose} width="flex-1">
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                width="flex-1"
+                disabled={sending || !recipientEmail.trim() || !subject.trim() || !body.trim()}
+                loading={sending}
+              >
+                Send
+              </Button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <BaseFormComponent
+          isOpen={showCompose}
+          title={replyingTo ? "Reply" : "New Message"}
+          onClose={resetCompose}
+          onSubmit={handleSend}
+          submitText={sending ? "Sending..." : "Send"}
+          submitDisabled={sending || !recipientEmail.trim() || !subject.trim() || !body.trim()}
+          submitLoading={sending}
+          maxWidth="max-w-xl"
+        >
+          <div className="flex flex-col gap-4">
+            {!replyingTo && (
+              <InputItem
+                label="Recipient Email"
+                type="email"
+                name="recipientEmail"
+                placeholder="Enter recipient email"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+              />
+            )}
+
+            <InputItem
+              label="Subject"
+              type="text"
+              name="subject"
+              placeholder="Enter subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark mb-1">
+                Message
+              </label>
+              <TextArea
+                minHeight={120}
+                maxHeight={250}
+                placeholder="Write your message..."
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark outline-none focus:border-text-blue-default-light dark:focus:border-text-blue-default-dark"
+              />
+            </div>
+          </div>
+        </BaseFormComponent>
+      )}
+    </div>
+  );
+}

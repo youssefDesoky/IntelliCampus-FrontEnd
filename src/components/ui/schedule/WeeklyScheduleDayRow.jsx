@@ -1,4 +1,3 @@
-import { LocationDotIcon, UserTieIcon } from "../icons";
 import WeeklyScheduleEvents from "./WeeklyScheduleEvents";
 
 const getTimeIndex = (time) => {
@@ -16,7 +15,7 @@ const getTimeIndex = (time) => {
     return (hour - 8) + minuteDecimal; // 8 AM is index 0
 };
 
-export default function WeeklyScheduleDayRow({ isMobile, slots, days = [], schedule = [] }) {
+export default function WeeklyScheduleDayRow({ slots, days = [], schedule = [] }) {
     const totalSlots = slots.length;
     const firstSlotIndex = slots.length > 0 ? getTimeIndex(slots[0]) : 0;
     const slotStep = slots.length > 1 ? getTimeIndex(slots[1]) - firstSlotIndex : 1;
@@ -33,7 +32,7 @@ export default function WeeklyScheduleDayRow({ isMobile, slots, days = [], sched
                         grid min-h-20 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors
                         ${ dayIndex < days.length - 1 ? "border-b border-border-primary-default-light dark:border-border-primary-default-dark" : "" } 
                     `}
-                    style={{ gridTemplateColumns: `${isMobile ? "50px" : "100px"} repeat(${totalSlots}, 1fr)` }}
+                    style={{ gridTemplateColumns: `100px repeat(${totalSlots}, 1fr)` }}
                 >
                     {/* Day Label */}
                     <div className="p-3 flex items-center justify-center border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">

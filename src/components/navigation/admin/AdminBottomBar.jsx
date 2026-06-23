@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { getNavigationLinks } from "../../../data/admin/navigationLinks";
 import BottomBar from "../base/BottomBar";
 
-export default function AdminBottomBar() {
+export default function AdminBottomBar({ visible, floatingAction }) {
     const { t } = useTranslation('admin/aside');
     const user = useRouteLoaderData("root");
     const userRoles = useMemo(() => (user?.roles || []).map(r => r.toLowerCase()), [user]);
@@ -17,6 +17,6 @@ export default function AdminBottomBar() {
     );
 
     return (
-        <BottomBar links={links} />
+        <BottomBar links={links} visible={visible} floatingAction={floatingAction} />
     );
 }

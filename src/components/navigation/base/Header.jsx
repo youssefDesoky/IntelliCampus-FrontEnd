@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef } from "react";
-import { Link, NavLink, Form } from "react-router-dom";
+import { Link, NavLink, Form, useNavigate } from "react-router-dom";
 import defaultImage from "../../../assets/defaultImage.jpg";
 import { fetchMyNotifications, markNotificationAsRead, markAllNotificationsAsRead, subscribeNotificationsChanged } from "../../../api/notifications";
 
@@ -17,11 +17,12 @@ const viewLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin
 
 export default function Header({ avatar, notifications: initialNotifications, isMobile, availableViews = [], activeView, onViewChange }) {
     const { i18n } = useTranslation('common/header');
+    const navigate = useNavigate();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [notifications, setNotifications] = useState(initialNotifications || []);
     const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
-    
+
     const notificationsRef = useRef(null);
     const profileMenuRef = useRef(null);
     const eventSourceRef = useRef(null);
@@ -58,10 +59,18 @@ export default function Header({ avatar, notifications: initialNotifications, is
                     setNotifications(prevNotifications => {
                         const exists = prevNotifications.some(n => n.userNotificationId === notification.userNotificationId);
                         if (exists) return prevNotifications;
+                        const actionUrl = notification.clickUrl || notification.actionUrl;
                         showToast({
                             title: notification.typeLabel || 'Notification',
                             message: notification.message,
                             type: 'info',
+                            actionUrl,
+                            onClick: actionUrl
+                                ? () => {
+                                    handleMarkAsRead(notification.userNotificationId);
+                                    navigate(actionUrl);
+                                }
+                                : undefined,
                         });
                         return [notification, ...prevNotifications];
                     });
@@ -110,6 +119,21 @@ export default function Header({ avatar, notifications: initialNotifications, is
         } catch (err) {
             showError(err.message);
         }
+    };
+
+    const handleNotificationClick = async (notification) => {
+        const actionUrl = notification.clickUrl || notification.actionUrl;
+        if (!actionUrl) return;
+
+        setIsNotificationsOpen(false);
+        try {
+            await markNotificationAsRead(notification.userNotificationId);
+            const fresh = await fetchMyNotifications();
+            setNotifications(fresh || []);
+        } catch (err) {
+            showError(err.message);
+        }
+        navigate(actionUrl);
     };
 
     const handleMarkAllAsRead = async () => {
@@ -208,12 +232,12 @@ export default function Header({ avatar, notifications: initialNotifications, is
                         <div className="absolute top-full right-0 mt-2 w-80 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {/* Header with Mark All as Read */}
                             <div className="sticky top-0 p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark flex items-center justify-between">
-                                <h3 className="font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">Notifications</h3>
+                                <h3 className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark">Notifications</h3>
                                 {unreadCount > 0 && (
                                     <button
                                         onClick={handleMarkAllAsRead}
                                         disabled={isMarkingAllRead}
-                                        className="text-xs text-text-blue-default-light dark:text-text-blue-default-dark hover:underline disabled:opacity-50"
+                                        className="text-xs font-medium text-white bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
                                     >
                                         {isMarkingAllRead ? 'Marking...' : 'Mark all as read'}
                                     </button>
@@ -225,28 +249,39 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                 {(() => {
                                     return safeNotifications.length > 0 ? (
                                         safeNotifications.map((notification, index) => (
-                                            <li 
+                                            <li
                                                 key={notification.userNotificationId || index}
-                                                className={`border-b border-border-primary-default-light dark:border-border-primary-default-dark p-4 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors ${
-                                                    !notification.isRead ? 'bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark' : ''
-                                                }`}
+                                                className={`border-b border-border-primary-default-light dark:border-border-primary-default-dark p-4 transition-colors ${
+                                                    !notification.isRead
+                                                        ? 'bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark'
+                                                        : ''
+                                                } ${(notification.clickUrl || notification.actionUrl) ? 'cursor-pointer hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark' : 'cursor-default'}`}
+                                                onClick={() => handleNotificationClick(notification)}
                                             >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-1">
-                                                        <p className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark">
-                                                            {notification.typeLabel || 'Notification'}
-                                                        </p>
-                                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1">
-                                                            {notification.message || JSON.stringify(notification)}
-                                                        </p>
-                                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-2 opacity-70">
-                                                            {notification.timeAgo}
-                                                        </p>
+                                                <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
+                                                    <div className="flex items-start gap-2.5 min-w-0">
+                                                        {!notification.isRead && (
+                                                            <span className="mt-2 flex-shrink-0 w-2 h-2 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark" />
+                                                        )}
+                                                        <div className="min-w-0">
+                                                            <p className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark truncate">
+                                                                {notification.typeLabel || 'Notification'}
+                                                            </p>
+                                                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 line-clamp-2">
+                                                                {notification.message || JSON.stringify(notification)}
+                                                            </p>
+                                                            <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-2">
+                                                                {notification.timeAgo}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                     {!notification.isRead && (
                                                         <button
-                                                            onClick={() => handleMarkAsRead(notification.userNotificationId)}
-                                                            className="flex-shrink-0 px-2 py-1 text-xs bg-text-blue-default-light dark:bg-text-blue-default-dark text-white rounded hover:opacity-80 transition-opacity"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleMarkAsRead(notification.userNotificationId);
+                                                            }}
+                                                            className="self-start mt-1 flex-shrink-0 px-2.5 py-1 text-xs font-medium bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
                                                         >
                                                             Mark Read
                                                         </button>
@@ -255,7 +290,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                             </li>
                                         ))
                                     ) : (
-                                        <li className="p-4 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                        <li className="p-6 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm">
                                             No notifications
                                         </li>
                                     );

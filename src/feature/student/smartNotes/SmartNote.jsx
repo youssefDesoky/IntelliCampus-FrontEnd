@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import SmartNoteEditor from "./SmartNoteEditor.jsx";
 import SelectBox from "../../../components/ui/SelectBox";
 import { ClockIcon, CalendarIcon, TrashIcon, FahimIcon, BookIcon, LinkIcon } from "../../../components/ui/icons";
+import { updateNoteLinkedLecture, deleteNote, fromBackendLinkedLecture } from "./notesApi";
 
 const defaultWeeklyLectureOptions = [
     {
@@ -25,21 +26,21 @@ const defaultWeeklyLectureOptions = [
     },
 ]
 
-function buildLectureOptions(courseFolders = []) {
+function buildLectureOptions(courseFolders = [], fallbackCourseId = null) {
     if (courseFolders.length > 0) {
         return courseFolders.map((folder, idx) => {
-            const folderValue = folder.materialFolderId || folder.id || String(idx + 1)
+            const folderValue = folder.materialFolderId ?? folder.id ?? idx + 1
             const folderLabel = folder.name || `Week ${idx + 1}`
 
             return {
-                id: idx + 1,
-                value: String(folderValue),
+                id: folderValue,
+                value: folderValue,
                 title: folderLabel,
                 shortTitle: folderLabel,
-                weekLabel: folderLabel,
+                weekLabel: `${folderLabel} Lecture`,
                 description: folder.description || "",
-                course: folder.courseId || null,
-                materialFolderId: folder.materialFolderId || String(folderValue),
+                course: folder.courseId ?? fallbackCourseId,
+                materialFolderId: folderValue,
             }
         })
     }
@@ -47,28 +48,21 @@ function buildLectureOptions(courseFolders = []) {
     return defaultWeeklyLectureOptions
 }
 
-function formatDisplayDate(date = new Date()) {
-    return date.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-    });
-}
-
-export default function SmartNote({ note, courseFolders = [], courseId = null, onSaveNote }) {
+export default function SmartNote({ note, courseFolders = [], courseId = null, studentId = null, onSaveNote, onDeleteNote }) {
     const cardRef = useRef(null);
     const [cardWidth, setCardWidth] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
     const [isPickerOpen, setIsPickerOpen] = useState(false);
+    const [isLinkLoading, setIsLinkLoading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const navigate = useNavigate();
-    const lectureOptions = buildLectureOptions(courseFolders);
-    const linkedLecture = note.linkedLecture
-        ? lectureOptions.find((option) => String(option.materialFolderId) === String(note.linkedLecture.materialFolderId ?? "")) || note.linkedLecture
+    const normalizedLinkedLecture = fromBackendLinkedLecture(note.linkedLecture) ?? note.linkedLecture ?? null
+    const lectureOptions = buildLectureOptions(courseFolders, courseId);
+    const linkedLecture = normalizedLinkedLecture
+        ? lectureOptions.find((option) => String(option.materialFolderId) === String(normalizedLinkedLecture.materialFolderId ?? normalizedLinkedLecture.id ?? "")) || normalizedLinkedLecture
         : null;
     const selectedLectureOption = linkedLecture
-        ? lectureOptions.find((option) => String(option.materialFolderId) === String(linkedLecture.materialFolderId ?? "")) || null
+        ? lectureOptions.find((option) => String(option.materialFolderId) === String(linkedLecture.materialFolderId ?? linkedLecture.id ?? "")) || null
         : null;
 
     useEffect(() => {
@@ -81,7 +75,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, o
         return () => ro.disconnect();
     }, []);
 
-    function handleLectureSelect(option) {
+    async function handleLectureSelect(option) {
         const nextLecture = option
             ? {
                 id: option.id,
@@ -89,17 +83,28 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, o
                 shortTitle: option.shortTitle,
                 weekLabel: option.weekLabel,
                 description: option.description,
-                courseId: courseId || option.course || note.linkedLecture?.courseId || null,
+                courseId: courseId || option.course || normalizedLinkedLecture?.courseId || null,
                 materialFolderId: option.materialFolderId,
             }
             : null;
 
-        onSaveNote?.({
-            ...note,
-            linkedLecture: nextLecture,
-            modified: formatDisplayDate(),
-        });
-        setIsPickerOpen(false);
+        setIsLinkLoading(true);
+        try {
+            const savedNote = await updateNoteLinkedLecture(note.id, {
+                lecture: nextLecture,
+                courseFolders,
+            });
+            onSaveNote?.({
+                ...note,
+                ...savedNote,
+                linkedLecture: savedNote.linkedLecture ?? nextLecture,
+            });
+        } catch {
+            // apiClient already emits errors via ErrorContext
+        } finally {
+            setIsLinkLoading(false);
+            setIsPickerOpen(false);
+        }
     }
 
     return (
@@ -114,14 +119,28 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, o
                     onClose={() => setIsEditing(false)}
                     courseFolders={courseFolders}
                     courseId={courseId}
+                    studentId={studentId}
                     onSaveNote={onSaveNote}
                 />
             )}
 
             {/* Delete action, tucked into the corner so it never competes with the title */}
             <button
-                onClick={(e) => { e.stopPropagation(); /* handle delete */ }}
-                className="absolute right-3.5 top-3.5 shrink-0 rounded-lg border border-transparent p-1.5 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:border-red-300 hover:bg-red-50 dark:hover:border-red-800 dark:hover:bg-red-950"
+                disabled={isDeleting}
+                onClick={async (e) => {
+                    e.stopPropagation();
+                    if (isDeleting) return;
+                    setIsDeleting(true);
+                    try {
+                        await deleteNote(note.id);
+                        onDeleteNote?.(note.id);
+                    } catch {
+                        // apiClient already emits errors via ErrorContext
+                    } finally {
+                        setIsDeleting(false);
+                    }
+                }}
+                className="absolute right-3.5 top-3.5 shrink-0 rounded-lg border border-transparent p-1.5 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:border-red-300 hover:bg-red-50 dark:hover:border-red-800 dark:hover:bg-red-950 disabled:opacity-50"
             >
                 <TrashIcon className="w-3.5 h-3.5 text-icon-secondary-default-light dark:text-icon-primary-default-dark" />
             </button>
@@ -145,8 +164,9 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, o
                             onClick={(e) => {
                                 e.stopPropagation();
                                 const targetCourseId = courseId || linkedLecture.courseId;
-                                if (targetCourseId && linkedLecture.materialFolderId) {
-                                    navigate(`/courses/${targetCourseId}/materials?folderId=${linkedLecture.materialFolderId}`);
+                                const folderId = linkedLecture.id ?? linkedLecture.materialFolderId;
+                                if (targetCourseId && folderId != null) {
+                                    navigate(`/courses/${targetCourseId}/materials?folderId=${folderId}`);
                                 }
                             }}
                             className="flex flex-1 items-center gap-3 text-left min-w-0"
@@ -211,6 +231,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, o
                         label="Choose Lecture"
                         showLabel={true}
                         compact={false}
+                        disabled={isLinkLoading}
                         className="w-full"
                         options={lectureOptions.map((lecture) => ({
                             value: lecture.materialFolderId,

@@ -90,6 +90,7 @@ export default function CourseAssignments() {
                     averageGrade: statsData.averageGrade
                 });
             } catch (statsErr) {
+                showError(statsErr.message || "Failed to load assignment stats");
             }
         } catch (err) {
             showError(err.message);
@@ -104,7 +105,7 @@ export default function CourseAssignments() {
 
     const upcomingAssignments = assignments.filter((a) => !a.isSubmitted && new Date(a.dueDate) > new Date()) || [];
 
-    const pastAssignments = assignments.filter((a) => a.isSubmitted || new Date(a.dueDate) <= new Date()) || [];
+        const pastAssignments = assignments.filter((a) => a.isSubmitted || (a.dueDate && new Date(a.dueDate) <= new Date())) || [];
 
     if (isLoading) {
         return (
@@ -205,7 +206,7 @@ export default function CourseAssignments() {
                     )}
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             showing {pagedAssignments.length} of {pastAssignments.length} assignments
                         </p>
 
@@ -215,7 +216,7 @@ export default function CourseAssignments() {
             </div>
 
             {/* Sidebar */}
-            <div>
+            <div className="hidden lg:block">
                 <BaseComponent
                     title="Assignment Stats"
                     description="Overview of your assignment activity for this course"

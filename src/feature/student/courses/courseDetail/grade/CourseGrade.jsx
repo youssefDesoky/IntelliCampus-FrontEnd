@@ -68,7 +68,9 @@ export default function CourseGrade() {
 			{isPhone ? (
 				<div className="relative flex flex-col gap-6">
 					<CurrentGrade gradePercent={overallGrade.percent} letterGrade={overallGrade.letter} gradedItems={gradedItems} items={history} />
+					<AssessmentBreakdown groups={assessmentBreakdown} />
 					<GradeHistory items={history} currentPage={currentPage} setCurrentPage={setCurrentPage} />
+					<GradeComplaint items={history} />
 				</div>
 			) : (
 				<div className="relative grid grid-cols-1 lg:grid-cols-3 gap-6">

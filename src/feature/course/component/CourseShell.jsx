@@ -1,5 +1,5 @@
-import { Outlet, useParams } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { Outlet, useParams, useLocation } from "react-router-dom";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 import CourseNavBar from "./CourseNavBar";
 
@@ -13,13 +13,15 @@ import {
     FilePenIcon, 
     BrainIcon,
     StickyNoteIcon,
-    VideoIcon
+    VideoIcon,
+    ChartLineIcon,
 } from "../../../components/ui/icons";
 import { fetchCourseMaterialsOrganized } from "../services/materialsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const links = [
     { to: "", end: true, icon: <BullHornIcon className="w-5 h-5" />, label: "Announcements" },
+    { to: "analytics", icon: <ChartLineIcon className="w-5 h-5" />, label: "Analytics" },
     { to: "materials", icon: <FolderOpenIconDark className="w-5 h-5" />, label: "Materials" },
     { to: "assignments", icon: <FilePenIcon className="w-5 h-5" />, label: "Assignments" },
     { to: "quizzes", icon: <BrainIcon className="w-5 h-5" />, label: "Quizzes" },
@@ -30,8 +32,13 @@ const links = [
     { to: "meeting", icon: <VideoIcon className="w-5 h-5" />, label: "Meeting" },
 ];
 
+const INSTRUCTOR_HIDE = new Set(["smart-notes"]);
+const STUDENT_HIDE = new Set(["analytics"]);
+
 export default function CourseShell() {
     const { courseId } = useParams();
+    const { pathname } = useLocation();
+    const isInstructor = pathname.startsWith("/instructor");
     const [materialsData, setMaterialsData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const { showError } = useError();
@@ -67,6 +74,11 @@ export default function CourseShell() {
         folders: materialsData?.folders || [],
     };
 
+    const visibleLinks = useMemo(
+        () => links.filter((l) => isInstructor ? !INSTRUCTOR_HIDE.has(l.to) : !STUDENT_HIDE.has(l.to)),
+        [isInstructor]
+    );
+
     if (isLoading) {
         return <p>Loading course data...</p>;
     }
@@ -74,7 +86,7 @@ export default function CourseShell() {
     return (
         <>
             <Section>
-                <CourseNavBar links={links} />
+                <CourseNavBar links={visibleLinks} />
                 <Outlet context={{ course, courseId, refreshMaterials }} />
             </Section>
         </>

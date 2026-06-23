@@ -34,13 +34,15 @@ export default function CourseWeekMaterials({ folder, highlighted = false }) {
                             <h3 className="text-xl md:text-2xl font-bold truncate text-text-primary-default-light dark:text-text-primary-default-dark">
                                 {folder.name}
                             </h3>
-                            <button
-                                onClick={() => downloadAllMaterials(materials)}
-                                className="md:hidden ml-auto flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-text-primary-default-light dark:text-text-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark transition-colors shadow-sm"
-                                aria-label="Download All Materials"
-                            >
+                            {materials.length > 0 && (
+                                <button
+                                    onClick={() => downloadAllMaterials(materials)}
+                                    className="md:hidden ml-auto flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-text-primary-default-light dark:text-text-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark transition-colors shadow-sm"
+                                    aria-label="Download All Materials"
+                                >
                                 <DownloadIcon size={18} />
                             </button>
+                            )}
                         </div>
                         {folder.description && (
                             <p className="text-base text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-3xl">

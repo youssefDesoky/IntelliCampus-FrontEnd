@@ -95,17 +95,18 @@ export default function InstructorCourseMaterials() {
 
     return (
         <>
-            {/* Add Folder Button */}
-            <Button 
-                variant="primary" 
-                onClick={() => setShowAddFolder(true)}
-                className="fixed bottom-5 right-5 z-50 group"
-            >
-                <PlusIcon size={24} />
-                <span className="max-w-0 -ml-2 group-hover:ml-0 overflow-hidden group-hover:max-w-40 transition-all! duration-300! whitespace-nowrap">
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                    Materials
+                </h2>
+                <Button
+                    variant="primary"
+                    onClick={() => setShowAddFolder(true)}
+                    startIcon={<PlusIcon size={18} />}
+                >
                     Add New Folder
-                </span>
-            </Button>
+                </Button>
+            </div>
 
             {/* Add Folder Popup */}
             {showAddFolder && (

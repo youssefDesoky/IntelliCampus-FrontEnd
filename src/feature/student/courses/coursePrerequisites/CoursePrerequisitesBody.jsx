@@ -1,38 +1,48 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Section from "../../../../components/ui/Section";
 import CoursePrerequisitesCard from "./CoursePrerequisitesCard";
-
-const courseData = [
-    {
-        id: 1, title: "Data Structures", code: "CS201", creditHours: 3,
-        prerequisites: [{ id: "CS101", title: "Introduction to Programming" }],
-    },
-    {
-        id: 2, title: "Algorithms", code: "CS202", creditHours: 3,
-        prerequisites: [{ id: "CS201", title: "Data Structures" }],
-    },
-    {
-        id: 3, title: "Operating Systems", code: "CS301", creditHours: 3,
-        prerequisites: [{ id: "CS201", title: "Data Structures" }],
-    },
-    {
-        id: 4, title: "Database Systems", code: "CS302", creditHours: 3,
-        prerequisites: [{ id: "CS201", title: "Data Structures" }],
-    },
-    {
-        id: 5, title: "Computer Networks", code: "CS303", creditHours: 3,
-        prerequisites: [{ id: "CS201", title: "Data Structures" }],
-    },
-    {
-        id: 6, title: "Artificial Intelligence", code: "CS401", creditHours: 3,
-        prerequisites: [
-            { id: "CS202", title: "Algorithms" },
-            { id: "CS301", title: "Operating Systems" },
-        ],
-    },
-];
+import { API_URL } from "../../../../config/api";
+import { useError } from "../../../../contexts/ErrorContext.jsx";
 
 export default function CoursePrerequisitesBody({ search = "" }) {
+    const [courseData, setCourseData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { showError } = useError();
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function load() {
+            try {
+                setLoading(true);
+                const res = await fetch(`${API_URL}/api/courses/prerequisites`, {
+                    credentials: "include",
+                });
+                if (!res.ok) throw new Error(`Failed to load prerequisites (${res.status})`);
+                const data = await res.json();
+                const list = Array.isArray(data) ? data : [];
+                const mapped = list.map((course) => ({
+                    id: course.courseId,
+                    title: course.courseName || "",
+                    code: course.courseCode || "",
+                    creditHours: course.creditHours || "",
+                    prerequisites: (course.prerequisites || []).map((p) => ({
+                        id: p.code || "",
+                        title: p.title || "",
+                    })),
+                }));
+                if (!cancelled) setCourseData(mapped);
+            } catch (err) {
+                if (!cancelled) showError(err.message || "Failed to load prerequisites");
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        }
+
+        load();
+        return () => { cancelled = true; };
+    }, []);
+
     const filtered = useMemo(() => {
         if (!search.trim()) return courseData;
         const q = search.toLowerCase();
@@ -44,7 +54,17 @@ export default function CoursePrerequisitesBody({ search = "" }) {
                     (p) => p.title.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)
                 )
         );
-    }, [search]);
+    }, [courseData, search]);
+
+    if (loading) {
+        return (
+            <Section>
+                <div className="flex justify-center py-12">
+                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading prerequisites...</p>
+                </div>
+            </Section>
+        );
+    }
 
     return (
         <Section>
@@ -57,7 +77,7 @@ export default function CoursePrerequisitesBody({ search = "" }) {
             {filtered.length === 0 && (
                 <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-10 text-center">
                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        No courses match your search.
+                        {search.trim() ? "No courses match your search." : "No prerequisite data available."}
                     </p>
                 </div>
             )}

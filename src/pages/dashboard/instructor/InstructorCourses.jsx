@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 import Section from "../../../components/ui/Section";
 import DataBanner from "../../../components/ui/DataBanner";
@@ -12,6 +13,7 @@ import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function InstructorCourses() {
     const { isMobile } = useDeviceType();
+    const navigate = useNavigate();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const { showError } = useError();
@@ -43,6 +45,10 @@ export default function InstructorCourses() {
 
     // Compute stats from real data
     const totalHours = courses.reduce((sum, c) => sum + (c.creditHours || 0), 0);
+
+    const handleEnterClassroom = useCallback((courseId) => {
+        navigate(`/courses/${courseId}`);
+    }, [navigate]);
 
     const stats = [
         { label: "Assigned Courses", value: courses.length },
@@ -86,7 +92,7 @@ export default function InstructorCourses() {
             {!loading && courses.length > 0 && (
                 <Section className={`mb-6 ${viewMode === "grid" ? "grid grid-cols-2 gap-4" : "flex flex-col gap-4"}`}>
                     {courses.map((course) => (
-                        <MyCourse key={course.courseId} course={course} role="instructor" viewMode={viewMode} isMobile={isMobile} />
+                        <MyCourse key={course.courseId} course={course} role="instructor" viewMode={viewMode} isMobile={isMobile} onEnterClassroom={() => handleEnterClassroom(course.courseId)} />
                     ))}
                 </Section>
             )}

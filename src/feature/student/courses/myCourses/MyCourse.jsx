@@ -1,181 +1,199 @@
-import { Link } from 'react-router-dom';
-// Icons
-import { 
-    UserTieIcon, 
-    UsersIcon,
-    CalendarIcon, 
-    LocationDotIcon, 
-    CheckIcon, 
-    XIcon, 
-    ExclamationIcon, 
-    StarIcon, 
-    FileLinesIcon,
-    ClipboardCheckIcon
-} from '../../../../components/ui/icons';
+import {
+  CheckIcon,
+  StarIcon,
+  UsersIcon,
+  LocationDotIcon,
+  UserIcon,
+} from "../../../../components/ui/icons";
 
-/** Small amber label for fields the backend doesn't supply yet */
-function MissingLabel({ field }) {
-    return (
-        <span className="text-xs text-amber-500 italic">⚠ {field} is missing</span>
-    );
+const typeStyles = {
+  elective: {
+    label: "ELECTIVE",
+    avatar: "bg-bg-surface-purple-default-light text-text-purple-default-light dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark",
+    badge: "bg-bg-surface-purple-default-light text-text-purple-default-light border-border-purple-default-light dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark dark:border-border-purple-default-dark",
+  },
+  core: {
+    label: "CORE",
+    avatar: "bg-bg-surface-blue-default-light text-text-blue-default-light dark:bg-bg-surface-blue-default-dark dark:text-text-blue-default-dark",
+    badge: "bg-bg-surface-blue-default-light text-text-blue-default-light border-border-blue-default-light dark:bg-bg-surface-blue-default-dark dark:text-text-blue-default-dark dark:border-border-blue-default-dark",
+  },
+};
+
+const statusStyles = {
+  "in-progress": "bg-bg-surface-secondary-default-light text-text-secondary-default-light border-border-primary-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-secondary-default-dark dark:border-border-primary-default-dark",
+  completed: "bg-bg-surface-green-default-light text-text-green-default-light border-border-green-default-light dark:bg-bg-surface-green-default-dark dark:text-text-green-default-dark dark:border-border-green-default-dark",
+};
+
+const attendanceStyles = {
+  good: "bg-bg-surface-green-default-light text-text-green-default-light dark:bg-bg-surface-green-default-dark dark:text-text-green-default-dark",
+  warning: "bg-bg-surface-amber-default-light text-text-amber-default-light dark:bg-bg-surface-amber-default-dark dark:text-text-amber-default-dark",
+  risk: "bg-bg-surface-red-default-light text-text-red-default-light dark:bg-bg-surface-red-default-dark dark:text-text-red-default-dark",
+};
+
+function StatusBadge({ label, className }) {
+  return (
+    <span
+      className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${className}`}
+    >
+      {label}
+    </span>
+  );
 }
 
-function getCourseTypeStyles(isElective) {
-    return isElective 
-      ? {
-          borderLeft: "border-l-border-success-default-light dark:border-l-border-success-default-dark",
-          bg: "bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark",
-          text: "text-text-success-default-light dark:text-text-success-default-dark",
-        }
-      : {
-          borderLeft: "border-l-border-accent-default-light dark:border-l-border-accent-default-dark",
-          bg: "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark",
-          text: "text-text-accent-default-light dark:text-text-accent-default-dark",
-        };
+function ActionButtons({ onEnterClassroom, onViewMaterials, layout }) {
+  const isHorizontal = layout === "horizontal";
+  return (
+    <div
+      className={`flex ${isHorizontal ? "flex-row" : "flex-col"} ${isHorizontal ? "gap-2" : "gap-2"} ${isHorizontal ? "w-full" : ""}`}
+    >
+      <button
+        onClick={onEnterClassroom}
+        className={`px-4 py-2 text-sm font-semibold rounded-lg bg-bg-dark text-white whitespace-nowrap transition-opacity hover:opacity-90 ${isHorizontal ? "flex-1" : ""}`}
+      >
+        Enter Classroom
+      </button>
+      <button
+        onClick={onViewMaterials}
+        className={`px-4 py-2 text-sm font-semibold rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark whitespace-nowrap transition-colors hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark ${isHorizontal ? "flex-1" : ""}`}
+      >
+        View Materials
+      </button>
+    </div>
+  );
 }
 
-/** Reusable component for bottom statistics (Attendance, Grades, etc.) */
-function StatItem({ icon: Icon, label, value, colorClass, missingField }) {
-    return (
-        <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-md flex items-center justify-center ${colorClass}`}>
-                {Icon}
-            </div>
-            <div className="flex flex-col">
-                <span className="text-xs font-normal text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                    {label}
-                </span>
-                {value != null ? (
-                    <span className="text-sm font-semibold">{value}</span>
-                ) : (
-                    <MissingLabel field={missingField || label} />
-                )}
-            </div>
+function Stat({ icon, label, value, iconClass }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${iconClass}`}
+      >
+        {icon}
+      </div>
+      <div className="flex flex-col">
+        <span className="text-[11px] text-text-secondary-default-light dark:text-text-secondary-default-dark leading-none">
+          {label}
+        </span>
+        <span className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark leading-none mt-0.5">
+          {value}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export default function MyCourse({
+  initials = "CS",
+  code = "CS301-A",
+  semester = "Fall 2025",
+  type = "elective",
+  status = "in-progress",
+  title = "Database Systems",
+  instructor = "Dr. Amina Hassan",
+  room = "Room B204",
+  attendance = { value: "88%", status: "good" },
+  section = "A",
+  grade = "A-",
+  onEnterClassroom,
+  onViewMaterials,
+}) {
+  const typeAccent = typeStyles[type] || typeStyles.elective;
+  const statusClass = statusStyles[status] || statusStyles["in-progress"];
+  const statusLabel = status === "completed" ? "COMPLETED" : "IN PROGRESS";
+  const attClass = attendanceStyles[attendance.status] || attendanceStyles.good;
+
+  return (
+    <div className="w-full rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark p-4 sm:p-5 shadow-sm shadow-shadow-light/50 dark:shadow-shadow-dark/30">
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Avatar — hidden on mobile */}
+        <div
+          className={`hidden sm:flex w-14 h-14 rounded-xl items-center justify-center font-bold text-base flex-shrink-0 ${typeAccent.avatar}`}
+        >
+          {initials}
         </div>
-    );
-}
 
-export default function MyCourse({ course, role, viewMode, isMobile }) {
-    const isInstructor = role === 'instructor';
-    const isCompact = isMobile || viewMode === "grid";
-    const typeStyles = getCourseTypeStyles(course.isElective);
-
-    // --- Student Attendance Icon Logic ---
-    const getStudentAttendanceData = (attendance) => {
-        if (attendance == null) return { icon: null, color: "bg-gray-200" };
-        if (attendance > 75) return { icon: <CheckIcon className="w-5 h-5" />, color: "bg-bg-surface-success-default-light dark:bg-bg-surface-success-default-dark" };
-        if (attendance >= 50) return { icon: <ExclamationIcon className="w-5 h-5" />, color: "bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark" };
-        return { icon: <XIcon className="w-5 h-5" />, color: "bg-bg-surface-danger-default-light dark:bg-bg-surface-danger-default-dark" };
-    };
-    const studentAttendance = getStudentAttendanceData(course.attendance);
-
-    return (
-        <div className={`grid grid-cols-5 gap-4 rounded-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-sm shadow-shadow-light relative hover:shadow-lg dark:hover:shadow-shadow-dark mb-4 ${isCompact ? "p-4 border-l-4" : "p-6 border-l-6"} ${typeStyles.borderLeft}`}>
-            
-            {/* Left Content Area */}
-            <div className={`${isCompact ? "col-span-5" : "col-span-4"}`}>
-                
-                {/* Header (Code, Semester, Status Badge) */}
-                <div className={`flex ${isCompact ? "flex-row-reverse" : "flex-col"} justify-between mb-2`}>
-                    <div className="flex gap-2.5 items-center mb-2 flex-wrap">
-                        {!isMobile && (
-                            <span className="px-2 py-1 rounded-full border text-text-primary-active-light dark:text-text-primary-active-dark text-xs font-semibold">
-                                {isInstructor ? course.courseCode : course.courseId}
-                            </span>
-                        )}
-                        {course.semester != null 
-                            ? <span className="text-text-secondary-active-light dark:text-text-secondary-active-dark text-xs font-normal">{course.semester}</span>
-                            : <MissingLabel field="semester" />
-                        }
-
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold tracking-wide uppercase bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark border border-border-secondary-default-light dark:border-border-secondary-default-dark">
-                            In Progress
-                        </span>
-                    </div>
-                    <h2 className={`${isMobile ? "text-lg" : "text-xl"} font-bold mb-2`}>{course.courseName}</h2>
-                </div>
-                
-                {/* Meta Info (Professor / Schedule & Room) */}
-                <div className={`flex flex-row gap-4 ${!isInstructor ? "text-center" : ""} text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark mb-4`}>
-                    {!isInstructor ? (
-                        <div className="flex gap-1">
-                            {!isMobile && <UserTieIcon className="w-5 h-5 place-self-center" />}
-                            {course.professorName != null ? <span className="text-sm">{course.professorName}</span> : <MissingLabel field="professorName" />}
-                        </div>
-                    ) : (
-                        <>
-                            <div className="flex gap-1">
-                                {!isMobile && <CalendarIcon className="w-5 h-5 place-self-center" />}
-                                {course.schedule != null ? <span className="text-sm">{course.schedule}</span> : <MissingLabel field="schedule" />}
-                            </div>
-                            <div className="h-auto w-px bg-text-secondary-active-light dark:bg-text-secondary-active-dark" />
-                        </>
-                    )}
-
-                    <div className="flex gap-1">
-                        {!isMobile && <LocationDotIcon className="w-5 h-5 place-self-center" />}
-                        {course.room != null ? <span className="text-sm">{course.room}</span> : <MissingLabel field="room" />}
-                    </div>
-                </div>
-
-                {/* Statistics Row */}
-                <div className={`flex flex-row ${isCompact ? "gap-3" : "gap-6"} text-sm mt-6`}>
-                    {isInstructor ? (
-                        <>
-                            <StatItem icon={<UsersIcon className="w-5 h-5" />} label="Students" value={course.numOfStudents} colorClass="bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark" />
-                            <StatItem icon={<ClipboardCheckIcon className="w-5 h-5" />} label="Attendance" value={course.attendance} colorClass="bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark" />
-                            <StatItem icon={<StarIcon className="w-5 h-5" />} label="Grade" value={course.grade} colorClass="bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark" />
-                        </>
-                    ) : (
-                        <>
-                            <StatItem 
-                                icon={studentAttendance.icon} 
-                                label="Attendance" 
-                                value={course.attendance != null ? `${course.attendance}%` : null} 
-                                colorClass={studentAttendance.color} 
-                            />
-                            <StatItem 
-                                icon={<FileLinesIcon className="w-5 h-5" />} 
-                                label="Assignments" 
-                                value={course.assignments != null ? `${course.assignments.filter(a => a.status === "Submitted").length}/${course.assignments.length}` : null} 
-                                colorClass="bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark" 
-                            />
-                            <StatItem 
-                                icon={<StarIcon className="w-5 h-5" />} 
-                                label="Grade" 
-                                value={course.grade} 
-                                colorClass="bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark" 
-                            />
-                        </>
-                    )}
-                </div>
-
-                {course.isElective == null && (
-                    <div className="mt-3"><MissingLabel field="isElective" /></div>
-                )}
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          {/* Header row */}
+          <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-xs font-semibold">
+                {code}
+              </span>
+              <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs">
+                {semester}
+              </span>
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${typeAccent.badge}`}>
+                {typeAccent.label}
+              </span>
             </div>
-
-            {/* Right Action Area */}
-            <div className={`flex gap-4 ${isCompact ? "col-span-5 border-t border-t-border-accent-default-light dark:border-t-border-accent-default-dark pt-4 mt-1" : "col-span-1 flex-col items-end"}`}>
-                <div className={`flex gap-2 w-full ${isCompact ? "flex-row justify-end" : "flex-col items-end"}`}>
-                    <Link 
-                        to={isInstructor ? `/instructor/courses/${course.courseId}` : `/courses/${course.courseId}`}
-                        className={`bg-bg-fill-primary-active-light dark:bg-bg-fill-primary-active-dark text-text-accent-active-light dark:text-text-accent-active-dark place-content-center font-bold rounded-md border border-border-accent-default-light dark:border-border-accent-default-dark text-center ${isMobile ? "px-3 py-1 text-xs" : "px-4 py-2 text-sm"}`}
-                    >
-                        {isMobile ? "Classroom" : "Enter Classroom"}
-                    </Link>
-
-                    {!isInstructor && (
-                        <Link 
-                            to={`/courses/${course.courseId}/materials`}
-                            className={`bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark place-content-center font-bold rounded-md border border-border-secondary-default-light dark:border-border-secondary-default-dark text-center ${isMobile ? "px-3 py-1 text-xs" : "px-4 py-2 text-sm"}`}
-                        >
-                            {isMobile ? "Materials" : "View Materials"}
-                        </Link>
-                    )}
-                </div>
+            {/* Mobile status */}
+            <div className="sm:hidden">
+              <StatusBadge label={statusLabel} className={statusClass} />
             </div>
-            
+          </div>
+
+          {/* Title */}
+          <h2 className="text-base sm:text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark mb-3 truncate">
+            {title}
+          </h2>
+
+          {/* Info row */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-4">
+            <div className="flex items-center gap-1.5">
+              <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>{instructor}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <LocationDotIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>{room}</span>
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            <Stat
+              icon={<CheckIcon className="w-4 h-4" />}
+              label="Attendance"
+              value={attendance.value}
+              iconClass={attClass}
+            />
+            <Stat
+              icon={<UsersIcon className="w-4 h-4" />}
+              label="Section"
+              value={section}
+              iconClass="bg-bg-surface-purple-default-light text-text-purple-default-light dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark"
+            />
+            <Stat
+              icon={<StarIcon className="w-4 h-4" />}
+              label="Grade"
+              value={grade}
+              iconClass="bg-bg-surface-secondary-default-light text-text-secondary-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-secondary-default-dark"
+            />
+          </div>
         </div>
-    );
+
+        {/* Desktop: status + action buttons */}
+        <div className="hidden sm:flex flex-col items-end flex-shrink-0 min-w-[140px]">
+          <StatusBadge label={statusLabel} className={statusClass} />
+          <div className="flex flex-col items-end justify-center gap-2 flex-1 mt-2">
+            <ActionButtons
+              onEnterClassroom={onEnterClassroom}
+              onViewMaterials={onViewMaterials}
+              layout="vertical"
+            />
+          </div>
+        </div>
+
+        {/* Mobile: action buttons */}
+        <div className="sm:hidden">
+          <ActionButtons
+            onEnterClassroom={onEnterClassroom}
+            onViewMaterials={onViewMaterials}
+            layout="horizontal"
+          />
+        </div>
+      </div>
+    </div>
+  );
 }

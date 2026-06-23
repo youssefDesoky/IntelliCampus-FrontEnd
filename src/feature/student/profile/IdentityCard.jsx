@@ -15,14 +15,16 @@ import {
 import Button from "../../../components/ui/Button";
 import { API_URL } from "../../../config/api";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import EditProfileForm from "./EditProfileForm";
 
-export default function IdentityCard({ user, className = "" }) {
+export default function IdentityCard({ user, className = "", onProfileUpdate }) {
     const [isFlipped, setIsFlipped] = useState(false);
     const [qrImageSrc, setQrImageSrc] = useState(user.qrCode || "");
     const [isGeneratingQr, setIsGeneratingQr] = useState(false);
     const { showError } = useError();
     const [isExpired, setIsExpired] = useState(false);
     const [countdown, setCountdown] = useState(30);
+    const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
     useEffect(() => {
         if (!isFlipped || countdown <= 0) return;
@@ -78,6 +80,7 @@ export default function IdentityCard({ user, className = "" }) {
     }, [isGeneratingQr]);
 
     return (
+        <>
         <div className={`group perspective-distant h-full ${className}`}>
             <div
                 className={`relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] preserve-3d ${isFlipped ? "rotate-y-180" : ""}`}
@@ -120,7 +123,7 @@ export default function IdentityCard({ user, className = "" }) {
                                 <div className="flex items-center gap-1.5 mt-1">
                                     <UserTieIcon size={12} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
                                     <p className="text-xs font-semibold truncate text-text-accent-default-light dark:text-text-accent-default-dark">
-                                        {user.specialization}
+                                        {user.specialization || user.department || "–"}
                                     </p>
                                 </div>
                             </div>
@@ -132,8 +135,6 @@ export default function IdentityCard({ user, className = "" }) {
                         <div className="flex items-center gap-2.5 text-sm">
                             <HouseIcon size={14} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
                             <span className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{user.faculty}</span>
-                            <span className="w-1 h-1 rounded-full bg-text-tertiary-default-light dark:bg-text-tertiary-default-dark" />
-                            <span className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark">Since {user.studentSince}</span>
                         </div>
                         <div className="flex items-center gap-2.5 text-sm">
                             <MailIconDark size={14} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
@@ -154,6 +155,7 @@ export default function IdentityCard({ user, className = "" }) {
                         <Button
                             variant="primary"
                             width="w-full"
+                            onClick={() => setIsEditProfileOpen(true)}
                             className="rounded-xl h-10 text-xs font-bold shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                         >
                             <PenSquareIcon size={13} />
@@ -201,5 +203,13 @@ export default function IdentityCard({ user, className = "" }) {
                 </div>
             </div>
         </div>
+
+        <EditProfileForm
+            isOpen={isEditProfileOpen}
+            onClose={() => setIsEditProfileOpen(false)}
+            user={user}
+            onSaved={onProfileUpdate}
+        />
+        </>
     );
 }

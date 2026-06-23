@@ -3,12 +3,13 @@ import { useOutletContext, useParams, useRouteLoaderData } from "react-router-do
 
 import Button from "../../../components/ui/Button";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
-import { ArrowRightIcon, CalendarIcon, ClockIcon, DownloadIcon, LocationDotIcon, QRCodeIcon, UsersIcon, XIcon } from "../../../components/ui/icons";
+import { ArrowRightIcon, CalendarIcon, ClockIcon, DownloadIcon, LocationDotIcon, PlusIcon, QRCodeIcon, UsersIcon, XIcon } from "../../../components/ui/icons";
 
 import {
     fetchAttendanceReport,
     fetchClassesByCourse,
     getSessionsByClass,
+    createClass,
     createSession,
     recordManualAttendance,
     scanAttendanceQr,
@@ -101,6 +102,11 @@ export default function InstructorCourseAttendance() {
     const [selectedSessionId, setSelectedSessionId] = useState(null);
     const [creatingSession, setCreatingSession] = useState(false);
 
+    // Create class state
+    const [isCreateClassOpen, setIsCreateClassOpen] = useState(false);
+    const [creatingClass, setCreatingClass] = useState(false);
+    const [newClass, setNewClass] = useState({ className: "", description: "" });
+
     // Attendance UI state
     const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
     const [scanning, setScanning] = useState(false);
@@ -135,6 +141,29 @@ export default function InstructorCourseAttendance() {
             setIsLoadingClasses(false);
         }
     }, [courseId, currentInstructorId]);
+
+    const handleCreateClass = async () => {
+        if (!newClass.className.trim()) {
+            showError("Class name is required.");
+            return;
+        }
+        setCreatingClass(true);
+        try {
+            await createClass({
+                courseId: Number(courseId),
+                instructorId: currentInstructorId,
+                className: newClass.className.trim(),
+                description: newClass.description.trim(),
+            });
+            setIsCreateClassOpen(false);
+            setNewClass({ className: "", description: "" });
+            await loadClasses();
+        } catch (err) {
+            showError(err.message || "Failed to create class.");
+        } finally {
+            setCreatingClass(false);
+        }
+    };
 
     useEffect(() => {
         loadClasses();
@@ -364,6 +393,9 @@ export default function InstructorCourseAttendance() {
                         <h1 className="mt-1 text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Choose a class to inspect attendance</h1>
                         <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{courseName} • Open a class to review its attendance report, scan QR codes, or record manual entries.</p>
                     </div>
+                    <Button type="button" variant="primary" onClick={() => setIsCreateClassOpen(true)} startIcon={<PlusIcon size={18} />}>
+                        Create Class
+                    </Button>
                 </div>
 
                 {classes.length === 0 ? (
@@ -474,6 +506,52 @@ export default function InstructorCourseAttendance() {
                         })}
                     </div>
                 )}
+
+            {isCreateClassOpen && (
+                <ModelOverlay onClose={() => setIsCreateClassOpen(false)} maxWidth="max-w-lg">
+                    <div className="relative w-full overflow-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
+                        <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-5 dark:border-border-primary-default-dark">
+                            <h3 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Create Class</h3>
+                            <button
+                                type="button"
+                                onClick={() => setIsCreateClassOpen(false)}
+                                className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2.5 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
+                                aria-label="Close"
+                            >
+                                <XIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="px-6 py-6 space-y-4">
+                            <div>
+                                <label className="mb-1.5 block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Class Name *</label>
+                                <input
+                                    type="text"
+                                    value={newClass.className}
+                                    onChange={(e) => setNewClass((prev) => ({ ...prev, className: e.target.value }))}
+                                    placeholder="e.g. Lecture 1"
+                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1.5 block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Description</label>
+                                <textarea
+                                    value={newClass.description}
+                                    onChange={(e) => setNewClass((prev) => ({ ...prev, description: e.target.value }))}
+                                    placeholder="Optional description"
+                                    rows={2}
+                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <Button type="button" variant="secondary" onClick={() => setIsCreateClassOpen(false)}>Cancel</Button>
+                                <Button type="button" variant="primary" onClick={handleCreateClass} disabled={creatingClass}>
+                                    {creatingClass ? "Creating..." : "Create Class"}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </ModelOverlay>
+            )}
             </div>
         );
     }

@@ -1,20 +1,52 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
 import Section from "../../../../../components/ui/Section";
 import Button from "../../../../../components/ui/Button";
 import TextArea from "../../../../../components/ui/TextArea";
 import BaseFormComponent from "../../../../../components/ui/BaseFormComponent";
-import { CheckIcon, DownloadIcon, XIcon, CloudUploadIcon, FileLinesIcon, FileIcon, TrashIcon, PaperclipIcon } from "../../../../../components/ui/icons";
+import { CheckIcon, DownloadIcon, XIcon, CloudUploadIcon, FileLinesIcon, FileIcon, TrashIcon, PaperclipIcon, CalendarDaysIcon } from "../../../../../components/ui/icons";
 import Table from "../../../../../components/ui/Table";
 import AttendanceOverall from "./AttendanceOverall";
 import AttendanceBreakdown from "./AttendanceBreakdown";
 import AttendanceExcuseCard from "./AttendanceExcuseCard";
-
+import { API_URL } from "../../../../../config/api";
+import { useError } from "../../../../../contexts/ErrorContext.jsx";
 
 export default function CourseAttendance() {
     const fileInputRef = useRef(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [reason, setReason] = useState("");
+    const [selectedSessionId, setSelectedSessionId] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [attendanceData, setAttendanceData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const { course, courseId } = useOutletContext();
+    const { showError } = useError();
+
+    useEffect(() => {
+        if (!courseId) return;
+        let cancelled = false;
+
+        async function loadAttendance() {
+            try {
+                setLoading(true);
+                const res = await fetch(`${API_URL}/api/attendance/my-attendance/course/${courseId}`, {
+                    credentials: "include",
+                });
+                if (!res.ok) throw new Error(`Failed to load attendance (${res.status})`);
+                const data = await res.json();
+                if (!cancelled) setAttendanceData(data);
+            } catch (err) {
+                if (!cancelled) showError(err.message);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        }
+
+        loadAttendance();
+        return () => { cancelled = true; };
+    }, [courseId]);
 
     const openForm = () => setIsFormOpen(true);
 
@@ -22,6 +54,7 @@ export default function CourseAttendance() {
         setIsFormOpen(false);
         setSelectedFile(null);
         setReason("");
+        setSelectedSessionId("");
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
@@ -29,36 +62,94 @@ export default function CourseAttendance() {
         setSelectedFile(event.target.files?.[0] || null);
     };
 
-    const handleSubmit = () => {
-        if (!reason.trim() || !selectedFile) return;
-        closeForm();
+    const handleSubmit = async () => {
+        if (!reason.trim() || !selectedFile || !selectedSessionId) return;
+
+        setSubmitting(true);
+        try {
+            const formData = new FormData();
+            formData.append("SessionId", selectedSessionId);
+            formData.append("Reason", reason);
+            formData.append("Document", selectedFile);
+
+            const res = await fetch(`${API_URL}/api/courses/${courseId}/attendance/excuse`, {
+                method: "POST",
+                credentials: "include",
+                body: formData,
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `Failed to submit excuse (${res.status})`);
+            }
+
+            closeForm();
+        } catch (err) {
+            showError(err.message);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    // Example layout of the expected backend response:
-    const mockExpectedBackendResponse = {
-        summary: {
-            percentage: 85,
-            attendedSessions: 21,
-            missedSessions: 4,
-            totalSessions: 25,
-        },
-        breakdown: {
-            percentage: 85,
-            presentSessions: 21,
-            missedSessions: 4,
-            totalSessions: 25,
-            onTimePercentage: 80,
-            needsImprovementPercentage: 20
-        },
-        history: sampleTableData // usually this array goes here
+    const handleExport = () => {
+        if (!attendanceData?.history || attendanceData.history.length === 0) {
+            showError("No attendance data to export.");
+            return;
+        }
+
+        const headers = ["Date", "Time", "Type", "Status"];
+        const rows = attendanceData.history.map((session) => [
+            session.date || "",
+            session.time || "",
+            session.type || "",
+            session.status || "",
+        ]);
+
+        let csv = headers.join(",") + "\n";
+        rows.forEach((row) => {
+            csv += row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",") + "\n";
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Attendance_${course?.title || courseId}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading attendance...</p>
+            </div>
+        );
+    }
+
+    if (!attendanceData) {
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+                    No attendance data available
+                </h3>
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
+                    Attendance records for this course are not available yet.
+                </p>
+            </div>
+        );
+    }
+
+    const { summary, breakdown, history } = attendanceData;
 
     return (
         <>
             <Section className="mb-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <AttendanceOverall attendance={mockExpectedBackendResponse.summary} onRequestExcuse={openForm} />
-                    <AttendanceBreakdown breakdown={mockExpectedBackendResponse.breakdown} />
+                    <AttendanceOverall attendance={summary} onRequestExcuse={openForm} />
+                    <AttendanceBreakdown breakdown={breakdown} />
                     <AttendanceExcuseCard />
                 </div>
             </Section>
@@ -67,9 +158,9 @@ export default function CourseAttendance() {
                 <Table
                     title="Attendance History"
                     description="Complete record of your class attendance"
-                    componentButton={<Button variant="secondary" startIcon={<DownloadIcon size={18} />}>Export</Button>}
+                    componentButton={<Button variant="secondary" onClick={handleExport} startIcon={<DownloadIcon size={18} />}>Export</Button>}
                     headers={["Date", "Time", "Type", "Status"]}
-                    data={sampleTableData.map((session) => ({
+                    data={(history || []).map((session) => ({
                         date: <span className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">{session.date}</span>,
                         time: <span className="text-sm text-text-secondary-light dark:text-text-secondary-dark">{session.time}</span>,
                         type: (
@@ -103,12 +194,34 @@ export default function CourseAttendance() {
                 description="Add a supporting file and explain the reason for your absence or delay."
                 onClose={closeForm}
                 onSubmit={handleSubmit}
-                submitText="Submit Request"
+                submitText={submitting ? "Submitting..." : "Submit Request"}
                 cancelText="Cancel"
+                submitDisabled={submitting}
                 maxWidth="max-w-xl"
                 contentClassName="space-y-6"
             >
                 <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="block">
+                            <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
+                                <CalendarDaysIcon size={16} className="text-text-secondary-light dark:text-text-secondary-dark" />
+                                Select session
+                            </span>
+                            <select
+                                value={selectedSessionId}
+                                onChange={(e) => setSelectedSessionId(e.target.value)}
+                                className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+                            >
+                                <option value="">Choose a session...</option>
+                                {(attendanceData?.history || []).map((session) => (
+                                    <option key={session.sessionId || session.id} value={session.sessionId || session.id}>
+                                        {session.date} — {session.time} ({session.type})
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+
                     <label className="block">
                         <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
                             <FileLinesIcon size={16} className="text-text-secondary-light dark:text-text-secondary-dark" />
@@ -176,82 +289,3 @@ export default function CourseAttendance() {
         </>
     );
 }
-
-const sampleTableData = [
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        type: "Lecture",
-        status: "Present"
-    },
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        type: "Section",
-        status: "Present"
-    },
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        type: "Lecture",
-        status: "Present"
-    },
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        type: "Section",
-        status: "Absent"
-    },
-        {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        status: "Present"
-    },
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        status: "Present"
-    },
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        status: "Present"
-    },
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        status: "Absent"
-    },
-        {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        status: "Present"
-    },
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        status: "Present"
-    },
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        status: "Present"
-    },
-    {
-        date: "24 Sep 2024",
-        time: "10:00 AM",
-        topic: "Introduction to React",
-        status: "Absent"
-    }
-]

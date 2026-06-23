@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import Tiptap from "../ui/Tiptap"
 import ModelOverlay from "../../../components/ui/ModelOverlay"
 import { BookIcon, LinkIcon, ClockIcon, FileLinesIcon } from "../../../components/ui/icons"
+import { createNote, updateNote, fromBackendLinkedLecture } from "./notesApi"
 
 // Fallback hardcoded options when not in CourseShell
 const defaultWeeklyLectureOptions = [
@@ -75,27 +76,31 @@ function SaveBadge({ status }) {
     )
 }
 
-export default function SmartNoteEditor({ note, onClose, courseFolders = [], courseId = null, onSaveNote, isPhone }) {
+export default function SmartNoteEditor({ note, onClose, courseFolders = [], courseId = null, studentId = null, onSaveNote }) {
+    const normalizedLinkedLecture = fromBackendLinkedLecture(note?.linkedLecture) ?? note?.linkedLecture ?? null
+
     const titleRef = useRef(note?.title ?? "")
     const bodyRef  = useRef(note?.content ?? "")
 
     const [titleValue, setTitleValue] = useState(note?.title ?? "")
     const [wordCount,  setWordCount]  = useState(countWords(note?.content))
     const [visible,    setVisible]    = useState(false)
-    const [linkedLecture, setLinkedLecture] = useState(note?.linkedLecture ?? null)
+    const [linkedLecture, setLinkedLecture] = useState(normalizedLinkedLecture)
     const [isPickerOpen, setIsPickerOpen] = useState(false)
+    const [isSaving,   setIsSaving]   = useState(false)
     const navigate = useNavigate()
     
     // Build lecture options from course folders or use defaults
     let weeklyLectureOptions = defaultWeeklyLectureOptions
     if (courseFolders && courseFolders.length > 0) {
         weeklyLectureOptions = courseFolders.map((folder, idx) => ({
-            id: idx + 1,
+            id: folder.materialFolderId ?? idx + 1,
             title: folder.name || `Week ${idx + 1}`,
             shortTitle: folder.name || `Week ${idx + 1}`,
-            weekLabel: folder.name || `Week ${idx + 1}`,
+            weekLabel: `${folder.name || `Week ${idx + 1}`} Lecture`,
             description: folder.description || "",
-            materialFolderId: folder.materialFolderId,
+            courseId: folder.courseId ?? courseId,
+            materialFolderId: folder.materialFolderId ?? idx + 1,
         }))
     }
 
@@ -123,7 +128,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
         schedule()
     }
 
-    function handleSave() {
+    async function handleSave() {
         const title = titleRef.current.trim()
         const plainContent = htmlToText(bodyRef.current)
 
@@ -132,33 +137,42 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
             return
         }
 
-        const now = new Date()
-        const formattedDate = now.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-        })
-        const formattedDateTime = now.toLocaleString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-        })
         const isNewNote = !note?.id || note?.id === "new-note"
 
-        const savedNote = {
-            ...note,
-            id: isNewNote ? Date.now() : note.id,
-            title,
-            content: bodyRef.current,
-            linkedLecture,
-            creationDate: isNewNote ? formattedDate : (note?.creationDate || formattedDate),
-            modified: formattedDateTime,
+        if (isNewNote && !studentId) {
+            handleClose()
+            return
         }
 
-        onSaveNote?.(savedNote)
-        handleClose()
+        setIsSaving(true)
+
+        try {
+            let savedNote
+            if (isNewNote) {
+                savedNote = await createNote({
+                    studentId,
+                    courseId,
+                    title,
+                    content: bodyRef.current,
+                    linkedLecture,
+                    courseFolders,
+                })
+            } else {
+                savedNote = await updateNote(note.id, {
+                    title,
+                    content: bodyRef.current,
+                    linkedLecture,
+                    courseFolders,
+                })
+            }
+
+            onSaveNote?.(savedNote)
+            handleClose()
+        } catch {
+            // apiClient already emits errors via ErrorContext
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     return (
@@ -188,8 +202,9 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation()
-                                    if (courseId && linkedLecture?.materialFolderId) {
-                                        navigate(`/courses/${courseId}/materials?folderId=${linkedLecture.materialFolderId}`)
+                                    const folderId = linkedLecture?.id ?? linkedLecture?.materialFolderId
+                                    if (courseId && folderId != null) {
+                                        navigate(`/courses/${courseId}/materials?folderId=${folderId}`)
                                     }
                                 }}
                                 className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
@@ -214,11 +229,12 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                         {/* Save */}
                         <button
                             type="button"
+                            disabled={isSaving}
                             onClick={handleSave}
-                            className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-text-primary-active-light dark:bg-text-primary-active-dark text-bg-surface-primary-default-light dark:text-bg-surface-primary-default-dark hover:opacity-85 active:scale-[0.97] transition-all"
+                            className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-text-primary-active-light dark:bg-text-primary-active-dark text-bg-surface-primary-default-light dark:text-bg-surface-primary-default-dark hover:opacity-85 active:scale-[0.97] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             <SaveIcon />
-                            <span className="hidden sm:inline">Save</span>
+                            <span className="hidden sm:inline">{isSaving ? "Saving…" : "Save"}</span>
                         </button>
 
                         {/* Close */}

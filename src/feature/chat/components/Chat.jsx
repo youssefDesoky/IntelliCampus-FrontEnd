@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Section from "../../../components/ui/Section";
 import Dialog from "../../../components/ui/Dialog";
-import CommentsIcon from "../../../components/ui/icons/CommentsIcon";
 import ChatUsers from "./ChatUsers";
 import Messaging from "./Messaging";
 import DefaultChatPanel from "./DefaultChatPanel";
 import AddFriendPanel from "./AddFriendPanel";
 import CreateGroupPanel from "./CreateGroupPanel";
+import { useSidebar } from "../../../hooks";
+import * as signalR from "@microsoft/signalr";
 import {
   createHubConnection,
   fetchChatHistory,
@@ -25,6 +26,7 @@ import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
   const { showError } = useError();
+  const { isPhone } = useSidebar();
   // "default" | "messaging" | "addFriend" | "createGroup"
   const [activePanel, setActivePanel] = useState("default");
   const [friendId, setFriendId] = useState("");
@@ -178,7 +180,12 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
       );
     });
 
+    conn.onreconnecting((error) => {
+      console.warn("[ChatHub] Reconnecting...", error);
+    });
+
     conn.onreconnected(async () => {
+      console.info("[ChatHub] Reconnected.");
       const partner = chatPartnerRef.current;
       if (partner) {
         if (partner.type === "group") {
@@ -188,10 +195,31 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
       }
     });
 
+    conn.onclose((error) => {
+      console.error("[ChatHub] Connection closed.", error);
+    });
+
+    let disposed = false;
+    conn
+      .start()
+      .then(() => {
+        if (disposed) conn.stop();
+      })
+      .catch((err) => {
+        if (disposed) return;
+        console.error("[ChatHub] Connection failed:", err);
+      });
+
     connectionRef.current = conn;
 
     return () => {
-      conn.stop();
+      disposed = true;
+      if (
+        conn.state === signalR.HubConnectionState.Connected ||
+        conn.state === signalR.HubConnectionState.Reconnecting
+      ) {
+        conn.stop();
+      }
       if (connectionRef.current === conn) connectionRef.current = null;
     };
   }, [isChatOpen, currentUser]);
@@ -448,63 +476,97 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     setActivePanel("messaging");
   };
 
+  const handleBackToUsers = () => {
+    setActivePanel("default");
+    setChatPartner(null);
+    setMessages([]);
+    setPinnedMessage(null);
+    setSearchQuery("");
+  };
+
+  const handleAttachFile = (file, type) => {
+    console.log("[Chat] Attach file:", { name: file.name, type, size: file.size });
+    // TODO: wire up file upload / send as message
+  };
+
   return (
     <>
       {isChatOpen && (
-        <Section className="fixed bottom-0 right-100 m-4 w-full max-w-[750px] bg-bg-surface-default-light dark:bg-bg-surface-default-dark rounded-lg shadow-lg p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 grid grid-cols-3 gap-4 w-full max-w-[750px] h-[600px] min-h-[600px] overflow-hidden">
-            <ChatUsers
-              chatPartner={chatPartner}
-              friends={friends}
-              groups={groups}
-              onlineUsers={onlineUsers}
-              unreadCounts={unreadCounts}
-              onAddFriend={() => setActivePanel("addFriend")}
-              onCreateGroup={() => setActivePanel("createGroup")}
-              onSelectUser={handleSelectUser}
-              onSelectGroup={handleSelectGroup}
-              searchMembers={searchMembers}
-              onSearchMembersChange={setSearchMembers}
-              currentUser={currentUser}
-            />
-            <div className="col-span-2 flex flex-col min-h-0 gap-0">
-              {activePanel === "default" ? (
-                <DefaultChatPanel
+        <Section className={`fixed z-50 ${isPhone ? 'inset-0 rounded-none p-0 h-dvh' : 'bottom-4 right-6 w-full max-w-[750px]'} bg-bg-surface-default-light dark:bg-bg-surface-default-dark shadow-lg ${isPhone ? 'p-0' : 'p-4'}`}>
+          <div className={`bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col ${isPhone ? 'w-full h-full' : 'w-full max-w-[750px] h-[600px] min-h-[600px]'}`}>
+            {/* Top bar with close button */}
+            <div className="flex items-center justify-end px-3 py-2 border-b border-gray-100 dark:border-gray-700 shrink-0 bg-white dark:bg-gray-800">
+              <button
+                onClick={() => setIsChatOpen(false)}
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-red-400 transition-all active:scale-90"
+                aria-label="Close chat"
+              >
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4l8 8M12 4l-8 8" />
+                </svg>
+              </button>
+            </div>
+            <div className={`flex-1 min-h-0 p-4 ${isPhone ? '' : 'grid grid-cols-3 gap-4'}`}>
+              {(!isPhone || activePanel === "default") && (
+                <ChatUsers
+                  chatPartner={chatPartner}
+                  friends={friends}
+                  groups={groups}
+                  onlineUsers={onlineUsers}
+                  unreadCounts={unreadCounts}
                   onAddFriend={() => setActivePanel("addFriend")}
                   onCreateGroup={() => setActivePanel("createGroup")}
+                  onSelectUser={handleSelectUser}
+                  onSelectGroup={handleSelectGroup}
+                  searchMembers={searchMembers}
+                  onSearchMembersChange={setSearchMembers}
+                  currentUser={currentUser}
                 />
-              ) : activePanel === "createGroup" ? (
-                <CreateGroupPanel
-                  friends={friendsList}
-                  onCreate={handleCreateGroup}
-                  onCancel={() => setActivePanel("default")}
-                />
-              ) : activePanel === "addFriend" ? (
-                <AddFriendPanel
-                  friendId={friendId}
-                  setFriendId={setFriendId}
-                  friendRequests={friendRequests}
-                  onInvite={handleSendInvite}
-                  onBack={() => setActivePanel("default")}
-                  onAcceptRequest={handleAcceptRequest}
-                  onDeclineRequest={handleDeclineRequest}
-                />
-              ) : (
-                <Messaging
-                  messages={formattedMessages}
-                  sendMessage={sendMessage}
-                  onInputChange={handleInputChange}
-                  partnerTyping={partnerTyping}
-                  chatPartner={chatPartner}
-                  deleteMessage={deleteMessage}
-                  editMessage={editMessage}
-                  pinMessage={pinMessage}
-                  unpinMessage={unpinMessage}
-                  pinnedMessage={pinnedMessage}
-                  showSenderInfo={chatPartner?.type === "group"}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                />
+              )}
+            {(!isPhone || activePanel !== "default") && (
+              <div className={`${isPhone ? 'h-full' : 'col-span-2 h-full'} flex flex-col min-h-0 gap-0`}>
+                  {activePanel === "default" ? (
+                    <DefaultChatPanel
+                      onAddFriend={() => setActivePanel("addFriend")}
+                      onCreateGroup={() => setActivePanel("createGroup")}
+                    />
+                  ) : activePanel === "createGroup" ? (
+                    <CreateGroupPanel
+                      friends={friendsList}
+                      onCreate={handleCreateGroup}
+                      onCancel={() => setActivePanel("default")}
+                    />
+                  ) : activePanel === "addFriend" ? (
+                    <AddFriendPanel
+                      friendId={friendId}
+                      setFriendId={setFriendId}
+                      friendRequests={friendRequests}
+                      onInvite={handleSendInvite}
+                      onBack={() => setActivePanel("default")}
+                      onAcceptRequest={handleAcceptRequest}
+                      onDeclineRequest={handleDeclineRequest}
+                    />
+                  ) : (
+                    <Messaging
+                      messages={formattedMessages}
+                      sendMessage={sendMessage}
+                      onInputChange={handleInputChange}
+                      partnerTyping={partnerTyping}
+                      chatPartner={chatPartner}
+                      deleteMessage={deleteMessage}
+                      editMessage={editMessage}
+                      pinMessage={pinMessage}
+                      unpinMessage={unpinMessage}
+                      pinnedMessage={pinnedMessage}
+                      showSenderInfo={chatPartner?.type === "group"}
+                      searchQuery={searchQuery}
+                      onSearchChange={setSearchQuery}
+                    isPhone={isPhone}
+                    onBack={handleBackToUsers}
+                    onAttachFile={handleAttachFile}
+                  />
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -525,12 +587,6 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
         </Section>
       )}
 
-      <button
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        className="fixed bottom-6 right-6 flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all duration-200 z-50"
-      >
-        <CommentsIcon size={22} />
-      </button>
     </>
   );
 }

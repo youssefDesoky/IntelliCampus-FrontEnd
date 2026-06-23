@@ -131,18 +131,19 @@ export default function InstructorCourseAnnouncements() {
 
     return (
         <div className="space-y-4">
-            {/* Create Announcement Button */}
-            <Button
-                type="button"
-                variant="primary"
-                onClick={() => setShowCreateForm(true)}
-                className="fixed bottom-5 right-5 z-50 group"
-            >
-                <PlusIcon size={24} />
-                <span className="max-w-0 -ml-2 group-hover:ml-0 overflow-hidden group-hover:max-w-40 transition-all! duration-300! whitespace-nowrap">
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                    Announcements
+                </h2>
+                <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => setShowCreateForm(true)}
+                    startIcon={<PlusIcon size={18} />}
+                >
                     Add New Announcement
-                </span>
-            </Button>
+                </Button>
+            </div>
 
             {/* Create/Edit Announcement Form Modal */}
             <BaseFormComponent

@@ -33,7 +33,7 @@ export default function WeeklyScheduleAgenda({ days, schedule = [], variant = "d
     }
 
     return (
-        <div className="flex flex-col gap-3 p-3">
+        <div className="flex flex-col gap-3">
             {activeDays.map((day) => {
                 const events = [...schedule]
                     .filter((ev) => ev.day === day.key)

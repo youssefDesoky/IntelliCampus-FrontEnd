@@ -7,3 +7,5 @@ export { default as InstructorMeetingRoom } from "./InstructorMeetingRoom";
 export { default as InstructorProfile } from "./InstructorProfile";
 export { default as InstructorReminders } from "./InstructorReminders";
 export { default as InstructorSchedule } from "./InstructorSchedule";
+export { default as InstructorCourseGrades } from "./InstructorCourseGrades";
+export { default as InstructorCourseAnalytics } from "./InstructorCourseAnalytics";

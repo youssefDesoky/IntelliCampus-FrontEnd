@@ -11,7 +11,7 @@ export function getChatPartner(currentUserId) {
 
 export function createHubConnection() {
   return new signalR.HubConnectionBuilder()
-    .withUrl("/hubs/chat")
+    .withUrl("/hubs/chat", { withCredentials: true })
     .withAutomaticReconnect()
     .build();
 }

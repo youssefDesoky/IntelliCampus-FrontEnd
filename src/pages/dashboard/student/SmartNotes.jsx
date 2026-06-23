@@ -6,6 +6,7 @@ import { API_URL } from "../../../config/api";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 import SmartNotesBody from "../../../feature/student/smartNotes/SmartNotesBody";
+import { fromBackendLinkedLecture } from "../../../feature/student/smartNotes/notesApi";
 
 
 export default function SmartNotes() {
@@ -20,8 +21,12 @@ export default function SmartNotes() {
     const [loading, setLoading] = useState(true);
     const { showError } = useError();
 
-    const studentId = authUser?.role === "student" ? authUser?.userId : null;
+    const studentId = authUser?.roles?.some(r => r.toLowerCase().startsWith("student")) ? authUser?.userId : null;
     const currentCourseId = outletCtx?.courseId || null;
+
+    function handleDeleteNote(deletedNoteId) {
+        setNotes((prevNotes) => prevNotes.filter((item) => String(item.id) !== String(deletedNoteId)));
+    }
 
     useEffect(() => {
         let cancelled = false;
@@ -55,12 +60,7 @@ export default function SmartNotes() {
                     (course?.notes || []).map((note) => ({
                         ...note,
                         course: course?.title || course?.courseName || "",
-                        linkedLecture: note?.linkedLecture
-                            ? {
-                                ...note.linkedLecture,
-                                courseId: note.linkedLecture.courseId || course?.id || null,
-                            }
-                            : null,
+                        linkedLecture: fromBackendLinkedLecture(note?.linkedLecture),
                     }))
                 );
 
@@ -84,7 +84,7 @@ export default function SmartNotes() {
         return () => {
             cancelled = true;
         };
-    }, [studentId, currentCourseId]);
+    }, [studentId, currentCourseId, showError]);
 
     const sortedNotes = useMemo(() => {
         return [...notes].sort((a, b) => {
@@ -124,6 +124,9 @@ export default function SmartNotes() {
             viewMode={viewMode}
             setViewMode={setViewMode}
             onSaveNote={handleSaveNote}
+            onDeleteNote={handleDeleteNote}
+            studentId={studentId}
+            courseId={currentCourseId}
         />
     );
 }
