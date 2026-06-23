@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import BoxData from "../../../components/ui/BoxData";
 import Section from "../../../components/ui/Section";
-import { BookIcon, FileLinesIcon, ClipboardCheckIcon, ChartLineIcon, BullHornIcon, ArrowRightIcon, ChartBarIcon } from "../../../components/ui/icons";
+import { BookIcon, ClipboardCheckIcon, ChartLineIcon, BullHornIcon, ArrowRightIcon, ChartBarIcon } from "../../../components/ui/icons";
 
 import StudyTimer from "../../../feature/student/dashboard/StudyTimer";
 import TodayReminders from "../../../feature/student/dashboard/TodayReminders";
@@ -15,14 +15,12 @@ import { fetchStudentDashboard } from "../../../api/dashboard";
 
 const statIcons = {
   activeCourses: <BookIcon className="w-6 h-6 text-blue-600" />,
-  pendingAssignments: <FileLinesIcon className="w-6 h-6 text-emerald-600" />,
   attendanceRate: <ClipboardCheckIcon className="w-6 h-6 text-amber-600" />,
   currentGpa: <ChartLineIcon className="w-6 h-6 text-rose-600" />,
 };
 
 const statIconStyles = {
   activeCourses: "bg-blue-100 dark:bg-bg-surface-blue-default-dark",
-  pendingAssignments: "bg-green-100 dark:bg-bg-surface-green-default-dark",
   attendanceRate: "bg-yellow-100 dark:bg-bg-surface-yellow-default-dark",
   currentGpa: "bg-red-100 dark:bg-bg-surface-red-default-dark",
 };
@@ -70,20 +68,13 @@ export default function Dashboard() {
     },
     {
       id: 2,
-      title: "Pending Assignments",
-      value: stats.pendingAssignments ?? 0,
-      icon: statIcons.pendingAssignments,
-      iconStyle: statIconStyles.pendingAssignments,
-    },
-    {
-      id: 3,
       title: "Attendance Rate",
       value: `${stats.attendanceRate ?? 0}%`,
       icon: statIcons.attendanceRate,
       iconStyle: statIconStyles.attendanceRate,
     },
     {
-      id: 4,
+      id: 3,
       title: "Current GPA",
       value: stats.currentGpa ?? "0.0",
       icon: statIcons.currentGpa,
@@ -109,7 +100,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <Section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+      <Section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {statsData.map((stat) => (
           <BoxData
             key={stat.id}
