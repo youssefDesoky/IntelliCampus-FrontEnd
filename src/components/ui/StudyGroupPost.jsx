@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import ArrowUpIcon from "./icons/ArrowUpIcon";
 import CommentIcon from "./icons/CommentIcon";
 
@@ -7,7 +7,10 @@ const CONTENT_PREVIEW_LENGTH = 240;
 
 export default function StudyGroupPost({ className = "", postData, courseId, courseTitle = null, onUpvote }) {
     const navigate = useNavigate();
+    const location = useLocation();
     const [hasUpvoted, setHasUpvoted] = useState(false);
+
+    const basePath = location.pathname.startsWith("/instructor") ? `/instructor/courses/${courseId}` : `/courses/${courseId}`;
     const [expanded, setExpanded] = useState(false);
 
     const content = postData.content || "";
@@ -83,7 +86,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                     <span>{postData.likes}</span>
                 </button>
                 <button
-                    onClick={() => navigate(`/courses/${courseId}/community/questions/${postData.id}`)}
+                    onClick={() => navigate(`${basePath}/community/questions/${postData.id}`)}
                     className="px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors duration-150"
                 >
                     <CommentIcon className="w-4 h-4" />

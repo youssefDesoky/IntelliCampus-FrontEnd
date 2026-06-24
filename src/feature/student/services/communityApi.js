@@ -45,6 +45,10 @@ export async function routeQuestion(courseId, postId, topN = 3) {
   });
 }
 
+export async function fetchSinglePost(courseId, postId) {
+  return apiClient(`/api/courses/${courseId}/community/questions/${postId}`);
+}
+
 export async function exportGraph(courseId, graphType = "interaction") {
   return apiClient(`/api/courses/${courseId}/community/graph?graphType=${graphType}`);
 }

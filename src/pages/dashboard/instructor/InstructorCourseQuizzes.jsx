@@ -35,7 +35,11 @@ export default function InstructorCourseQuizzes() {
         setLoading(true);
         try {
             const data = await fetchQuizzesByCourse(courseId);
-            setQuizzes(data);
+            const allQuizzes = [
+                ...(data.upcoming || []).map(q => ({ ...q, deadline: q.dueDate })),
+                ...(data.history || []).map(q => ({ ...q, deadline: q.dueDate }))
+            ];
+            setQuizzes(allQuizzes);
         } catch {
             setQuizzes([]);
         } finally {

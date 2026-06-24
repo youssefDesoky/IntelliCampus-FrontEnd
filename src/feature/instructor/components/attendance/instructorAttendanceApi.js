@@ -1,6 +1,7 @@
 export {
   fetchClassesByCourse,
   fetchAttendanceReport,
+  fetchSessionAttendance,
   createClass,
   recordAttendance,
   getSessionsByClass,

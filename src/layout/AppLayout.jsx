@@ -53,7 +53,7 @@ export default function AppLayout() {
     return (
         <div className="min-h-screen bg-bg-light dark:bg-bg-dark text-text-primary-active-light dark:text-text-primary-active-dark">
             <div className="mx-auto">
-                    {getHeader(isMobile, user?.profileImage, user?.notifications, {
+                    {getHeader(isMobile, isPhone, user?.profileImage, user?.notifications, {
                         availableViews,
                         activeView,
                         onViewChange: handleViewChange

@@ -54,9 +54,11 @@ export default function CourseShell() {
     const loadCourseData = useCallback(async (showLoading = true) => {
         try {
             if (showLoading) setIsLoading(true);
+            const searchParams = new URLSearchParams(location.search);
+            const folderId = searchParams.get('folderId');
 
             const [materials, course] = await Promise.all([
-                fetchCourseMaterialsOrganized(courseId),
+                fetchCourseMaterialsOrganized(courseId, folderId),
                 fetchCourseById(courseId),
             ]);
 
@@ -69,7 +71,7 @@ export default function CourseShell() {
         } finally {
             setIsLoading(false);
         }
-    }, [courseId, showError]);
+    }, [courseId, showError, location]);
 
     // Refresh without showing full-page loading (for child components)
     const refreshMaterials = useCallback(() => loadCourseData(false), [loadCourseData]);
