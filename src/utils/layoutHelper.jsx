@@ -8,8 +8,8 @@ import AdminBottomBar from "../components/navigation/admin/AdminBottomBar";
 import InstructorBottomBar from "../components/navigation/instructor/InstructorBottomBar";
 import StudentBottomBar from "../components/navigation/student/StudentBottomBar";
 
-export function getHeader(isMobile, profileImage, notifications, roleViewProps) {
-    return <Header isMobile={isMobile} avatar={profileImage} notifications={notifications} {...roleViewProps} />;
+export function getHeader(isMobile, isPhone, profileImage, notifications, roleViewProps) {
+    return <Header isMobile={isMobile} isPhone={isPhone} avatar={profileImage} notifications={notifications} {...roleViewProps} />;
 }
 
 export function getAside(role, height) {

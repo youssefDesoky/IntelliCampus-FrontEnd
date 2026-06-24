@@ -176,7 +176,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
     }
 
     return (
-        <ModelOverlay onClick={handleClose}>
+        <ModelOverlay onClose={handleClose}>
             <div
                 onClick={(e) => e.stopPropagation()}
                 style={{

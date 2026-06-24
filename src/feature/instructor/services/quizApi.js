@@ -1,7 +1,7 @@
 import apiClient from "../../../api/apiClient";
 
 export async function fetchQuizzesByCourse(courseId) {
-  return apiClient(`/api/courses/${courseId}/instructor-quizzes`);
+  return apiClient(`/api/courses/${courseId}/quizzes`);
 }
 
 export async function createQuiz(payload) {

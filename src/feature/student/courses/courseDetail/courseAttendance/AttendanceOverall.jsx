@@ -4,7 +4,7 @@ import Button from "../../../../../components/ui/Button";
 import { PaperclipIcon } from "../../../../../components/ui/icons";
 
 export default function AttendanceOverall({ attendance, onRequestExcuse }) {
-    const { percentage, attendedSessions, missedSessions } = attendance;
+    const { percentage = 0, attendedSessions = 0, missedSessions = 0 } = attendance ?? {};
 
     const attendanceSummary = percentage >= 75
         ? "Your attendance is strong. Keep the pace steady."

@@ -1,7 +1,14 @@
 import apiClient from "../../../api/apiClient";
 
-export async function fetchActiveCourses() {
-  return apiClient('/api/courses/active');
+export async function fetchActiveCourses(params = {}) {
+  const { search, status, departmentId, isActiveOnly } = params;
+  const query = new URLSearchParams();
+  if (search) query.set('search', search);
+  if (status) query.set('status', status);
+  if (departmentId) query.set('departmentId', departmentId);
+  if (isActiveOnly) query.set('isActiveOnly', 'true');
+  const qs = query.toString();
+  return apiClient(`/api/courses/active${qs ? `?${qs}` : ''}`);
 }
 
 export async function fetchClassesForCourse(courseId) {

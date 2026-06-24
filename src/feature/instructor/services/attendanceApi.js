@@ -8,8 +8,13 @@ export async function fetchAttendanceReport(classId) {
   return apiClient(`/api/attendance/report/class/${classId}`);
 }
 
-export async function createClass(payload) {
-  return apiClient('/api/classes', {
+export async function fetchSessionAttendance(sessionId) {
+  return apiClient(`/api/attendance/sessions/${sessionId}/students`);
+}
+
+export async function createClass(classType, payload) {
+  const endpoint = classType === "Section" ? '/api/classes/section' : '/api/classes/lecture';
+  return apiClient(endpoint, {
     method: "POST",
     body: JSON.stringify(payload),
   });

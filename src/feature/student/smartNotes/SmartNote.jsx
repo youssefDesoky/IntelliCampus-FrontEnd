@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import SmartNoteEditor from "./SmartNoteEditor.jsx";
 import SelectBox from "../../../components/ui/SelectBox";
 import { ClockIcon, CalendarIcon, TrashIcon, FahimIcon, BookIcon, LinkIcon } from "../../../components/ui/icons";
 import { updateNoteLinkedLecture, deleteNote, fromBackendLinkedLecture } from "./notesApi";
+import Dialog from "../../../components/ui/Dialog";
 
 const defaultWeeklyLectureOptions = [
     {
@@ -55,6 +56,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
     const [isPickerOpen, setIsPickerOpen] = useState(false);
     const [isLinkLoading, setIsLinkLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const navigate = useNavigate();
     const normalizedLinkedLecture = fromBackendLinkedLecture(note.linkedLecture) ?? note.linkedLecture ?? null
     const lectureOptions = buildLectureOptions(courseFolders, courseId);
@@ -108,11 +110,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
     }
 
     return (
-        <div
-            ref={cardRef}
-            onClick={() => setIsEditing(true)}
-            className="group relative flex min-w-70 flex-col gap-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 md:p-5 shadow-sm shadow-shadow-light dark:shadow-shadow-dark transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-        >
+        <Fragment>
             {isEditing && (
                 <SmartNoteEditor
                     note={note}
@@ -124,21 +122,40 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                 />
             )}
 
+            <Dialog
+                isOpen={showDeleteConfirm}
+                variant="warning"
+                title="Delete Note"
+                confirmText="Delete"
+                cancelText="Cancel"
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={() => {
+                    setShowDeleteConfirm(false);
+                    setIsDeleting(true);
+                    deleteNote(note.id).then(() => {
+                        onDeleteNote?.(note.id);
+                    }).catch(() => {
+                        // apiClient already emits errors via ErrorContext
+                    }).finally(() => {
+                        setIsDeleting(false);
+                    });
+                }}
+            >
+                Are you sure you want to delete this note? This action cannot be undone.
+            </Dialog>
+
+            <div
+                ref={cardRef}
+                onClick={() => setIsEditing(true)}
+                className="group relative flex min-w-70 flex-col gap-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 md:p-5 shadow-sm shadow-shadow-light dark:shadow-shadow-dark transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            >
+
             {/* Delete action, tucked into the corner so it never competes with the title */}
             <button
                 disabled={isDeleting}
-                onClick={async (e) => {
+                onClick={(e) => {
                     e.stopPropagation();
-                    if (isDeleting) return;
-                    setIsDeleting(true);
-                    try {
-                        await deleteNote(note.id);
-                        onDeleteNote?.(note.id);
-                    } catch {
-                        // apiClient already emits errors via ErrorContext
-                    } finally {
-                        setIsDeleting(false);
-                    }
+                    setShowDeleteConfirm(true);
                 }}
                 className="absolute right-3.5 top-3.5 shrink-0 rounded-lg border border-transparent p-1.5 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:border-red-300 hover:bg-red-50 dark:hover:border-red-800 dark:hover:bg-red-950 disabled:opacity-50"
             >
@@ -151,7 +168,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                     {note.title}
                 </h3>
                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2 leading-relaxed">
-                    {note.content}
+                    {note.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()}
                 </p>
             </div>
 
@@ -289,9 +306,10 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                     className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-white bg-linear-to-r from-indigo-500 to-cyan-500 hover:opacity-90 transition-opacity rounded-lg px-3 py-1.5"
                 >
                     <FahimIcon className="w-3.5 h-3.5" />
-                    {cardWidth >= 320 && <span>AI Summarize</span>}
+                    {cardWidth >= 320 && <span>AI Enhance</span>}
                 </button>
             </div>
-        </div>
+            </div>
+        </Fragment>
     );
 }

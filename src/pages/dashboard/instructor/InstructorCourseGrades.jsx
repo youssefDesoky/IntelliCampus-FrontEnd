@@ -3,6 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { fetchCourseGrades } from "../../../feature/instructor/services/gradesApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { ChartBarIcon, UsersIcon, CheckIcon, FilePenIcon, BrainIcon } from "../../../components/ui/icons";
+import Table from "../../../components/ui/Table";
 
 function GradeIcon({ type }) {
     const cls = {
@@ -91,17 +92,13 @@ export default function InstructorCourseGrades() {
 
     const stats = [
         { label: "Total Students", value: summary.totalStudents, icon: <UsersIcon size={20} />, color: "text-blue-600 dark:text-blue-400" },
-        { label: "Average Grade", value: `${summary.averageGrade}%`, icon: <ChartBarIcon size={20} />, color: "text-text-accent-default-light dark:text-text-accent-default-dark" },
+        { label: "Average Course Work", value: `${summary.averageCoursework} / ${summary.totalCoursework}`, icon: <ChartBarIcon size={20} />, color: "text-text-accent-default-light dark:text-text-accent-default-dark" },
         { label: "Pass Rate", value: `${summary.passRate}%`, icon: <CheckIcon size={20} />, color: "text-green-600 dark:text-green-400" },
         { label: "Assessments", value: `${summary.gradedAssessments}/${summary.totalAssessments}`, icon: <FilePenIcon size={20} />, color: "text-text-tertiary-default-light dark:text-text-tertiary-default-dark" },
     ];
 
     return (
         <div className="space-y-6">
-            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                {course?.title || `Course ${courseId}`}
-            </p>
-
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map((stat) => (
                     <div key={stat.label} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
@@ -155,60 +152,43 @@ export default function InstructorCourseGrades() {
                 </div>
             </div>
 
-            <div>
-                <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">Students</h3>
-                <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-text-tertiary-default-light dark:text-text-tertiary-default-dark uppercase tracking-wider">Student</th>
-                                    {assessments.map((a) => (
-                                        <th key={a.id} className="text-center px-3 py-3 text-xs font-semibold text-text-tertiary-default-light dark:text-text-tertiary-default-dark uppercase tracking-wider whitespace-nowrap">
-                                            {a.title.length > 12 ? a.title.slice(0, 12) + "…" : a.title}
-                                        </th>
-                                    ))}
-                                    <th className="text-center px-4 py-3 text-xs font-semibold text-text-tertiary-default-light dark:text-text-tertiary-default-dark uppercase tracking-wider">Overall</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border-tertiary-default-light dark:divide-border-tertiary-default-dark">
-                                {students.map((s) => (
-                                    <tr
-                                        key={s.id}
-                                        className="hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50 transition-colors"
-                                    >
-                                        <td className="px-4 py-3">
-                                            <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{s.name}</span>
-                                        </td>
-                                        {assessments.map((a) => {
-                                            const match = s.assessments.find((sa) => sa.assessmentId === a.id);
-                                            const score = match?.score;
-                                            return (
-                                                <td key={a.id} className="text-center px-3 py-3">
-                                                    <span className={`text-sm font-semibold ${getGradeTextColor(score)}`}>
-                                                        {score != null ? `${score}%` : "—"}
-                                                    </span>
-                                                </td>
-                                            );
-                                        })}
-                                        <td className="text-center px-4 py-3">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                                s.overall >= 85 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" :
-                                                s.overall >= 75 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" :
-                                                s.overall >= 65 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" :
-                                                s.overall >= 50 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" :
-                                                "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                                            }`}>
-                                                {s.grade}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">Students</h3>
+            <Table
+                role="instructor"
+                headers={["Student", ...assessments.map(a => a.title.length > 12 ? a.title.slice(0, 12) + "\u2026" : a.title), "Overall"]}
+                data={students.map(s => {
+                    const row = {
+                        student: <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{s.name}</span>,
+                    };
+                    assessments.forEach((a, idx) => {
+                        const match = s.assessments.find(sa => sa.assessmentId === a.id);
+                        const score = match?.score;
+                        row[`col_${idx}`] = (
+                            <span className={`text-sm font-semibold ${getGradeTextColor(score)}`}>
+                                {score != null ? `${score}%` : "\u2014"}
+                            </span>
+                        );
+                    });
+                    row["Overall"] = (
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                            s.overall >= 85 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" :
+                            s.overall >= 75 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" :
+                            s.overall >= 65 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" :
+                            s.overall >= 50 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" :
+                            "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                        }`}>
+                            {s.grade}
+                        </span>
+                    );
+                    return row;
+                })}
+                columnAlignments={["text-left", ...assessments.map(() => "text-center"), "text-center"]}
+                wrapInSection={false}
+                showHeaderActions={false}
+                showPagination={false}
+                showSelectionColumn={false}
+                showActionsColumn={false}
+            />
         </div>
     );
 }

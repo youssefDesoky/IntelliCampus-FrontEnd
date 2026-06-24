@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 import Section from "../../../../components/ui/Section";
 import Button from "../../../../components/ui/Button";
 import BaseComponent from "../../../../components/ui/BaseComponent";
 import DateTimeInput from "../../../../components/form/DateTimeInput";
-import { createMeeting } from "../../../course/services/meetingsApi";
+import { createMeeting, fetchCourseMeetings } from "../../../course/services/meetingsApi";
 import MicIcon from "../../../../components/ui/icons/MicIcon";
 import MicSlashIcon from "../../../../components/ui/icons/MicSlashIcon";
 import VideoIcon from "../../../../components/ui/icons/VideoIcon";
@@ -47,7 +47,7 @@ function ControlDivider() {
 export default function MeetingRoom() {
     const user = useRouteLoaderData("root");
     const { course, courseId } = useOutletContext();
-    const isInstructor = user?.role === "instructor" || user?.role === "Instructor";
+    const isInstructor = user?.roles?.some((r) => r === "Instructor");
 
     const [meetings, setMeetings] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -66,55 +66,17 @@ export default function MeetingRoom() {
     const containerRef = useRef(null);
     const apiRef = useRef(null);
 
-    const mockMeetings = useMemo(() => {
-        const now = new Date();
-        return [
-            {
-                meetingId: 1,
-                title: "Week 1 Lecture - Introduction to Programming",
-                dateTime: new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(),
-                roomName: "week-1-lecture-intro",
-            },
-            {
-                meetingId: 2,
-                title: "Week 1 Section - Lab Exercises",
-                dateTime: new Date(now.getTime() - 26 * 60 * 60 * 1000).toISOString(),
-                roomName: "week-1-section-lab",
-            },
-            {
-                meetingId: 3,
-                title: "Week 2 Lecture - Advanced Topics",
-                dateTime: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
-                roomName: "week-2-lecture-advanced",
-            },
-            {
-                meetingId: 4,
-                title: "Project Kickoff Meeting",
-                dateTime: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                roomName: "project-kickoff",
-            },
-            {
-                meetingId: 5,
-                title: "Midterm Review Session",
-                dateTime: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                roomName: "midterm-review",
-            },
-        ];
-    }, []);
-
     const loadMeetings = useCallback(async () => {
         setLoading(true);
         try {
-            // Mock data - replace with API call when backend is ready
-            // const data = await fetchCourseMeetings(courseId);
-            await new Promise((resolve) => setTimeout(resolve, 300));
-            setMeetings(mockMeetings);
+            const data = await fetchCourseMeetings(courseId);
+            setMeetings(data);
         } catch (err) {
             showError(err.message);
         } finally {
             setLoading(false);
         }
-    }, [mockMeetings]);
+    }, [courseId]);
 
     useEffect(() => {
         loadMeetings();
