@@ -22,6 +22,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [notifications, setNotifications] = useState(initialNotifications || []);
     const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
+    const [activeTab, setActiveTab] = useState('unread');
 
     const notificationsRef = useRef(null);
     const profileMenuRef = useRef(null);
@@ -114,8 +115,9 @@ export default function Header({ avatar, notifications: initialNotifications, is
     const handleMarkAsRead = async (notificationId) => {
         try {
             await markNotificationAsRead(notificationId);
-            const fresh = await fetchMyNotifications();
-            setNotifications(fresh || []);
+            setNotifications(prev => prev.map(n =>
+                n.userNotificationId === notificationId ? { ...n, isRead: true } : n
+            ));
         } catch (err) {
             showError(err.message);
         }
@@ -126,12 +128,15 @@ export default function Header({ avatar, notifications: initialNotifications, is
         if (!actionUrl) return;
 
         setIsNotificationsOpen(false);
-        try {
-            await markNotificationAsRead(notification.userNotificationId);
-            const fresh = await fetchMyNotifications();
-            setNotifications(fresh || []);
-        } catch (err) {
-            showError(err.message);
+        if (!notification.isRead) {
+            try {
+                await markNotificationAsRead(notification.userNotificationId);
+                setNotifications(prev => prev.map(n =>
+                    n.userNotificationId === notification.userNotificationId ? { ...n, isRead: true } : n
+                ));
+            } catch (err) {
+                showError(err.message);
+            }
         }
         navigate(actionUrl);
     };
@@ -140,8 +145,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
         try {
             setIsMarkingAllRead(true);
             await markAllNotificationsAsRead();
-            const fresh = await fetchMyNotifications();
-            setNotifications(fresh || []);
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
         } catch (err) {
             showError(err.message);
         } finally {
@@ -244,11 +248,33 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                 )}
                             </div>
 
+                            {/* Filter Tabs */}
+                            <div className="flex gap-1 px-3 py-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark">
+                                {['all', 'unread', 'read'].map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-150 ${
+                                            activeTab === tab
+                                                ? 'bg-text-accent-default-light dark:bg-text-accent-default-dark text-white'
+                                                : 'text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark'
+                                        }`}
+                                    >
+                                        {tab === 'all' ? 'All' : tab === 'unread' ? 'Unread' : 'Read'}
+                                    </button>
+                                ))}
+                            </div>
+
                             {/* Notifications List */}
                             <ul>
                                 {(() => {
-                                    return safeNotifications.length > 0 ? (
-                                        safeNotifications.map((notification, index) => (
+                                    const filteredNotifications = safeNotifications.filter(n => {
+                                        if (activeTab === 'unread') return !n.isRead;
+                                        if (activeTab === 'read') return n.isRead;
+                                        return true;
+                                    });
+                                    return filteredNotifications.length > 0 ? (
+                                        filteredNotifications.map((notification, index) => (
                                             <li
                                                 key={notification.userNotificationId || index}
                                                 className={`border-b border-border-primary-default-light dark:border-border-primary-default-dark p-4 transition-colors ${

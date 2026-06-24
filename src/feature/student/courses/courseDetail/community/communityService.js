@@ -63,6 +63,14 @@ export async function toggleUpvote(courseId, postId) {
     return res.json();
 }
 
+export async function fetchSinglePost(courseId, postId) {
+    const res = await fetch(`${API_URL}/api/courses/${courseId}/community/questions/${postId}`, {
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch post: ${res.status}`);
+    return res.json();
+}
+
 export async function routeQuestion(courseId, postId, topN = 3) {
     const res = await fetch(`${API_URL}/api/courses/${courseId}/community/route`, {
         method: "POST",
