@@ -3,6 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useDeviceType } from '../../../hooks';
 import * as signalR from "@microsoft/signalr";
+import { InboxMessageListSkeleton } from "./SkeletonLoader";
 import { fetchInboxMessages, fetchSentMessages, markMessageAsRead, deleteMessage, sendMessage } from "../../../api/messages";
 import { EnvelopIcon, PaperPlaneIcon, TrashIcon, ImportIcon, XIcon, PenSquareIcon, ArrowRightIcon } from "../../../components/ui/icons";
 import InputItem from "../../../components/form/InputItem";
@@ -680,9 +681,7 @@ export default function Inbox() {
 
       <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full text-text-secondary-default-light dark:text-text-secondary-default-dark">
-            Loading messages...
-          </div>
+          <InboxMessageListSkeleton />
         ) : filteredThreads.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-text-secondary-default-light dark:text-text-secondary-default-dark gap-2">
             <ImportIcon className="w-12 h-12 opacity-40" />

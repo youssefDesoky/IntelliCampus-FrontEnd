@@ -8,15 +8,15 @@ const BrandedQRCode = ({ token }) => {
       <QRCode
         value={token}
         size={250}
-        logoImage="/images/IntelliCampusLogo.png" // Update this path to your actual logo
+        logoImage="/images/IntelliCampusLogo.png"
         logoWidth={60}
         logoHeight={60}
         removeQrCodeBehindLogo={true} 
         logoPadding={10}
         logoPaddingStyle="circle"
-        qrStyle="dots"
+        qrStyle="fluid"
         eyeRadius={10}
-        fgColor="#1A365D"
+        fgColor="#313d52"
         bgColor="#FFFFFF"
         ecLevel="H"
       />
@@ -26,10 +26,9 @@ const BrandedQRCode = ({ token }) => {
 
 const styles = {
   qrContainer: {
-    padding: '20px',
-    backgroundColor: '#ffffff',
+    padding: '10px',
+    backgroundColor: '#FFFFFF',
     borderRadius: '16px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
     display: 'inline-flex',
     justifyContent: 'center',
     alignItems: 'center'

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import Section from "../../../../components/ui/Section";
 import Button from "../../../../components/ui/Button";
+import { TranscriptSkeleton } from "./SkeletonLoader";
 import { fetchTranscript, exportTranscriptPdf } from "../gradeApi";
 import { DownloadIcon } from "../../../../components/ui/icons";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
@@ -45,9 +46,7 @@ export default function TranscriptView() {
     if (loading) {
         return (
             <Section className="p-6">
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    Loading transcript...
-                </p>
+                <TranscriptSkeleton />
             </Section>
         );
     }

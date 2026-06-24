@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
-import QRCode from "qrcode";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BrandedQRCode from "../../../components/ui/BrandedQRCode";
 import {
     UserIcon,
@@ -11,6 +10,7 @@ import {
     QRCodeIcon,
     ArrowRotateRightIcon,
     PenSquareIcon,
+    CameraIcon,
 } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import { API_URL } from "../../../config/api";
@@ -19,12 +19,56 @@ import EditProfileForm from "./EditProfileForm";
 
 export default function IdentityCard({ user, className = "", onProfileUpdate }) {
     const [isFlipped, setIsFlipped] = useState(false);
-    const [qrImageSrc, setQrImageSrc] = useState(user.qrCode || "");
+    const [qrPayload, setQrPayload] = useState(user.qrCode || "");
     const [isGeneratingQr, setIsGeneratingQr] = useState(false);
     const { showError } = useError();
     const [isExpired, setIsExpired] = useState(false);
     const [countdown, setCountdown] = useState(30);
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+    const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        setAvatarPreview(user?.avatar || "");
+    }, [user?.avatar]);
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const dataUrl = reader.result;
+            setAvatarPreview(dataUrl);
+            setUploadingAvatar(true);
+            try {
+                const res = await fetch(`${API_URL}/api/auth/profile/image`, {
+                    method: "PUT",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dataUrl),
+                });
+                if (!res.ok) {
+                    const body = await res.json().catch(() => null);
+                    const msg = body?.detail || body?.message || "Failed to update profile image";
+                    showError(msg);
+                    setAvatarPreview(user?.avatar || "");
+                } else {
+                    onProfileUpdate?.();
+                }
+            } catch (err) {
+                showError(err?.message || "Failed to update profile image");
+                setAvatarPreview(user?.avatar || "");
+            } finally {
+                setUploadingAvatar(false);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
 
     useEffect(() => {
         if (!isFlipped || countdown <= 0) return;
@@ -64,12 +108,7 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
                 throw new Error("QR payload was not returned by server.");
             }
 
-            const qrDataUrl = await QRCode.toDataURL(qrPayload, {
-                width: 320,
-                margin: 1,
-            });
-
-            setQrImageSrc(qrDataUrl);
+            setQrPayload(qrPayload);
             setCountdown(expiresInSeconds);
             setIsFlipped(true);
         } catch (error) {
@@ -81,7 +120,7 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
 
     return (
         <>
-        <div className={`group perspective-distant h-full ${className}`}>
+        <div className={`group perspective-distant min-h-105 h-full ${className}`}>
             <div
                 className={`relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] preserve-3d ${isFlipped ? "rotate-y-180" : ""}`}
                 style={{ transformStyle: "preserve-3d", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
@@ -110,11 +149,29 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
                     <div className="relative -mt-14 px-6 z-10">
                         <div className="flex items-end gap-4">
                             <div className="relative shrink-0">
-                                <div className="w-24 h-24 rounded-2xl p-[2px] bg-gradient-to-tr from-blue-500 to-cyan-400 shadow-xl">
-                                    <div className="w-full h-full rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                                        <img src={user.avatar} alt={`${user.name}'s profile avatar`} className="w-full h-full object-cover" />
+                                <div
+                                    onClick={handleAvatarClick}
+                                    className="w-24 h-24 rounded-2xl p-[2px] bg-gradient-to-tr from-blue-500 to-cyan-400 shadow-xl cursor-pointer group/avatar"
+                                >
+                                    <div className="relative w-full h-full rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                        <img src={avatarPreview} alt={`${user.name}'s profile avatar`} className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                                            <CameraIcon size={20} className="text-white" />
+                                        </div>
                                     </div>
                                 </div>
+                                {uploadingAvatar && (
+                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap">
+                                        Uploading...
+                                    </div>
+                                )}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleAvatarChange}
+                                    className="hidden"
+                                />
                             </div>
                             <div className="pb-2 min-w-0 flex-1">
                                 <h2 className="text-xl font-extrabold tracking-tight truncate text-text-primary-default-light dark:text-text-primary-default-dark">
@@ -169,7 +226,7 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
                     className="absolute inset-0 w-full h-full backface-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden shadow-xl rotate-y-180 flex flex-col"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
-                    <div className="relative flex-1 flex flex-col p-8 bg-linear-to-b from-bg-surface-primary-default-light dark:from-bg-surface-primary-default-dark to-bg-surface-secondary-default-light dark:to-bg-surface-secondary-default-dark">
+                    <div className="relative flex-1 flex flex-col px-8 pt-4 bg-linear-to-b from-bg-surface-primary-default-light dark:from-bg-surface-primary-default-dark to-bg-surface-secondary-default-light dark:to-bg-surface-secondary-default-dark">
                         <button
                             onClick={() => setIsFlipped(false)}
                             className="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-xs font-semibold transition-all"
@@ -178,14 +235,14 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
                             <span>Show Profile</span>
                         </button>
 
-                        <div className="text-left">
+                        <div className="text-left mb-2">
                             <h3 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Attendance QR Code</h3>
-                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1">Scan this code at the attendance gate to check in</p>
+                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Scan this code at the attendance gate to check in</p>
                         </div>
 
-                        <div className="flex-1 flex items-center justify-center">
-                            <div className="w-72 h-72 rounded-3xl bg-white shadow-lg border border-zinc-100 flex items-center justify-center relative overflow-hidden">
-                                <BrandedQRCode token={qrImageSrc || user.qrCode} />
+                        <div className="flex-1 flex items-center justify-center pt-4 px-4 pb-8">
+                            <div className="rounded-3xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg border border-border-primary-default-light dark:border-border-primary-default-dark flex items-center justify-center relative overflow-hidden p-3">
+                                <BrandedQRCode token={qrPayload} />
                                 {isExpired && (
                                     <button
                                         type="button"

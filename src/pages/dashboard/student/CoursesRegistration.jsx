@@ -12,6 +12,7 @@ import CourseCard from "../../../feature/student/courses/courseRegister/CourseCa
 import CourseRegistrationNote from "../../../feature/student/courses/courseRegister/CourseRegistrationNote";
 import CourseRegistrationHeader from "../../../feature/student/courses/courseRegister/CourseRegistrationHeader";
 import CoursesRegistrationActionButtons from "../../../feature/student/courses/courseRegister/CourseRegistrationActionButtons";
+import { RegistrationPageSkeleton } from "../../../feature/student/courses/courseRegister/SkeletonLoader";
 
 import {
     fetchActiveCourses,
@@ -287,9 +288,7 @@ export default function CoursesRegistration() {
             <CourseRegistrationHeader deviceType={isDesktop ? "desktop" : "mobile"} selectedCourses={selectedCourses} />
 
             {loading ? (
-                <p className="text-center py-10 text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                    Loading courses…
-                </p>
+                <RegistrationPageSkeleton />
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Section>
@@ -350,7 +349,7 @@ export default function CoursesRegistration() {
                         <h3 className="text-md font-semibold">Weekly Schedule Preview</h3>
 
                         {schedulePreviewLoading ? (
-                            <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark py-8 text-center">Loading schedule preview...</p>
+                            <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl h-48 w-full" />
                         ) : isMobile ? (
                             <WeeklyScheduleAgenda days={days} schedule={schedulePreview} variant="default" />
                         ) : (

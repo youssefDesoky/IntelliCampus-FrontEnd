@@ -1,38 +1,18 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import InputItem from "../../../components/form/InputItem";
 import TextArea from "../../../components/ui/TextArea";
 import { API_URL } from "../../../config/api";
 import { useError } from "../../../contexts/ErrorContext.jsx";
-import { UserIcon, CameraIcon } from "../../../components/ui/icons";
 
 export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
     const { showError } = useError();
-    const fileInputRef = useRef(null);
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
-    const [photoPreview, setPhotoPreview] = useState(user?.avatar || null);
 
     const handleClose = () => {
         setErrors({});
         onClose();
-    };
-
-    const handlePhotoClick = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handlePhotoChange = (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => setPhotoPreview(reader.result);
-        reader.readAsDataURL(file);
-    };
-
-    const handleRemovePhoto = () => {
-        setPhotoPreview(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleSubmit = async (e) => {
@@ -43,8 +23,15 @@ export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
         const phoneNumber = formData.get("phoneNumber") || "";
         const address = formData.get("address") || "";
 
+        const egyptianPhoneRegex = /^01[0125]\d{8}$/;
+
         const newErrors = {};
         if (!fullName.trim()) newErrors.fullName = "English name is required.";
+        if (!phoneNumber.trim()) {
+            newErrors.phoneNumber = "Phone number is required.";
+        } else if (!egyptianPhoneRegex.test(phoneNumber.trim())) {
+            newErrors.phoneNumber = "Enter a valid Egyptian phone number (e.g. 010XXXXXXXX).";
+        }
         if (!address.trim()) newErrors.address = "Address is required.";
 
         setErrors(newErrors);
@@ -69,21 +56,6 @@ export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
                 throw new Error(message);
             }
 
-            if (photoPreview !== (user?.avatar || null)) {
-                const imgRes = await fetch(`${API_URL}/api/auth/profile/image`, {
-                    method: "PUT",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(photoPreview || ""),
-                });
-
-                if (!imgRes.ok) {
-                    const imgBody = await imgRes.json().catch(() => null);
-                    const imgMessage = imgBody?.detail || imgBody?.message || "Failed to update profile image";
-                    showError(imgMessage);
-                }
-            }
-
             onSaved?.();
             handleClose();
         } catch (err) {
@@ -106,45 +78,6 @@ export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
             maxWidth="max-w-md"
         >
             <div className="space-y-5">
-                <div className="flex flex-col items-center shrink-0">
-                    <div className="relative">
-                        <div
-                            onClick={handlePhotoClick}
-                            className="w-24 h-24 rounded-xl overflow-hidden ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark hover:ring-border-accent-active-light dark:hover:ring-border-accent-active-dark transition-all group"
-                        >
-                            {photoPreview ? (
-                                <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                                    <UserIcon className="w-10 h-10 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
-                                </div>
-                            )}
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
-                                <CameraIcon className="w-7 h-7 text-white" />
-                            </div>
-                        </div>
-                        {photoPreview && (
-                            <button
-                                type="button"
-                                onClick={handleRemovePhoto}
-                                className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark flex items-center justify-center shadow-sm hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3 fill-current"><path d="M18.3 5.71 12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z" /></svg>
-                            </button>
-                        )}
-                    </div>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                    />
-                    <p className="mt-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark text-center">
-                        Click to {photoPreview ? "change" : "upload"}<br />profile photo
-                    </p>
-                </div>
-
                 <InputItem
                     label="Full Name (English)"
                     type="text"

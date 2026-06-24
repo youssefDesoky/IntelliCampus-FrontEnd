@@ -16,6 +16,7 @@ import {
     VideoIcon,
     ChartLineIcon,
 } from "../../../components/ui/icons";
+import { CourseShellSkeleton } from "./SkeletonLoader";
 import { fetchCourseMaterialsOrganized } from "../services/materialsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
@@ -80,7 +81,7 @@ export default function CourseShell() {
     );
 
     if (isLoading) {
-        return <p>Loading course data...</p>;
+        return <CourseShellSkeleton />;
     }
 
     return (

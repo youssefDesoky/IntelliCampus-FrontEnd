@@ -6,6 +6,7 @@ import RemindersHeader from "../../../feature/student/reminders/RemindersHeader"
 import Timeline from "../../../feature/student/reminders/Timeline";
 import CalenderWidget from "../../../components/ui/CalendarWidget";
 import AddReminderForm from "../../../feature/student/reminders/AddReminderForm";
+import { RemindersSkeleton } from "../../../feature/student/reminders/SkeletonLoader";
 import { fetchRemindersByDay, createReminder as createReminderApi, updateReminder as updateReminderApi, deleteReminder as deleteReminderApi } from "../../../feature/student/remindersApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
@@ -66,9 +67,11 @@ export default function Reminders() {
     const [selectedCategory, setSelectedCategory] = useState(categoryOptions[0]);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [reminders, setReminders] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         let cancelled = false;
+        setIsLoading(true);
         async function load() {
             try {
                 const data = await fetchRemindersByDay(selectedDate);
@@ -78,6 +81,8 @@ export default function Reminders() {
                     showError(err.message);
                     setReminders([]);
                 }
+            } finally {
+                if (!cancelled) setIsLoading(false);
             }
         }
         load();
@@ -157,6 +162,10 @@ export default function Reminders() {
             return reminderDay > nextDay && reminderDay <= weekEnd;
         }),
     };
+
+    if (isLoading) {
+        return <RemindersSkeleton />;
+    }
 
     return (
         <>

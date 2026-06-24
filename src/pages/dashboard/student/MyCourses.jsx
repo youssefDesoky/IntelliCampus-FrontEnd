@@ -4,6 +4,7 @@ import Section from "../../../components/ui/Section";
 
 import MyCourse from "../../../feature/student/courses/myCourses/MyCourse";
 import TranscriptView from "../../../feature/student/courses/myCourses/TranscriptView";
+import { MyCoursesPageSkeleton } from "../../../feature/student/courses/myCourses/SkeletonLoader";
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import DataBanner from "../../../components/ui/DataBanner";
@@ -144,9 +145,7 @@ export default function MyCourses() {
             )}
 
             {!showTranscript && loading && (
-                <div className="flex justify-center py-12">
-                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading courses...</p>
-                </div>
+                <MyCoursesPageSkeleton viewMode={viewMode} />
             )}
 
             {!showTranscript && !loading && filteredCourses.length === 0 && (
