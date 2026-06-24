@@ -1,19 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 import Section from "../../../components/ui/Section";
 import DataBanner from "../../../components/ui/DataBanner";
 import useDeviceType from "../../../hooks/useDeviceType";
 
-import InstructorCourse from "../../../feature/instructor/components/courses/InstructorCourse";
+import MyCourse from "../../../feature/student/courses/myCourses/MyCourse";
 import InstructorCoursesHeader from "../../../feature/instructor/components/courses/InstructorCoursesHeader";
 import { fetchMyTeachingCourses } from "../../../feature/course/services/coursesApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 
 export default function InstructorCourses() {
     const { isMobile } = useDeviceType();
+    const navigate = useNavigate();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError } = useError();
 
     const [viewMode, setViewMode] = useState(() => {
         return isMobile ? "list" : localStorage.getItem("instructorCoursesViewMode") || "grid";
@@ -31,8 +34,7 @@ export default function InstructorCourses() {
                 const data = await fetchMyTeachingCourses();
                 if (!cancelled) setCourses(data);
             } catch (err) {
-                if (!cancelled) setError(err.message);
-                console.error("Failed to load teaching courses:", err);
+                showError(err.message);
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -44,11 +46,15 @@ export default function InstructorCourses() {
     // Compute stats from real data
     const totalHours = courses.reduce((sum, c) => sum + (c.creditHours || 0), 0);
 
+    const handleEnterClassroom = useCallback((courseId) => {
+        navigate(`/courses/${courseId}`);
+    }, [navigate]);
+
     const stats = [
         { label: "Assigned Courses", value: courses.length },
         { label: "Total Hours", value: totalHours },
-        { label: "Total Students", value: "⚠ missing from backend" },
-        { label: "Average Attendance", value: "⚠ missing from backend" },
+        // { label: "Total Students", value: "⚠ missing from backend" },
+        // { label: "Average Attendance", value: "⚠ missing from backend" },
     ];
 
     return (
@@ -72,13 +78,7 @@ export default function InstructorCourses() {
                 </div>
             )}
 
-            {error && (
-                <div className="flex justify-center py-12">
-                    <p className="text-red-500">Failed to load courses: {error}</p>
-                </div>
-            )}
-
-            {!loading && !error && courses.length === 0 && (
+            {!loading && courses.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                         No courses assigned
@@ -89,10 +89,10 @@ export default function InstructorCourses() {
                 </div>
             )}
 
-            {!loading && !error && courses.length > 0 && (
+            {!loading && courses.length > 0 && (
                 <Section className={`mb-6 ${viewMode === "grid" ? "grid grid-cols-2 gap-4" : "flex flex-col gap-4"}`}>
                     {courses.map((course) => (
-                        <InstructorCourse key={course.courseId} course={course} viewMode={viewMode} isMobile={isMobile} />
+                        <MyCourse key={course.courseId} course={course} role="instructor" viewMode={viewMode} isMobile={isMobile} onEnterClassroom={() => handleEnterClassroom(course.courseId)} />
                     ))}
                 </Section>
             )}

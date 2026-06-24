@@ -1,24 +1,86 @@
+import { useMemo, useState, useEffect } from "react";
+import Section from "../../../../components/ui/Section";
 import CoursePrerequisitesCard from "./CoursePrerequisitesCard";
+import { API_URL } from "../../../../config/api";
+import { useError } from "../../../../contexts/ErrorContext.jsx";
 
-const coursesData = {
-    "Computer Science": [
-        { id: 1, title: "Data Structures", code: "CS201", prerequisites: ["CS101"] },
-        { id: 2, title: "Algorithms", code: "CS202", prerequisites: ["CS201"] },
-        { id: 3, title: "Operating Systems", code: "CS301", prerequisites: ["CS201"] },
-        { id: 4, title: "Database Systems", code: "CS302", prerequisites: ["CS201"] },
-        { id: 5, title: "Computer Networks", code: "CS303", prerequisites: ["CS201"] },
-        { id: 6, title: "Artificial Intelligence", code: "CS401", prerequisites: ["CS202"] },
-    ],
-};
+export default function CoursePrerequisitesBody({ search = "" }) {
+    const [courseData, setCourseData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { showError } = useError();
 
-export default function CoursePrerequisitesBody({ isPhone, isTablet, viewMode }) {
+    useEffect(() => {
+        let cancelled = false;
+
+        async function load() {
+            try {
+                setLoading(true);
+                const res = await fetch(`${API_URL}/api/courses/prerequisites`, {
+                    credentials: "include",
+                });
+                if (!res.ok) throw new Error(`Failed to load prerequisites (${res.status})`);
+                const data = await res.json();
+                const list = Array.isArray(data) ? data : [];
+                const mapped = list.map((course) => ({
+                    id: course.courseId,
+                    title: course.courseName || "",
+                    code: course.courseCode || "",
+                    creditHours: course.creditHours || "",
+                    prerequisites: (course.prerequisites || []).map((p) => ({
+                        id: p.code || "",
+                        title: p.title || "",
+                    })),
+                }));
+                if (!cancelled) setCourseData(mapped);
+            } catch (err) {
+                if (!cancelled) showError(err.message || "Failed to load prerequisites");
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        }
+
+        load();
+        return () => { cancelled = true; };
+    }, []);
+
+    const filtered = useMemo(() => {
+        if (!search.trim()) return courseData;
+        const q = search.toLowerCase();
+        return courseData.filter(
+            (course) =>
+                course.title.toLowerCase().includes(q) ||
+                course.code.toLowerCase().includes(q) ||
+                course.prerequisites.some(
+                    (p) => p.title.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)
+                )
+        );
+    }, [courseData, search]);
+
+    if (loading) {
+        return (
+            <Section>
+                <div className="flex justify-center py-12">
+                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading prerequisites...</p>
+                </div>
+            </Section>
+        );
+    }
+
     return (
-        <div>
-            <div className={`grid ${isPhone ? "grid-cols-1" : isTablet ? (viewMode === 'list' ? "grid-cols-1" : "grid-cols-2") : (viewMode === 'grid-3' ? "grid-cols-3" : "grid-cols-2")} gap-6 mb-4`}>
-                {coursesData["Computer Science"].map((course) => (
+        <Section>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filtered.map((course) => (
                     <CoursePrerequisitesCard key={course.id} course={course} />
                 ))}
             </div>
-        </div>
+
+            {filtered.length === 0 && (
+                <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-10 text-center">
+                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        {search.trim() ? "No courses match your search." : "No prerequisite data available."}
+                    </p>
+                </div>
+            )}
+        </Section>
     );
 }

@@ -3,7 +3,7 @@ import Section from "../../../components/ui/Section";
 
 export default function AttendanceOverall({className, studentAttendance}) {
     return (
-        <Section className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
+        <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
             <h2 className="text-2xl font-semibold mb-4">Attendance</h2>
 
             <div className="relative w-48 h-48 mx-auto mb-4">
@@ -64,6 +64,6 @@ export default function AttendanceOverall({className, studentAttendance}) {
             >
                 View Detailed Attendance
             </NavLink>
-        </Section>
+        </div>
     );
 }

@@ -8,24 +8,26 @@ import AdminBottomBar from "../components/navigation/admin/AdminBottomBar";
 import InstructorBottomBar from "../components/navigation/instructor/InstructorBottomBar";
 import StudentBottomBar from "../components/navigation/student/StudentBottomBar";
 
-export function getHeader(isMobile, profileImage, notifications) {
-    return <Header isMobile={isMobile} profileImage={profileImage} notifications={notifications} />;
+export function getHeader(isMobile, profileImage, notifications, roleViewProps) {
+    return <Header isMobile={isMobile} avatar={profileImage} notifications={notifications} {...roleViewProps} />;
 }
 
 export function getAside(role, height) {
     switch (role?.toLowerCase()) {
-        case "admin": return <AdminAside height={height} />;
+        case "admin":
+        case "superadmin": return <AdminAside height={height} />;
         case "instructor": return <InstructorAside height={height} />;
         case "student": return <StudentAside height={height} />;
         default: return null;
     }
 }
 
-export function getBottomBar(role) {
+export function getBottomBar(role, extraProps = {}) {
     switch (role?.toLowerCase()) {
-        case "admin": return <AdminBottomBar />;
-        case "instructor": return <InstructorBottomBar />;
-        case "student": return <StudentBottomBar />;
+        case "admin":
+        case "superadmin": return <AdminBottomBar {...extraProps} />;
+        case "instructor": return <InstructorBottomBar {...extraProps} />;
+        case "student": return <StudentBottomBar {...extraProps} />;
         default: return null;
     }
 }

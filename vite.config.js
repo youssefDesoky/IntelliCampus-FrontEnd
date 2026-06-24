@@ -13,14 +13,30 @@ export default defineConfig({
     https: true,
     proxy: {
       '/api': {
-        target: 'https://192.168.1.15:5123',
+        target: 'http://localhost:5122',
         changeOrigin: true,
         secure: false,
       },
       '/materials': {
-        target: 'https://192.168.1.15:5123',
+        target: 'http://localhost:5122',
         changeOrigin: true,
         secure: false,
+      },
+      '/images': {
+        target: 'http://localhost:5122',
+        changeOrigin: true,
+        secure: false,
+        bypass(req) {
+          if (req.url.match(/\.(png|jpg|jpeg|svg|gif|webp)$/)) {
+            return req.url;
+          }
+        }
+      },
+      '/hubs': {
+        target: 'http://localhost:5122',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
       },
     },
   }

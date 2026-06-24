@@ -6,7 +6,6 @@ import { getNavigationLinks } from "../../../data/student/navigationLinks";
 
 import Aside from "../base/Aside";
 
-import Button from "../../ui/Button";
 import DropdownMenu from "../../ui/DropdownMenu";
 import { BookIcon, AngleDownIcon } from "../../ui/icons";
 
@@ -40,7 +39,7 @@ export default function StudentAside({height}) {
         <Aside height={height} links={getNavigationLinks(t)}>
             <div className={`${isCoursesOpen ? `${!isCompact ? "pl-2 border-l-4 border-border-accent-default-light dark:border-border-accent-default-dark" : ""}` : "border-transparent"}`}>
                 <div className="relative">
-                    <Button
+                    <button
                         ref={buttonRef}
                         onClick={() => setIsCoursesOpen(!isCoursesOpen)}
                         className="w-full flex items-center gap-3 p-2 rounded overflow-hidden border border-transparent text-text-secondary-active-light dark:text-text-secondary-active-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark hover:text-text-accent-hover-light dark:hover:text-text-accent-hover-dark hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark"
@@ -52,7 +51,7 @@ export default function StudentAside({height}) {
                                 <AngleDownIcon className={`w-4 h-4 ml-auto shrink-0 ${isCoursesOpen ? "rotate-0" : "-rotate-90"}`} />
                             </>
                         )}
-                    </Button>
+                    </button>
                   
                     {isCompact && isCoursesOpen &&
                         <DropdownMenu 
@@ -75,11 +74,6 @@ export default function StudentAside({height}) {
                                     <span className="text-sm font-semibold whitespace-nowrap">{t('coursePrerequisites')}</span>
                                 </NavLink>
                             </li>
-                            <li>
-                                <NavLink to="/courses/remarking-request" className={({ isActive }) => linkCls(isActive)}>
-                                    <span className="text-sm font-semibold whitespace-nowrap">{t('courseRemarkingRequest')}</span>
-                                </NavLink>
-                            </li>
                         </DropdownMenu> 
                     }
                 </div>
@@ -99,11 +93,6 @@ export default function StudentAside({height}) {
                         <li>
                             <NavLink to="/courses/prerequisites" className={({ isActive }) => linkCls(isActive)}>
                                 <span className="text-base font-semibold whitespace-nowrap">{t('coursePrerequisites')}</span>
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/courses/remarking-request" className={({ isActive }) => linkCls(isActive)}>
-                                <span className="text-base font-semibold whitespace-nowrap">{t('courseRemarkingRequest')}</span>
                             </NavLink>
                         </li>
                     </menu>

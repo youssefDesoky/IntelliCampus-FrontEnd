@@ -47,7 +47,7 @@ export default function StudyTimer({className, timerDuration = 60}) {
     };
 
     return (
-        <Section className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col justify-between ${className}`}>
+        <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col justify-between ${className}`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold">Study Timer</h2>
             <button>
@@ -110,6 +110,6 @@ export default function StudyTimer({className, timerDuration = 60}) {
               {isRunning ? 'Pause' : 'Start'}
             </Button>
           </div>
-        </Section>
+        </div>
     );
 }

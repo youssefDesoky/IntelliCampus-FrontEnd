@@ -3,6 +3,7 @@ import Section from "../../../../components/ui/Section";
 import BoxData from "../../../../components/ui/BoxData";
 import SelectBox from "../../../../components/ui/SelectBox";
 import Table from "../../../../components/ui/Table";
+import DateInput from "../../../../components/form/DateInput";
 
 const students = [
     { id: "2021-CS-001", name: "Alice Johnson", email: "alice.johnson@example.com", status: "Present", present: 23, absent: 2, image: "/images/alice.jpg" },
@@ -80,8 +81,7 @@ export default function Attendance() {
                     />
                 </div>
                 <div className="flex-1">
-                    <label htmlFor="date" className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-2">Select Date</label>
-                    <input type="date" id="date" defaultValue="2024-01-15" className="w-full px-4 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-border-accent-default-light dark:focus:ring-border-accent-default-dark" />
+                    <DateInput label="Select Date" name="date" defaultValue="2024-01-15" />
                 </div>
                 <button className="bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark hover:bg-bg-surface-accent-hover-light dark:hover:bg-bg-surface-accent-hover-dark text-text-accent-active-light dark:text-text-accent-active-dark px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="w-4 h-4 fill-icon-accent-active-light dark:fill-icon-accent-active-dark">

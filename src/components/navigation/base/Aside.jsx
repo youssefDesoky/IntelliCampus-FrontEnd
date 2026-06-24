@@ -1,13 +1,17 @@
-import { Form, NavLink } from "react-router-dom";
+import { Form, NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useSidebar from "../../../hooks/useSidebar";
 import { SidebarIcon, SignOutIcon } from "../../ui/icons";
 
 const pageNameStyle = "text-base font-semibold whitespace-nowrap";
 
+const isPathActive = (to, pathname) =>
+    to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(to + "/");
+
 export default function Aside({ height, links=[], children }) {
     const { t } = useTranslation('common/aside');
     const { width, isCompact, toggleSidebar, linkCls } = useSidebar();
+    const { pathname } = useLocation();
 
     if (!links) {
         return <p>No Links Provided</p>
@@ -53,8 +57,8 @@ export default function Aside({ height, links=[], children }) {
                         <NavLink 
                             key={index}
                             to={to} 
-                            end 
-                            className={({ isActive }) => linkCls(isActive)}
+                            end={to === "/"}
+                            className={({ isActive }) => linkCls(isActive || isPathActive(to, pathname))}
                         >
                             {Icon && <Icon className="w-5 h-5 shrink-0" />}
                             {!isCompact && <span className={pageNameStyle}>{label}</span>}

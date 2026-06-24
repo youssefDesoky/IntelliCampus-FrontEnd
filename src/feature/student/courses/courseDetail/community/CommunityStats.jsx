@@ -1,23 +1,27 @@
-import Section from "../../../../../components/ui/Section";
+export default function CommunityStats({ posts = [], className = "" }) {
+    const totalPosts = posts.length;
+    const totalComments = posts.reduce((sum, p) => sum + (p.comments?.length || 0), 0);
+    const totalUpvotes = posts.reduce((sum, p) => sum + (p.upvoteCount || 0), 0);
 
-export default function CommunityStats() {
     return (
-        <Section className="p-4 border bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark rounded-md">
-            <h2 className="mb-4 text-lg font-bold">Community Stats</h2>
-            <div className="flex flex-col gap-3">
+        <div className={`p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark ${className}`}>
+            <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-3">
+                Community Stats
+            </h3>
+            <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                    <p>Total Members</p>
-                    <span>256</span>
+                    <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Questions</span>
+                    <span className="font-medium">{totalPosts}</span>
                 </div>
                 <div className="flex justify-between">
-                    <p>Total Posts</p>
-                    <span>1,024</span>
+                    <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Comments</span>
+                    <span className="font-medium">{totalComments}</span>
                 </div>
                 <div className="flex justify-between">
-                    <p>Active Now</p>
-                    <span>32</span>
+                    <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Upvotes</span>
+                    <span className="font-medium">{totalUpvotes}</span>
                 </div>
             </div>
-        </Section>
+        </div>
     );
 }

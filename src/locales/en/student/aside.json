@@ -1,12 +1,13 @@
 {
     "dashboard": "Dashboard",
+    "inbox": "Inbox",
     "reminders": "Reminders",
     "courses": "Courses",
     "allCourses": "My Courses",
     "courseRegistration": "Registration",
     "coursePrerequisites": "Prerequisites",
-    "courseRemarkingRequest": "Remarking Request",
     "community": "Community",
     "smartNotes": "Smart Notes",
-    "schedule" : "Schedule"
+    "schedule" : "Schedule",
+    "specializationPreference": "Specialization Preference"
 }

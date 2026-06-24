@@ -29,14 +29,15 @@ export default function DropdownMenu({children, className = '', direction = 'bot
 
     const directionClass = portal ? '' : (directionMap[direction] || directionMap['bottom']);
     const positionClass = portal ? '' : (positionMap[position] || positionMap['start']);
-    const arrowDirectionClass = arrowDirectionMap[direction] || arrowDirectionMap['bottom'];
-    const arrowPositionClass = (direction === 'top' || direction === 'bottom') ? (arrowPositionMap[position] || arrowPositionMap['start']) : '';
+    const arrowDirectionClass = portal ? '' : (arrowDirectionMap[direction] || arrowDirectionMap['bottom']);
+    const arrowPositionClass = portal ? '' : ((direction === 'top' || direction === 'bottom') ? (arrowPositionMap[position] || arrowPositionMap['start']) : '');
+    const arrowContent = portal ? '' : "after:content-[''] after:border-8 after:absolute";
 
     const positionType = portal ? 'fixed' : 'absolute';
 
     const menu = (
         <menu 
-            className={`${positionType} after:content-[''] after:border-8 after:absolute bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-hover-light dark:border-border-primary-hover-dark rounded-lg shadow-lg p-3 flex flex-col gap-2 min-w-50 z-9999 ${directionClass} ${positionClass} ${arrowDirectionClass} ${arrowPositionClass} ${className}`}
+            className={`${positionType} ${arrowContent} bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-hover-light dark:border-border-primary-hover-dark rounded-lg shadow-lg p-3 flex flex-col gap-2 min-w-50 z-[9999] ${directionClass} ${positionClass} ${arrowDirectionClass} ${arrowPositionClass} ${className}`}
             style={style}
             {...props}
         >

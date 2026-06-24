@@ -1,67 +1,132 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 
 import useDeviceType from "../../../hooks/useDeviceType";
+import { API_URL } from "../../../config/api";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 import SmartNotesBody from "../../../feature/student/smartNotes/SmartNotesBody";
-import SmartNotesHeader from "../../../feature/student/smartNotes/SmartNotesHeader";
+import { fromBackendLinkedLecture } from "../../../feature/student/smartNotes/notesApi";
 
 
 export default function SmartNotes() {
     const {isPhone, isTablet} = useDeviceType();
+    const authUser = useRouteLoaderData("root");
+    const outletCtx = useOutletContext();
     const [viewMode, setViewMode] = useState(
         localStorage.getItem('notesViewMode') === 'grid-3' ? 'grid-3' : 'grid-2'
     );
+
+    const [notes, setNotes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { showError } = useError();
+
+    const studentId = authUser?.roles?.some(r => r.toLowerCase().startsWith("student")) ? authUser?.userId : null;
+    const currentCourseId = outletCtx?.courseId || null;
+
+    function handleDeleteNote(deletedNoteId) {
+        setNotes((prevNotes) => prevNotes.filter((item) => String(item.id) !== String(deletedNoteId)));
+    }
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadNotes() {
+            if (!studentId) {
+                if (!cancelled) {
+                    setNotes([]);
+                    setLoading(false);
+                }
+                return;
+            }
+
+            try {
+                setLoading(true);
+
+                const res = await fetch(`${API_URL}/api/students/${studentId}`, {
+                    credentials: "include",
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Failed to load student notes (${res.status})`);
+                }
+
+                const student = await res.json();
+                const courses = currentCourseId
+                    ? (student?.courses || []).filter((course) => String(course?.id) === String(currentCourseId))
+                    : (student?.courses || []);
+
+                const mappedNotes = courses.flatMap((course) =>
+                    (course?.notes || []).map((note) => ({
+                        ...note,
+                        course: course?.title || course?.courseName || "",
+                        linkedLecture: fromBackendLinkedLecture(note?.linkedLecture),
+                    }))
+                );
+
+                if (!cancelled) {
+                    setNotes(mappedNotes);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    showError(err?.message || "Failed to load notes");
+                    setNotes([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        }
+
+        loadNotes();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [studentId, currentCourseId, showError]);
+
+    const sortedNotes = useMemo(() => {
+        return [...notes].sort((a, b) => {
+            const firstDate = Date.parse(a?.modified || a?.creationDate || "") || 0;
+            const secondDate = Date.parse(b?.modified || b?.creationDate || "") || 0;
+            return secondDate - firstDate;
+        });
+    }, [notes]);
+
+    function handleSaveNote(savedNote) {
+        if (!savedNote) return;
+
+        setNotes((prevNotes) => {
+            const existingIndex = prevNotes.findIndex((item) => String(item.id) === String(savedNote.id));
+
+            if (existingIndex !== -1) {
+                return prevNotes.map((item, idx) => (idx === existingIndex ? savedNote : item));
+            }
+
+            return [savedNote, ...prevNotes];
+        });
+    }
+
+    if (loading) {
+        return (
+            <div className="flex justify-center py-12">
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading notes...</p>
+            </div>
+        );
+    }
+
     return (
-        <>
-            <SmartNotesHeader notes={notes} isPhone={isPhone} isTablet={isTablet} viewMode={viewMode} setViewMode={setViewMode} />
-            
-            <SmartNotesBody notes={notes} isPhone={isPhone} isTablet={isTablet} viewMode={viewMode} />
-        </>
+        <SmartNotesBody
+            notes={sortedNotes}
+            isPhone={isPhone}
+            isTablet={isTablet}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            onSaveNote={handleSaveNote}
+            onDeleteNote={handleDeleteNote}
+            studentId={studentId}
+            courseId={currentCourseId}
+        />
     );
 }
-
-
-const notes = [
-    {
-        id: 1,
-        title: "Note 1",
-        content: "This is the content of note 1.",
-        course: "Course A",
-        date: "2024-06-01"
-    },
-    {
-        id: 2,
-        title: "Note 2",
-        content: "This is the content of note 2.",
-        course: "Course B",
-        date: "2024-06-02"
-    },
-    {
-        id: 3,
-        title: "Note 3",
-        content: "This is the content of note 3.",
-        course: "Course C",
-        date: "2024-06-03"
-    },
-    {
-        id: 4,
-        title: "Note 4",
-        content: "This is the content of note 4.",
-        course: "Course D",
-        date: "2024-06-04"
-    },
-    {
-        id: 5,
-        title: "Note 5",
-        content: "This is the content of note 5.",
-        course: "Course E",
-        date: "2024-06-05"
-    },
-    {
-        id: 6,
-        title: "Note 6",
-        content: "This is the content of note 6.",
-        course: "Course F",
-        date: "2024-06-06"
-    }
-]

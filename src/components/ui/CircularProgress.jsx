@@ -51,13 +51,16 @@ export default function CircularProgress({
             </svg>
 
             <div className={`absolute inset-0 flex items-center justify-center ${textColor}`}>
-                <span 
-                    className="font-bold" 
-                    style={{ fontSize: size * 0.25 }}
-                >
-                    {Math.round(normalizedProgress)}%
-                </span>
-                {children}
+                {children ? (
+                    children
+                ) : (
+                    <span 
+                        className="font-bold" 
+                        style={{ fontSize: size * 0.25 }}
+                    >
+                        {Math.round(normalizedProgress)}%
+                    </span>
+                )}
             </div>
         </div>
     );

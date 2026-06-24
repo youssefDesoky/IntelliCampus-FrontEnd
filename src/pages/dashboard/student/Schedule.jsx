@@ -1,152 +1,233 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import useDeviceType from "../../../hooks/useDeviceType";
 
-import WeeklySchedule from "../../../components/ui/WeeklySchedule";
+import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
+import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
 import ExamSchedule from "../../../feature/student/schedule/ExamSchedule";
+import ModelOverlay from "../../../components/ui/ModelOverlay";
+import { fetchMySchedule, exportSchedulePdf } from "../../../feature/student/schedule/scheduleApi";
+import { fetchMyExams, exportExamSchedulePdf } from "../../../feature/student/schedule/examScheduleApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
-const sampleSchedule = [
-    {
-        id: 1,
-        title: "Data Structures",
-        day: "sat",
-        startTime: "8:00 AM",
-        endTime: "10:00 AM",
-        type: "lecture",
-        location: "Room 101",
-        instructor: "Dr. Ahmed"
-    },
-    {
-        id: 2,
-        title: "Database Lab",
-        day: "sat",
-        startTime: "11:00 AM",
-        endTime: "1:00 PM",
-        type: "lab",
-        location: "Lab 3",
-        instructor: "Eng. Sara"
-    },
-    {
-        id: 3,
-        title: "Web Development",
-        day: "sun",
-        startTime: "9:00 AM",
-        endTime: "11:00 AM",
-        type: "lecture",
-        location: "Room 205",
-        instructor: "Dr. Mohamed"
-    },
-    {
-        id: 4,
-        title: "Algorithms Section",
-        day: "mon",
-        startTime: "2:00 PM",
-        endTime: "4:00 PM",
-        type: "section",
-        location: "Room 102",
-        instructor: "TA Fatma"
-    },
-    {
-        id: 5,
-        title: "Midterm Exam",
-        day: "wed",
-        startTime: "10:00 AM",
-        endTime: "12:00 PM",
-        type: "exam",
-        location: "Hall A"
-    },
-    {
-        id: 6,
-        title: "Office Hours",
-        day: "thu",
-        startTime: "1:00 PM",
-        endTime: "2:15 PM",
-        type: "office",
-        location: "Office 15",
-        instructor: "Dr. Ahmed"
-    },
-];
-
-const sampleExams = [
-    {
-        id: 1,
-        courseCode: "CS301",
-        courseName: "Data Structures & Algorithms",
-        date: "2026-02-06",
-        day: "Tuesday",
-        startTime: "9:00 AM",
-        endTime: "11:00 AM",
-        duration: "2 hours",
-        location: "Hall A - Building 3",
-        type: "midterm",
-        status: "upcoming",
-    },
-    {
-        id: 2,
-        courseCode: "CS305",
-        courseName: "Database Systems",
-        date: "2026-02-12",
-        day: "Thursday",
-        startTime: "1:00 PM",
-        endTime: "3:00 PM",
-        duration: "2 hours",
-        location: "Hall B - Building 2",
-        type: "midterm",
-        status: "upcoming",
-    },
-    {
-        id: 3,
-        courseCode: "CS310",
-        courseName: "Web Development",
-        date: "2026-02-15",
-        day: "Sunday",
-        startTime: "10:00 AM",
-        endTime: "12:00 PM",
-        duration: "2 hours",
-        location: "Lab 5 - Building 1",
-        type: "final",
-        status: "upcoming",
-    },
-    {
-        id: 4,
-        courseCode: "MATH201",
-        courseName: "Linear Algebra",
-        date: "2026-02-18",
-        day: "Wednesday",
-        startTime: "9:00 AM",
-        endTime: "11:30 AM",
-        duration: "2.5 hours",
-        location: "Hall C - Building 3",
-        type: "midterm",
-        status: "upcoming",
-    },
-    {
-        id: 5,
-        courseCode: "CS320",
-        courseName: "Operating Systems",
-        date: "2026-02-20",
-        day: "Friday",
-        startTime: "2:00 PM",
-        endTime: "4:00 PM",
-        duration: "2 hours",
-        location: "Hall A - Building 3",
-        type: "midterm",
-        status: "upcoming",
-    },
-];
+const scheduleStorageKey = "studentCurrSchedule";
+const allowedTypeFilters = ["lecture", "section", "activity"];
 
 export default function Schedule() {
-    const [currSchedule, setCurrSchedule] = useState(localStorage.getItem("currSchedule") || "weekly");
-    const { isPhone } = useDeviceType();
+    const [currSchedule, setCurrSchedule] = useState(localStorage.getItem(scheduleStorageKey) || "weekly");
+    const [selectedTypes, setSelectedTypes] = useState([]);
+    const [scheduleData, setScheduleData] = useState([]);
+    const [examsData, setExamsData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const { isMobile } = useDeviceType();
+    const { showError } = useError();
+
+    const loadScheduleData = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const [schedule, exams] = await Promise.all([
+                fetchMySchedule(),
+                fetchMyExams(),
+            ]);
+            setScheduleData(Array.isArray(schedule) ? schedule : []);
+            setExamsData(Array.isArray(exams) ? exams : []);
+        } catch {
+            setScheduleData([]);
+            setExamsData([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadScheduleData();
+    }, [loadScheduleData]);
+
+    const getTypeGroup = (eventType) => {
+        if (eventType === "lecture") return "lecture";
+        if (eventType === "section") return "section";
+        return "activity";
+    };
+
+    const toggleTypeFilter = (type) => {
+        if (!allowedTypeFilters.includes(type)) return;
+
+        setSelectedTypes((prev) => {
+            if (prev.includes(type)) {
+                return prev.filter((item) => item !== type);
+            }
+
+            return [...prev, type];
+        });
+    };
+
+    const clearTypeFilters = () => setSelectedTypes([]);
+
+    const handleExport = async () => {
+        try {
+            if (currSchedule === "weekly") {
+                await exportSchedulePdf(selectedTypes);
+            } else {
+                await exportExamSchedulePdf();
+            }
+        } catch {
+            showError("Failed to export PDF. Please try again.");
+        }
+    };
+
+    const filteredSchedule = selectedTypes.length === 0
+        ? scheduleData
+        : scheduleData.filter((event) => selectedTypes.includes(getTypeGroup(event.type)));
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <p className="text-gray-600">Loading schedule...</p>
+            </div>
+        );
+    }
+
     return (
         <>        
-            <ScheduleHeader currSchedule={currSchedule} setCurrSchedule={setCurrSchedule} isPhone={isPhone} />
+            <ScheduleHeader
+                currSchedule={currSchedule}
+                setCurrSchedule={setCurrSchedule}
+                isMobile={isMobile}
+                selectedTypes={selectedTypes}
+                onToggleType={toggleTypeFilter}
+                onClearTypes={clearTypeFilters}
+                onExport={handleExport}
+            />
 
             {currSchedule === "weekly" ? (
-                <WeeklySchedule schedule={sampleSchedule} onEventClick={(event) => alert(`Clicked on event: ${event.title}`)} />
+                isMobile ? (
+                    <WeeklyScheduleAgenda
+                        days={days}
+                        schedule={filteredSchedule}
+                        variant="default"
+                        onEventClick={setSelectedEvent}
+                    />
+                ) : (
+                    <WeeklySchedule
+                        schedule={filteredSchedule}
+                        onEventClick={setSelectedEvent}
+                    />
+                )
             ) : (
-                <ExamSchedule exams={sampleExams} />
+                <ExamSchedule exams={examsData} />
+            )}
+
+            {selectedEvent && (
+                <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
             )}
         </>
+    );
+}
+
+function EventDetailModal({ event, onClose }) {
+    const type = event.type?.toLowerCase();
+    const accentGradient = type === "lecture"
+        ? "bg-linear-to-r from-bg-fill-accent-default-light to-text-blue-accent-light"
+        : type === "section"
+        ? "bg-linear-to-r from-text-purple-accent-light to-border-purple-default-dark"
+        : "bg-linear-to-r from-text-primary-default-light to-icon-primary-default-light";
+
+    const bgColorClass = type === "lecture"
+        ? "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark text-text-blue-accent-light dark:text-text-blue-accent-dark"
+        : type === "section"
+        ? "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark text-text-purple-accent-light dark:text-text-purple-accent-dark"
+        : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark";
+
+    const badgeClass = type === "lecture"
+        ? "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark text-text-blue-accent-light dark:text-text-blue-accent-dark"
+        : type === "section"
+        ? "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark text-text-purple-accent-light dark:text-text-purple-accent-dark"
+        : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark";
+
+    const dayName = days.find(d => d.key === event.day)?.label || event.day || "";
+
+    return (
+        <ModelOverlay onClose={onClose}>
+            <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-2xl shadow-2xl max-w-md w-full mx-auto overflow-hidden">
+                <div className={`h-2 ${accentGradient}`} />
+
+                <div className="p-6">
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 flex items-center justify-center rounded-xl ${bgColorClass}`}>
+                                <span className="text-2xl font-bold uppercase">
+                                    {event.title?.[0] || "?"}
+                                </span>
+                            </div>
+                            <div>
+                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeClass}`}>
+                                    {(event.type || "class").toUpperCase()}
+                                </span>
+                                <h3 className="text-xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark mt-1">
+                                    {event.title}
+                                </h3>
+                            </div>
+                        </div>
+                        <button
+                            className="p-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg transition"
+                            onClick={onClose}
+                            aria-label="Close"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div className="mb-6 p-4 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg">
+                                <svg className="w-5 h-5 text-icon-accent-default-light dark:text-icon-accent-default-dark" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">Date & Time</p>
+                                <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">
+                                    {dayName} &bull; {event.startTime} - {event.endTime}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 mb-6">
+                        {event.location && (
+                            <div className="flex items-center gap-3 p-3 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg transition">
+                                <div className="p-2 bg-bg-surface-success-disabled-light dark:bg-bg-surface-success-default-dark text-text-success-default-light dark:text-text-success-default-dark rounded-lg">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">Location</p>
+                                    <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">{event.location}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {event.instructor && (
+                            <div className="flex items-center gap-3 p-3 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg transition">
+                                <div className="p-2 bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark text-text-purple-accent-light dark:text-text-purple-accent-dark rounded-lg">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">Instructor</p>
+                                    <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">{event.instructor}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </ModelOverlay>
     );
 }

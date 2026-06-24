@@ -1,112 +1,291 @@
+import { useRef, useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-
-import ProgressBox from "../../../../ui/ProgressBox";
-import Section from "../../../../ui/Section";
-import CircularProgress from "../../../../ui/CircularProgress";
-import Button from "../../../../ui/Button";
-import CourseLayout from "../../../../../layout/course/CourseLayout";
-
+import Section from "../../../../../components/ui/Section";
+import Button from "../../../../../components/ui/Button";
+import TextArea from "../../../../../components/ui/TextArea";
+import BaseFormComponent from "../../../../../components/ui/BaseFormComponent";
+import { CheckIcon, DownloadIcon, XIcon, CloudUploadIcon, FileLinesIcon, FileIcon, TrashIcon, PaperclipIcon, CalendarDaysIcon } from "../../../../../components/ui/icons";
+import Table from "../../../../../components/ui/Table";
+import AttendanceOverall from "./AttendanceOverall";
+import AttendanceBreakdown from "./AttendanceBreakdown";
+import AttendanceExcuseCard from "./AttendanceExcuseCard";
+import { API_URL } from "../../../../../config/api";
+import { useError } from "../../../../../contexts/ErrorContext.jsx";
 
 export default function CourseAttendance() {
-    const { course } = useOutletContext();
-    const studentAttendance = course.attendance;
-    
+    const fileInputRef = useRef(null);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [reason, setReason] = useState("");
+    const [selectedSessionId, setSelectedSessionId] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [attendanceData, setAttendanceData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const { course, courseId } = useOutletContext();
+    const { showError } = useError();
+
+    useEffect(() => {
+        if (!courseId) return;
+        let cancelled = false;
+
+        async function loadAttendance() {
+            try {
+                setLoading(true);
+                const res = await fetch(`${API_URL}/api/attendance/my-attendance/course/${courseId}`, {
+                    credentials: "include",
+                });
+                if (!res.ok) throw new Error(`Failed to load attendance (${res.status})`);
+                const data = await res.json();
+                if (!cancelled) setAttendanceData(data);
+            } catch (err) {
+                if (!cancelled) showError(err.message);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        }
+
+        loadAttendance();
+        return () => { cancelled = true; };
+    }, [courseId]);
+
+    const openForm = () => setIsFormOpen(true);
+
+    const closeForm = () => {
+        setIsFormOpen(false);
+        setSelectedFile(null);
+        setReason("");
+        setSelectedSessionId("");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleFileChange = (event) => {
+        setSelectedFile(event.target.files?.[0] || null);
+    };
+
+    const handleSubmit = async () => {
+        if (!reason.trim() || !selectedFile || !selectedSessionId) return;
+
+        setSubmitting(true);
+        try {
+            const formData = new FormData();
+            formData.append("SessionId", selectedSessionId);
+            formData.append("Reason", reason);
+            formData.append("Document", selectedFile);
+
+            const res = await fetch(`${API_URL}/api/courses/${courseId}/attendance/excuse`, {
+                method: "POST",
+                credentials: "include",
+                body: formData,
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `Failed to submit excuse (${res.status})`);
+            }
+
+            closeForm();
+        } catch (err) {
+            showError(err.message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleExport = () => {
+        if (!attendanceData?.history || attendanceData.history.length === 0) {
+            showError("No attendance data to export.");
+            return;
+        }
+
+        const headers = ["Date", "Time", "Type", "Status"];
+        const rows = attendanceData.history.map((session) => [
+            session.date || "",
+            session.time || "",
+            session.type || "",
+            session.status || "",
+        ]);
+
+        let csv = headers.join(",") + "\n";
+        rows.forEach((row) => {
+            csv += row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",") + "\n";
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Attendance_${course?.title || courseId}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading attendance...</p>
+            </div>
+        );
+    }
+
+    if (!attendanceData) {
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+                    No attendance data available
+                </h3>
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
+                    Attendance records for this course are not available yet.
+                </p>
+            </div>
+        );
+    }
+
+    const { summary, breakdown, history } = attendanceData;
+
     return (
-        <CourseLayout>
-            <Section>
-                <div>
-                    <h2>OVERALL ATTENDANCE</h2>
-                    <div>
-                        <CircularProgress value={studentAttendance} size={120} />
-                        <p>
-                            {studentAttendance > 75 ? 
-                            "Excellent attendance record! Keep it up." : 
-                            studentAttendance > 50 ? "Good attendance, but there's room for improvement." :
-                            "Attendance needs improvement. Please try to attend more sessions."}
-                        </p>
-                    </div>
-                </div>
-
-                <div>
-                    <h2>BREAKDOWN</h2>
-                    <div>
-                        <ProgressBox progress={25} backgroundColor={'bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark'}>
-                            <div>
-                                <p>Overall Sessions</p>
-                            </div>
-                            <span>{25}</span>
-                        </ProgressBox>
-
-                        <ProgressBox progress={studentAttendance} backgroundColor={'bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark'}>
-                            <div>
-                                <p>Present</p>
-                            </div>
-                            <span>{studentAttendance}</span>
-                        </ProgressBox>
-
-                        <ProgressBox progress={2} backgroundColor={'bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark'}>
-                            <div>
-                                <p>Absent</p>
-                            </div>
-                            <span>{2}</span>
-                        </ProgressBox>
-                    </div>    
-                </div>
-
-                <div>
-                    <h2>ATTENDANCE EXCUSES</h2>
-                    <div>
-                        <Button>
-                            Request Attendance Excuse
-                        </Button>
-                    </div>
+        <>
+            <Section className="mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <AttendanceOverall attendance={summary} onRequestExcuse={openForm} />
+                    <AttendanceBreakdown breakdown={breakdown} />
+                    <AttendanceExcuseCard />
                 </div>
             </Section>
 
             <Section>
-                <div>
-                    <div>
-                        <h3></h3>
-                        <p></p>
+                <Table
+                    title="Attendance History"
+                    description="Complete record of your class attendance"
+                    componentButton={<Button variant="secondary" onClick={handleExport} startIcon={<DownloadIcon size={18} />}>Export</Button>}
+                    headers={["Date", "Time", "Type", "Status"]}
+                    data={(history || []).map((session) => ({
+                        date: <span className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">{session.date}</span>,
+                        time: <span className="text-sm text-text-secondary-light dark:text-text-secondary-dark">{session.time}</span>,
+                        type: (
+                            <span className="inline-flex items-center rounded bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-2 py-0.5 text-xs font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                                {session.type}
+                            </span>
+                        ),
+                        status: session.status === "Present" ? (
+                            <span className="inline-flex items-center justify-center rounded-full bg-bg-surface-success-default-light dark:bg-bg-surface-success-default-dark p-1.5">
+                                <CheckIcon size={14} className="text-text-success-active-light dark:text-text-success-active-dark" />
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center justify-center rounded-full bg-bg-surface-danger-default-light dark:bg-bg-surface-danger-default-dark p-1.5">
+                                <XIcon size={14} className="text-text-danger-active-light dark:text-text-danger-active-dark" />
+                            </span>
+                        ),
+                    }))}
+                    wrapInSection={false}
+                    showHeaderActions={false}
+                    showPagination={true}
+                    displayRowLimit={10}
+                    showSelectionColumn={false}
+                    showActionsColumn={false}
+                    grouped={true}
+                />
+            </Section>
+
+            <BaseFormComponent
+                isOpen={isFormOpen}
+                title="Request an excuse"
+                description="Add a supporting file and explain the reason for your absence or delay."
+                onClose={closeForm}
+                onSubmit={handleSubmit}
+                submitText={submitting ? "Submitting..." : "Submit Request"}
+                cancelText="Cancel"
+                submitDisabled={submitting}
+                maxWidth="max-w-xl"
+                contentClassName="space-y-6"
+            >
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="block">
+                            <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
+                                <CalendarDaysIcon size={16} className="text-text-secondary-light dark:text-text-secondary-dark" />
+                                Select session
+                            </span>
+                            <select
+                                value={selectedSessionId}
+                                onChange={(e) => setSelectedSessionId(e.target.value)}
+                                className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+                            >
+                                <option value="">Choose a session...</option>
+                                {(attendanceData?.history || []).map((session) => (
+                                    <option key={session.sessionId || session.id} value={session.sessionId || session.id}>
+                                        {session.date} — {session.time} ({session.type})
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
                     </div>
-                    <div>
 
-                    </div>
-                </div>
+                    <label className="block">
+                        <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
+                            <FileLinesIcon size={16} className="text-text-secondary-light dark:text-text-secondary-dark" />
+                            Reason for excuse
+                        </span>
+                        <TextArea
+                            value={reason}
+                            onChange={(event) => setReason(event.target.value)}
+                            placeholder="Explain why you missed the session and any relevant details..."
+                            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-all placeholder:text-text-secondary-light focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-dark"
+                        />
+                    </label>
 
-                <div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Session Topic</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <div>
+                    <div className="block">
+                        <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
+                            <PaperclipIcon size={16} className="text-text-secondary-light dark:text-text-secondary-dark" />
+                            Supporting document
+                        </span>
 
+                        {!selectedFile ? (
+                            <label className="group flex flex-col items-center justify-center w-full min-h-36 rounded-2xl border-2 border-dashed border-border-primary-default-light bg-bg-surface-secondary-default-light hover:bg-bg-surface-primary-hover-light hover:border-border-accent-default-light transition-all dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:hover:bg-bg-surface-primary-hover-dark">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-bg-fill-secondary-default-light group-hover:scale-110 transition-transform duration-200 dark:bg-bg-fill-secondary-default-dark mb-3">
+                                    <CloudUploadIcon size={24} className="text-text-secondary-light dark:text-text-secondary-dark" />
+                                </div>
+                                <p className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">
+                                    Click to upload or drag and drop
+                                </p>
+                                <p className="mt-1 text-xs text-text-secondary-light dark:text-text-secondary-dark text-center">
+                                    PDF, PNG, JPG, or DOC (max. 10MB)
+                                </p>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                                    onChange={handleFileChange}
+                                />
+                            </label>
+                        ) : (
+                            <div className="flex items-center justify-between p-4 rounded-2xl border border-border-primary-default-light bg-bg-surface-primary-default-light shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
+                                <div className="flex items-center gap-4 min-w-0">
+                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-bg-surface-accent-default-light text-text-accent-active-light dark:bg-bg-surface-accent-default-dark dark:text-text-accent-active-dark">
+                                        <FileIcon size={24} />
                                     </div>
-                                </td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div>
-                    <p></p>
-
-                    <div>
-
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold truncate text-text-primary-light dark:text-text-primary-dark">{selectedFile.name}</p>
+                                        <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-0.5">
+                                            {selectedFile.size ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    onClick={() => setSelectedFile(null)}
+                                    className="shrink-0 text-text-danger-default-light hover:bg-bg-surface-danger-default-light dark:text-text-danger-default-dark dark:hover:bg-bg-surface-danger-default-dark"
+                                >
+                                    <TrashIcon size={18} />
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </Section>
-        </CourseLayout>
+            </BaseFormComponent>
+        </>
     );
 }

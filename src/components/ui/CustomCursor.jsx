@@ -10,6 +10,9 @@ export default function CustomCursor() {
     useEffect(() => {
         if (!hasMouse) return;
 
+        new Image().src = defaultSrc;
+        new Image().src = inputFallback;
+
         const moveCursor = (e) => {
             if (!cursorRef.current) return;
             cursorRef.current.style.transform = `translate3d(${e.clientX - 16}px, ${e.clientY - 16}px, 0)`;
@@ -24,6 +27,10 @@ export default function CustomCursor() {
         const showCursor = () => {
             if (!cursorRef.current) return;
             cursorRef.current.style.opacity = "1";
+            document.documentElement.style.cursor = "none";
+            requestAnimationFrame(() => {
+                document.documentElement.style.cursor = "";
+            });
         };
 
         const handleDocMouseOut = (e) => {
@@ -32,73 +39,54 @@ export default function CustomCursor() {
 
         window.addEventListener("mousemove", moveCursor);
         document.addEventListener("mouseout", handleDocMouseOut);
-        window.addEventListener("blur", hideCursor);
-        window.addEventListener("focus", showCursor);
+        const handleVisibility = () => {
+            if (document.hidden) hideCursor();
+            else showCursor();
+        };
+        document.addEventListener("visibilitychange", handleVisibility);
         window.addEventListener("mouseenter", showCursor);
+        window.addEventListener("focus", showCursor);
 
         return () => {
             window.removeEventListener("mousemove", moveCursor);
             document.removeEventListener("mouseout", handleDocMouseOut);
-            window.removeEventListener("blur", hideCursor);
-            window.removeEventListener("focus", showCursor);
+            document.removeEventListener("visibilitychange", handleVisibility);
             window.removeEventListener("mouseenter", showCursor);
+            window.removeEventListener("focus", showCursor);
         };
-    }, [hasMouse]);
+    }, [hasMouse, defaultSrc, inputFallback]);
 
     useEffect(() => {
         if (!hasMouse) return;
 
-        const enterClickable = () => {
-            return () => {
+        const inputSelector = "input:not([type='checkbox']):not([type='radio']), textarea, select, [data-cursor='input']";
+        const clickableSelector = "button, a, label, input[type='checkbox'], input[type='radio'], [data-cursor='clickable']";
+
+        const handleMouseOver = (e) => {
             if (!cursorRef.current || !imgRef.current) return;
-            cursorRef.current.classList.add("clickable");
-            imgRef.current.style.transform = "rotateY(0deg) rotateZ(-45deg)";
-            };
+            const target = e.target;
+
+            const input = target.closest(inputSelector);
+            if (input) {
+                const src = input.getAttribute("data-cursor-src") || inputFallback;
+                imgRef.current.src = src;
+                imgRef.current.style.transform = "";
+                cursorRef.current.classList.remove("clickable");
+            } else if (target.closest(clickableSelector)) {
+                imgRef.current.src = defaultSrc;
+                imgRef.current.style.transform = "rotateY(0deg) rotateZ(-45deg)";
+                cursorRef.current.classList.add("clickable");
+            } else {
+                imgRef.current.src = defaultSrc;
+                imgRef.current.style.transform = "rotateY(180deg)";
+                cursorRef.current.classList.remove("clickable");
+            }
         };
 
-        const leaveClickable = () => {
-            if (!cursorRef.current || !imgRef.current) return;
-            cursorRef.current.classList.remove("clickable");
-            imgRef.current.style.transform = "rotateY(180deg)";
-        };
-
-        const clickEls = Array.from(document.querySelectorAll("button, a, label, [data-cursor='clickable']"));
-        clickEls.forEach((el) => {
-            el.addEventListener("mouseenter", enterClickable(el));
-            el.addEventListener("mouseleave", leaveClickable);
-        });
-
-        const inputSelector = "input, textarea, select, [data-cursor='input']";
-        const inputEls = Array.from(document.querySelectorAll(inputSelector));
-        const enterInputHandlers = new Map();
-
-        inputEls.forEach((el) => {
-            const src = el.getAttribute("data-cursor-src") || inputFallback;
-            const onEnter = () => {
-            if (!imgRef.current) return;
-            imgRef.current.src = src;
-            };
-            const onLeave = () => {
-            if (!imgRef.current) return;
-            imgRef.current.src = defaultSrc;
-            };
-            enterInputHandlers.set(el, { onEnter, onLeave });
-            el.addEventListener("mouseenter", onEnter);
-            el.addEventListener("mouseleave", onLeave);
-        });
+        document.addEventListener("mouseover", handleMouseOver);
 
         return () => {
-            clickEls.forEach((el) => {
-            el.removeEventListener("mouseenter", enterClickable(el));
-            el.removeEventListener("mouseleave", leaveClickable);
-            });
-            inputEls.forEach((el) => {
-            const handlers = enterInputHandlers.get(el);
-            if (handlers) {
-                el.removeEventListener("mouseenter", handlers.onEnter);
-                el.removeEventListener("mouseleave", handlers.onLeave);
-            }
-            });
+            document.removeEventListener("mouseover", handleMouseOver);
         };
     }, [hasMouse, defaultSrc, inputFallback]);
 
@@ -107,7 +95,7 @@ export default function CustomCursor() {
     return (
         <div
             ref={cursorRef}
-            className="custom-cursor fixed top-0 left-0 w-10 h-10 pointer-events-none z-9999 transition-opacity duration-200"
+            className="custom-cursor fixed top-0 left-0 w-10 h-10 pointer-events-none z-[99999] transition-opacity duration-200"
             style={{ opacity: 1 }}
         >
             <img

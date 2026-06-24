@@ -1,87 +1,109 @@
-import AcademicInfo from "../../../feature/student/profile/AcademicInfo";
-import Interests from "../../../feature/student/profile/Interests";
-import ProfileOverview from "../../../feature/student/profile/ProfileOverview";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRouteLoaderData } from "react-router-dom";
+import IdentityCard from "../../../feature/student/profile/IdentityCard";
+import AccountControlsCard from "../../../feature/student/profile/AccountControlsCard";
+import AcademicInfoCard from "../../../feature/student/profile/AcademicInfoCard";
+import PerformanceCard from "../../../feature/student/profile/PerformanceCard";
+import { fetchStudentProfile } from "../../../api/studentProfile";
+import { useError } from "../../../contexts/ErrorContext";
 
-import AttendanceQRCode from "../../../feature/student/profile/AttendanceQRCode";
-import QuickStats from "../../../feature/student/profile/QuickStats";
-import UpcomingDeadlines from "../../../feature/student/profile/UpcomingDeadlines";
-import Settings from "../../../feature/student/profile/settings";
+function mapBackendToUserData(student) {
+    return {
+        name: student.fullName,
+        avatar: student.profileImage || "",
+        specialization: student.specializationName || "",
+        department: student.departmentName || "",
+        faculty: student.facultyName || "",
+        studentSince: student.enrollmentDate || "",
+        email: student.email || "",
+        phone: student.phoneNumber || "",
+        address: student.address || "",
+        studentCode: student.studentCode || "",
+        level: student.level,
+        studentType: student.studentType || "",
+        bylaw: student.bylawName || "",
+        gpa: student.gpa,
+        courses: student.courses || [],
+        qrCode: "",
+        fullNameAr: student.fullNameAr || "",
+    };
+}
 
 export default function Profile() {
-    const [isProfileOverviewVisible, setIsProfileOverviewVisible] = useState(true);
+    const authUser = useRouteLoaderData("root");
+    const studentId = authUser?.roles?.some((r) => r.toLowerCase().startsWith("student")) ? authUser?.userId : null;
+    const { showError } = useError();
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    const loadProfile = useCallback(async () => {
+        if (!studentId) return;
+        const student = await fetchStudentProfile(studentId);
+        return student;
+    }, [studentId]);
+
+    const refreshUserData = useCallback(async () => {
+        try {
+            const student = await loadProfile();
+            if (student) setUserData(mapBackendToUserData(student));
+        } catch (err) {
+            showError(err?.message || "Failed to load profile");
+        }
+    }, [loadProfile, showError]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function init() {
+            if (!studentId) {
+                if (!cancelled) setLoading(false);
+                return;
+            }
+            setLoading(true);
+            try {
+                const student = await fetchStudentProfile(studentId);
+                if (!cancelled) setUserData(mapBackendToUserData(student));
+            } catch (err) {
+                if (!cancelled) showError(err?.message || "Failed to load profile");
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        }
+
+        init();
+        return () => { cancelled = true; };
+    }, [studentId, showError]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading profile...</p>
+            </div>
+        );
+    }
+
+    if (!userData) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Unable to load profile.</p>
+            </div>
+        );
+    }
 
     return (
-        <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                { isProfileOverviewVisible ? (
-                    <ProfileOverview
-                        user={{
-                            name: "Youssef Desoky",
-                            specialization: "Information Systems",
-                            avatar: "/images/students/youssefDesoky/profile.png",
-                            gpa: "3.8",
-                            attendance: "95%",
-                            faculty: "Faculty of Computers and Information"
-                        }}
-                        setIsProfileOverviewVisible={setIsProfileOverviewVisible}
-                        className="lg:col-span-1" 
-                    />
-                ) : (
-                    <AttendanceQRCode
-                        setIsProfileOverviewVisible={setIsProfileOverviewVisible}
-                        user={{
-                            qrCode: "/images/students/youssefDesoky/attendance-qr.png"
-                        }}
-                        className="lg:col-span-1" 
-                    />
-                )}
-                
-
-
-                <AcademicInfo
-                    user={{
-                        AcademicInformation: [
-                            { name: "studentId", label: "Student ID", value: "S12345678" },
-                            { name: "specialization", label: "Specialization", value: "Information Systems" },
-                            { name: "year", label: "Year", value: "Senior" },
-                            { name: "semester", label: "Semester", value: "Fall 2026" },
-                            { name: "email", label: "Email", value: "john.doe@example.com" },
-                            { name: "phone", label: "Phone Number", value: "+1 234 567 8901" },
-                        ]
-                    }}
-                    className="lg:col-span-2" 
-                />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <UpcomingDeadlines
-                        reminders={[
-                            { title: "Project Proposal", course: "IS 410", due: "Sep 15", priority: "high" },
-                            { title: "Midterm Exam", course: "CS 220", due: "Sep 20", priority: "medium" },
-                            { title: "Research Paper", course: "IS 330", due: "Sep 25", priority: "low" },
-                        ]}
-                        className="lg:col-span-2" 
-                    />
-                </div>
-
-                <div className="space-y-6">
-                    <Interests 
-                        interests ={["Artificial Intelligence", "Web Development", "Data Science", "Cybersecurity"]}
-                        className="lg:col-span-1" 
-                    />
-                    
-                    <QuickStats
-                        items={[
-                            { icon: "📚", label: "Courses Enrolled", value: 5 },
-                            { icon: "📝", label: "Assignments Due", value: 12 },
-                        ]}
-                        className="lg:col-span-1" 
-                    />
-                    <Settings className="lg:col-span-2 mt-6" />
+        <div className="px-4 lg:px-8 py-6 space-y-6">
+            <div className="mx-auto max-w-7xl space-y-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_2fr] items-stretch">
+                    <div className="flex h-full flex-col gap-6 lg:sticky lg:top-6 self-start">
+                        <IdentityCard user={userData} className="flex-1 min-h-0" onProfileUpdate={refreshUserData} />
+                        <AccountControlsCard className="shrink-0" />
+                    </div>
+                    <div className="flex h-full flex-col gap-6">
+                        <AcademicInfoCard user={userData} />
+                        <PerformanceCard user={userData} />
+                    </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }

@@ -9,32 +9,50 @@ import { rootAuthLoader } from "./routes/loaders";
 import { authAction, logoutAction } from "./routes/actions";
 
 import CustomCursor from "./components/ui/CustomCursor";
+import { ContextMenuProvider } from "./components/ui/ContextMenu";
 import SidebarProvider from "./contexts/SidebarProvider";
 import CourseShell from "./feature/course/component/CourseShell";
 
 // Auth Pages
-import { LoginPage, ForgetPassword } from "./pages/auth";
+import { LoginPage, ForgetPassword, ResetPassword, UnauthorizedPage, InternalServerErrorPage, ResourceNotFoundPage } from "./pages/auth";
+
+// Profile (shared across all roles)
+import Profile from "./pages/dashboard/Profile";
+
+// Shared Pages (all authenticated users)
+import { Inbox, ComposeMessage } from "./pages/dashboard/shared";
 
 // Student Pages
 import { 
-    Profile as StudentProfile,
     Schedule as StudentSchedule,
     MyCourses as StudentCourses,
     Dashboard as StudentDashboard, 
     Reminders as StudentReminders,
-    Community as StudentCommunity, 
+    StudyGroup as StudentStudyGroup, 
     SmartNotes as StudentSmartNotes, 
     CourseMaterials as StudentCourseMaterials, 
     CoursePrerequisites as StudentCoursePrerequisites, 
-    CoursesRegistration as StudentCoursesRegistration, 
+    CoursesRegistration as StudentCoursesRegistration,
+    SpecializationPreference as StudentSpecializationPreference,
 } from "./pages/dashboard/student";
 
+import CourseAttendance from "./feature/student/courses/courseDetail/courseAttendance/CourseAttendance";
+import CourseAssignments from "./feature/student/courses/courseDetail/assignments/CourseAssignments";
+import CourseGrade from "./feature/student/courses/courseDetail/grade/CourseGrade";
+import CourseQuizzes from "./feature/student/courses/courseDetail/quizzes/CourseQuizzes";
+import CourseQuizPractice from "./feature/student/courses/courseDetail/quizzes/CourseQuizPractice";
+import CourseAnnouncements from "./feature/student/courses/courseDetail/announcements/CourseAnnouncements";
+
 // Admin Pages
-import { ManageInstructors, ManageStudents, ManageAdmins, ManageCourses, ManageCourseClasses } from "./pages/dashboard/admin";
+import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, StudentDetails, InstructorDetails, ManageAdmins, ManageCourses, ManageCourseClasses, ManageRooms, ManageDepartments, ManageBylaws, ManageBylawDetailsPage, ManageExams } from "./pages/dashboard/admin";
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
-import { InstructorCourses, InstructorCourseMaterials } from "./pages/dashboard/instructor"
+import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule } from "./pages/dashboard/instructor"
+import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
+import { InstructorMeetingRoom } from "./pages/dashboard/instructor"
+import InstructorCommunity from "./feature/student/courses/courseDetail/community/MyCommunities"
+
 
 export default function App() {    
     const { i18n } = useTranslation();
@@ -63,13 +81,16 @@ export default function App() {
         loader: rootAuthLoader,
         element: <AppLayout />,
         children: [
+            // ================= SHARED (all authenticated users) =================
+            { path: "profile", element: <Profile /> },
+            { path: "inbox", element: <Inbox /> },
+            { path: "inbox/compose", element: <ComposeMessage /> },
+
             // ================= STUDENT =================
             {
-                element: <RoleGuard allow={["student"]} />,
+                element: <RoleGuard allow={["student_bachelor", "student_masters", "student_phd", "student_diploma", "student"]} />,
                 children: [
-                    // { index: true, element: <StudentDashboard /> },
-                    { index: true, element: <div>Student Dashboard Content</div> },
-                    { path: "profile", element: <StudentProfile /> },
+                    { index: true, element: <StudentDashboard /> },
                     { path: "fahim", element: <div>Fahim AI Content</div> },
                     { path: "courses", element: <StudentCourses /> },
 
@@ -77,14 +98,16 @@ export default function App() {
                         path: "courses/:courseId/*",
                         element: <CourseShell />,
                         children: [
-                            { index: true, element: <div>Course Announcements Content</div> },
+                            { index: true, element: <CourseAnnouncements /> },
                             { path: "materials", element: <StudentCourseMaterials /> },
-                            { path: "assignments", element: <div>Course Assignments Content</div> },
-                            { path: "quizzes", element: <div>Course Quizzes Content</div> },
-                            { path: "attendance", element: <div>Course Attendance Content</div> },
-                            { path: "grades", element: <div>Course Grades Content</div> },
-                            { path: "community", element: <StudentCommunity /> },
-                            { path: "study-group", element: <div>Course Study Group Content</div> },
+                            { path: "assignments", element: <CourseAssignments /> },
+                            { path: "quizzes", element: <CourseQuizzes /> },
+                            { path: "quizzes/practice", element: <CourseQuizPractice /> },
+                            { path: "attendance", element: <CourseAttendance /> },
+                            { path: "grades", element: <CourseGrade /> },
+                            { path: "community", element: <StudentStudyGroup /> },
+                            { path: "smart-notes", element: <StudentSmartNotes /> },
+                            { path: "meeting", element: <InstructorMeetingRoom /> },
                         ],
                     },
 
@@ -93,6 +116,7 @@ export default function App() {
                     { path: "reminders", element: <StudentReminders /> },
                     { path: "smart-notes", element: <StudentSmartNotes /> },
                     { path: "schedule", element: <StudentSchedule /> },
+                    { path: "specialization-preference", element: <StudentSpecializationPreference /> },
                 ],
             },
 
@@ -102,19 +126,24 @@ export default function App() {
                 element: <RoleGuard allow={["instructor"]} />,
                 children: [
                     { index: true, element: <div>Instructor Dashboard Content</div> },
+                    { path: "reminders", element: <InstructorReminders /> },
+                    { path: "schedule", element: <InstructorSchedule /> },
                     { path: "courses", element: <InstructorCourses /> },
 
                     {
                         path: "courses/:courseId/*", 
                         element: <CourseShell />,
                         children: [
-                            { index: true, element: <div>Course Announcements Content</div> },
+                            { index: true, element: <InstructorCourseAnnouncements /> },
                             { path: "materials", element: <InstructorCourseMaterials /> },
-                            { path: "assignments", element: <div>Course Assignments Content</div> },
-                            { path: "quizzes", element: <div>Course Quizzes Content</div> },
-                            { path: "attendance", element: <div>Course Attendance Content</div> },
-                            { path: "grades", element: <div>Course Grades Content</div> },
-                            { path: "community", element: <div>Course Community Content</div> },
+                            { path: "assignments", element: <InstructorCourseAssignments /> },
+                            { path: "quizzes", element: <InstructorCourseQuizzes /> },
+                            { path: "attendance", element: <InstructorCourseAttendance /> },
+                            { path: "grades", element: <InstructorCourseGrades /> },
+                            { path: "community", element: <InstructorCommunity /> },
+                            { path: "smart-notes", element: <StudentSmartNotes /> },
+                            { path: "analytics", element: <InstructorCourseAnalytics /> },
+                            { path: "meeting", element: <InstructorMeetingRoom /> },
                         ],
                     },
                 ],
@@ -123,16 +152,57 @@ export default function App() {
             // ================= ADMIN =================
             {
                 path: "admin",
-                element: <RoleGuard allow={["admin", "superadmin"]} />,
                 children: [
-                    { index: true, element: <div>Admin Dashboard Content</div> },
-                    { path: "analytics", element: <Attendance /> },
-                    { path: "admins", element: <ManageAdmins /> },
-                    { path: "students", element: <ManageStudents /> },
-                    { path: "instructors", element: <ManageInstructors /> },
-                    { path: "courses", element: <ManageCourses /> },
-                    { path: "courses/:courseId", element: <ManageCourseClasses /> },
-                    { path: "rooms", element: <div>Manage Rooms Content</div> },
+                    // Dashboard — all admin roles
+                    {
+                        element: <RoleGuard allow={["superadmin", "admin_bachelor", "admin_masters", "admin_postgrad", "admin_phd", "admin_diploma", "admin_academicstaff"]} />,
+                        children: [
+                            { index: true, element: <AdminDashboard /> },
+                        ],
+                    },
+                    // Analytics — superadmin only
+                    {
+                        element: <RoleGuard allow={["superadmin"]} />,
+                        children: [
+                            { path: "analytics", element: <Attendance /> },
+                        ],
+                    },
+                    // Students — superadmin + student-type admins
+                    {
+                        element: <RoleGuard allow={["superadmin", "admin_bachelor", "admin_masters", "admin_postgrad", "admin_phd", "admin_diploma"]} />,
+                        children: [
+                            { path: "students", element: <ManageStudents /> },
+                            { path: "students/:studentId", element: <StudentDetails /> },
+                        ],
+                    },
+                    // Instructors — superadmin + academic staff
+                    {
+                        element: <RoleGuard allow={["superadmin", "admin_academicstaff"]} />,
+                        children: [
+                            { path: "instructors", element: <ManageInstructors /> },
+                            { path: "instructors/:instructorId", element: <InstructorDetails /> },
+                        ],
+                    },
+                    // Admins — superadmin only
+                    {
+                        element: <RoleGuard allow={["superadmin"]} />,
+                        children: [
+                            { path: "admins", element: <ManageAdmins /> },
+                        ],
+                    },
+                    // SuperAdmin-only pages (departments, courses, rooms, bylaws, exams)
+                    {
+                        element: <RoleGuard allow={["superadmin"]} />,
+                        children: [
+                            { path: "departments", element: <ManageDepartments /> },
+                            { path: "courses", element: <ManageCourses /> },
+                            { path: "courses/:courseId", element: <ManageCourseClasses /> },
+                            { path: "rooms", element: <ManageRooms /> },
+                            { path: "bylaws", element: <ManageBylaws /> },
+                            { path: "bylaws/:bylawId", element: <ManageBylawDetailsPage /> },
+                            { path: "exams", element: <ManageExams /> },
+                        ],
+                    },
                 ],
             },
         ],
@@ -141,16 +211,19 @@ export default function App() {
     // ================= PUBLIC =================
     { path: "/login", element: <LoginPage />, action: authAction },
     { path: "/forgot-password", element: <ForgetPassword /> },
-    { path: "/unauthorized", element: <div>Unauthorized Access</div> },
+    { path: "/reset-password", element: <ResetPassword /> },
+    { path: "/unauthorized", element: <UnauthorizedPage /> },
+    { path: "/internal-server-error", element: <InternalServerErrorPage /> },
+    { path: "/resource-not-found", element: <ResourceNotFoundPage /> },
     { path: "/logout", action: logoutAction },
     ]);
 
     return (
-        <>
-            {/* <CustomCursor /> */}
+        <ContextMenuProvider blockNative>
+            <CustomCursor />
             <SidebarProvider>
                 <RouterProvider router={router} />
             </SidebarProvider>
-        </>
+        </ContextMenuProvider>
     );
 }

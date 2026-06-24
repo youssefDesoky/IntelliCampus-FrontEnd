@@ -5,12 +5,18 @@ import CalendarHeader from "./calendar/CalendarHeader";
 import CalendarDays from "./calendar/CalendarDays";
 import CalendarCells from "./calendar/CalendarCells";
 
-export default function CalendarWidget() {
+export default function CalendarWidget({ selectedDate: selectedDateProp, onDateSelect }) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [internalSelectedDate, setInternalSelectedDate] = useState(new Date());
+    const selectedDate = selectedDateProp || internalSelectedDate;
+
+    const handleDateSelect = (date) => {
+        setInternalSelectedDate(date);
+        onDateSelect?.(date);
+    };
 
     return (
-        <div className="bg-bg-light dark:bg-bg-dark p-8 rounded-3xl shadow-2xl border border-border-accent-default-light dark:border-border-accent-default-dark">
+        <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-8 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
             <CalendarHeader
                 currentMonth={currentMonth}
                 onPrev={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -22,7 +28,7 @@ export default function CalendarWidget() {
             <CalendarCells
                 currentMonth={currentMonth}
                 selectedDate={selectedDate}
-                setSelectedDate={setSelectedDate}
+                setSelectedDate={handleDateSelect}
             />
         </div>
     );
