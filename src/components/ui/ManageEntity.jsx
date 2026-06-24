@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import UserHeader from "./UserHeader";
 import PageHeader from "./PageHeader";
 import Section from "./Section";
@@ -47,9 +48,8 @@ export default function ManageEntity({
   const { isDesktop, isTablet, isPhone } = useDeviceType();
   const { showError } = useError();
   const isSm = !isPhone;
+  const queryClient = useQueryClient();
 
-  const [rawItems, setRawItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingItem, setEditingItem] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -66,6 +66,55 @@ export default function ManageEntity({
     [entityIdField]
   );
   const pluralLower = entityNamePlural.toLowerCase();
+  const queryKey = [pluralLower];
+
+  const { data: rawItems = [], isLoading, error, refetch } = useQuery({
+    queryKey,
+    queryFn: fetchItems,
+  });
+
+  useEffect(() => {
+    if (error) showError(error.message);
+  }, [error, showError]);
+
+  const createMutation = useMutation({
+    mutationFn: createItem,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      setIsFormOpen(false);
+      setEditingItem(null);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => updateItem(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      setIsFormOpen(false);
+      setEditingItem(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      setDeleteTarget(null);
+    },
+  });
+
+  const deleteSelectedMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) {
+        await deleteItem(id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      setSelectedRowIds([]);
+      setIsDeleteSelectedOpen(false);
+    },
+  });
 
   useEffect(() => {
     const calculateItemsPerPage = () => {
@@ -83,19 +132,6 @@ export default function ManageEntity({
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawItems.length, isPhone, isTablet, ...extraDeps]);
-
-  const loadItems = useCallback(async () => {
-    try {
-      const data = await fetchItems();
-      setRawItems(Array.isArray(data) ? data : []);
-    } catch (err) {
-      showError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchItems, pluralLower, showError]);
-
-  useEffect(() => { loadItems(); }, [loadItems]);
 
   const filteredItems = useMemo(() => {
     const q = (searchQuery || "").toLowerCase();
@@ -152,26 +188,20 @@ export default function ManageEntity({
 
   const handleCreate = useCallback(async (formData) => {
     try {
-      await createItem(formData);
-      setIsFormOpen(false);
-      setEditingItem(null);
-      await loadItems();
+      await createMutation.mutateAsync(formData);
     } catch (err) {
       showError(err.message);
     }
-  }, [createItem, loadItems, entityName, showError]);
+  }, [createMutation, showError]);
 
   const handleUpdate = useCallback(async (formData) => {
     if (!updateItem || !editingItem) return;
     try {
-      await updateItem(getId(editingItem), formData);
-      setIsFormOpen(false);
-      setEditingItem(null);
-      await loadItems();
+      await updateMutation.mutateAsync({ id: getId(editingItem), data: formData });
     } catch (err) {
       showError(err.message);
     }
-  }, [updateItem, editingItem, getId, loadItems, entityName, showError]);
+  }, [updateItem, editingItem, getId, updateMutation, showError]);
 
   const handleFormSubmit = useCallback(async (formData) => {
     setFormIsLoading(true);
@@ -189,26 +219,19 @@ export default function ManageEntity({
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     try {
-      await deleteItem(getId(deleteTarget));
-      await loadItems();
+      await deleteMutation.mutateAsync(getId(deleteTarget));
     } catch (err) {
       showError(err.message);
     }
-    setDeleteTarget(null);
-  }, [deleteTarget, getId, deleteItem, loadItems, entityName, showError]);
+  }, [deleteTarget, getId, deleteMutation, showError]);
 
   const handleDeleteSelected = useCallback(async () => {
     try {
-      for (const id of selectedRowIds) {
-        await deleteItem(id);
-      }
+      await deleteSelectedMutation.mutateAsync(selectedRowIds);
     } catch (err) {
       showError(err.message);
     }
-    setSelectedRowIds([]);
-    setIsDeleteSelectedOpen(false);
-    await loadItems();
-  }, [selectedRowIds, deleteItem, loadItems, showError]);
+  }, [selectedRowIds, deleteSelectedMutation, showError]);
 
   const openForm = useCallback((item = null) => {
     setEditingItem(item);
@@ -219,6 +242,8 @@ export default function ManageEntity({
     setIsFormOpen(false);
     setEditingItem(null);
   }, []);
+
+  const loadItems = refetch;
 
   const formHelpers = {
     isFormOpen, editingItem, openForm, closeForm,

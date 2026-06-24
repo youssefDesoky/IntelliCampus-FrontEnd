@@ -13,9 +13,9 @@ import {
     CameraIcon,
 } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
-import { API_URL } from "../../../config/api";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import EditProfileForm from "./EditProfileForm";
+import { updateProfileImage, generateAttendanceQr as generateAttendanceQrApi } from "../services/profileApi";
 
 export default function IdentityCard({ user, className = "", onProfileUpdate }) {
     const [isFlipped, setIsFlipped] = useState(false);
@@ -46,20 +46,8 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
             setAvatarPreview(dataUrl);
             setUploadingAvatar(true);
             try {
-                const res = await fetch(`${API_URL}/api/auth/profile/image`, {
-                    method: "PUT",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(dataUrl),
-                });
-                if (!res.ok) {
-                    const body = await res.json().catch(() => null);
-                    const msg = body?.detail || body?.message || "Failed to update profile image";
-                    showError(msg);
-                    setAvatarPreview(user?.avatar || "");
-                } else {
-                    onProfileUpdate?.();
-                }
+                await updateProfileImage(dataUrl);
+                onProfileUpdate?.();
             } catch (err) {
                 showError(err?.message || "Failed to update profile image");
                 setAvatarPreview(user?.avatar || "");
@@ -91,16 +79,7 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
         setIsExpired(false);
 
         try {
-            const response = await fetch(`${API_URL}/api/attendance/qr`, {
-                credentials: "include",
-            });
-
-            if (!response.ok) {
-                const text = await response.text();
-                throw new Error(text || `Failed to generate attendance QR (${response.status})`);
-            }
-
-            const data = await response.json();
+            const data = await generateAttendanceQrApi();
             const qrPayload = data.qrPayload ?? data.QrPayload;
             const expiresInSeconds = data.expiresInSeconds ?? data.ExpiresInSeconds ?? 15;
 

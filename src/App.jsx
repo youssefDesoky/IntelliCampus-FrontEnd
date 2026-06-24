@@ -29,6 +29,7 @@ import {
     Dashboard as StudentDashboard, 
     Reminders as StudentReminders,
     StudyGroup as StudentStudyGroup, 
+    StudyGroupPostDetail as StudentStudyGroupPostDetail,
     SmartNotes as StudentSmartNotes, 
     CourseMaterials as StudentCourseMaterials, 
     CoursePrerequisites as StudentCoursePrerequisites, 
@@ -48,7 +49,7 @@ import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, Student
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
-import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule } from "./pages/dashboard/instructor"
+import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule, InstructorDashboard } from "./pages/dashboard/instructor"
 import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
 import { InstructorMeetingRoom } from "./pages/dashboard/instructor"
 import InstructorCommunity from "./feature/student/courses/courseDetail/community/MyCommunities"
@@ -106,6 +107,7 @@ export default function App() {
                             { path: "attendance", element: <CourseAttendance /> },
                             { path: "grades", element: <CourseGrade /> },
                             { path: "community", element: <StudentStudyGroup /> },
+                            { path: "community/questions/:postId", element: <StudentStudyGroupPostDetail /> },
                             { path: "smart-notes", element: <StudentSmartNotes /> },
                             { path: "meeting", element: <InstructorMeetingRoom /> },
                         ],
@@ -125,7 +127,7 @@ export default function App() {
                 path: "instructor",
                 element: <RoleGuard allow={["instructor"]} />,
                 children: [
-                    { index: true, element: <div>Instructor Dashboard Content</div> },
+                    { index: true, element: <InstructorDashboard /> },
                     { path: "reminders", element: <InstructorReminders /> },
                     { path: "schedule", element: <InstructorSchedule /> },
                     { path: "courses", element: <InstructorCourses /> },
@@ -141,6 +143,7 @@ export default function App() {
                             { path: "attendance", element: <InstructorCourseAttendance /> },
                             { path: "grades", element: <InstructorCourseGrades /> },
                             { path: "community", element: <InstructorCommunity /> },
+                            { path: "community/questions/:postId", element: <StudentStudyGroupPostDetail /> },
                             { path: "smart-notes", element: <StudentSmartNotes /> },
                             { path: "analytics", element: <InstructorCourseAnalytics /> },
                             { path: "meeting", element: <InstructorMeetingRoom /> },

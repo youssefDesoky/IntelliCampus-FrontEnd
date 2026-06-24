@@ -67,3 +67,20 @@ export default async function apiClient(endpoint, options = {}) {
 
   return body;
 }
+
+export async function downloadBlob(endpoint, filename) {
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}

@@ -3,7 +3,7 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
 import DateInput from "../../../components/form/DateInput";
 import { XIcon, FloppyDiskIcon } from "../../../components/ui/icons";
-import { fetchDepartments } from "../services/adminApi";
+import { fetchDepartments } from "../services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const levelOptions = [

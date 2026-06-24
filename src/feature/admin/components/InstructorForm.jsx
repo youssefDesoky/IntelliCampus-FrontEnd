@@ -5,7 +5,10 @@ import SelectBox from "../../../components/ui/SelectBox";
 import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
-import { fetchInstructorRoles, fetchDepartments, fetchSpecializations, fetchRooms, fetchInstructors, fetchFaculties, fetchProfessorsByFaculty } from "../services/adminApi";
+import { fetchInstructorRoles } from "../services/adminAccountsApi";
+import { fetchDepartments, fetchSpecializations } from "../services/adminDepartmentsApi";
+import { fetchRooms } from "../services/adminFacilitiesApi";
+import { fetchInstructors, fetchFaculties, fetchProfessorsByFaculty } from "../services/adminInstructorsApi";
 import countryList from "react-select-country-list";
 import {
   validateNationalIdOrPassport,

@@ -18,8 +18,8 @@ import {
     fetchInstructorById,
     fetchInstructorCourses,
     fetchInstructorTASections,
-    sendEmail,
-} from "../../../feature/admin/services/adminApi";
+} from "../../../feature/admin/services/adminInstructorsApi";
+import { sendEmail } from "../../../feature/admin/services/adminCommunicationApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 

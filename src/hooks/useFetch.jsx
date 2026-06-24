@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import apiClient from "../utils/apiClient";
+import apiClient from "../api/apiClient";
 
 export default function useFetch(url, options = {}, enabled = true) {
 

@@ -7,7 +7,9 @@ import RadioToggle from "../../../components/form/RadioToggle";
 import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
-import { fetchBylaws, fetchSpecializations, fetchDepartments, fetchStudentTypes } from "../services/adminApi";
+import { fetchBylaws } from "../services/adminBylawsApi";
+import { fetchSpecializations, fetchDepartments } from "../services/adminDepartmentsApi";
+import { fetchStudentTypes } from "../services/adminStudentsApi";
 import {
   validateNationalIdOrPassport,
   validatePhoneNumber,

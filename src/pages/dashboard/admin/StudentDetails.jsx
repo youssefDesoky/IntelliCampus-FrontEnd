@@ -17,8 +17,8 @@ import {
     fetchStudentCompletedCourses,
     fetchAvailableCoursesForStudent,
     updateStudent,
-    sendEmail,
-} from "../../../feature/admin/services/adminApi";
+} from "../../../feature/admin/services/adminStudentsApi";
+import { sendEmail } from "../../../feature/admin/services/adminCommunicationApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import StudentForm from "../../../feature/admin/components/StudentForm";
 import StudentInfoTab from "./StudentInfoTab";

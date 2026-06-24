@@ -1,7 +1,7 @@
-import apiClient from "../utils/apiClient";
+import apiClient from "./apiClient";
 
 export async function fetchMyNotifications() {
-  return apiClient('/api/notifications/unread');
+  return apiClient('/api/notifications');
 }
 
 export function dispatchNotificationsChanged() {

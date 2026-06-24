@@ -6,7 +6,7 @@ import AssignRoleModal from "../../../feature/admin/components/AssignRoleModal";
 import FilterDropdown from "../../../components/ui/FilterDropdown";
 import { UserIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
-import { fetchStudents, createStudent, updateStudent, deleteStudent } from "../../../feature/admin/services/adminApi";
+import { fetchStudents, createStudent, updateStudent, deleteStudent } from "../../../feature/admin/services/adminStudentsApi";
 
 export default function ManageStudents() {
   const { isDesktop, isTablet } = useDeviceType();

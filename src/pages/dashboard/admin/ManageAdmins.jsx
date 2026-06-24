@@ -7,7 +7,7 @@ import AssignRoleModal from "../../../feature/admin/components/AssignRoleModal";
 import Button from "../../../components/ui/Button";
 import { UserIcon, XIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
-import { fetchAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../feature/admin/services/adminApi";
+import { fetchAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../feature/admin/services/adminAccountsApi";
 
 function getAdminRoleDisplay(admin) {
   if (admin.role) return admin.role;

@@ -4,7 +4,7 @@ import SelectBox from "../../../components/ui/SelectBox";
 import Button from "../../../components/ui/Button";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import { XIcon } from "../../../components/ui/icons";
-import { fetchRoomTypes } from "../services/adminApi";
+import { fetchRoomTypes } from "../services/adminFacilitiesApi";
 
 const capacityOptions = [
     { value: "20", label: "Up to 20" },

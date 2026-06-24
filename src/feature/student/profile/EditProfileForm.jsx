@@ -2,8 +2,8 @@ import { useState } from "react";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import InputItem from "../../../components/form/InputItem";
 import TextArea from "../../../components/ui/TextArea";
-import { API_URL } from "../../../config/api";
 import { useError } from "../../../contexts/ErrorContext.jsx";
+import { updateProfile } from "../services/profileApi";
 
 export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
     const { showError } = useError();
@@ -39,22 +39,11 @@ export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
 
         setSubmitting(true);
         try {
-            const res = await fetch(`${API_URL}/api/auth/profile`, {
-                method: "PUT",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    fullName: fullName.trim() || null,
-                    phoneNumber: phoneNumber.trim() || null,
-                    address: address.trim() || null,
-                }),
+            await updateProfile({
+                fullName: fullName.trim() || null,
+                phoneNumber: phoneNumber.trim() || null,
+                address: address.trim() || null,
             });
-
-            if (!res.ok) {
-                const body = await res.json().catch(() => null);
-                const message = body?.detail || body?.message || body?.title || `Failed to update profile (${res.status})`;
-                throw new Error(message);
-            }
 
             onSaved?.();
             handleClose();

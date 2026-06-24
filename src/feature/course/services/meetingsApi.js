@@ -1,4 +1,4 @@
-import apiClient from "../../../utils/apiClient";
+import apiClient from "../../../api/apiClient";
 
 export async function fetchCourseMeetings(courseId) {
   return apiClient(`/api/meetings/course/${courseId}`);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
-import { fetchCourseGrades } from "../../../feature/instructor/components/grades/instructorGradesApi";
+import { fetchCourseGrades } from "../../../feature/instructor/services/gradesApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { ChartBarIcon, UsersIcon, CheckIcon, FilePenIcon, BrainIcon } from "../../../components/ui/icons";
 

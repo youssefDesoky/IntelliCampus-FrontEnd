@@ -17,7 +17,7 @@ import {
   deleteBylaw,
   toggleBylawActive,
   uploadBylawDocument,
-} from "../../../feature/admin/services/adminApi";
+} from "../../../feature/admin/services/adminBylawsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const tableHeaders = ["Bylaw", "Description", "Type", "Status", "Students", "Document"];

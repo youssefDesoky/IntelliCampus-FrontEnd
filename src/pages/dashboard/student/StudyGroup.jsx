@@ -8,7 +8,7 @@ import {
     CommentsIcon,
     PaperPlaneIcon,
 } from "../../../components/ui/icons";
-import { fetchCommunityPosts, createCommunityPost, toggleUpvote, addComment } from "../../../feature/student/courses/courseDetail/community/communityService";
+import { fetchCommunityPosts, createCommunityPost, toggleUpvote } from "../../../feature/student/courses/courseDetail/community/communityService";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function StudyGroup() {
@@ -81,17 +81,6 @@ export default function StudyGroup() {
         }
     };
 
-    const handleAddComment = async (postId, content) => {
-        if (!courseId) return;
-        try {
-            await addComment(courseId, postId, content);
-            const data = await fetchCommunityPosts(courseId);
-            setPosts(Array.isArray(data) ? data.map(mapPost) : []);
-        } catch (err) {
-            showError(err.message);
-        }
-    };
-
     if (!course) {
         return (
             <div className="py-10 text-center">
@@ -140,8 +129,8 @@ export default function StudyGroup() {
                             <StudyGroupPost
                                 key={post.id}
                                 postData={post}
+                                courseId={courseId}
                                 onUpvote={() => handleUpvote(post.id)}
-                                onAddComment={(content) => handleAddComment(post.id, content)}
                             />
                         ))
                     ) : (

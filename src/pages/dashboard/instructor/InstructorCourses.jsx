@@ -5,11 +5,31 @@ import Section from "../../../components/ui/Section";
 import DataBanner from "../../../components/ui/DataBanner";
 import useDeviceType from "../../../hooks/useDeviceType";
 
-import MyCourse from "../../../feature/student/courses/myCourses/MyCourse";
+import InstructorCourseCard from "../../../feature/instructor/components/courses/InstructorCourseCard";
 import InstructorCoursesHeader from "../../../feature/instructor/components/courses/InstructorCoursesHeader";
 import { fetchMyTeachingCourses } from "../../../feature/course/services/coursesApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
+
+function mapCourseToCardProps(course) {
+    const initials = (course.departmentName || course.courseCode || "")
+        .split(" ")
+        .map(w => w[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2) || "CS";
+
+    return {
+        courseId: course.courseId,
+        initials,
+        code: course.courseCode || "",
+        semester: course.semester || "",
+        type: course.isElective ? "elective" : "core",
+        title: course.courseName || "",
+        room: course.room || "",
+        totalStudents: course.totalStudents,
+    };
+}
 
 export default function InstructorCourses() {
     const { isMobile } = useDeviceType();
@@ -32,7 +52,7 @@ export default function InstructorCourses() {
             try {
                 setLoading(true);
                 const data = await fetchMyTeachingCourses();
-                if (!cancelled) setCourses(data);
+                if (!cancelled) setCourses((Array.isArray(data) ? data : []).map(mapCourseToCardProps));
             } catch (err) {
                 showError(err.message);
             } finally {
@@ -45,16 +65,16 @@ export default function InstructorCourses() {
 
     // Compute stats from real data
     const totalHours = courses.reduce((sum, c) => sum + (c.creditHours || 0), 0);
+    const totalStudents = courses.reduce((sum, c) => sum + (c.totalStudents || 0), 0);
 
     const handleEnterClassroom = useCallback((courseId) => {
-        navigate(`/courses/${courseId}`);
+        navigate(`/instructor/courses/${courseId}`);
     }, [navigate]);
 
     const stats = [
         { label: "Assigned Courses", value: courses.length },
         { label: "Total Hours", value: totalHours },
-        // { label: "Total Students", value: "⚠ missing from backend" },
-        // { label: "Average Attendance", value: "⚠ missing from backend" },
+        { label: "Total Students", value: totalStudents },
     ];
 
     return (
@@ -65,7 +85,7 @@ export default function InstructorCourses() {
                 setViewMode={setViewMode}
             />
 
-            <Section className="hidden md:grid grid-cols-2 gap-6 mb-6">
+            <Section className="hidden md:grid grid-cols-3 gap-6 mb-6">
                 <DataBanner
                     title="Course Statistics"
                     data={stats}
@@ -92,7 +112,7 @@ export default function InstructorCourses() {
             {!loading && courses.length > 0 && (
                 <Section className={`mb-6 ${viewMode === "grid" ? "grid grid-cols-2 gap-4" : "flex flex-col gap-4"}`}>
                     {courses.map((course) => (
-                        <MyCourse key={course.courseId} course={course} role="instructor" viewMode={viewMode} isMobile={isMobile} onEnterClassroom={() => handleEnterClassroom(course.courseId)} />
+                        <InstructorCourseCard key={course.courseId} {...course} onEnterClassroom={() => handleEnterClassroom(course.courseId)} />
                     ))}
                 </Section>
             )}

@@ -6,7 +6,7 @@ import BaseComponent from "../../../../../components/ui/BaseComponent";
 import Button from "../../../../../components/ui/Button";
 import PaginationButtons from "../../../../../components/ui/PaginationButtons";
 import { CalendarDaysIcon, ClockIcon, PlayIcon, EyeIcon, ChartBarIcon, StarIcon } from "../../../../../components/ui/icons";
-import { fetchCourseQuizzesOverview } from "../../quizzesApi";
+import { fetchCourseQuizzesOverview } from "../../../services/quizzesApi";
 import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
 const PAGE_SIZE = 3;

@@ -6,7 +6,7 @@ import PaginationButtons from "../../../../../components/ui/PaginationButtons";
 import QuestionCard from "./QuestionCard";
 import QuizHeader from "./QuizHeader";
 import QuizSummary from "./QuizSummary";
-import { fetchPracticeQuiz, submitPracticeQuiz } from "../../quizzesApi";
+import { fetchPracticeQuiz, submitPracticeQuiz } from "../../../services/quizzesApi";
 
 const PAGE_SIZE = 3;
 
