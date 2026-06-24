@@ -49,7 +49,7 @@ import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, Student
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
-import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule } from "./pages/dashboard/instructor"
+import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule, InstructorDashboard } from "./pages/dashboard/instructor"
 import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
 import { InstructorMeetingRoom } from "./pages/dashboard/instructor"
 import InstructorCommunity from "./feature/student/courses/courseDetail/community/MyCommunities"
@@ -127,7 +127,7 @@ export default function App() {
                 path: "instructor",
                 element: <RoleGuard allow={["instructor"]} />,
                 children: [
-                    { index: true, element: <div>Instructor Dashboard Content</div> },
+                    { index: true, element: <InstructorDashboard /> },
                     { path: "reminders", element: <InstructorReminders /> },
                     { path: "schedule", element: <InstructorSchedule /> },
                     { path: "courses", element: <InstructorCourses /> },

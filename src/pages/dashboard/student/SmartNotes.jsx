@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 
 import useDeviceType from "../../../hooks/useDeviceType";
-import { API_URL } from "../../../config/api";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 import SmartNotesBody from "../../../feature/student/smartNotes/SmartNotesBody";
 import { fromBackendLinkedLecture } from "../../../feature/student/smartNotes/notesApi";
+import { fetchStudentNotes } from "../../../feature/student/services/profileApi";
 
 
 export default function SmartNotes() {
@@ -43,15 +43,7 @@ export default function SmartNotes() {
             try {
                 setLoading(true);
 
-                const res = await fetch(`${API_URL}/api/students/${studentId}`, {
-                    credentials: "include",
-                });
-
-                if (!res.ok) {
-                    throw new Error(`Failed to load student notes (${res.status})`);
-                }
-
-                const student = await res.json();
+                const student = await fetchStudentNotes(studentId);
                 const courses = currentCourseId
                     ? (student?.courses || []).filter((course) => String(course?.id) === String(currentCourseId))
                     : (student?.courses || []);

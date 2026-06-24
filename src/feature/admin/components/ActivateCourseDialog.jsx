@@ -3,7 +3,7 @@ import Button from "../../../components/ui/Button";
 import { CheckIcon, XIcon } from "../../../components/ui/icons";
 import SelectBox from "../../../components/ui/SelectBox";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
-import { fetchInstructors } from "../services/adminApi";
+import { fetchInstructors } from "../services/adminInstructorsApi";
 
 const semesterOptions = [
     { value: "Fall 2025", label: "Fall 2025" },

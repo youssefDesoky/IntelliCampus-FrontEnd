@@ -3,7 +3,7 @@ import InputItem from "../../../components/form/InputItem";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
 import TextArea from "../../../components/ui/TextArea";
-import { fetchDepartments } from "../services/adminApi";
+import { fetchDepartments } from "../services/adminDepartmentsApi";
 
 export default function CourseForm({ onClose, method = "post", onSubmit, initialData = {}, isOpen = true }) {
     const isEdit = method === "put";

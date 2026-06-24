@@ -3,7 +3,7 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
 import NumberInput from "../../../components/form/NumberInput";
 import { PlusIcon, TrashIcon, XIcon } from "../../../components/ui/icons";
-import { fetchSpecializations, createSpecialization, deleteSpecialization } from "../services/adminApi";
+import { fetchSpecializations, createSpecialization, deleteSpecialization } from "../services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function DepartmentSpecializationsForm({ department, onClose, onUpdate }) {

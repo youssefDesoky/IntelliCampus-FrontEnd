@@ -4,7 +4,8 @@ import Button from "../../../components/ui/Button";
 import DepartmentForm from "../../../feature/admin/components/DepartmentForm";
 import DepartmentSpecializationsForm from "../../../feature/admin/components/DepartmentSpecializationsForm";
 import DepartmentRegistrationSettings from "../../../feature/admin/components/DepartmentRegistrationSettings";
-import { fetchDepartments, createDepartment, updateDepartment, deleteDepartment, fetchInstructors, updateDepartmentRegistrationSettings } from "../../../feature/admin/services/adminApi";
+import { fetchDepartments, createDepartment, updateDepartment, deleteDepartment, updateDepartmentRegistrationSettings } from "../../../feature/admin/services/adminDepartmentsApi";
+import { fetchInstructors } from "../../../feature/admin/services/adminInstructorsApi";
 import { PlusIcon, CalendarIcon } from "../../../components/ui/icons";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 

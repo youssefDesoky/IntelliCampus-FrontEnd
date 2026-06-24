@@ -9,8 +9,8 @@ import Table from "../../../../../components/ui/Table";
 import AttendanceOverall from "./AttendanceOverall";
 import AttendanceBreakdown from "./AttendanceBreakdown";
 import AttendanceExcuseCard from "./AttendanceExcuseCard";
-import { API_URL } from "../../../../../config/api";
 import { useError } from "../../../../../contexts/ErrorContext.jsx";
+import { fetchMyAttendance, submitExcuse } from "../../../services/profileApi";
 
 export default function CourseAttendance() {
     const fileInputRef = useRef(null);
@@ -31,11 +31,7 @@ export default function CourseAttendance() {
         async function loadAttendance() {
             try {
                 setLoading(true);
-                const res = await fetch(`${API_URL}/api/attendance/my-attendance/course/${courseId}`, {
-                    credentials: "include",
-                });
-                if (!res.ok) throw new Error(`Failed to load attendance (${res.status})`);
-                const data = await res.json();
+                const data = await fetchMyAttendance(courseId);
                 if (!cancelled) setAttendanceData(data);
             } catch (err) {
                 if (!cancelled) showError(err.message);
@@ -67,22 +63,11 @@ export default function CourseAttendance() {
 
         setSubmitting(true);
         try {
-            const formData = new FormData();
-            formData.append("SessionId", selectedSessionId);
-            formData.append("Reason", reason);
-            formData.append("Document", selectedFile);
-
-            const res = await fetch(`${API_URL}/api/courses/${courseId}/attendance/excuse`, {
-                method: "POST",
-                credentials: "include",
-                body: formData,
+            await submitExcuse(courseId, {
+                sessionId: selectedSessionId,
+                reason,
+                file: selectedFile,
             });
-
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || `Failed to submit excuse (${res.status})`);
-            }
-
             closeForm();
         } catch (err) {
             showError(err.message);

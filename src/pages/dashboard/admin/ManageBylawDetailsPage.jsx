@@ -13,7 +13,6 @@ import MaterialPreview from "../../../components/ui/MaterialPreview";
 import { API_URL } from "../../../config/api";
 import {
   fetchBylawById,
-  fetchCourses,
   updateBylaw,
   toggleBylawActive,
   setBylawGradeScales,
@@ -28,13 +27,16 @@ import {
   setCoursePrerequisites,
   createBucket as apiCreateBucket,
   updateBucket as apiUpdateBucket,
-  fetchDepartments,
-  fetchSpecializations,
   deleteBucket as apiDeleteBucket,
   updateBylawGradeWeights,
+} from "../../../feature/admin/services/adminBylawsApi";
+import { fetchCourses } from "../../../feature/admin/services/adminCoursesApi";
+import {
+  fetchDepartments,
+  fetchSpecializations,
   fetchSpecializationPrerequisites,
   setSpecializationPrerequisites,
-} from "../../../feature/admin/services/adminApi";
+} from "../../../feature/admin/services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const allTabs = [

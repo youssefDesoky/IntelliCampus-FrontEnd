@@ -6,7 +6,7 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import DateInput from "../../../components/form/DateInput";
 import TimeInput from "../../../components/form/TimeInput";
 import { CalendarIcon } from "../../../components/ui/icons";
-import { autoSchedule, getAvailableSlots, updateExam, fetchExams, deleteExam } from "../services/adminApi";
+import { autoSchedule, getAvailableSlots, updateExam, fetchExams, deleteExam } from "../services/adminSchedulingApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function to12Hour(t) {

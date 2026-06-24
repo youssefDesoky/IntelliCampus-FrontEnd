@@ -2,8 +2,8 @@ import { useMemo, useState, useEffect } from "react";
 import Section from "../../../../components/ui/Section";
 import CoursePrerequisitesCard from "./CoursePrerequisitesCard";
 import { PrereqPageSkeleton } from "./SkeletonLoader";
-import { API_URL } from "../../../../config/api";
 import { useError } from "../../../../contexts/ErrorContext.jsx";
+import { fetchCoursePrerequisites } from "../../services/profileApi";
 
 export default function CoursePrerequisitesBody({ search = "" }) {
     const [courseData, setCourseData] = useState([]);
@@ -16,11 +16,7 @@ export default function CoursePrerequisitesBody({ search = "" }) {
         async function load() {
             try {
                 setLoading(true);
-                const res = await fetch(`${API_URL}/api/courses/prerequisites`, {
-                    credentials: "include",
-                });
-                if (!res.ok) throw new Error(`Failed to load prerequisites (${res.status})`);
-                const data = await res.json();
+                const data = await fetchCoursePrerequisites();
                 const list = Array.isArray(data) ? data : [];
                 const mapped = list.map((course) => ({
                     id: course.courseId,

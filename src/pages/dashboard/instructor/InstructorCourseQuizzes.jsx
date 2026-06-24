@@ -77,14 +77,8 @@ export default function InstructorCourseQuizzes() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Quizzes</h1>
+                <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Quizzes</h2>
                 <Button type="button" variant="primary" onClick={() => setIsCreateOpen(true)}>Create Quiz</Button>
-            </div>
-
-            <div className="p-4 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    Create quizzes for your course. Student quiz progress and submissions can be viewed after students take the quizzes.
-                </p>
             </div>
 
             {loading ? (

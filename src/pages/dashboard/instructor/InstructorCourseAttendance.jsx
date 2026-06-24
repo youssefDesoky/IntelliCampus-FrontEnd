@@ -390,7 +390,7 @@ export default function InstructorCourseAttendance() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Attendance classes</p>
-                        <h1 className="mt-1 text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Choose a class to inspect attendance</h1>
+                        <h2 className="mt-1 text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Choose a class to inspect attendance</h2>
                         <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{courseName} • Open a class to review its attendance report, scan QR codes, or record manual entries.</p>
                     </div>
                     <Button type="button" variant="primary" onClick={() => setIsCreateClassOpen(true)} startIcon={<PlusIcon size={18} />}>
@@ -583,10 +583,7 @@ export default function InstructorCourseAttendance() {
 
             {/* Header with class info and download button */}
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Attendance Report</h1>
-                    <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{report.className || "Class Attendance"}</p>
-                </div>
+                <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Attendance Report</h2>
                 <Button type="button" variant="secondary" onClick={downloadReport} startIcon={<DownloadIcon size={18} />}>Download Report</Button>
             </div>
 

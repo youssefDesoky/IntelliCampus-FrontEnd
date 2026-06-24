@@ -11,7 +11,7 @@ import {
     CheckIcon,
     EnvelopIcon,
 } from "../../../components/ui/icons";
-import { fetchInstructorCourses } from "../../../feature/admin/services/adminApi";
+import { fetchInstructorCourses } from "../../../feature/admin/services/adminInstructorsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import AccountControlsCard from "../../../feature/student/profile/AccountControlsCard";
 

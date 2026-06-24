@@ -1,8 +1,8 @@
 import { useState } from "react";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import InputItem from "../../../components/form/InputItem";
-import { API_URL } from "../../../config/api";
 import { useError } from "../../../contexts/ErrorContext.jsx";
+import { changePassword } from "../services/profileApi";
 
 export default function ChangePasswordForm({ isOpen, onClose }) {
     const { showError } = useError();
@@ -40,22 +40,7 @@ export default function ChangePasswordForm({ isOpen, onClose }) {
 
         setSubmitting(true);
         try {
-            const res = await fetch(`${API_URL}/api/auth/change-password`, {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    currentPassword: oldPassword,
-                    newPassword: newPassword,
-                }),
-            });
-
-            if (!res.ok) {
-                const body = await res.json().catch(() => null);
-                const message = body?.detail || body?.message || body?.title || `Failed to change password (${res.status})`;
-                throw new Error(message);
-            }
-
+            await changePassword(oldPassword, newPassword);
             handleClose();
         } catch (err) {
             showError(err?.message || "Failed to change password.");

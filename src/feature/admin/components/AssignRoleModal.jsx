@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
 import { XIcon } from "../../../components/ui/icons";
-import { fetchUserRoles, assignUserRoles, fetchAssignableRoles } from "../services/adminApi";
+import { fetchUserRoles, assignUserRoles, fetchAssignableRoles } from "../services/adminAccountsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function AssignRoleModal({ userId, userName, onClose, onRolesUpdated }) {

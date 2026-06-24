@@ -247,7 +247,10 @@ export default function InstructorCourseAssignments() {
     
     return (
         <div className="space-y-4">
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                Assignments
+            </h2>
             <Button
                 type="button"
                 variant="primary"
