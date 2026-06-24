@@ -29,12 +29,36 @@ function mapBackendToUserData(student) {
     };
 }
 
+function mapAuthToUserData(auth) {
+    if (!auth) return null;
+    return {
+        name: auth.fullName || auth.name || "",
+        avatar: auth.profileImage || "",
+        email: auth.email || "",
+        phone: auth.phoneNumber || auth.phone || "",
+        address: auth.address || "",
+        specialization: auth.specialization || "",
+        department: auth.departmentName || auth.department || "",
+        faculty: auth.facultyName || auth.faculty || "",
+        studentSince: auth.enrollmentDate || "",
+        studentCode: auth.studentCode || "",
+        level: auth.level,
+        studentType: auth.studentType || "",
+        bylaw: auth.bylawName || "",
+        gpa: auth.gpa,
+        courses: auth.courses || [],
+        qrCode: "",
+        fullNameAr: auth.fullNameAr || "",
+    };
+}
+
 export default function Profile() {
     const authUser = useRouteLoaderData("root");
     const studentId = authUser?.roles?.some((r) => r.toLowerCase().startsWith("student")) ? authUser?.userId : null;
     const { showError } = useError();
-    const [userData, setUserData] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const initialData = mapAuthToUserData(authUser);
+    const [userData, setUserData] = useState(initialData);
+    const [detailedLoading, setDetailedLoading] = useState(!!studentId);
 
     const loadProfile = useCallback(async () => {
         if (!studentId) return;
@@ -52,21 +76,17 @@ export default function Profile() {
     }, [loadProfile, showError]);
 
     useEffect(() => {
+        if (!studentId) return;
         let cancelled = false;
 
         async function init() {
-            if (!studentId) {
-                if (!cancelled) setLoading(false);
-                return;
-            }
-            setLoading(true);
             try {
                 const student = await fetchStudentProfile(studentId);
                 if (!cancelled) setUserData(mapBackendToUserData(student));
             } catch (err) {
                 if (!cancelled) showError(err?.message || "Failed to load profile");
             } finally {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) setDetailedLoading(false);
             }
         }
 
@@ -74,15 +94,7 @@ export default function Profile() {
         return () => { cancelled = true; };
     }, [studentId, showError]);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-20">
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading profile...</p>
-            </div>
-        );
-    }
-
-    if (!userData) {
+    if (!userData && !studentId) {
         return (
             <div className="flex items-center justify-center py-20">
                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Unable to load profile.</p>
@@ -95,12 +107,12 @@ export default function Profile() {
             <div className="mx-auto max-w-7xl space-y-6">
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_2fr] items-stretch">
                     <div className="flex h-full flex-col gap-6 lg:sticky lg:top-6 self-start">
-                        <IdentityCard user={userData} className="flex-1 min-h-0" onProfileUpdate={refreshUserData} />
+                        <IdentityCard user={userData} onProfileUpdate={refreshUserData} />
                         <AccountControlsCard className="shrink-0" />
                     </div>
                     <div className="flex h-full flex-col gap-6">
-                        <AcademicInfoCard user={userData} />
-                        <PerformanceCard user={userData} />
+                        <AcademicInfoCard user={userData} loading={detailedLoading} />
+                        <PerformanceCard user={userData} loading={detailedLoading} />
                     </div>
                 </div>
             </div>

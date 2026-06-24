@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import Section from "../../../../components/ui/Section";
 import CoursePrerequisitesCard from "./CoursePrerequisitesCard";
+import { PrereqPageSkeleton } from "./SkeletonLoader";
 import { API_URL } from "../../../../config/api";
 import { useError } from "../../../../contexts/ErrorContext.jsx";
 
@@ -59,9 +60,7 @@ export default function CoursePrerequisitesBody({ search = "" }) {
     if (loading) {
         return (
             <Section>
-                <div className="flex justify-center py-12">
-                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading prerequisites...</p>
-                </div>
+                <PrereqPageSkeleton />
             </Section>
         );
     }
