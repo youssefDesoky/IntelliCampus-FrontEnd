@@ -10,12 +10,16 @@ function GradeIcon({ type }) {
         Quiz: "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark text-text-purple-accent-light dark:text-text-purple-accent-dark",
         Assignment: "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark text-text-blue-accent-light dark:text-text-blue-accent-dark",
         Exam: "bg-bg-surface-amber-default-light dark:bg-bg-surface-amber-default-dark text-text-amber-accent-light dark:text-text-amber-accent-dark",
+        Midterm: "bg-bg-surface-amber-default-light dark:bg-bg-surface-amber-default-dark text-text-amber-accent-light dark:text-text-amber-accent-dark",
+        Final: "bg-bg-surface-amber-default-light dark:bg-bg-surface-amber-default-dark text-text-amber-accent-light dark:text-text-amber-accent-dark",
     }[type] || "bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark";
 
     const icon = {
         Quiz: <BrainIcon size={18} />,
         Assignment: <FilePenIcon size={18} />,
         Exam: <ChartBarIcon size={18} />,
+        Midterm: <ChartBarIcon size={18} />,
+        Final: <ChartBarIcon size={18} />,
     }[type] || <ChartBarIcon size={18} />;
 
     return <div className={`p-2.5 rounded-lg shrink-0 ${cls}`}>{icon}</div>;
