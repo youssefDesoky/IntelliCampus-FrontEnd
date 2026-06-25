@@ -28,6 +28,7 @@ function mapCourseToCardProps(course) {
         title: course.courseName || "",
         room: course.room || "",
         totalStudents: course.totalStudents,
+        creditHours: course.creditHours,
     };
 }
 
@@ -52,7 +53,7 @@ export default function InstructorCourses() {
             try {
                 setLoading(true);
                 const data = await fetchMyTeachingCourses();
-                if (!cancelled) setCourses((Array.isArray(data) ? data : []).map(mapCourseToCardProps));
+                if (!cancelled) setCourses((Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []).map(mapCourseToCardProps));
             } catch (err) {
                 showError(err.message);
             } finally {
