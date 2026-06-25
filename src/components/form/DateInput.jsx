@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { CalendarIcon } from "../ui/icons";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -77,9 +78,11 @@ export default function DateInput({
         const d = parseISO(value) ?? new Date();
         return new Date(d.getFullYear(), d.getMonth(), 1);
     });
+    const [coords, setCoords]       = useState({ top: 0, left: 0 });
 
     const containerRef = useRef(null);
     const triggerRef   = useRef(null);
+    const dropdownRef  = useRef(null);
 
     // ── Sync external value ──────────────────────────────────────────────────
     useEffect(() => {
@@ -89,7 +92,10 @@ export default function DateInput({
     // ── Close on outside click / Escape ──────────────────────────────────────
     useEffect(() => {
         const handleClick = (e) => {
-            if (containerRef.current && !containerRef.current.contains(e.target)) {
+            if (
+                containerRef.current && !containerRef.current.contains(e.target) &&
+                dropdownRef.current && !dropdownRef.current.contains(e.target)
+            ) {
                 setIsOpen(false);
             }
         };
@@ -106,6 +112,28 @@ export default function DateInput({
             document.removeEventListener("keydown", handleKey);
         };
     }, []);
+
+    // ── Position dropdown ─────────────────────────────────────────────────────
+    const updatePosition = () => {
+        if (triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect();
+            setCoords({
+                top: rect.bottom,
+                left: rect.left,
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        updatePosition();
+        window.addEventListener("scroll", updatePosition, true);
+        window.addEventListener("resize", updatePosition);
+        return () => {
+            window.removeEventListener("scroll", updatePosition, true);
+            window.removeEventListener("resize", updatePosition);
+        };
+    }, [isOpen]);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
     const isDisabledDate = (date) => {
@@ -248,17 +276,23 @@ export default function DateInput({
                 />
             </button>
 
-            {/* ── Calendar Dropdown ──────────────────────────────────────── */}
-            {isOpen && (
+            {/* ── Calendar Dropdown (Portalized) ────────────────────────── */}
+            {isOpen && createPortal(
                 <div
+                    ref={dropdownRef}
                     role="dialog"
                     aria-label="Date picker"
                     className={[
-                        "absolute z-50 top-full mt-2 left-0 w-72",
+                        "z-[9999] w-72",
                         "rounded-xl border shadow-xl p-4",
                         "bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark",
                         "border-border-primary-default-light dark:border-border-primary-default-dark",
                     ].join(" ")}
+                    style={{
+                        position: 'fixed',
+                        top: `${coords.top}px`,
+                        left: `${coords.left}px`,
+                    }}
                 >
                     {/* Month / Year navigation */}
                     <div className="flex items-center justify-between mb-4">
@@ -334,7 +368,8 @@ export default function DateInput({
                             </button>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Error message */}
