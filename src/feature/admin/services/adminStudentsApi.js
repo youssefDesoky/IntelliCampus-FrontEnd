@@ -1,7 +1,8 @@
 import apiClient from "../../../api/apiClient";
 
 export async function fetchStudents() {
-    return apiClient('/api/students');
+    const result = await apiClient('/api/students?PageSize=50');
+    return result?.data ?? result ?? [];
 }
 
 export async function fetchStudentById(id) {
@@ -27,15 +28,18 @@ export async function deleteStudent(id) {
 }
 
 export async function fetchStudentRegisteredCourses(studentId) {
-    return apiClient(`/api/Courses/student/${studentId}?status=inprogress`);
+    const result = await apiClient(`/api/Courses/student/${studentId}?status=inprogress&PageSize=50`);
+    return result?.data ?? result ?? [];
 }
 
 export async function fetchStudentCompletedCourses(studentId) {
-    return apiClient(`/api/Courses/student/${studentId}?status=completed`);
+    const result = await apiClient(`/api/Courses/student/${studentId}?status=completed&PageSize=50`);
+    return result?.data ?? result ?? [];
 }
 
 export async function fetchAvailableCoursesForStudent(studentId) {
-    return apiClient('/api/Courses/active');
+    const result = await apiClient('/api/Courses/active?PageSize=50');
+    return result?.data ?? result ?? [];
 }
 
 export async function registerStudentCourse(studentId, courseId, classId = null) {

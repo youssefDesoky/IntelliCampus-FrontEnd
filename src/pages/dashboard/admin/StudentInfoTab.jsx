@@ -62,7 +62,7 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                         {student.fullName || student.name}
                     </h2>
                     <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark font-mono tracking-wider mt-2">
-                        {student.studentId}
+                        {student.studentCode || "—"}
                     </p>
                     <div className="w-full mt-auto pt-6">
                         <div className="grid grid-cols-2 gap-3 w-full">

@@ -3,7 +3,8 @@ import apiClient from "../../../api/apiClient";
 // ─── Exams ─────────────────────────────────────────────────
 
 export async function fetchExams() {
-    return apiClient('/api/exams');
+    const result = await apiClient('/api/exams?PageSize=50');
+    return result?.data ?? result ?? [];
 }
 
 export async function deleteExam(id) {

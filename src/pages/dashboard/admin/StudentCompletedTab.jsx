@@ -34,14 +34,14 @@ export default function StudentCompletedTab({ courses, loading, page, totalPages
         if (!isPhone) {
             row.courseWork = c.courseWork != null ? `${Math.round(Number(c.courseWork))}` : "—";
         }
-        const gradeNum = c.grade != null ? Number(c.grade) : null;
-        const letterGrade = toGradeLetter(gradeNum);
+        const totalGrade = c.totalGrade != null ? Number(c.totalGrade) : null;
+        const letterGrade = c.grade || (totalGrade != null ? toGradeLetter(totalGrade) : null);
         const gradeColor =
             letterGrade === "A" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" :
             letterGrade === "B" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" :
             letterGrade === "C" ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" :
             "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300";
-        row.percentage = gradeNum != null ? `${Math.round(gradeNum)}` : "—";
+        row.percentage = totalGrade != null ? `${Math.round(totalGrade)}` : "—";
         row.grade = (
             <span className={`px-2 py-0.5 rounded font-semibold text-xs ${gradeColor}`}>
                 {letterGrade}

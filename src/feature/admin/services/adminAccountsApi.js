@@ -15,7 +15,8 @@ export const ROLE_GROUP_MAP = {
 // ─── Admins ─────────────────────────────────────────────────
 
 export async function fetchAdmins() {
-    return apiClient('/api/admins');
+    const result = await apiClient('/api/admins?PageSize=50');
+    return result?.data ?? result ?? [];
 }
 
 export async function createAdmin(data) {

@@ -166,7 +166,7 @@ export default function StudentDetails() {
                             </h1>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs font-mono tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                    {student.studentCode || student.studentId}
+                                    {student.studentCode || "—"}
                                 </span>
                             </div>
                         </div>

@@ -1,7 +1,8 @@
 import apiClient from "../../../api/apiClient";
 
 export async function fetchInstructors() {
-    return apiClient('/api/instructors');
+    const result = await apiClient('/api/instructors?PageSize=50');
+    return result?.data ?? result ?? [];
 }
 
 export async function fetchInstructorById(id) {
@@ -42,7 +43,8 @@ export async function fetchFaculties() {
 }
 
 export async function fetchInstructorCourses(instructorId) {
-    return apiClient(`/api/Courses/instructor/${instructorId}`);
+    const result = await apiClient(`/api/Courses/instructor/${instructorId}?PageSize=50`);
+    return result?.data ?? result ?? [];
 }
 
 export async function fetchInstructorTASections(instructorId) {

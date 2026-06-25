@@ -7,7 +7,7 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import SelectBox from "../../../components/ui/SelectBox";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
 import NumberInput from "../../../components/form/NumberInput";
-import { PlusIcon, TrashIcon, FloppyDiskIcon, CheckIcon, XIcon, ArrowRightIcon, CloudUploadIcon, LinkIcon, ClipboardCheckIcon, CalendarDaysIcon, UserIcon, WarningIcon, ClockIcon, DownloadIcon, FileIcon, PenSquareIcon } from "../../../components/ui/icons";
+import { PlusIcon, TrashIcon, FloppyDiskIcon, CheckIcon, XIcon, ArrowRightIcon, CloudUploadIcon, LinkIcon, ClipboardCheckIcon, CalendarDaysIcon, UserIcon, WarningIcon, ClockIcon, DownloadIcon, FileIcon, PenSquareIcon, BuildingIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
 import MaterialPreview from "../../../components/ui/MaterialPreview";
 import { API_URL } from "../../../config/api";
@@ -25,6 +25,8 @@ import {
   mapCourseToBylaw,
   unmapCourseFromBylaw,
   setCoursePrerequisites,
+  updateBylawCourseAllowedDepartments,
+  updateBylawCourseCreditHours,
   createBucket as apiCreateBucket,
   updateBucket as apiUpdateBucket,
   deleteBucket as apiDeleteBucket,
@@ -130,8 +132,13 @@ function LevelScaleCard({ scale, index, onChange, onRemove }) {
   );
 }
 
-function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPrerequisites }) {
+function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPrerequisites, onSetAllowedDepartments, onCreditHoursChange }) {
   const getCourse = (courseId) => allCourses.find((c) => c.courseId === courseId);
+
+  const handleCreditHoursChange = (courseId, value) => {
+    const num = value === "" ? null : parseInt(value, 10);
+    onCreditHoursChange?.(courseId, isNaN(num) ? null : num);
+  };
 
   return (
     <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
@@ -152,23 +159,36 @@ function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPr
         <div className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
           {items.map((entry, idx) => {
             const course = getCourse(entry.courseId);
+            const isMajor = onSetAllowedDepartments != null;
             return (
               <div key={entry.courseId} className="flex items-center gap-4 px-4 py-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                    {course?.courseName || "Unknown Course"}
+                    {course?.courseName || entry.courseName || "Unknown Course"}
                   </p>
                   <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    {course?.courseCode || entry.courseId}
+                    {course?.courseCode || entry.courseCode || entry.courseId}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-[10px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark whitespace-nowrap">Credits:</label>
-                    <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark w-8 text-center">
-                      {course?.creditHours ?? "—"}
-                    </span>
-                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    value={entry.creditHours ?? course?.creditHours ?? ""}
+                    onChange={(e) => handleCreditHoursChange(entry.courseId, e.target.value)}
+                    placeholder={course?.creditHours?.toString() ?? "—"}
+                    className="w-14 text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark bg-transparent border border-border-primary-default-light dark:border-border-primary-default-dark rounded px-1 py-0.5 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-border-accent-active-light dark:focus:border-border-accent-active-dark"
+                  />
+                  {isMajor && (
+                    <button
+                      type="button"
+                      onClick={() => onSetAllowedDepartments?.(entry)}
+                      className="p-1.5 rounded-lg text-text-accent-active-light dark:text-text-accent-active-dark hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+                      title="Set allowed departments"
+                    >
+                      <BuildingIcon size={16} />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => onSetPrerequisites?.(entry.courseId)}
@@ -224,6 +244,9 @@ export default function ManageBylawDetailsPage() {
   const [minPassingGpa, setMinPassingGpa] = useState("");
   const [courseWorkGrade, setCourseWorkGrade] = useState("");
   const [finalExamGrade, setFinalExamGrade] = useState("");
+  const [minPassingCourseworkGrade, setMinPassingCourseworkGrade] = useState("");
+  const [minPassingFinalExamGrade, setMinPassingFinalExamGrade] = useState("");
+  const [maxGradeOnRetake, setMaxGradeOnRetake] = useState("");
 
   // ── Academic Probation Rules ──
   const [probationThreshold, setProbationThreshold] = useState("");
@@ -257,6 +280,11 @@ export default function ManageBylawDetailsPage() {
   const [selectedCourseIds, setSelectedCourseIds] = useState([]);
   const [courseSearchQuery, setCourseSearchQuery] = useState("");
   const [courseIdToBylawCourseId, setCourseIdToBylawCourseId] = useState({});
+
+  // ── Allowed Departments ──
+  const [departmentTarget, setDepartmentTarget] = useState(null);
+  const [deptSelectedIds, setDeptSelectedIds] = useState([]);
+  const [deptSearchQuery, setDeptSearchQuery] = useState("");
 
   // ── Prerequisites ──
   const [prerequisites, setPrerequisites] = useState({});
@@ -330,6 +358,9 @@ export default function ManageBylawDetailsPage() {
       setMinPassingGpa(data.minPassingGpa ?? "");
       setCourseWorkGrade(data.courseWorkGrade ?? "");
       setFinalExamGrade(data.finalExamGrade ?? "");
+      setMinPassingCourseworkGrade(data.minPassingCourseworkGrade ?? "");
+      setMinPassingFinalExamGrade(data.minPassingFinalExamGrade ?? "");
+      setMaxGradeOnRetake(data.maxGradeOnRetake ?? "");
 
       setProbationThreshold(data.probationThreshold ?? "");
       setProbationRegistrationLimit(data.probationRegistrationLimit ?? "");
@@ -349,7 +380,7 @@ export default function ManageBylawDetailsPage() {
       (data.bylawCourses || []).forEach(bc => {
         courseMap[bc.courseId] = bc.bylawCourseId;
         bcToCourse[bc.bylawCourseId] = bc.courseId;
-        const entry = { courseId: bc.courseId, bylawCourseId: bc.bylawCourseId, creditHours: bc.creditHours ?? null };
+        const entry = { courseId: bc.courseId, bylawCourseId: bc.bylawCourseId, creditHours: bc.creditHours ?? null, allowedDepartments: bc.allowedDepartments || [], courseCode: bc.courseCode, courseName: bc.courseName };
         const type = bc.courseType?.toLowerCase() || "";
         if (type === "generaluniversity") uni.push(entry);
         else if (type === "faculty") college.push(entry);
@@ -524,6 +555,11 @@ export default function ManageBylawDetailsPage() {
         courseWorkGrade: parseFloat(courseWorkGrade) || null,
         finalExamGrade: parseFloat(finalExamGrade) || null,
       });
+      await updateBylawPassingCourseGrades(bylawId, {
+        minPassingCourseworkGrade: parseFloat(minPassingCourseworkGrade) || null,
+        minPassingFinalExamGrade: parseFloat(minPassingFinalExamGrade) || null,
+        maxGradeOnRetake: maxGradeOnRetake || null,
+      });
       showSuccess("Grading configuration saved successfully");
       await loadData();
     } catch (err) {
@@ -647,7 +683,10 @@ export default function ManageBylawDetailsPage() {
     const updater = (prev) => {
       const existing = new Set(prev.map(c => c.courseId));
       const newIds = selectedCourseIds.filter(id => !existing.has(id));
-      const result = [...prev, ...newIds.map(courseId => ({ courseId, bylawCourseId: null, creditHours: null }))];
+      const result = [...prev, ...newIds.map(courseId => {
+        const c = allCourses.find(x => x.courseId === courseId);
+        return { courseId, bylawCourseId: null, creditHours: c?.creditHours ?? null, courseCode: c?.courseCode, courseName: c?.courseName };
+      })];
       return result;
     };
     if (courseSelectTarget === "university") {
@@ -679,6 +718,42 @@ export default function ManageBylawDetailsPage() {
     setPrereqTarget(null);
     setPrereqSelectedIds([]);
   };
+
+  // ── Handlers: Allowed Departments ──
+
+  const openDepartmentSelect = (entry) => {
+    setDepartmentTarget(entry);
+    setDeptSelectedIds(entry.allowedDepartments || []);
+    setDeptSearchQuery("");
+  };
+
+  const confirmDepartmentSelection = () => {
+    if (!departmentTarget) return;
+    const updatedDepts = deptSelectedIds;
+    const updater = (prev) => prev.map(c =>
+      c.courseId === departmentTarget.courseId
+        ? { ...c, allowedDepartments: updatedDepts }
+        : c
+    );
+    setUniversityRequired(updater);
+    setCollegeRequired(updater);
+    setMajorRequired(updater);
+    setDepartmentTarget(null);
+    setDeptSelectedIds([]);
+  };
+
+  // ── Handlers: Credit Hours ──
+
+  const handleCreditHoursChange = (courseId, creditHours) => {
+    const updater = (prev) => prev.map(c =>
+      c.courseId === courseId ? { ...c, creditHours } : c
+    );
+    setUniversityRequired(updater);
+    setCollegeRequired(updater);
+    setMajorRequired(updater);
+  };
+
+  const [bucketCourseCredits, setBucketCourseCredits] = useState({});
 
   // ── Handlers: Buckets ──
 
@@ -728,6 +803,9 @@ export default function ManageBylawDetailsPage() {
     const bucket = buckets.find(b => b.id === bucketId);
     setBucketCourseTarget(bucketId);
     setBucketSelectedIds((bucket?.courseIds || []).map(c => c.courseId));
+    const creditMap = {};
+    (bucket?.courseIds || []).forEach(c => { creditMap[c.courseId] = c.creditHours ?? null; });
+    setBucketCourseCredits(creditMap);
     setBucketSearchQuery("");
     try {
       const depts = await fetchDepartments();
@@ -742,14 +820,15 @@ export default function ManageBylawDetailsPage() {
     setBuckets(prev => prev.map(b =>
       b.id === bucketCourseTarget ? {
         ...b,
-        courseIds: bucketSelectedIds.map(id => {
-          const course = allCourses.find(c => c.courseId === id);
-          return { courseId: id, creditHours: course?.creditHours || 0 };
-        }),
+        courseIds: bucketSelectedIds.map(id => ({
+          courseId: id,
+          creditHours: bucketCourseCredits[id] ?? null,
+        })),
       } : b
     ));
     setBucketCourseTarget(null);
     setBucketSelectedIds([]);
+    setBucketCourseCredits({});
   };
 
   const removeBucketCourse = (bucketId, courseId) => {
@@ -827,6 +906,7 @@ export default function ManageBylawDetailsPage() {
 
       // Determine added courseIds (not in original mapping)
       const addedIds = allCurrent.filter(c => !courseIdToBylawCourseId[c.courseId]).map(c => c.courseId);
+      const existingIds = allCurrent.filter(c => courseIdToBylawCourseId[c.courseId]).map(c => c.courseId);
 
       // Determine removed courseIds (in original but not in current)
       const removedIds = allOriginal.filter(id => !allCurrentIds.has(id));
@@ -839,9 +919,12 @@ export default function ManageBylawDetailsPage() {
 
       const newBcIds = {};
       for (const courseId of addedIds) {
+        const entry = allCurrent.find(c => c.courseId === courseId);
         const result = await mapCourseToBylaw(bylawId, {
           courseId,
           courseType: typeForCourse[courseId],
+          creditHours: entry?.creditHours ?? null,
+          allowedDepartmentIds: entry?.allowedDepartments?.length > 0 ? entry.allowedDepartments : null,
         });
         newBcIds[courseId] = result.bylawCourseId;
       }
@@ -861,6 +944,22 @@ export default function ManageBylawDetailsPage() {
               prerequisiteBylawCourseIds: prereqBcIds,
             });
           }
+        }
+      }
+
+      // Save credit hours for all current courses
+      for (const entry of allCurrent) {
+        const bcId = updatedMap[entry.courseId];
+        if (bcId && entry.creditHours != null) {
+          await updateBylawCourseCreditHours(bcId, { creditHours: entry.creditHours });
+        }
+      }
+
+      // Save allowed departments for all current courses
+      for (const entry of allCurrent) {
+        const bcId = updatedMap[entry.courseId];
+        if (bcId && entry.allowedDepartments?.length > 0) {
+          await updateBylawCourseAllowedDepartments(bcId, { departmentIds: entry.allowedDepartments });
         }
       }
 
@@ -1223,6 +1322,25 @@ export default function ManageBylawDetailsPage() {
             </div>
           </div>
 
+          {/* Minimum Passing Course Work & Final Exam Grades */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Min Passing Coursework (%)</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Minimum coursework percentage to pass the course</p>
+              <NumberInput step="0.1" min="0" max="100" value={minPassingCourseworkGrade} onChange={(e) => setMinPassingCourseworkGrade(e.target.value)} placeholder="e.g. 15" className="w-full" />
+            </div>
+            <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Min Passing Final Exam (%)</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Minimum final exam percentage to pass the course</p>
+              <NumberInput step="0.1" min="0" max="100" value={minPassingFinalExamGrade} onChange={(e) => setMinPassingFinalExamGrade(e.target.value)} placeholder="e.g. 18" className="w-full" />
+            </div>
+            <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Max Grade on Retake (%)</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Maximum overall grade when retaking a failed course</p>
+              <input type="text" value={maxGradeOnRetake} onChange={(e) => setMaxGradeOnRetake(e.target.value)} className={inputClass} placeholder="e.g. D" />
+            </div>
+          </div>
+
           {gradeScales.length === 0 ? (
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
               No grade scales defined. Click "Add Grade Scale" to add one.
@@ -1502,6 +1620,7 @@ export default function ManageBylawDetailsPage() {
                 onAdd={() => openCourseSelect("university")}
                 onRemove={(idx) => removeCourseMappingRow(universityRequired, setUniversityRequired, idx)}
                 onSetPrerequisites={openPrereqSelect}
+                onCreditHoursChange={handleCreditHoursChange}
               />
               <CourseMappingTable
                 title="College Required Courses"
@@ -1510,6 +1629,7 @@ export default function ManageBylawDetailsPage() {
                 onAdd={() => openCourseSelect("college")}
                 onRemove={(idx) => removeCourseMappingRow(collegeRequired, setCollegeRequired, idx)}
                 onSetPrerequisites={openPrereqSelect}
+                onCreditHoursChange={handleCreditHoursChange}
               />
               <CourseMappingTable
                 title="Major Required Courses"
@@ -1518,6 +1638,8 @@ export default function ManageBylawDetailsPage() {
                 onAdd={() => openCourseSelect("major")}
                 onRemove={(idx) => removeCourseMappingRow(majorRequired, setMajorRequired, idx)}
                 onSetPrerequisites={openPrereqSelect}
+                onSetAllowedDepartments={openDepartmentSelect}
+                onCreditHoursChange={handleCreditHoursChange}
               />
             </div>
           )}
@@ -1609,13 +1731,27 @@ export default function ManageBylawDetailsPage() {
                                     {course?.courseCode || `#${item.courseId}`}
                                   </p>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <label className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">
-                                    Credits:
-                                  </label>
-                                  <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark w-8 text-center">
-                                    {course?.creditHours ?? item.creditHours ?? "—"}
-                                  </span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <label className="text-[10px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark whitespace-nowrap">Credits:</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={item.creditHours ?? course?.creditHours ?? ""}
+                                    onChange={(e) => {
+                                      const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                                      const ch = isNaN(val) ? null : val;
+                                      setBuckets(prev => prev.map(b =>
+                                        b.id === bucket.id ? {
+                                          ...b,
+                                          courseIds: b.courseIds.map(c =>
+                                            c.courseId === item.courseId ? { ...c, creditHours: ch } : c
+                                          )
+                                        } : b
+                                      ));
+                                    }}
+                                    className="w-14 text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark bg-transparent border border-border-primary-default-light dark:border-border-primary-default-dark rounded px-1 py-0.5 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:border-border-accent-active-light dark:focus:border-border-accent-active-dark"
+                                    placeholder={course?.creditHours?.toString() ?? "—"}
+                                  />
                                 </div>
                                 <button
                                   type="button"
@@ -1675,11 +1811,17 @@ export default function ManageBylawDetailsPage() {
             {/* Course List */}
             <div className="flex-1 overflow-y-auto px-5 space-y-1 min-h-0 no-scrollbar">
               {allCourses
-                .filter((c) =>
-                  !courseSearchQuery ||
-                  c.courseName?.toLowerCase().includes(courseSearchQuery.toLowerCase()) ||
-                  c.courseCode?.toLowerCase().includes(courseSearchQuery.toLowerCase())
-                )
+                .filter((c) => {
+                  const alreadyMapped = universityRequired.some(u => u.courseId === c.courseId) ||
+                    collegeRequired.some(co => co.courseId === c.courseId) ||
+                    majorRequired.some(m => m.courseId === c.courseId) ||
+                    buckets.some(b => (b.courseIds || []).some(ci => ci.courseId === c.courseId));
+                  return !alreadyMapped && (
+                    !courseSearchQuery ||
+                    c.courseName?.toLowerCase().includes(courseSearchQuery.toLowerCase()) ||
+                    c.courseCode?.toLowerCase().includes(courseSearchQuery.toLowerCase())
+                  );
+                })
                 .map((course) => {
                   const isSelected = selectedCourseIds.includes(course.courseId);
                   return (
@@ -1709,17 +1851,23 @@ export default function ManageBylawDetailsPage() {
                           {course.courseName}
                         </p>
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                          {course.courseCode}{course.creditHours ? ` • ${course.creditHours} Credits` : ""}
+                          {course.courseCode}
                         </p>
                       </div>
                     </label>
                   );
                 })}
-              {allCourses.filter((c) =>
-                !courseSearchQuery ||
-                c.courseName?.toLowerCase().includes(courseSearchQuery.toLowerCase()) ||
-                c.courseCode?.toLowerCase().includes(courseSearchQuery.toLowerCase())
-              ).length === 0 && (
+              {allCourses.filter((c) => {
+                const alreadyMapped = universityRequired.some(u => u.courseId === c.courseId) ||
+                  collegeRequired.some(co => co.courseId === c.courseId) ||
+                  majorRequired.some(m => m.courseId === c.courseId) ||
+                  buckets.some(b => (b.courseIds || []).some(ci => ci.courseId === c.courseId));
+                return !alreadyMapped && (
+                  !courseSearchQuery ||
+                  c.courseName?.toLowerCase().includes(courseSearchQuery.toLowerCase()) ||
+                  c.courseCode?.toLowerCase().includes(courseSearchQuery.toLowerCase())
+                );
+              }).length === 0 && (
                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
                   No courses found.
                 </p>
@@ -1813,7 +1961,7 @@ export default function ManageBylawDetailsPage() {
                           {course.courseName}
                         </p>
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                          {course.courseCode}{course.creditHours ? ` • ${course.creditHours} Credits` : ""}
+                          {course.courseCode}
                         </p>
                       </div>
                     </label>
@@ -1851,6 +1999,100 @@ export default function ManageBylawDetailsPage() {
         </ModelOverlay>
       )}
 
+      {/* Allowed Department Selection Overlay */}
+      {departmentTarget && (
+        <ModelOverlay onClose={() => setDepartmentTarget(null)} maxWidth="max-w-lg">
+          <div className="w-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+              <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                Allowed Departments
+              </h2>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark ml-2 truncate">
+                for {allCourses.find(c => c.courseId === departmentTarget.courseId)?.courseName || "course"}
+              </p>
+              <button type="button" onClick={() => setDepartmentTarget(null)} className="ml-auto p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors">
+                <XIcon size={20} />
+              </button>
+            </div>
+
+            <div className="px-5 py-3">
+              <input
+                type="text"
+                value={deptSearchQuery}
+                onChange={(e) => setDeptSearchQuery(e.target.value)}
+                placeholder="Search departments..."
+                className={`w-full ${inputClass}`}
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 space-y-1 min-h-0 no-scrollbar">
+              {bucketDepartments
+                .filter((d) =>
+                  !deptSearchQuery ||
+                  (d.departmentName || d.name)?.toLowerCase().includes(deptSearchQuery.toLowerCase())
+                )
+                .map((dept) => {
+                  const deptId = dept.departmentId ?? dept.id;
+                  const isSelected = deptSelectedIds.includes(deptId);
+                  return (
+                    <label
+                      key={deptId}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark"
+                          : "hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          setDeptSelectedIds(prev =>
+                            isSelected
+                              ? prev.filter(id => id !== deptId)
+                              : [...prev, deptId]
+                          );
+                        }}
+                        className="rounded border-border-primary-default-light dark:border-border-primary-default-dark text-text-accent-active-light focus:ring-text-accent-active-light"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                          {dept.departmentName || dept.name}
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })}
+              {bucketDepartments.filter((d) =>
+                !deptSearchQuery ||
+                (d.departmentName || d.name)?.toLowerCase().includes(deptSearchQuery.toLowerCase())
+              ).length === 0 && (
+                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
+                  No departments found.
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3 px-5 py-4 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
+              <button
+                type="button"
+                onClick={() => setDepartmentTarget(null)}
+                className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDepartmentSelection}
+                className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save ({deptSelectedIds.length})
+              </button>
+            </div>
+          </div>
+        </ModelOverlay>
+      )}
+
       {/* Bucket Course Selection Overlay */}
       {bucketCourseTarget && (
         <ModelOverlay onClose={() => setBucketCourseTarget(null)} maxWidth="max-w-2xl">
@@ -1879,11 +2121,18 @@ export default function ManageBylawDetailsPage() {
             {/* Course List */}
             <div className="flex-1 overflow-y-auto px-5 space-y-1 min-h-0 no-scrollbar">
               {allCourses
-                .filter((c) =>
-                  !bucketSearchQuery ||
-                  c.courseName?.toLowerCase().includes(bucketSearchQuery.toLowerCase()) ||
-                  c.courseCode?.toLowerCase().includes(bucketSearchQuery.toLowerCase())
-                )
+                .filter((c) => {
+                  const requiredIds = new Set([
+                    ...universityRequired.map(u => u.courseId),
+                    ...collegeRequired.map(co => co.courseId),
+                    ...majorRequired.map(m => m.courseId),
+                  ]);
+                  return !requiredIds.has(c.courseId) && (
+                    !bucketSearchQuery ||
+                    c.courseName?.toLowerCase().includes(bucketSearchQuery.toLowerCase()) ||
+                    c.courseCode?.toLowerCase().includes(bucketSearchQuery.toLowerCase())
+                  );
+                })
                 .map((course) => {
                   const isSelected = bucketSelectedIds.includes(course.courseId);
                   return (
@@ -1904,6 +2153,18 @@ export default function ManageBylawDetailsPage() {
                               ? prev.filter(id => id !== course.courseId)
                               : [...prev, course.courseId]
                           );
+                          if (!isSelected) {
+                            setBucketCourseCredits(prev => ({
+                              ...prev,
+                              [course.courseId]: null,
+                            }));
+                          } else {
+                            setBucketCourseCredits(prev => {
+                              const next = { ...prev };
+                              delete next[course.courseId];
+                              return next;
+                            });
+                          }
                         }}
                         className="rounded border-border-primary-default-light dark:border-border-primary-default-dark text-text-accent-active-light focus:ring-text-accent-active-light"
                       />
@@ -1912,17 +2173,24 @@ export default function ManageBylawDetailsPage() {
                           {course.courseName}
                         </p>
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                          {course.courseCode}{course.creditHours ? ` • ${course.creditHours} Credits` : ""}
+                          {course.courseCode}
                         </p>
                       </div>
                     </label>
                   );
                 })}
-              {allCourses.filter((c) =>
-                !bucketSearchQuery ||
-                c.courseName?.toLowerCase().includes(bucketSearchQuery.toLowerCase()) ||
-                c.courseCode?.toLowerCase().includes(bucketSearchQuery.toLowerCase())
-              ).length === 0 && (
+              {allCourses.filter((c) => {
+                const requiredIds = new Set([
+                  ...universityRequired.map(u => u.courseId),
+                  ...collegeRequired.map(co => co.courseId),
+                  ...majorRequired.map(m => m.courseId),
+                ]);
+                return !requiredIds.has(c.courseId) && (
+                  !bucketSearchQuery ||
+                  c.courseName?.toLowerCase().includes(bucketSearchQuery.toLowerCase()) ||
+                  c.courseCode?.toLowerCase().includes(bucketSearchQuery.toLowerCase())
+                );
+              }).length === 0 && (
                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
                   No courses found.
                 </p>
@@ -2005,7 +2273,10 @@ export default function ManageBylawDetailsPage() {
                   { value: "", label: "All Departments" },
                   ...bucketDepartments.map(d => ({ value: d.departmentName || d.name, label: d.departmentName || d.name }))
                 ]}
-                selectedOption={bucketDepartments.find(d => (d.departmentName || d.name) === newBucketForm.department) || { value: "", label: "All Departments" }}
+                selectedOption={(() => {
+                  const dept = bucketDepartments.find(d => (d.departmentName || d.name) === newBucketForm.department);
+                  return dept ? { value: dept.departmentName || dept.name, label: dept.departmentName || dept.name } : { value: "", label: "All Departments" };
+                })()}
                 onChange={(opt) => {
                   const deptObj = bucketDepartments.find(d => (d.departmentName || d.name) === opt.value);
                   setNewBucketForm(prev => ({ ...prev, department: opt.value || "", departmentId: deptObj?.departmentId || deptObj?.id || null }));
@@ -2086,7 +2357,10 @@ export default function ManageBylawDetailsPage() {
                   { value: "", label: "All Departments" },
                   ...bucketDepartments.map(d => ({ value: d.departmentName || d.name, label: d.departmentName || d.name }))
                 ]}
-                selectedOption={bucketDepartments.find(d => (d.departmentName || d.name) === editingBucket.department) || { value: "", label: "All Departments" }}
+                selectedOption={(() => {
+                  const dept = bucketDepartments.find(d => (d.departmentName || d.name) === editingBucket.department);
+                  return dept ? { value: dept.departmentName || dept.name, label: dept.departmentName || dept.name } : { value: "", label: "All Departments" };
+                })()}
                 onChange={(opt) => {
                   const deptObj = bucketDepartments.find(d => (d.departmentName || d.name) === opt.value);
                   setEditingBucket(prev => ({
@@ -2291,37 +2565,39 @@ export default function ManageBylawDetailsPage() {
       {/* Document Preview Overlay */}
       {documentPreviewTarget && (
         <ModelOverlay onClose={() => setDocumentPreviewTarget(null)} maxWidth="max-w-5xl">
-          <div className="w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
-            <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-4 dark:border-border-primary-default-dark">
-              <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                {documentPreviewTarget.fileName || "Document Preview"}
-              </h3>
+          <div className="w-full overflow-hidden rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-xl">
+            <div className="flex items-center justify-between border-b border-border-primary-default-light dark:border-border-primary-default-dark px-5 py-4">
+              <div>
+                <h4 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                  {documentPreviewTarget.fileName || "Document Preview"}
+                </h4>
+                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-0.5">Policy document preview</p>
+              </div>
               <div className="flex items-center gap-2">
                 <a
                   href={`${API_URL}/api/Bylaw/${documentPreviewTarget.bylawId ?? documentPreviewTarget.id}/download`}
                   download
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark px-3.5 py-2 text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                 >
-                  <DownloadIcon size={16} />
+                  <DownloadIcon size={14} />
                   Download
                 </a>
                 <button
                   type="button"
                   onClick={() => setDocumentPreviewTarget(null)}
-                  className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+                  aria-label="Close bylaw preview"
                 >
-                  <XIcon size={20} />
+                  <XIcon size={14} />
                 </button>
               </div>
             </div>
-            <div className="p-6">
-              <MaterialPreview
-                type={0}
-                title={documentPreviewTarget.fileName || "document"}
-                viewUrl={`${API_URL}/api/Bylaw/${documentPreviewTarget.bylawId ?? documentPreviewTarget.id}/download`}
-                downloadUrl={`${API_URL}/api/Bylaw/${documentPreviewTarget.bylawId ?? documentPreviewTarget.id}/download`}
-              />
-            </div>
+            <MaterialPreview
+              type={0}
+              title={documentPreviewTarget.fileName || "document"}
+              viewUrl={`${API_URL}/api/Bylaw/${documentPreviewTarget.bylawId ?? documentPreviewTarget.id}/view`}
+              downloadUrl={`${API_URL}/api/Bylaw/${documentPreviewTarget.bylawId ?? documentPreviewTarget.id}/download`}
+            />
           </div>
         </ModelOverlay>
       )}
@@ -2416,7 +2692,7 @@ export default function ManageBylawDetailsPage() {
                             {course.courseName}
                           </p>
                           <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            {course.courseCode}{course.creditHours ? ` • ${course.creditHours} Credits` : ""}
+                            {course.courseCode}
                           </p>
                         </div>
                       </label>
