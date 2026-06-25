@@ -2,8 +2,10 @@ import apiClient from "../../../api/apiClient";
 
 // ─── Bylaws ─────────────────────────────────────────────────
 
-export async function fetchBylaws() {
-    return apiClient('/api/Bylaw');
+export async function fetchBylaws(type) {
+    const params = type ? `?Type=${type}&PageSize=50` : '?PageSize=50';
+    const result = await apiClient(`/api/Bylaw${params}`);
+    return result?.data ?? result ?? [];
 }
 
 export async function fetchBylawById(id) {
@@ -99,6 +101,13 @@ export async function updateBylawGradeWeights(id, data) {
     });
 }
 
+export async function updateBylawPassingCourseGrades(id, data) {
+    return apiClient(`/api/Bylaw/${id}/passing-course-grades`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
 export async function updateBylawMinHours(id, data) {
     return apiClient(`/api/Bylaw/${id}/minhours-departmentAndSpecialization`, {
         method: "PUT",
@@ -120,6 +129,20 @@ export async function unmapCourseFromBylaw(bylawCourseId) {
 
 export async function setCoursePrerequisites(bylawCourseId, data) {
     return apiClient(`/api/Bylaw/courses/${bylawCourseId}/prerequisites`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateBylawCourseAllowedDepartments(bylawCourseId, data) {
+    return apiClient(`/api/Bylaw/courses/${bylawCourseId}/allowed-departments`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+    });
+}
+
+export async function updateBylawCourseCreditHours(bylawCourseId, data) {
+    return apiClient(`/api/Bylaw/courses/${bylawCourseId}/credit-hours`, {
         method: "PUT",
         body: JSON.stringify(data),
     });

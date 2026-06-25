@@ -9,8 +9,10 @@ export async function fetchCourses(params = {}) {
     if (status) query.set('status', status);
     if (departmentId) query.set('departmentId', departmentId);
     if (isActiveOnly) query.set('isActiveOnly', 'true');
+    query.set('PageSize', '50');
     const qs = query.toString();
-    return apiClient(`/api/courses${qs ? `?${qs}` : ''}`);
+    const result = await apiClient(`/api/courses?${qs}`);
+    return result?.data ?? result ?? [];
 }
 
 export async function fetchCourseById(id) {

@@ -3,7 +3,8 @@ import apiClient from "../../../api/apiClient";
 // ─── Departments ────────────────────────────────────────────
 
 export async function fetchDepartments() {
-    return apiClient('/api/departments');
+    const result = await apiClient('/api/departments?PageSize=50');
+    return result?.data ?? result ?? [];
 }
 
 export async function fetchDepartmentById(id) {

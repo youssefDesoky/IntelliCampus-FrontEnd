@@ -3,7 +3,8 @@ import apiClient from "../../../api/apiClient";
 // ─── Rooms ──────────────────────────────────────────────────
 
 export async function fetchRooms() {
-    return apiClient('/api/rooms');
+    const result = await apiClient('/api/rooms?PageSize=50');
+    return result?.data ?? result ?? [];
 }
 
 export async function fetchRoomTypes() {

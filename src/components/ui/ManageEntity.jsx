@@ -70,7 +70,7 @@ export default function ManageEntity({
 
   const { data: rawItems = [], isLoading, error, refetch } = useQuery({
     queryKey,
-    queryFn: fetchItems,
+    queryFn: () => fetchItems(),
   });
 
   useEffect(() => {

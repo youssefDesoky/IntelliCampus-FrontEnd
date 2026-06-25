@@ -48,6 +48,8 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
         return programs[0];
     });
 
+    const isCredit = selectedProgram?.value === "Credit";
+
     const [departments, setDepartments] = useState([]);
     const [selectedDepartment, setSelectedDepartment] = useState(null);
 
@@ -90,18 +92,27 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
             .catch(console.error);
     }, [defaultType, isEdit, initialData.studentType]);
 
+    const bylawTypeMap = {
+        bachelor: 'Bachelor',
+        masters: 'Master',
+        phd: 'PhD',
+        diploma: 'Diploma',
+    };
+
     useEffect(() => {
-        fetchBylaws()
+        const type = selectedStudentType?.value ? bylawTypeMap[selectedStudentType.value] : undefined;
+        fetchBylaws(type)
             .then(data => {
                 const options = data.map(b => ({ value: b.bylawId, label: b.name }));
                 setBylaws(options);
+                setSelectedBylaw(null);
                 if (initialData.bylawId) {
                     const match = options.find(o => o.value === initialData.bylawId);
                     if (match) setSelectedBylaw(match);
                 }
             })
             .catch(console.error);
-    }, [initialData.bylawId]);
+    }, [selectedStudentType, initialData.bylawId]);
 
     useEffect(() => {
         fetchDepartments()
@@ -350,7 +361,23 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                 </div>
                             )}
 
-                            {!isPostgrad && !isEdit && (
+                            {!isPostgrad && isCredit && !isEdit && (
+                                <SelectBox
+                                    className="w-full"
+                                    label="Department"
+                                    name="departmentId"
+                                    labelDirection="flex-col"
+                                    options={departments}
+                                    selectedOption={selectedDepartment}
+                                    onChange={setSelectedDepartment}
+                                />
+                            )}
+
+                            {!isPostgrad && isCredit && !isEdit && (
+                                <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={new Date().toISOString().split("T")[0]} required />
+                            )}
+
+                            {!isPostgrad && !isCredit && !isEdit && (
                                 <div className="col-span-1 sm:col-span-2">
                                     <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={new Date().toISOString().split("T")[0]} required />
                                 </div>
@@ -386,7 +413,24 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                         onChange={setSelectedSpecialization}
                                     />
                                     {!isEdit && (
-                                        <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={new Date().toISOString().split("T")[0]} required />
+                                        <div className="flex flex-col">
+                                            <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Program</label>
+                                            <RadioToggle
+                                                name="program"
+                                                options={programs}
+                                                value={selectedProgram.value}
+                                                onChange={(value) => {
+                                                    const selected = programs.find(p => p.value === value) || programs[0];
+                                                    setSelectedProgram(selected);
+                                                }}
+                                                className="w-full"
+                                            />
+                                        </div>
+                                    )}
+                                    {!isEdit && (
+                                        <div className="col-span-1 sm:col-span-2">
+                                            <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={new Date().toISOString().split("T")[0]} required />
+                                        </div>
                                     )}
                                 </>
                             )}
