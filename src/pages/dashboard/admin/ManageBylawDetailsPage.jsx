@@ -919,7 +919,30 @@ export default function ManageBylawDetailsPage() {
       // Build updated courseId -> bylawCourseId map for required courses
       const updatedMap = { ...courseIdToBylawCourseId, ...newBcIds };
 
-      // Save buckets via ElectiveBuckets API (creates BylawCourse records for bucket courses)
+      // Set prerequisites for ALL current courses that have them
+      for (const entry of allCurrent) {
+        const prereqCourseIds = prerequisites[entry.courseId];
+        if (prereqCourseIds && prereqCourseIds.length > 0) {
+          const prereqBcIds = prereqCourseIds
+            .map(cid => updatedMap[cid])
+            .filter(Boolean);
+          if (prereqBcIds.length > 0) {
+            await setCoursePrerequisites(updatedMap[entry.courseId], {
+              prerequisiteBylawCourseIds: prereqBcIds,
+            });
+          }
+        }
+      }
+
+      // Remove unmapped courses
+      for (const courseId of removedIds) {
+        const bcId = courseIdToBylawCourseId[courseId];
+        if (bcId) {
+          await unmapCourseFromBylaw(bcId);
+        }
+      }
+
+      // Save buckets via ElectiveBuckets API
       const originalIds = new Set(originalBucketsRef.current);
       const currentIds = new Set(buckets.map(b => b.id));
       const bucketBcIds = {};
