@@ -934,6 +934,22 @@ export default function ManageBylawDetailsPage() {
         }
       }
 
+      // Save credit hours for all current courses
+      for (const entry of allCurrent) {
+        const bcId = updatedMap[entry.courseId];
+        if (bcId && entry.creditHours != null) {
+          await updateBylawCourseCreditHours(bcId, { creditHours: entry.creditHours });
+        }
+      }
+
+      // Save allowed departments for all current courses
+      for (const entry of allCurrent) {
+        const bcId = updatedMap[entry.courseId];
+        if (bcId && entry.allowedDepartments?.length > 0) {
+          await updateBylawCourseAllowedDepartments(bcId, { departmentIds: entry.allowedDepartments });
+        }
+      }
+
       // Remove unmapped courses
       for (const courseId of removedIds) {
         const bcId = courseIdToBylawCourseId[courseId];
