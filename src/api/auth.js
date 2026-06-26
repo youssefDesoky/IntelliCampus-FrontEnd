@@ -1,4 +1,4 @@
-import apiClient from "../utils/apiClient";
+import apiClient from "./apiClient";
 
 export function fetchPublicFaculties() {
     return apiClient("/api/faculties/public", { credentials: "omit" });
