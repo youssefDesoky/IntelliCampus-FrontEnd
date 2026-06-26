@@ -46,17 +46,7 @@ export default async function apiClient(endpoint, options = {}) {
     const error = new ApiError(res.status, title, detail, body);
 
     switch (res.status) {
-      case 400:
-        emitError({ title, message: detail });
-        break;
       case 401:
-        window.location.href = '/unauthorized';
-        break;
-      case 404:
-        emitError({ title, message: detail || 'Resource not found' });
-        break;
-      case 500:
-        window.location.href = '/internal-server-error';
         break;
       default:
         emitError({ title, message: detail });
@@ -66,4 +56,21 @@ export default async function apiClient(endpoint, options = {}) {
   }
 
   return body;
+}
+
+export async function downloadBlob(endpoint, filename) {
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 }

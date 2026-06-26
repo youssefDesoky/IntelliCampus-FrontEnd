@@ -1,37 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
 import NumberInput from "../../../components/form/NumberInput";
 import { PlusIcon, TrashIcon, XIcon } from "../../../components/ui/icons";
-import { fetchSpecializations, createSpecialization, deleteSpecialization } from "../services/adminApi";
+import { fetchSpecializations, createSpecialization, deleteSpecialization } from "../services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function DepartmentSpecializationsForm({ department, onClose, onUpdate }) {
     const { showError } = useError();
-    const [specializations, setSpecializations] = useState([]);
     const [newName, setNewName] = useState("");
     const [newNameAr, setNewNameAr] = useState("");
     const [newMaxCapacity, setNewMaxCapacity] = useState("");
-    const [loading, setLoading] = useState(true);
     const [adding, setAdding] = useState(false);
 
     const departmentId = department?.id ?? department?.departmentId;
 
-    const loadSpecializations = async () => {
-        try {
-            setLoading(true);
-            const data = await fetchSpecializations(departmentId);
-            setSpecializations(Array.isArray(data) ? data : []);
-        } catch (err) {
-            showError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (departmentId) loadSpecializations();
-    }, [departmentId]);
+    const { data: specializations = [], isLoading: loading, refetch } = useQuery({
+        queryKey: ["departmentSpecializations", departmentId],
+        queryFn: async () => {
+            try {
+                const data = await fetchSpecializations(departmentId);
+                return Array.isArray(data) ? data : [];
+            } catch (err) {
+                showError(err.message);
+                return [];
+            }
+        },
+        staleTime: 5 * 60 * 1000,
+        enabled: !!departmentId,
+    });
 
     const handleAdd = async () => {
         const name = newName.trim();
@@ -40,8 +38,8 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
         try {
             setAdding(true);
             const maxCap = newMaxCapacity ? parseInt(newMaxCapacity) : null;
-            const created = await createSpecialization(departmentId, { name, nameAr: nameAr || null, maxCapacity: maxCap });
-            setSpecializations(prev => [...prev, created]);
+            await createSpecialization(departmentId, { name, nameAr: nameAr || null, maxCapacity: maxCap });
+            refetch();
             setNewName("");
             setNewNameAr("");
             setNewMaxCapacity("");
@@ -56,7 +54,7 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
     const handleDelete = async (specId) => {
         try {
             await deleteSpecialization(departmentId, specId);
-            setSpecializations(prev => prev.filter(s => (s.id ?? s.specializationId) !== specId));
+            refetch();
             onUpdate?.();
         } catch (err) {
             showError(err.message);

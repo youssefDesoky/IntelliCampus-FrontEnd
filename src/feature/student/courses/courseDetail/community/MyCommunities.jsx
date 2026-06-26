@@ -11,7 +11,6 @@ import {
     fetchCommunityPosts,
     createCommunityPost,
     toggleUpvote,
-    addComment,
 } from "./communityService";
 import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
@@ -78,17 +77,6 @@ export default function MyCommunities() {
         if (!courseId) return;
         try {
             await toggleUpvote(courseId, postId);
-            const data = await fetchCommunityPosts(courseId);
-            setPosts(Array.isArray(data) ? data.map(mapPost) : []);
-        } catch (err) {
-            showError(err.message);
-        }
-    };
-
-    const handleAddComment = async (postId, content) => {
-        if (!courseId) return;
-        try {
-            await addComment(courseId, postId, content);
             const data = await fetchCommunityPosts(courseId);
             setPosts(Array.isArray(data) ? data.map(mapPost) : []);
         } catch (err) {
@@ -216,8 +204,8 @@ export default function MyCommunities() {
                         <StudyGroupPost
                             key={post.id}
                             postData={post}
+                            courseId={courseId}
                             onUpvote={() => handleUpvote(post.id)}
-                            onAddComment={(content) => handleAddComment(post.id, content)}
                         />
                     ))
                 ) : (

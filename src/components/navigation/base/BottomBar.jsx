@@ -14,9 +14,14 @@ export default function BottomBar({ links = [], leftLinks = [], rightLinks = [],
         if (to === "/") return pathname === "/";
         if (pathname === to) return true;
         if (pathname.startsWith(to + "/")) {
-            return !allLinks.some(link =>
-                link.to !== to && (pathname === link.to || pathname.startsWith(link.to + "/"))
-            );
+            return !allLinks.some(link => {
+                if (link.to === to) return false;
+                if (pathname === link.to) return true;
+                if (pathname.startsWith(link.to + "/")) {
+                    return link.to.length > to.length;
+                }
+                return false;
+            });
         }
         return false;
     };
@@ -97,45 +102,58 @@ export default function BottomBar({ links = [], leftLinks = [], rightLinks = [],
 
                 <div className="overflow-hidden flex items-center h-[62px] rounded-[18px] border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-xl px-1 relative">
 
-                    {/* ── العناصر المتحركة ───────────────── */}
-                    <div className="relative flex-1 h-full">
-                        {allLinks.map(({ to, label, icon: Icon }, index) => {
-                            const isActive = getIsActive(to);
-                            const offset = getWrappedOffset(index);
-                            
-                            // إخفاء العناصر اللي بره النطاق المرئي
-                            const isVisible = Math.abs(offset) <= Math.floor(VISIBLE_COUNT / 2) + 1;
-
-                            return (
-                                <div
+                    {activeIndex === -1 ? (
+                        <div className="flex flex-1 items-center justify-around h-full">
+                            {allLinks.slice(0, VISIBLE_COUNT).map(({ to, label, icon: Icon }) => (
+                                <NavLink
                                     key={to}
-                                    className="absolute top-0 h-full flex items-center justify-center"
-                                    style={{
-                                        width: `${itemWidthPercent}%`,
-                                        // الاعتماد على left و transform بالشكل ده بيمنع أي مسافات فاضية (Blank spaces)
-                                        left: "50%",
-                                        transform: `translateX(calc(-50% + ${offset * 100}%))`,
-                                        transition: `transform ${SLIDE_EASE}, opacity 0.3s`,
-                                        opacity: isVisible ? 1 : 0,
-                                        zIndex: isActive ? 0 : 1,
-                                        pointerEvents: isVisible ? "auto" : "none"
-                                    }}
+                                    to={to}
+                                    end={to === "/"}
+                                    title={label}
+                                    className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors duration-150 text-text-secondary-active-light dark:text-text-secondary-active-dark hover:text-text-accent-hover-light dark:hover:text-text-accent-hover-dark w-full"
                                 >
-                                    {!isActive && (
-                                        <NavLink
-                                            to={to}
-                                            end={to === "/"}
-                                            title={label}
-                                            className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors duration-150 text-text-secondary-active-light dark:text-text-secondary-active-dark hover:text-text-accent-hover-light dark:hover:text-text-accent-hover-dark w-full"
-                                        >
-                                            {Icon && <Icon className="w-5 h-5" />}
-                                            <span className="text-[10px] font-medium truncate w-full text-center">{label}</span>
-                                        </NavLink>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+                                    {Icon && <Icon className="w-5 h-5" />}
+                                    <span className="text-[10px] font-medium truncate w-full text-center">{label}</span>
+                                </NavLink>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="relative flex-1 h-full">
+                            {allLinks.map(({ to, label, icon: Icon }, index) => {
+                                const isActive = getIsActive(to);
+                                const offset = getWrappedOffset(index);
+                                const isVisible = Math.abs(offset) <= Math.floor(VISIBLE_COUNT / 2) + 1;
+
+                                return (
+                                    <div
+                                        key={to}
+                                        className="absolute top-0 h-full flex items-center justify-center"
+                                        style={{
+                                            width: `${itemWidthPercent}%`,
+                                            left: "50%",
+                                            transform: `translateX(calc(-50% + ${offset * 100}%))`,
+                                            transition: `transform ${SLIDE_EASE}, opacity 0.3s`,
+                                            opacity: isVisible ? 1 : 0,
+                                            zIndex: isActive ? 0 : 1,
+                                            pointerEvents: isVisible ? "auto" : "none"
+                                        }}
+                                    >
+                                        {!isActive && (
+                                            <NavLink
+                                                to={to}
+                                                end={to === "/"}
+                                                title={label}
+                                                className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors duration-150 text-text-secondary-active-light dark:text-text-secondary-active-dark hover:text-text-accent-hover-light dark:hover:text-text-accent-hover-dark w-full"
+                                            >
+                                                {Icon && <Icon className="w-5 h-5" />}
+                                                <span className="text-[10px] font-medium truncate w-full text-center">{label}</span>
+                                            </NavLink>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     {children}
                 </div>

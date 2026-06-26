@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { CalendarIcon, ClockIcon} from "../ui/icons";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -156,6 +157,9 @@ export default function DateTimeInput({
     });
 
     const containerRef = useRef(null);
+    const triggerRef   = useRef(null);
+    const dropdownRef  = useRef(null);
+    const [coords, setCoords] = useState({ top: 0, left: 0 });
 
     // ── Sync when external value changes ─────────────────────────────────────
     useEffect(() => {
@@ -169,7 +173,10 @@ export default function DateTimeInput({
     // ── Outside-click & Escape ────────────────────────────────────────────────
     useEffect(() => {
         const onOutside = (e) => {
-            if (containerRef.current && !containerRef.current.contains(e.target)) {
+            if (
+                containerRef.current && !containerRef.current.contains(e.target) &&
+                dropdownRef.current && !dropdownRef.current.contains(e.target)
+            ) {
                 setPanel(null);
             }
         };
@@ -181,6 +188,28 @@ export default function DateTimeInput({
             document.removeEventListener("keydown", onKey);
         };
     }, []);
+
+    // ── Position dropdown ─────────────────────────────────────────────────────
+    const updatePosition = () => {
+        if (triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect();
+            setCoords({
+                top: rect.bottom,
+                left: rect.left,
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (!activePanel) return;
+        updatePosition();
+        window.addEventListener("scroll", updatePosition, true);
+        window.addEventListener("resize", updatePosition);
+        return () => {
+            window.removeEventListener("scroll", updatePosition, true);
+            window.removeEventListener("resize", updatePosition);
+        };
+    }, [activePanel]);
 
     // ── Build & emit the combined "YYYY-MM-DDTHH:mm" string ──────────────────
     const buildISO = (d, h, m, p) => {
@@ -268,7 +297,6 @@ export default function DateTimeInput({
 
     // ── Shared dropdown base classes ──────────────────────────────────────────
     const dropdownCls = [
-        "absolute z-50 top-full mt-2 left-0",
         "rounded-xl border shadow-xl p-4",
         "bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark",
         "border-border-primary-default-light dark:border-border-primary-default-dark",
@@ -287,7 +315,7 @@ export default function DateTimeInput({
             )}
 
             {/* ── Split Trigger ──────────────────────────────────────────── */}
-            <div className={[
+            <div ref={triggerRef} className={[
                 "flex border rounded-lg overflow-hidden transition-colors",
                 "bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark",
                 isDisabled && "opacity-50 pointer-events-none",
@@ -350,9 +378,18 @@ activePanel === "time"
                 </button>
             </div>
 
-            {/* ── Date Panel ─────────────────────────────────────────────── */}
-            {activePanel === "date" && (
-                <div className={dropdownCls}>
+            {/* ── Date Panel (Portalized) ────────────────────────────────── */}
+            {activePanel === "date" && createPortal(
+                <div
+                    ref={dropdownRef}
+                    className={dropdownCls}
+                    style={{
+                        position: 'fixed',
+                        top: `${coords.top}px`,
+                        left: `${coords.left}px`,
+                        zIndex: 9999,
+                    }}
+                >
 
                     {/* Month navigation */}
                     <div className="flex items-center justify-between mb-4">
@@ -410,12 +447,22 @@ activePanel === "time"
                             Select time <ChevronRight />
                         </button>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {/* ── Time Panel ─────────────────────────────────────────────── */}
-            {activePanel === "time" && (
-                <div className={dropdownCls}>
+            {/* ── Time Panel (Portalized) ────────────────────────────────── */}
+            {activePanel === "time" && createPortal(
+                <div
+                    ref={dropdownRef}
+                    className={dropdownCls}
+                    style={{
+                        position: 'fixed',
+                        top: `${coords.top}px`,
+                        left: `${coords.left}px`,
+                        zIndex: 9999,
+                    }}
+                >
 
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-center mb-3 select-none text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         Select Time
@@ -477,7 +524,8 @@ activePanel === "time"
                             Done
                         </button>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Error */}

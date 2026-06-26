@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { useOutletContext, useParams, useRouteLoaderData } from "react-router-dom";
+import { useCallback, useEffect, useState, useRef } from "react";
+import { useNavigate, useOutletContext, useParams, useRouteLoaderData } from "react-router-dom";
+import QrScanner from "qr-scanner";
 
 import Button from "../../../components/ui/Button";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
-import { ArrowRightIcon, CalendarIcon, ClockIcon, DownloadIcon, LocationDotIcon, PlusIcon, QRCodeIcon, UsersIcon, XIcon } from "../../../components/ui/icons";
+import Table from "../../../components/ui/Table";
+import { AngleDownIcon, ArrowRightIcon, CalendarIcon, ClockIcon, DownloadIcon, PlusIcon, QRCodeIcon, UsersIcon, XIcon } from "../../../components/ui/icons";
 
 import {
-    fetchAttendanceReport,
+    fetchSessionAttendance,
     fetchClassesByCourse,
     getSessionsByClass,
-    createClass,
+    getSessionById,
     createSession,
     recordManualAttendance,
     scanAttendanceQr,
@@ -54,37 +56,10 @@ function getClassTypeStyles(classType) {
     };
 }
 
-function getClassCardMeta(classItem) {
-    const classId = classItem.classId || classItem.id;
-    const className = classItem.name || classItem.className || `Class ${classId}`;
-    const classDescription = classItem.description || classItem.Description || null;
-    const classType = classItem.classTypeName || classItem.classType || classItem.type || null;
-    const groupCode = classItem.groupCode || classItem.GroupCode || null;
-    const day = classItem.dayName || classItem.day || null;
-    const startTime = formatTime(classItem.startTime);
-    const endTime = formatTime(classItem.endTime);
-    const room = classItem.room || classItem.Room || null;
-    const instructor = classItem.instructorName || classItem.InstructorName || null;
-    const scheduleText = day && startTime ? `${day}${endTime ? `, ${startTime} - ${endTime}` : `, ${startTime}`}` : null;
-
-    return {
-        classId,
-        className,
-        classDescription,
-        classType,
-        groupCode,
-        day,
-        startTime,
-        endTime,
-        room,
-        instructor,
-        scheduleText,
-    };
-}
-
 export default function InstructorCourseAttendance() {
     const outlet = useOutletContext() || {};
     const params = useParams();
+    const navigate = useNavigate();
     const authUser = useRouteLoaderData("root");
     const courseId = outlet.courseId || outlet.course?.id || params.courseId;
     const course = outlet.course || null;
@@ -93,28 +68,28 @@ export default function InstructorCourseAttendance() {
 
     const [classes, setClasses] = useState([]);
     const [selectedClassId, setSelectedClassId] = useState(null);
-    const [report, setReport] = useState(null);
-    const [isLoadingClasses, setIsLoadingClasses] = useState(true);
-    const [isLoadingReport, setIsLoadingReport] = useState(false);
-    const [isLoadingSessions, setIsLoadingSessions] = useState(false);
-    const { showError } = useError();
     const [sessions, setSessions] = useState([]);
     const [selectedSessionId, setSelectedSessionId] = useState(null);
+    const [report, setReport] = useState(null);
+
+    const [isLoadingClasses, setIsLoadingClasses] = useState(true);
+    const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+    const [isLoadingReport, setIsLoadingReport] = useState(false);
+    const { showError } = useError();
+    const sessionInUrl = params.sessionId ? Number(params.sessionId) : null;
+
     const [creatingSession, setCreatingSession] = useState(false);
+    const [isCreateSessionOpen, setIsCreateSessionOpen] = useState(false);
+    const [newSession, setNewSession] = useState({ topic: "", description: "" });
 
-    // Create class state
-    const [isCreateClassOpen, setIsCreateClassOpen] = useState(false);
-    const [creatingClass, setCreatingClass] = useState(false);
-    const [newClass, setNewClass] = useState({ className: "", description: "" });
-
-    // Attendance UI state
     const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
     const [scanning, setScanning] = useState(false);
     const [manualId, setManualId] = useState("");
     const [recentScans, setRecentScans] = useState([]);
-    const [scanTab, setScanTab] = useState("qr"); // "qr" or "manual"
-    const videoRef = useRef(null);
-    const detectorTimerRef = useRef(null);
+    const [scanTab, setScanTab] = useState("qr");
+    const qrContainerRef = useRef(null);
+    const qrScannerRef = useRef(null);
+    const processingScanRef = useRef(false);
 
     const loadClasses = useCallback(async () => {
         if (!courseId || !currentInstructorId) {
@@ -127,118 +102,126 @@ export default function InstructorCourseAttendance() {
         try {
             const data = await fetchClassesByCourse(courseId);
             const allClasses = Array.isArray(data) ? data : [];
-            // Filter to only show classes taught by current instructor
             const filteredClasses = allClasses.filter(cls => {
                 const clsInstructorId = cls.instructorId || cls.InstructorId;
                 return clsInstructorId === currentInstructorId;
             });
             setClasses(filteredClasses);
-            setSelectedClassId(filteredClasses.length > 0 ? (filteredClasses[0].classId || filteredClasses[0].id) : null);
+
+            // If a session is in the URL, resolve its classId first
+            if (sessionInUrl) {
+                try {
+                    const session = await getSessionById(sessionInUrl);
+                    if (session?.classId) {
+                        setSelectedClassId(Number(session.classId));
+                    }
+                } catch (err) {
+                    showError(err.message || "Failed to load session details.");
+                }
+            } else if (filteredClasses.length > 0 && !selectedClassId) {
+                setSelectedClassId(filteredClasses[0].classId || filteredClasses[0].id);
+            }
         } catch (err) {
             showError(err.message || "Failed to load classes.");
             setClasses([]);
         } finally {
             setIsLoadingClasses(false);
         }
-    }, [courseId, currentInstructorId]);
+    }, [courseId, currentInstructorId, sessionInUrl]);
 
-    const handleCreateClass = async () => {
-        if (!newClass.className.trim()) {
-            showError("Class name is required.");
-            return;
-        }
-        setCreatingClass(true);
-        try {
-            await createClass({
-                courseId: Number(courseId),
-                instructorId: currentInstructorId,
-                className: newClass.className.trim(),
-                description: newClass.description.trim(),
-            });
-            setIsCreateClassOpen(false);
-            setNewClass({ className: "", description: "" });
-            await loadClasses();
-        } catch (err) {
-            showError(err.message || "Failed to create class.");
-        } finally {
-            setCreatingClass(false);
-        }
-    };
-
-    useEffect(() => {
-        loadClasses();
-    }, [loadClasses]);
-
-    const loadSessions = useCallback(async () => {
-        if (!selectedClassId) {
+    const loadSessions = useCallback(async (classId) => {
+        if (!classId) {
             setSessions([]);
-            setSelectedSessionId(null);
             return;
         }
 
         setIsLoadingSessions(true);
         try {
-            const data = await getSessionsByClass(selectedClassId);
+            const data = await getSessionsByClass(classId);
             const normalized = Array.isArray(data) ? data : [];
             setSessions(normalized);
-            if (normalized.length === 0) {
-                setSelectedSessionId(null);
-                return;
-            }
-
-            setSelectedSessionId((current) => {
-                if (current && normalized.some((s) => s.sessionId === current)) {
-                    return current;
-                }
-
-                const sorted = [...normalized].sort((a, b) => {
-                    const aDate = new Date(a.date || 0).getTime();
-                    const bDate = new Date(b.date || 0).getTime();
-                    return bDate - aDate;
-                });
-                return sorted[0]?.sessionId ?? normalized[0].sessionId;
-            });
         } catch (err) {
             setSessions([]);
-            setSelectedSessionId(null);
             showError(err.message || "Failed to load sessions.");
         } finally {
             setIsLoadingSessions(false);
         }
-    }, [selectedClassId]);
+    }, []);
+
+    const loadAttendanceReport = useCallback(async (sessionId) => {
+        if (!sessionId) { setReport(null); return; }
+        setIsLoadingReport(true);
+        setSelectedSessionId(sessionId);
+        try {
+            const data = await fetchSessionAttendance(sessionId);
+            setReport(data);
+        } catch (err) {
+            showError(err.message || "Failed to load session attendance.");
+            setReport(null);
+        } finally {
+            setIsLoadingReport(false);
+        }
+    }, []);
 
     useEffect(() => {
-        loadSessions();
-    }, [loadSessions]);
+        loadClasses();
+    }, [loadClasses]);
 
-    const ensureSelectedSession = useCallback(async () => {
-        if (selectedSessionId) return selectedSessionId;
-        if (sessions.length > 0) {
-            setSelectedSessionId(sessions[0].sessionId || sessions[0].SessionId || sessions[0].id);
-            return selectedSessionId;
+    useEffect(() => {
+        loadSessions(selectedClassId);
+    }, [selectedClassId, loadSessions]);
+
+    useEffect(() => {
+        if (sessionInUrl) {
+            loadAttendanceReport(sessionInUrl);
+        } else {
+            setSelectedSessionId(null);
+            setReport(null);
         }
+    }, [sessionInUrl, loadAttendanceReport]);
 
-        if (!selectedClassId) throw new Error("No class selected");
-
+    const handleCreateSession = async () => {
+        if (!newSession.topic.trim()) {
+            showError("Session title is required.");
+            return;
+        }
+        if (!selectedClassId) {
+            showError("Select a class first.");
+            return;
+        }
         setCreatingSession(true);
         try {
+            const topic = newSession.description.trim()
+                ? `${newSession.topic.trim()} - ${newSession.description.trim()}`
+                : newSession.topic.trim();
             const payload = {
                 classId: Number(selectedClassId),
                 date: new Date().toISOString(),
-                topic: "Auto session",
+                topic,
             };
             const created = await createSession(payload);
-            const sid = created.sessionId ?? created.SessionId ?? created.sessionId;
-            const newSessions = [...(sessions || []), created];
-            setSessions(newSessions);
-            setSelectedSessionId(sid);
-            return sid;
+            setIsCreateSessionOpen(false);
+            setNewSession({ topic: "", description: "" });
+            navigate(`/instructor/courses/${courseId}/attendance/${created.sessionId}`, { replace: true });
+        } catch (err) {
+            showError(err.message || "Failed to create session.");
         } finally {
             setCreatingSession(false);
         }
-    }, [selectedSessionId, sessions, selectedClassId]);
+    };
 
-
+    const stopScanner = async () => {
+        setScanning(false);
+        processingScanRef.current = false;
+        if (qrScannerRef.current) {
+            try {
+                qrScannerRef.current.stop();
+                qrScannerRef.current.destroy();
+            } catch {
+            }
+            qrScannerRef.current = null;
+        }
+    };
 
     const startScanner = async () => {
         if (!selectedSessionId) {
@@ -250,88 +233,76 @@ export default function InstructorCourseAttendance() {
             return;
         }
 
+        await stopScanner();
+        const videoEl = qrContainerRef.current;
+        if (!videoEl) return;
+
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                // Ensure video will autoplay in secure contexts
-                videoRef.current.muted = true;
-                videoRef.current.playsInline = true;
-                try {
-                    await videoRef.current.play();
-                } catch (playErr) {
-                    // some browsers block autoplay; user can press Start in the modal to begin playback
-                }
-            }
-            setScanning(true);
-
-            if (window.BarcodeDetector) {
-                const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
-                detectorTimerRef.current = setInterval(async () => {
+            const qrScanner = new QrScanner(
+                videoEl,
+                async (result) => {
+                    if (processingScanRef.current) return;
+                    processingScanRef.current = true;
                     try {
-                        const barcodes = await detector.detect(videoRef.current);
-                        if (barcodes && barcodes.length > 0) {
-                            const value = barcodes[0].rawValue || barcodes[0].rawText || null;
-                            if (value) handleScanned(value);
-                        }
-                    } catch { /* ignore */ }
-                }, 500);
-            }
+                        await handleScanned(result.data);
+                    } finally {
+                        setTimeout(() => { processingScanRef.current = false; }, 1500);
+                    }
+                },
+                {
+                    onDecodeError: () => {},
+                    highlightScanRegion: true,
+                    highlightCodeOutline: true,
+                    preferredCamera: "environment",
+                    maxScansPerSecond: 30,
+                    returnDetailedScanResult: true,
+                }
+            );
+            qrScannerRef.current = qrScanner;
+            setScanning(true);
+            await qrScanner.start();
         } catch (err) {
-            showError(err.message || 'Failed to access camera.');
-        }
-    };
-
-    const stopScanner = () => {
-        setScanning(false);
-        if (detectorTimerRef.current) {
-            clearInterval(detectorTimerRef.current);
-            detectorTimerRef.current = null;
-        }
-        if (videoRef.current && videoRef.current.srcObject) {
-            const tracks = videoRef.current.srcObject.getTracks();
-            tracks.forEach((t) => t.stop());
-            videoRef.current.srcObject = null;
+            setScanning(false);
+            qrScannerRef.current = null;
+            console.error("QR Scanner error:", err);
+            showError(err?.message || 'Failed to start QR scanner.');
         }
     };
 
     const handleScanned = async (value) => {
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         try {
-            await scanAttendanceQr({
+            const result = await scanAttendanceQr({
                 sessionId: Number(selectedSessionId),
                 qrPayload: String(value),
                 status: 0,
             });
-            setRecentScans(prev => [{ id: value, timestamp, status: 'success' }, ...prev.slice(0, 9)]);
-            await loadAttendanceReport();
-            // Auto-start scanner again after short delay
-            setTimeout(() => startScanner(), 800);
+            const displayId = result?.studentCode || result?.studentName || value;
+            setRecentScans(prev => [{ id: displayId, name: result?.studentName, timestamp, status: 'success' }, ...prev.slice(0, 9)]);
+            const data = await fetchSessionAttendance(selectedSessionId);
+            setReport(data);
         } catch (err) {
             setRecentScans(prev => [{ id: value, timestamp, status: 'error' }, ...prev.slice(0, 9)]);
-            setTimeout(() => startScanner(), 1000);
+            showError(err.message || 'Failed to record scan.');
         }
     };
 
     const submitManualAttendance = async () => {
         if (!selectedSessionId) { showError('Select a session first.'); return; }
-        if (!manualId.trim()) { showError('Enter a student ID.'); return; }
-        const parsedStudentId = Number(manualId.trim());
-        if (!Number.isFinite(parsedStudentId)) {
-            showError('Student ID must be a valid number.');
-            return;
-        }
+        if (!manualId.trim()) { showError('Enter a student code.'); return; }
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         try {
-            await recordManualAttendance({
+            const result = await recordManualAttendance({
                 sessionId: Number(selectedSessionId),
-                studentId: parsedStudentId,
+                studentCode: manualId.trim(),
                 status: 0,
             });
-            setRecentScans(prev => [{ id: manualId.trim(), timestamp, status: 'success' }, ...prev.slice(0, 9)]);
+            const displayId = result?.studentCode || manualId.trim();
+            setRecentScans(prev => [{ id: displayId, name: result?.studentName, timestamp, status: 'success' }, ...prev.slice(0, 9)]);
             setManualId('');
-            await loadAttendanceReport();
-            showError('Attendance recorded for ' + manualId.trim());
+            const data = await fetchSessionAttendance(selectedSessionId);
+            setReport(data);
+            showError('Attendance recorded for ' + (result?.studentName || manualId.trim()));
         } catch (err) {
             showError(err.message || 'Failed to record attendance.');
         }
@@ -341,180 +312,533 @@ export default function InstructorCourseAttendance() {
         return () => { stopScanner(); };
     }, []);
 
-    const loadAttendanceReport = useCallback(async () => {
-        if (!selectedClassId) return;
-        setIsLoadingReport(true);
-        try {
-            const data = await fetchAttendanceReport(selectedClassId);
-            setReport(data);
-        } catch (err) {
-            showError(err.message || "Failed to load attendance report.");
-            setReport(null);
-        } finally {
-            setIsLoadingReport(false);
-        }
-    }, [selectedClassId]);
-
-    useEffect(() => { if (selectedClassId) loadAttendanceReport(); }, [selectedClassId, loadAttendanceReport]);
-
-    const belowThresholdCount = useMemo(() => { if (!report?.students) return 0; return report.students.filter((s) => s.belowThreshold).length; }, [report]);
-
     const downloadReport = () => {
         if (!report) return;
         const csvContent = [
-            ["Attendance Report"],
+            ["Session Attendance"],
+            [`Session: ${report.topic || "N/A"}`],
+            [`Date: ${new Date(report.date).toLocaleDateString()}`],
             [`Class: ${report.className || "N/A"}`],
-            [`Total Sessions: ${report.totalSessions}`],
-            [`On-Time %: ${report.onTimePercentage?.toFixed(2)}%`],
-            [`Needs Improvement %: ${report.needsImprovementPercentage?.toFixed(2)}%`],
             [],
-            ["Student Name", "Student ID", "Present", "Late", "Absent", "Attendance %", "Status"],
-            ...report.students.map((s) => [ s.studentName || "N/A", s.studentId, s.present, s.late, s.absent, `${s.attendancePercentage?.toFixed(2)}%`, s.belowThreshold ? "Below Threshold" : "Good", ]),
+            ["Student Code", "Student Name", "Status", "Check-in Time"],
+            ...report.students.map((s) => [
+                s.studentCode || "N/A",
+                s.studentName || s.studentFullName || s.fullName || s.name || "N/A",
+                s.status === "NotRecorded" ? "Not Recorded" : s.status,
+                s.checkInTime ? new Date(s.checkInTime).toLocaleTimeString() : "—",
+            ]),
         ].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
 
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `attendance_${report.className?.replace(/\s+/g, "_") || "report"}.csv`);
+        link.setAttribute("download", `session_${report.sessionId}_attendance.csv`);
         link.style.visibility = "hidden";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
 
-    if (isLoadingClasses) return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading classes...</p>;
-    if (!selectedClassId) {
+    if (isLoadingClasses) return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading...</p>;
+
+    // ─── SESSION DETAIL VIEW ───
+    if (sessionInUrl) {
+        if (isLoadingReport) return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading attendance report...</p>;
+        if (!report) return <p className="text-sm text-text-danger-default-light dark:text-text-danger-default-dark">No attendance data available for this session.</p>;
+
         return (
             <div className="space-y-6">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Attendance classes</p>
-                        <h1 className="mt-1 text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Choose a class to inspect attendance</h1>
-                        <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{courseName} • Open a class to review its attendance report, scan QR codes, or record manual entries.</p>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/instructor/courses/${courseId}/attendance`)}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
+                            aria-label="Back to sessions"
+                        >
+                            <AngleDownIcon className="h-4 w-4 rotate-90" />
+                        </button>
+                        <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Attendance Report</h2>
                     </div>
-                    <Button type="button" variant="primary" onClick={() => setIsCreateClassOpen(true)} startIcon={<PlusIcon size={18} />}>
-                        Create Class
-                    </Button>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setIsAttendanceOpen(true)}
+                            startIcon={<QRCodeIcon size={16} />}
+                        >
+                            <span className="hidden sm:inline">Take Attendance</span>
+                        </Button>
+                        <Button type="button" variant="secondary" onClick={downloadReport} startIcon={<DownloadIcon size={18} />}><span className="hidden sm:inline">Download Report</span></Button>
+                    </div>
                 </div>
 
-                {classes.length === 0 ? (
-                    <div className="rounded-3xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-8 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
-                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light text-text-accent-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-accent-default-dark">
-                            <UsersIcon className="h-7 w-7" />
-                        </div>
-                        <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No classes found for this course</h2>
-                        <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Add at least one class before attendance can be tracked here.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                        {classes.map((c) => {
-                            const meta = getClassCardMeta(c);
-                            const typeStyles = getClassTypeStyles(meta.classType);
-
-                            return (
-                                <button
-                                    key={meta.classId}
-                                    type="button"
-                                    onClick={() => setSelectedClassId(meta.classId)}
-                                    className="group relative overflow-hidden rounded-3xl border border-border-primary-default-light bg-bg-surface-primary-default-light text-left shadow-sm shadow-shadow-light transition-all duration-300 hover:-translate-y-1 hover:border-border-accent-default-light hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:shadow-shadow-dark dark:hover:border-border-accent-default-dark"
-                                >
-                                    <div className={`absolute inset-x-0 top-0 h-1 bg-linear-to-r ${typeStyles.accent}`} />
-                                    <div className="flex h-full flex-col p-5">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="space-y-3">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    {meta.groupCode ? (
-                                                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-wide ${typeStyles.pill}`}>
-                                                            {meta.groupCode}
-                                                        </span>
-                                                    ) : null}
-                                                    {meta.classType ? (
-                                                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${typeStyles.badge}`}>
-                                                            {meta.classType}
-                                                        </span>
-                                                    ) : null}
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-xl font-bold tracking-tight text-text-primary-default-light dark:text-text-primary-default-dark">{meta.className}</h3>
-                                                    <p className="mt-2 text-sm leading-6 text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-3">{meta.classDescription || "No description available for this class."}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light text-text-accent-default-light transition-transform duration-300 group-hover:translate-x-1 dark:bg-bg-surface-secondary-default-dark dark:text-text-accent-default-dark">
-                                                <ArrowRightIcon className="h-5 w-5" />
-                                            </div>
+                {isAttendanceOpen && (
+                    <ModelOverlay onClose={() => { setIsAttendanceOpen(false); stopScanner(); setManualId(''); setRecentScans([]); }} maxWidth="max-w-2xl">
+                        <div className="relative w-full overflow-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
+                            <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-5 dark:border-border-primary-default-dark">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark">
+                                            <QRCodeIcon className="h-6 w-6 text-text-accent-default-light dark:text-text-accent-default-dark" />
                                         </div>
-
-                                        <div className="mt-5 grid gap-3">
-                                            <div className="flex items-center gap-3 rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light px-4 py-3 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-bg-surface-primary-default-light text-text-accent-default-light dark:bg-bg-surface-primary-default-dark dark:text-text-accent-default-dark">
-                                                    <CalendarIcon className="h-5 w-5" />
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Schedule</p>
-                                                    <p className="mt-1 truncate text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                        {meta.scheduleText || "Schedule not set"}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid gap-3 sm:grid-cols-2">
-                                                <div className="flex items-center gap-3 rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-bg-surface-primary-default-light text-text-success-default-light dark:bg-bg-surface-primary-default-dark dark:text-text-success-default-dark">
-                                                        <LocationDotIcon className="h-5 w-5" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Room</p>
-                                                        <p className="mt-1 truncate text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{meta.room || "TBA"}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-3 rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-bg-surface-primary-default-light text-text-warning-default-light dark:bg-bg-surface-primary-default-dark dark:text-text-warning-default-dark">
-                                                        <ClockIcon className="h-5 w-5" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Time</p>
-                                                        <p className="mt-1 truncate text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                            {meta.startTime && meta.endTime ? `${meta.startTime} - ${meta.endTime}` : meta.startTime || "Not set"}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center justify-between rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light px-4 py-3 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-bg-surface-primary-default-light text-text-primary-default-light dark:bg-bg-surface-primary-default-dark dark:text-text-primary-default-dark">
-                                                        <UsersIcon className="h-5 w-5" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Instructor</p>
-                                                        <p className="mt-1 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{meta.instructor || "Unassigned"}</p>
-                                                    </div>
-                                                </div>
-
-                                                <span className="inline-flex items-center gap-2 text-sm font-semibold text-text-accent-default-light dark:text-text-accent-default-dark">
-                                                    Open
-                                                    <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                                                </span>
-                                            </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Take Attendance</h3>
+                                            <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Scan QR codes or enter student IDs manually</p>
                                         </div>
                                     </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsAttendanceOpen(false); stopScanner(); setManualId(''); setRecentScans([]); }}
+                                    className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2.5 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
+                                    aria-label="Close"
+                                >
+                                    <XIcon className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <div className="px-6 py-6">
+                                <div className="mb-6 flex border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setScanTab("qr"); }}
+                                        className={`relative flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors ${
+                                            scanTab === "qr"
+                                                ? "text-text-accent-default-light dark:text-text-accent-default-dark"
+                                                : "text-text-secondary-default-light hover:text-text-primary-default-light dark:text-text-secondary-default-dark dark:hover:text-text-primary-default-dark"
+                                        }`}
+                                    >
+                                        <QRCodeIcon className="h-4 w-4" />
+                                        <span>QR Scanner</span>
+                                        {scanTab === "qr" && (
+                                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-accent-default-light dark:bg-text-accent-default-dark rounded-full" />
+                                        )}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setScanTab("manual"); stopScanner(); }}
+                                        className={`relative flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors ${
+                                            scanTab === "manual"
+                                                ? "text-text-accent-default-light dark:text-text-accent-default-dark"
+                                                : "text-text-secondary-default-light hover:text-text-primary-default-light dark:text-text-secondary-default-dark dark:hover:text-text-primary-default-dark"
+                                        }`}
+                                    >
+                                        <UsersIcon className="h-4 w-4" />
+                                        <span>Manual Entry</span>
+                                        {scanTab === "manual" && (
+                                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-accent-default-light dark:bg-text-accent-default-dark rounded-full" />
+                                        )}
+                                    </button>
+                                </div>
+
+                                {scanTab === "qr" && (
+                                    <div className="space-y-5">
+                                        <div className="relative overflow-hidden rounded-2xl border border-border-primary-default-light bg-black dark:border-border-primary-default-dark" style={{ height: "clamp(320px, 52vh, 480px)" }}>
+                                            <video ref={qrContainerRef} className="h-full w-full object-cover" />
+                                        {!scanning ? (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm">
+                                                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/10">
+                                                    <QRCodeIcon className="h-10 w-10 text-white/80" />
+                                                </div>
+                                                <p className="mt-5 text-sm font-medium text-white/80">Camera is off</p>
+                                                <p className="mt-1 text-xs text-white/50">Tap Start Scanner to begin scanning QR codes</p>
+                                            </div>
+                                            ) : (
+                                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+                                                    <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-medium text-white/70 backdrop-blur-sm">
+                                                        <span className="h-2 w-2 animate-ping rounded-full bg-green-400" />
+                                                        <span className="h-2 w-2 -ml-4 rounded-full bg-green-500" />
+                                                        Scanning
+                                                        <div className="ml-2 flex items-center gap-1">
+                                                            <span className="inline-block h-1 w-1 rounded-full bg-white/50 animate-bounce" />
+                                                            <span className="inline-block h-1 w-1 rounded-full bg-white/50 animate-bounce delay-75" />
+                                                            <span className="inline-block h-1 w-1 rounded-full bg-white/50 animate-bounce delay-150" />
+                                                        </div>
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            <Button
+                                                type="button"
+                                                variant={scanning ? "secondary" : "primary"}
+                                                onClick={() => startScanner()}
+                                                disabled={scanning}
+                                                className="flex-1"
+                                                startIcon={!scanning ? <QRCodeIcon size={16} /> : undefined}
+                                            >
+                                                {scanning ? "Scanner Running..." : "Start Scanner"}
+                                            </Button>
+                                            {scanning && (
+                                                <Button
+                                                    type="button"
+                                                    variant="secondary"
+                                                    onClick={stopScanner}
+                                                    className="flex-1"
+                                                >
+                                                    Stop Scanner
+                                                </Button>
+                                            )}
+                                        </div>
+
+                                        {recentScans.length > 0 && (
+                                            <div className="space-y-3 border-t border-border-primary-default-light pt-4 dark:border-border-primary-default-dark">
+                                                <div className="flex items-center justify-between">
+                                                    <h4 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                        Recent Scans
+                                                    </h4>
+                                                    <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                                        {recentScans.filter(s => s.status === 'success').length} recorded
+                                                    </span>
+                                                </div>
+                                                <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+                                                    {recentScans.map((scan, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className={`flex items-center justify-between rounded-xl border px-4 py-2.5 transition-all ${
+                                                                scan.status === "success"
+                                                                    ? "border-border-success-default-light bg-bg-surface-green-default-light/15 dark:border-border-success-default-dark dark:bg-bg-surface-green-default-dark/15"
+                                                                    : "border-border-danger-default-light bg-bg-surface-red-default-light/15 dark:border-border-danger-default-dark dark:bg-bg-surface-red-default-dark/15"
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                                                                    scan.status === "success"
+                                                                        ? "bg-bg-surface-green-default-light text-text-success-default-light dark:bg-bg-surface-green-default-dark dark:text-text-success-default-dark"
+                                                                        : "bg-bg-surface-red-default-light text-text-danger-default-light dark:bg-bg-surface-red-default-dark dark:text-text-danger-default-dark"
+                                                                }`}>
+                                                                    {scan.status === "success" ? "\u2713" : "\u2717"}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                        <p className="truncate font-mono text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{scan.id}</p>
+                                                                        {scan.name && (
+                                                                            <p className="truncate text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{scan.name}</p>
+                                                                        )}
+                                                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{scan.timestamp}</p>
+                                                                    </div>
+                                                            </div>
+                                                            <span className={`shrink-0 text-[11px] font-semibold uppercase tracking-wide ${
+                                                                scan.status === "success"
+                                                                    ? "text-text-success-default-light dark:text-text-success-default-dark"
+                                                                    : "text-text-danger-default-light dark:text-text-danger-default-dark"
+                                                            }`}>
+                                                                {scan.status === "success" ? "Done" : "Error"}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {scanTab === "manual" && (
+                                    <div className="space-y-5">
+                                        <div className="rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light p-5 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark">
+                                            <label className="mb-3 block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                Enter Student ID
+                                            </label>
+                                            <div className="flex flex-col gap-2 sm:flex-row">
+                                                <input
+                                                    type="text"
+                                                    value={manualId}
+                                                    onChange={(e) => setManualId(e.target.value)}
+                                                    onKeyDown={(e) => e.key === "Enter" && submitManualAttendance()}
+                                                    placeholder="e.g. 2024001"
+                                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-primary-default-light px-4 py-3 text-sm text-text-primary-default-light placeholder-text-secondary-default-light transition-all focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-primary-default-dark dark:placeholder-text-secondary-default-dark dark:focus:border-border-accent-default-dark sm:flex-1"
+                                                    autoFocus
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="primary"
+                                                    onClick={submitManualAttendance}
+                                                    disabled={!manualId.trim()}
+                                                    className="w-full sm:w-fit"
+                                                >
+                                                    Record
+                                                </Button>
+                                            </div>
+                                            <p className="mt-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                                Press Enter or click Record to submit
+                                            </p>
+                                        </div>
+
+                                        {recentScans.length > 0 && (
+                                            <div className="space-y-3 border-t border-border-primary-default-light pt-4 dark:border-border-primary-default-dark">
+                                                <div className="flex items-center justify-between">
+                                                    <h4 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                        Recent Entries
+                                                    </h4>
+                                                    <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                                        {recentScans.filter(s => s.status === 'success').length} recorded
+                                                    </span>
+                                                </div>
+                                                <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+                                                    {recentScans.map((scan, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className={`flex items-center justify-between rounded-xl border px-4 py-2.5 transition-all ${
+                                                                scan.status === "success"
+                                                                    ? "border-border-success-default-light bg-bg-surface-green-default-light/15 dark:border-border-success-default-dark dark:bg-bg-surface-green-default-dark/15"
+                                                                    : "border-border-danger-default-light bg-bg-surface-red-default-light/15 dark:border-border-danger-default-dark dark:bg-bg-surface-red-default-dark/15"
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                                                                    scan.status === "success"
+                                                                        ? "bg-bg-surface-green-default-light text-text-success-default-light dark:bg-bg-surface-green-default-dark dark:text-text-success-default-dark"
+                                                                        : "bg-bg-surface-red-default-light text-text-danger-default-light dark:bg-bg-surface-red-default-dark dark:text-text-danger-default-dark"
+                                                                }`}>
+                                                                    {scan.status === "success" ? "\u2713" : "\u2717"}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                        <p className="truncate font-mono text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{scan.id}</p>
+                                                                        {scan.name && (
+                                                                            <p className="truncate text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{scan.name}</p>
+                                                                        )}
+                                                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{scan.timestamp}</p>
+                                                                    </div>
+                                                            </div>
+                                                            <span className={`shrink-0 text-[11px] font-semibold uppercase tracking-wide ${
+                                                                scan.status === "success"
+                                                                    ? "text-text-success-default-light dark:text-text-success-default-dark"
+                                                                    : "text-text-danger-default-light dark:text-text-danger-default-dark"
+                                                            }`}>
+                                                                {scan.status === "success" ? "Done" : "Error"}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </ModelOverlay>
+                )}
+
+                <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">Students</h3>
+                <Table
+                    role="instructor"
+                    headers={["Student ID", "Student Name", "Status", "Check-in Time"]}
+                    columnClassNames={["hidden sm:table-cell", "", "", ""]}
+                    data={report.students.map(student => ({
+                        studentId: <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{student.studentCode}</span>,
+                        studentName: <span className="truncate block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark max-w-[160px]">{student.studentName || student.studentFullName || student.fullName || student.name || "Unknown"}</span>,
+                        status: (() => {
+                            let statusColor;
+                            let label = student.status;
+                            if (student.status === "Present") {
+                                statusColor = "bg-bg-surface-green-default-light text-text-success-default-light dark:bg-bg-surface-green-default-dark dark:text-text-success-default-dark";
+                                label = "Present";
+                            } else if (student.status === "Absent") {
+                                statusColor = "bg-bg-surface-red-default-light text-text-danger-default-light dark:bg-bg-surface-red-default-dark dark:text-text-danger-default-dark";
+                                label = "Absent";
+                            } else if (student.status === "NotRecorded") {
+                                statusColor = "bg-bg-surface-amber-default-light text-text-warning-default-light dark:bg-bg-surface-amber-default-dark dark:text-text-warning-default-dark";
+                                label = "Not Recorded";
+                            } else {
+                                statusColor = "bg-bg-surface-secondary-default-light text-text-secondary-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-secondary-default-dark";
+                            }
+                            return (
+                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusColor}`}>
+                                    {label}
+                                </span>
+                            );
+                        })(),
+                        checkinTime: <span className="text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
+                            {student.checkInTime ? new Date(student.checkInTime).toLocaleTimeString() : "\u2014"}
+                        </span>,
+                    }))}
+                    columnAlignments={["text-left", "text-left", "text-left", "text-center"]}
+                    wrapInSection={false}
+                    showHeaderActions={false}
+                    showPagination={false}
+                    showSelectionColumn={false}
+                    showActionsColumn={false}
+                />
+            </div>
+        );
+    }
+
+    // ─── SESSION LIST VIEW ───
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Sessions</p>
+                    <h2 className="mt-1 text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Attendance Sessions</h2>
+                    <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{courseName}</p>
+                </div>
+                <Button type="button" variant="primary" onClick={() => setIsCreateSessionOpen(true)} startIcon={<PlusIcon size={18} />}>
+                    <span className="hidden sm:inline">Create Session</span>
+                </Button>
+            </div>
+
+            {/* Class selector */}
+            {classes.length > 1 && (
+                <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Class:</span>
+                    <div className="flex flex-wrap gap-2">
+                        {classes.map((cls) => {
+                            const cid = cls.classId || cls.id;
+                            const isActive = Number(cid) === Number(selectedClassId);
+                            const meta = {
+                                className: cls.name || cls.className || `Class ${cid}`,
+                                classType: cls.classTypeName || cls.classType || cls.type || null,
+                            };
+                            return (
+                                <button
+                                    key={cid}
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedClassId(cid);
+                                        navigate(`/instructor/courses/${courseId}/attendance`);
+                                    }}
+                                    className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
+                                        isActive
+                                            ? "border-border-accent-default-light bg-bg-fill-primary-default-light text-text-accent-default-light dark:border-border-accent-default-dark dark:bg-bg-fill-primary-default-dark dark:text-text-accent-default-dark"
+                                            : "border-border-primary-default-light bg-bg-surface-secondary-default-light text-text-secondary-default-light hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
+                                    }`}
+                                >
+                                    {meta.className}
+                                    {meta.classType && (
+                                        <span className="text-xs opacity-60">{meta.classType}</span>
+                                    )}
                                 </button>
                             );
                         })}
                     </div>
-                )}
+                </div>
+            )}
 
-            {isCreateClassOpen && (
-                <ModelOverlay onClose={() => setIsCreateClassOpen(false)} maxWidth="max-w-lg">
+            {classes.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-8 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light text-text-accent-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-accent-default-dark">
+                        <UsersIcon className="h-7 w-7" />
+                    </div>
+                    <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No classes assigned</h2>
+                    <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Contact an administrator to get assigned to a class before creating sessions.</p>
+                </div>
+            ) : isLoadingSessions ? (
+                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading sessions...</p>
+            ) : sessions.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-border-primary-default-light bg-bg-surface-secondary-default-light p-8 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-primary-default-light text-text-primary-default-light dark:bg-bg-surface-primary-default-dark dark:text-text-primary-default-dark">
+                        <CalendarIcon className="h-7 w-7" />
+                    </div>
+                    <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No sessions yet</h2>
+                    <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Click "Create Session" to start a new attendance session.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    {sessions.map((s) => {
+                        const sessionType = String(s.sessionType || "Lecture");
+                        const typeStyles = getClassTypeStyles(sessionType);
+
+                        const sessionDate = s.date
+                            ? new Date(s.date).toLocaleDateString()
+                            : "Unknown date";
+
+                        return (
+                            <button
+                                key={s.sessionId}
+                                type="button"
+                                onClick={() => {
+                                    navigate(`/instructor/courses/${courseId}/attendance/${s.sessionId}`, { replace: true });
+                                }}
+                                className="group relative overflow-hidden rounded-3xl border border-border-primary-default-light bg-bg-surface-primary-default-light text-left shadow-sm shadow-shadow-light transition-all duration-300 hover:-translate-y-1 hover:border-border-accent-default-light hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:shadow-shadow-dark dark:hover:border-border-accent-default-dark"
+                            >
+                                <div className={`absolute inset-x-0 top-0 h-1 bg-linear-to-r ${typeStyles.accent}`} />
+                                <div className="flex h-full flex-col p-5">
+                                    <div className="flex flex-1 flex-col items-start justify-between gap-3">
+                                        <div className="flex w-full items-start justify-between gap-3">
+                                            <div className="space-y-3">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    {s.className ? (
+                                                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-wide ${typeStyles.pill}`}>
+                                                            {s.className}
+                                                        </span>
+                                                    ) : null}
+                                                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${typeStyles.badge}`}>
+                                                        {sessionType}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-bold tracking-tight text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                        {(s.topic?.includes(" - ") ? s.topic.split(" - ")[0] : s.topic) || "Untitled Session"}
+                                                    </h3>
+                                                    {s.topic?.includes(" - ") && (
+                                                        <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                                            {s.topic.split(" - ").slice(1).join(" - ")}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light text-text-accent-default-light transition-transform duration-300 group-hover:translate-x-1 dark:bg-bg-surface-secondary-default-dark dark:text-text-accent-default-dark">
+                                                <QRCodeIcon className="h-5 w-5" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 grid grid-cols-2 gap-2">
+                                        <div className="flex items-center gap-2 rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light px-3 py-2.5 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark">
+                                            <CalendarIcon className="h-4 w-4 shrink-0 text-text-accent-default-light dark:text-text-accent-default-dark" />
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Date</p>
+                                                <p className="truncate text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{sessionDate}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light px-3 py-2.5 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark">
+                                            <ClockIcon className="h-4 w-4 shrink-0 text-text-accent-default-light dark:text-text-accent-default-dark" />
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Time</p>
+                                                <p className="truncate text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                    {s.startTime
+                                                        ? `${s.startTime}${s.endTime ? ` - ${s.endTime}` : ""}`
+                                                        : "\u2014"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 flex items-center justify-between rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light px-4 py-2.5 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark">
+                                        <div className="flex items-center gap-2">
+                                            <UsersIcon className="h-4 w-4 text-text-accent-default-light dark:text-text-accent-default-dark" />
+                                            <span className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                {s.presentCount ?? 0} / {s.totalStudents ?? 0}
+                                            </span>
+                                            {s.totalStudents > 0 && (
+                                                <div className="h-2 w-20 overflow-hidden rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+                                                    <div
+                                                        className="h-full rounded-full bg-text-accent-default-light transition-all duration-300 dark:bg-text-accent-default-dark"
+                                                        style={{ width: `${Math.round((s.presentCount / s.totalStudents) * 100)}%` }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-accent-default-light dark:text-text-accent-default-dark">
+                                            <span className="hidden sm:inline">Take Attendance</span>
+                                            <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                                        </span>
+                                    </div>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {isCreateSessionOpen && (
+                <ModelOverlay onClose={() => { setIsCreateSessionOpen(false); setNewSession({ topic: "", description: "" }); }} maxWidth="max-w-lg">
                     <div className="relative w-full overflow-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
                         <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-5 dark:border-border-primary-default-dark">
-                            <h3 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Create Class</h3>
+                            <h3 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Create Session</h3>
                             <button
                                 type="button"
-                                onClick={() => setIsCreateClassOpen(false)}
+                                onClick={() => { setIsCreateSessionOpen(false); setNewSession({ topic: "", description: "" }); }}
                                 className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2.5 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
                                 aria-label="Close"
                             >
@@ -522,357 +846,52 @@ export default function InstructorCourseAttendance() {
                             </button>
                         </div>
                         <div className="px-6 py-6 space-y-4">
+                            {classes.length > 1 && (
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Class *</label>
+                                    <select
+                                        value={selectedClassId ?? ""}
+                                        onChange={(e) => setSelectedClassId(Number(e.target.value))}
+                                        className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
+                                    >
+                                        {classes.map((cls) => (
+                                            <option key={cls.classId || cls.id} value={cls.classId || cls.id}>
+                                                {cls.name || cls.className || `Class ${cls.classId || cls.id}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                             <div>
-                                <label className="mb-1.5 block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Class Name *</label>
+                                <label className="mb-1.5 block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Title *</label>
                                 <input
                                     type="text"
-                                    value={newClass.className}
-                                    onChange={(e) => setNewClass((prev) => ({ ...prev, className: e.target.value }))}
-                                    placeholder="e.g. Lecture 1"
+                                    value={newSession.topic}
+                                    onChange={(e) => setNewSession((prev) => ({ ...prev, topic: e.target.value }))}
+                                    placeholder="e.g. Week 1 - Introduction"
                                     className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
                                 />
                             </div>
                             <div>
                                 <label className="mb-1.5 block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Description</label>
                                 <textarea
-                                    value={newClass.description}
-                                    onChange={(e) => setNewClass((prev) => ({ ...prev, description: e.target.value }))}
-                                    placeholder="Optional description"
-                                    rows={2}
+                                    value={newSession.description}
+                                    onChange={(e) => setNewSession((prev) => ({ ...prev, description: e.target.value }))}
+                                    placeholder="Optional description for this session"
+                                    rows={3}
                                     className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
                                 />
                             </div>
                             <div className="flex justify-end gap-3 pt-2">
-                                <Button type="button" variant="secondary" onClick={() => setIsCreateClassOpen(false)}>Cancel</Button>
-                                <Button type="button" variant="primary" onClick={handleCreateClass} disabled={creatingClass}>
-                                    {creatingClass ? "Creating..." : "Create Class"}
+                                <Button type="button" variant="secondary" onClick={() => { setIsCreateSessionOpen(false); setNewSession({ topic: "", description: "" }); }}>Cancel</Button>
+                                <Button type="button" variant="primary" onClick={handleCreateSession} disabled={creatingSession}>
+                                    {creatingSession ? "Creating..." : "Create Session"}
                                 </Button>
                             </div>
                         </div>
                     </div>
                 </ModelOverlay>
             )}
-            </div>
-        );
-    }
-
-    if (isLoadingReport) return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading attendance report...</p>;
-    if (!report) return <p className="text-sm text-text-danger-default-light dark:text-text-danger-default-dark">No attendance data available for this class.</p>;
-
-    return (        
-        <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Button type="button" variant="secondary" onClick={() => setSelectedClassId(null)}>← Back to Classes</Button>
-                <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={async () => {
-                        try {
-                            await ensureSelectedSession();
-                            setIsAttendanceOpen(true);
-                        } catch (err) {
-                            showError(err?.message || 'Failed to prepare session.');
-                        }
-                    }}
-                    startIcon={<QRCodeIcon size={16} />}
-                    disabled={creatingSession}
-                >
-                    {creatingSession ? 'Preparing...' : 'Take Attendance'}
-                </Button>
-            </div>
-
-            {/* Header with class info and download button */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Attendance Report</h1>
-                    <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{report.className || "Class Attendance"}</p>
-                </div>
-                <Button type="button" variant="secondary" onClick={downloadReport} startIcon={<DownloadIcon size={18} />}>Download Report</Button>
-            </div>
-
-            {isAttendanceOpen && (
-                <ModelOverlay onClose={() => { setIsAttendanceOpen(false); stopScanner(); setManualId(''); setRecentScans([]); }} maxWidth="max-w-2xl">
-                    <div className="relative w-full overflow-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
-                        {/* Header */}
-                        <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-5 dark:border-border-primary-default-dark">
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark">
-                                        <QRCodeIcon className="h-6 w-6 text-text-accent-default-light dark:text-text-accent-default-dark" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Take Attendance</h3>
-                                        <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Scan QR codes or enter student IDs manually</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => { setIsAttendanceOpen(false); stopScanner(); setManualId(''); setRecentScans([]); }}
-                                className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2.5 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
-                                aria-label="Close"
-                            >
-                                <XIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="px-6 py-6">
-                            <div className="mb-5">
-                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                    Session
-                                </label>
-                                <select
-                                    value={selectedSessionId || ""}
-                                    onChange={(e) => setSelectedSessionId(Number(e.target.value))}
-                                    disabled={isLoadingSessions || sessions.length === 0}
-                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
-                                >
-                                    {sessions.length === 0 ? (
-                                        <option value="">{isLoadingSessions ? "Loading sessions..." : "No sessions available"}</option>
-                                    ) : (
-                                        sessions.map((session) => {
-                                            const sessionDate = session.date
-                                                ? new Date(session.date).toLocaleDateString()
-                                                : "Unknown date";
-                                            const start = session.startTime || "";
-                                            const end = session.endTime || "";
-                                            const timeLabel = start && end ? ` (${start} - ${end})` : "";
-
-                                            return (
-                                                <option key={session.sessionId} value={session.sessionId}>
-                                                    {`#${session.sessionId} - ${sessionDate}${timeLabel}`}
-                                                </option>
-                                            );
-                                        })
-                                    )}
-                                </select>
-                            </div>
-
-                            {/* Tabs */}
-                            <div className="mb-6 flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setScanTab("qr")}
-                                    className={`flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition-all ${
-                                        scanTab === "qr"
-                                            ? "bg-bg-fill-primary-default-light text-text-accent-default-light dark:bg-bg-fill-primary-default-dark dark:text-text-accent-default-dark"
-                                            : "text-text-secondary-default-light hover:bg-bg-surface-secondary-default-light dark:text-text-secondary-default-dark dark:hover:bg-bg-surface-secondary-default-dark"
-                                    }`}
-                                >
-                                    <QRCodeIcon className="h-5 w-5" />
-                                    <span>QR Scanner</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setScanTab("manual")}
-                                    className={`flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition-all ${
-                                        scanTab === "manual"
-                                            ? "bg-bg-fill-primary-default-light text-text-accent-default-light dark:bg-bg-fill-primary-default-dark dark:text-text-accent-default-dark"
-                                            : "text-text-secondary-default-light hover:bg-bg-surface-secondary-default-light dark:text-text-secondary-default-dark dark:hover:bg-bg-surface-secondary-default-dark"
-                                    }`}
-                                >
-                                    <UsersIcon className="h-5 w-5" />
-                                    <span>Manual Entry</span>
-                                </button>
-                            </div>
-
-                            {/* QR Scanner Tab */}
-                            {scanTab === "qr" && (
-                                <div className="space-y-4">
-                                    {/* Video Feed */}
-                                    <div className="space-y-3">
-                                        <div className="relative overflow-hidden rounded-2xl border border-border-primary-default-light bg-black dark:border-border-primary-default-dark" style={{ aspectRatio: "4/3" }}>
-                                            <video ref={videoRef} className="h-full w-full object-cover" autoPlay muted playsInline />
-                                            {!scanning && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                                                    <div className="text-center">
-                                                        <div className="mb-4 text-5xl">📷</div>
-                                                        <p className="text-sm font-medium text-white">Press Start Scanner to begin</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex gap-3">
-                                            <Button
-                                                type="button"
-                                                variant={scanning ? "secondary" : "primary"}
-                                                onClick={startScanner}
-                                                disabled={scanning}
-                                                className="flex-1"
-                                            >
-                                                {scanning ? "Scanner Running..." : "Start Scanner"}
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                onClick={stopScanner}
-                                                disabled={!scanning}
-                                                className="flex-1"
-                                            >
-                                                Stop Scanner
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    {/* Recent Scans */}
-                                    {recentScans.length > 0 && (
-                                        <div className="space-y-3 border-t pt-4">
-                                            <h4 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Recent Scans</h4>
-                                            <div className="max-h-48 space-y-2 overflow-y-auto">
-                                                {recentScans.map((scan, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
-                                                            scan.status === "success"
-                                                                ? "border-border-success-default-light bg-bg-surface-green-default-light/20 dark:border-border-success-default-dark dark:bg-bg-surface-green-default-dark/20"
-                                                                : "border-border-danger-default-light bg-bg-surface-red-default-light/20 dark:border-border-danger-default-dark dark:bg-bg-surface-red-default-dark/20"
-                                                        }`}
-                                                    >
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="font-mono text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{scan.id}</p>
-                                                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{scan.timestamp}</p>
-                                                        </div>
-                                                        <span
-                                                            className={`text-xs font-semibold ${
-                                                                scan.status === "success"
-                                                                    ? "text-text-success-default-light dark:text-text-success-default-dark"
-                                                                    : "text-text-danger-default-light dark:text-text-danger-default-dark"
-                                                            }`}
-                                                        >
-                                                            {scan.status === "success" ? "✓ Done" : "✗ Error"}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Manual Entry Tab */}
-                            {scanTab === "manual" && (
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-3">Student ID</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={manualId}
-                                                onChange={(e) => setManualId(e.target.value)}
-                                                onKeyPress={(e) => e.key === "Enter" && submitManualAttendance()}
-                                                placeholder="Enter or paste student ID"
-                                                className="flex-1 rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm placeholder-text-secondary-default-light transition-colors focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:placeholder-text-secondary-default-dark dark:focus:border-border-accent-default-dark"
-                                                autoFocus
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="primary"
-                                                onClick={submitManualAttendance}
-                                                disabled={!manualId.trim()}
-                                            >
-                                                Record
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    {/* Recent Manual Entries */}
-                                    {recentScans.length > 0 && (
-                                        <div className="space-y-3 border-t pt-4">
-                                            <h4 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Recent Entries</h4>
-                                            <div className="max-h-48 space-y-2 overflow-y-auto">
-                                                {recentScans.map((scan, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
-                                                            scan.status === "success"
-                                                                ? "border-border-success-default-light bg-bg-surface-green-default-light/20 dark:border-border-success-default-dark dark:bg-bg-surface-green-default-dark/20"
-                                                                : "border-border-danger-default-light bg-bg-surface-red-default-light/20 dark:border-border-danger-default-dark dark:bg-bg-surface-red-default-dark/20"
-                                                        }`}
-                                                    >
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="font-mono text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{scan.id}</p>
-                                                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{scan.timestamp}</p>
-                                                        </div>
-                                                        <span
-                                                            className={`text-xs font-semibold ${
-                                                                scan.status === "success"
-                                                                    ? "text-text-success-default-light dark:text-text-success-default-dark"
-                                                                    : "text-text-danger-default-light dark:text-text-danger-default-dark"
-                                                            }`}
-                                                        >
-                                                            {scan.status === "success" ? "✓ Done" : "✗ Error"}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </ModelOverlay>
-            )}
-
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light p-4 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark">
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Total Sessions</p>
-                    <p className="mt-1 text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{report.totalSessions || 0}</p>
-                </div>
-
-                <div className="rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light p-4 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark">
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">On-Time %</p>
-                    <p className="mt-1 text-2xl font-bold text-text-success-default-light dark:text-text-success-default-dark">{report.onTimePercentage?.toFixed(1) || 0}%</p>
-                </div>
-
-                <div className="rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light p-4 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark">
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Needs Improvement %</p>
-                    <p className="mt-1 text-2xl font-bold text-text-warning-default-light dark:text-text-warning-default-dark">{report.needsImprovementPercentage?.toFixed(1) || 0}%</p>
-                </div>
-
-                <div className="rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light p-4 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark">
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Below Threshold</p>
-                    <p className="mt-1 text-2xl font-bold text-text-danger-default-light dark:text-text-danger-default-dark">{belowThresholdCount}</p>
-                </div>
-            </div>
-
-            {/* Students Table */}
-            <div className="rounded-2xl border border-border-primary-default-light bg-bg-surface-primary-default-light dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Student ID</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Student Name</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Present</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Absent</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Attendance %</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {report.students.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No students in this class.</td>
-                                </tr>
-                            ) : (
-                                report.students.map((student, idx) => (
-                                    <tr key={student.studentCode} className={`border-b border-border-primary-default-light dark:border-border-primary-default-dark ${idx % 2 === 0 ? "bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark" : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark"} hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors`}>
-                                        <td className="px-6 py-4 text-sm text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{student.studentCode}</td>
-                                        <td className="px-6 py-4 text-sm text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{student.studentName || "Unknown"}</td>
-                                        <td className="px-6 py-4 text-sm text-text-primary-default-light dark:text-text-primary-default-dark"><span className="px-3 py-1 rounded-full bg-bg-surface-green-default-light text-text-success-default-light dark:bg-bg-surface-green-default-dark dark:text-text-success-default-dark">{student.present}</span></td>
-                                        <td className="px-6 py-4 text-sm text-text-primary-default-light dark:text-text-primary-default-dark"><span className="px-3 py-1 rounded-full bg-bg-surface-red-default-light text-text-danger-default-light dark:bg-bg-surface-red-default-dark dark:text-text-danger-default-dark">{student.absent}</span></td>
-                                        <td className="px-6 py-4 text-sm text-text-primary-default-light dark:text-text-primary-default-dark font-semibold">{student.attendancePercentage?.toFixed(1)}%</td>
-                                        <td className="px-6 py-4 text-sm"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${student.belowThreshold ? "bg-bg-surface-red-default-light text-text-danger-default-light dark:bg-bg-surface-red-default-dark dark:text-text-danger-default-dark" : "bg-bg-surface-green-default-light text-text-success-default-light dark:bg-bg-surface-green-default-dark dark:text-text-success-default-dark"}`}>{student.belowThreshold ? "Below Threshold" : "Good Standing"}</span></td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     );
 }

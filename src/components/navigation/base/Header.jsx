@@ -15,13 +15,14 @@ import { useToast } from '../../../contexts/ToastContext.jsx';
 
 const viewLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
 
-export default function Header({ avatar, notifications: initialNotifications, isMobile, availableViews = [], activeView, onViewChange }) {
+export default function Header({ avatar, notifications: initialNotifications, isMobile, isPhone, availableViews = [], activeView, onViewChange }) {
     const { i18n } = useTranslation('common/header');
     const navigate = useNavigate();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [notifications, setNotifications] = useState(initialNotifications || []);
     const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
+    const [activeTab, setActiveTab] = useState('unread');
 
     const notificationsRef = useRef(null);
     const profileMenuRef = useRef(null);
@@ -114,8 +115,9 @@ export default function Header({ avatar, notifications: initialNotifications, is
     const handleMarkAsRead = async (notificationId) => {
         try {
             await markNotificationAsRead(notificationId);
-            const fresh = await fetchMyNotifications();
-            setNotifications(fresh || []);
+            setNotifications(prev => prev.map(n =>
+                n.userNotificationId === notificationId ? { ...n, isRead: true } : n
+            ));
         } catch (err) {
             showError(err.message);
         }
@@ -126,12 +128,15 @@ export default function Header({ avatar, notifications: initialNotifications, is
         if (!actionUrl) return;
 
         setIsNotificationsOpen(false);
-        try {
-            await markNotificationAsRead(notification.userNotificationId);
-            const fresh = await fetchMyNotifications();
-            setNotifications(fresh || []);
-        } catch (err) {
-            showError(err.message);
+        if (!notification.isRead) {
+            try {
+                await markNotificationAsRead(notification.userNotificationId);
+                setNotifications(prev => prev.map(n =>
+                    n.userNotificationId === notification.userNotificationId ? { ...n, isRead: true } : n
+                ));
+            } catch (err) {
+                showError(err.message);
+            }
         }
         navigate(actionUrl);
     };
@@ -140,8 +145,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
         try {
             setIsMarkingAllRead(true);
             await markAllNotificationsAsRead();
-            const fresh = await fetchMyNotifications();
-            setNotifications(fresh || []);
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
         } catch (err) {
             showError(err.message);
         } finally {
@@ -229,74 +233,202 @@ export default function Header({ avatar, notifications: initialNotifications, is
                     </button>
 
                     {isNotificationsOpen && (
-                        <div className="absolute top-full right-0 mt-2 w-80 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                            {/* Header with Mark All as Read */}
-                            <div className="sticky top-0 p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark flex items-center justify-between">
-                                <h3 className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark">Notifications</h3>
-                                {unreadCount > 0 && (
+                        isPhone ? (
+                            <div className="fixed inset-x-0 bottom-0 top-[60px] z-50 flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+                                <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+                                    <h3 className="text-lg font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
+                                        Notifications
+                                    </h3>
                                     <button
-                                        onClick={handleMarkAllAsRead}
-                                        disabled={isMarkingAllRead}
-                                        className="text-xs font-medium text-white bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
+                                        onClick={() => setIsNotificationsOpen(false)}
+                                        className="p-1.5 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark"
+                                        aria-label="Close"
                                     >
-                                        {isMarkingAllRead ? 'Marking...' : 'Mark all as read'}
+                                        <svg className="w-5 h-5 text-text-secondary-default-light dark:text-text-secondary-default-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
                                     </button>
-                                )}
-                            </div>
+                                </div>
 
-                            {/* Notifications List */}
-                            <ul>
-                                {(() => {
-                                    return safeNotifications.length > 0 ? (
-                                        safeNotifications.map((notification, index) => (
-                                            <li
-                                                key={notification.userNotificationId || index}
-                                                className={`border-b border-border-primary-default-light dark:border-border-primary-default-dark p-4 transition-colors ${
-                                                    !notification.isRead
-                                                        ? 'bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark'
-                                                        : ''
-                                                } ${(notification.clickUrl || notification.actionUrl) ? 'cursor-pointer hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark' : 'cursor-default'}`}
-                                                onClick={() => handleNotificationClick(notification)}
-                                            >
-                                                <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
-                                                    <div className="flex items-start gap-2.5 min-w-0">
-                                                        {!notification.isRead && (
-                                                            <span className="mt-2 flex-shrink-0 w-2 h-2 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark" />
-                                                        )}
-                                                        <div className="min-w-0">
-                                                            <p className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark truncate">
-                                                                {notification.typeLabel || 'Notification'}
-                                                            </p>
-                                                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 line-clamp-2">
-                                                                {notification.message || JSON.stringify(notification)}
-                                                            </p>
-                                                            <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-2">
-                                                                {notification.timeAgo}
-                                                            </p>
+                                {unreadCount > 0 && (
+                                    <div className="px-4 py-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark flex items-center justify-between">
+                                        <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                            {unreadCount} unread
+                                        </span>
+                                        <button
+                                            onClick={handleMarkAllAsRead}
+                                            disabled={isMarkingAllRead}
+                                            className="text-xs font-medium text-white bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
+                                        >
+                                            {isMarkingAllRead ? 'Marking...' : 'Mark all as read'}
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-1 px-3 py-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark">
+                                    {['all', 'unread', 'read'].map(tab => (
+                                        <button
+                                            key={tab}
+                                            onClick={() => setActiveTab(tab)}
+                                            className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-150 ${
+                                                activeTab === tab
+                                                    ? 'bg-text-accent-default-light dark:bg-text-accent-default-dark text-white'
+                                                    : 'text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark'
+                                            }`}
+                                        >
+                                            {tab === 'all' ? 'All' : tab === 'unread' ? 'Unread' : 'Read'}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto">
+                                    <ul>
+                                        {(() => {
+                                            const filteredNotifications = safeNotifications.filter(n => {
+                                                if (activeTab === 'unread') return !n.isRead;
+                                                if (activeTab === 'read') return n.isRead;
+                                                return true;
+                                            });
+                                            return filteredNotifications.length > 0 ? (
+                                                filteredNotifications.map((notification, index) => (
+                                                    <li
+                                                        key={notification.userNotificationId || index}
+                                                        className={`border-b border-border-primary-default-light dark:border-border-primary-default-dark p-4 transition-colors ${
+                                                            !notification.isRead
+                                                                ? 'bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark'
+                                                                : ''
+                                                        } ${(notification.clickUrl || notification.actionUrl) ? 'cursor-pointer hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark' : 'cursor-default'}`}
+                                                        onClick={() => handleNotificationClick(notification)}
+                                                    >
+                                                        <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
+                                                            <div className="flex items-start gap-2.5 min-w-0">
+                                                                {!notification.isRead && (
+                                                                    <span className="mt-2 flex-shrink-0 w-2 h-2 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark" />
+                                                                )}
+                                                                <div className="min-w-0">
+                                                                    <p className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark truncate">
+                                                                        {notification.typeLabel || 'Notification'}
+                                                                    </p>
+                                                                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 line-clamp-2">
+                                                                        {notification.message || JSON.stringify(notification)}
+                                                                    </p>
+                                                                    <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-2">
+                                                                        {notification.timeAgo}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {!notification.isRead && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleMarkAsRead(notification.userNotificationId);
+                                                                    }}
+                                                                    className="self-start mt-1 flex-shrink-0 px-2.5 py-1 text-xs font-medium bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
+                                                                >
+                                                                    Mark Read
+                                                                </button>
+                                                            )}
                                                         </div>
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <li className="p-6 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm">
+                                                    No notifications
+                                                </li>
+                                            );
+                                        })()}
+                                    </ul>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="absolute top-full right-0 mt-2 w-80 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                                <div className="sticky top-0 p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark flex items-center justify-between">
+                                    <h3 className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark">Notifications</h3>
+                                    {unreadCount > 0 && (
+                                        <button
+                                            onClick={handleMarkAllAsRead}
+                                            disabled={isMarkingAllRead}
+                                            className="text-xs font-medium text-white bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
+                                        >
+                                            {isMarkingAllRead ? 'Marking...' : 'Mark all as read'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-1 px-3 py-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark">
+                                    {['all', 'unread', 'read'].map(tab => (
+                                        <button
+                                            key={tab}
+                                            onClick={() => setActiveTab(tab)}
+                                            className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-150 ${
+                                                activeTab === tab
+                                                    ? 'bg-text-accent-default-light dark:bg-text-accent-default-dark text-white'
+                                                    : 'text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark'
+                                            }`}
+                                        >
+                                            {tab === 'all' ? 'All' : tab === 'unread' ? 'Unread' : 'Read'}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <ul>
+                                    {(() => {
+                                        const filteredNotifications = safeNotifications.filter(n => {
+                                            if (activeTab === 'unread') return !n.isRead;
+                                            if (activeTab === 'read') return n.isRead;
+                                            return true;
+                                        });
+                                        return filteredNotifications.length > 0 ? (
+                                            filteredNotifications.map((notification, index) => (
+                                                <li
+                                                    key={notification.userNotificationId || index}
+                                                    className={`border-b border-border-primary-default-light dark:border-border-primary-default-dark p-4 transition-colors ${
+                                                        !notification.isRead
+                                                            ? 'bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark'
+                                                            : ''
+                                                    } ${(notification.clickUrl || notification.actionUrl) ? 'cursor-pointer hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark' : 'cursor-default'}`}
+                                                    onClick={() => handleNotificationClick(notification)}
+                                                >
+                                                    <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
+                                                        <div className="flex items-start gap-2.5 min-w-0">
+                                                            {!notification.isRead && (
+                                                                <span className="mt-2 flex-shrink-0 w-2 h-2 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark" />
+                                                            )}
+                                                            <div className="min-w-0">
+                                                                <p className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark truncate">
+                                                                    {notification.typeLabel || 'Notification'}
+                                                                </p>
+                                                                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 line-clamp-2">
+                                                                    {notification.message || JSON.stringify(notification)}
+                                                                </p>
+                                                                <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-2">
+                                                                    {notification.timeAgo}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        {!notification.isRead && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleMarkAsRead(notification.userNotificationId);
+                                                                }}
+                                                                className="self-start mt-1 flex-shrink-0 px-2.5 py-1 text-xs font-medium bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
+                                                            >
+                                                                Mark Read
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                    {!notification.isRead && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleMarkAsRead(notification.userNotificationId);
-                                                            }}
-                                                            className="self-start mt-1 flex-shrink-0 px-2.5 py-1 text-xs font-medium bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
-                                                        >
-                                                            Mark Read
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                </li>
+                                            ))
+                                        ) : (
+                                            <li className="p-6 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm">
+                                                No notifications
                                             </li>
-                                        ))
-                                    ) : (
-                                        <li className="p-6 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm">
-                                            No notifications
-                                        </li>
-                                    );
-                                })()}
-                            </ul>
-                        </div>
+                                        );
+                                    })()}
+                                </ul>
+                            </div>
+                        )
                     )}
                 </div>
 

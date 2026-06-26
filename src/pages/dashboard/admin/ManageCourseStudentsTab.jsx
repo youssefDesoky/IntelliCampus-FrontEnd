@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useError } from '../../../contexts/ErrorContext.jsx';
-import { fetchCourseStudents } from "../../../feature/admin/services/adminApi";
+import { fetchCourseStudents } from "../../../feature/admin/services/adminCoursesApi";
 import { SearchIcon, UserIcon } from "../../../components/ui/icons";
 
 export default function ManageCourseStudentsTab({ courseId }) {

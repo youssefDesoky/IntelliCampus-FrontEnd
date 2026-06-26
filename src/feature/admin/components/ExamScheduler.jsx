@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useDeviceType from "../../../hooks/useDeviceType";
 import WeeklySchedule from "../../../components/ui/WeeklySchedule";
 import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
@@ -6,7 +7,7 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import DateInput from "../../../components/form/DateInput";
 import TimeInput from "../../../components/form/TimeInput";
 import { CalendarIcon } from "../../../components/ui/icons";
-import { autoSchedule, getAvailableSlots, updateExam, fetchExams, deleteExam } from "../services/adminApi";
+import { autoSchedule, getAvailableSlots, updateExam, fetchExams, deleteExam } from "../services/adminSchedulingApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function to12Hour(t) {
@@ -229,31 +230,21 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
 const ROWS_PER_PAGE = 8;
 
 function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose }) {
-  const [slots, setSlots] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [moving, setMoving] = useState(false);
   const [page, setPage] = useState(0);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const result = await getAvailableSlots({
-          courseId: exam.courseId,
-          scheduleFrom,
-          scheduleTo,
-          dailySlots,
-          excludeExamId: exam.examId,
-        });
-        setSlots(result);
-      } catch {
-        setSlots([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [exam, scheduleFrom, scheduleTo, dailySlots]);
+  const { data: slots = [], isLoading: loading } = useQuery({
+    queryKey: ["availableSlots", exam.courseId, exam.examId, scheduleFrom, scheduleTo, dailySlots],
+    queryFn: () => getAvailableSlots({
+      courseId: exam.courseId,
+      scheduleFrom,
+      scheduleTo,
+      dailySlots,
+      excludeExamId: exam.examId,
+    }),
+    staleTime: 30_000,
+  });
 
   const handleConfirmMove = async () => {
     if (!selectedSlot) return;
@@ -442,11 +433,51 @@ function deriveConfigFromExams(scheduled) {
 const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, ref) {
   const { isMobile } = useDeviceType();
   const { showError } = useError();
-  const [scheduleResult, setScheduleResult] = useState(null);
-  const [lastAutoConfig, setLastAutoConfig] = useState(null);
+  const queryClient = useQueryClient();
+  const [scheduleOverride, setScheduleOverride] = useState(null);
+  const [lastAutoConfig, setLastAutoConfig] = useState(() => {
+    const savedConfig = localStorage.getItem(CONFIG_STORAGE_KEY);
+    if (savedConfig) {
+      try { return JSON.parse(savedConfig); } catch { /* ignore */ }
+    }
+    return null;
+  });
   const [showAutoDialog, setShowAutoDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(null);
+
+  const { data: initialExams } = useQuery({
+    queryKey: ["scheduledExams"],
+    queryFn: async () => {
+      const exams = await fetchExams();
+      if (exams && exams.length > 0) {
+        return exams.map(exam => ({
+          courseId: exam.courseId,
+          courseCode: exam.courseCode || "",
+          courseName: exam.courseName || exam.title,
+          examId: exam.examId,
+          date: exam.date.split("T")[0],
+          startTime: exam.time.substring(0, 8),
+          endTime: (() => {
+            const [h, m] = exam.time.split(":").map(Number);
+            const total = h * 60 + m + exam.durationMinutes;
+            const endH = Math.floor(total / 60);
+            const endM = total % 60;
+            return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00`;
+          })(),
+          studentCount: 0,
+        }));
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const scheduleResult = useMemo(() => {
+    if (scheduleOverride) return scheduleOverride;
+    if (initialExams) return { success: true, scheduled: initialExams, unscheduledCourseIds: [] };
+    return null;
+  }, [initialExams, scheduleOverride]);
 
   const schedule = useMemo(() => {
     if (!scheduleResult?.scheduled) return [];
@@ -473,52 +504,21 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
 
   useEffect(() => { onScheduleChange?.(ready); }, [ready, onScheduleChange]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const exams = await fetchExams();
-        if (exams && exams.length > 0) {
-          const scheduled = exams.map(exam => ({
-            courseId: exam.courseId,
-            courseCode: exam.courseCode || "",
-            courseName: exam.courseName || exam.title,
-            examId: exam.examId,
-            date: exam.date.split("T")[0],
-            startTime: exam.time.substring(0, 8),
-            endTime: (() => {
-              const [h, m] = exam.time.split(":").map(Number);
-              const total = h * 60 + m + exam.durationMinutes;
-              const endH = Math.floor(total / 60);
-              const endM = total % 60;
-              return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00`;
-            })(),
-            studentCount: 0,
-          }));
-          setScheduleResult({ success: true, scheduled, unscheduledCourseIds: [] });
+  const derivedConfig = useMemo(() => {
+    if (!initialExams || lastAutoConfig) return null;
+    return deriveConfigFromExams(initialExams);
+  }, [initialExams, lastAutoConfig]);
 
-          const savedConfig = localStorage.getItem(CONFIG_STORAGE_KEY);
-          if (savedConfig) {
-            try { setLastAutoConfig(JSON.parse(savedConfig)); } catch { /* ignore */ }
-          } else {
-            const derived = deriveConfigFromExams(scheduled);
-            if (derived) setLastAutoConfig(derived);
-          }
-        }
-      } catch {
-        // No exams exist yet, that's fine
-      }
-    })();
-  }, []);
+  const effectiveConfig = lastAutoConfig || derivedConfig;
 
   const handleAutoClick = useCallback(() => {
     setShowAutoDialog(true);
   }, []);
 
-  const handleAutoConfirm = useCallback(async (request) => {
-    setLoading(true);
-    try {
-      const result = await autoSchedule(request);
-      setScheduleResult(result);
+  const autoScheduleMutation = useMutation({
+    mutationFn: autoSchedule,
+    onSuccess: (result, request) => {
+      setScheduleOverride(result);
       const config = {
         scheduleFrom: request.scheduleFrom,
         scheduleTo: request.scheduleTo,
@@ -527,28 +527,36 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
       setLastAutoConfig(config);
       localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
       setShowAutoDialog(false);
-    } catch (err) {
-      showError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [showError]);
+    },
+    onError: (err) => showError(err.message),
+    onSettled: () => setLoading(false),
+  });
 
-  const handleReset = useCallback(async () => {
-    try {
-      setLoading(true);
+  const handleAutoConfirm = useCallback((request) => {
+    setLoading(true);
+    autoScheduleMutation.mutate(request);
+  }, [autoScheduleMutation]);
+
+  const resetMutation = useMutation({
+    mutationFn: async () => {
       const exams = await fetchExams();
       await Promise.all(exams.map(e => deleteExam(e.examId)));
-      setScheduleResult(null);
+    },
+    onSuccess: () => {
+      setScheduleOverride(null);
       setLastAutoConfig(null);
       localStorage.removeItem(CONFIG_STORAGE_KEY);
       setEditing(null);
-    } catch (err) {
-      showError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [showError]);
+      queryClient.invalidateQueries({ queryKey: ["scheduledExams"] });
+    },
+    onError: (err) => showError(err.message),
+    onSettled: () => setLoading(false),
+  });
+
+  const handleReset = useCallback(() => {
+    setLoading(true);
+    resetMutation.mutate();
+  }, [resetMutation]);
 
   const handleEventClick = useCallback((ev) => {
     const exam = scheduleResult?.scheduled?.find(e => String(e.examId) === ev.id);
@@ -561,21 +569,25 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
       time: startTime,
       durationMinutes,
     });
-    setScheduleResult(prev => ({
-      ...prev,
-      scheduled: prev.scheduled.map(e =>
-        e.examId === examId
-          ? { ...e, date, startTime, endTime: (() => {
-              const [h, m] = startTime.split(":");
-              const total = parseInt(h) * 60 + parseInt(m) + durationMinutes;
-              const endH = Math.floor(total / 60);
-              const endM = total % 60;
-              return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00`;
-            })() }
-          : e
-      ),
-    }));
-  }, []);
+    setScheduleOverride(prev => {
+      const current = prev || (initialExams ? { success: true, scheduled: initialExams, unscheduledCourseIds: [] } : null);
+      if (!current) return null;
+      return {
+        ...current,
+        scheduled: current.scheduled.map(e =>
+          e.examId === examId
+            ? { ...e, date, startTime, endTime: (() => {
+                const [h, m] = startTime.split(":");
+                const total = parseInt(h) * 60 + parseInt(m) + durationMinutes;
+                const endH = Math.floor(total / 60);
+                const endM = total % 60;
+                return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00`;
+              })() }
+            : e
+        ),
+      };
+    });
+  }, [initialExams]);
 
   useImperativeHandle(ref, () => ({
     handleAuto: handleAutoClick,
@@ -630,13 +642,13 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
         </ModelOverlay>
       )}
 
-      {editing && lastAutoConfig && (
-        <ModelOverlay onClose={() => setEditing(null)} maxWidth="max-w-3xl">
+      {editing && effectiveConfig && (
+        <ModelOverlay onClose={() => setEditing(null)}>
           <MovePanel
             exam={editing}
-            scheduleFrom={lastAutoConfig.scheduleFrom}
-            scheduleTo={lastAutoConfig.scheduleTo}
-            dailySlots={lastAutoConfig.dailySlots}
+            scheduleFrom={effectiveConfig.scheduleFrom}
+            scheduleTo={effectiveConfig.scheduleTo}
+            dailySlots={effectiveConfig.dailySlots}
             onMove={handleMoveExam}
             onClose={() => setEditing(null)}
           />

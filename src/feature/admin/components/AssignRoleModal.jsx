@@ -1,35 +1,38 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
 import { XIcon } from "../../../components/ui/icons";
-import { fetchUserRoles, assignUserRoles, fetchAssignableRoles } from "../services/adminApi";
+import { fetchUserRoles, assignUserRoles, fetchAssignableRoles } from "../services/adminAccountsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function AssignRoleModal({ userId, userName, onClose, onRolesUpdated }) {
     const { showError } = useError();
-    const [availableRoles, setAvailableRoles] = useState([]);
     const [selectedRoles, setSelectedRoles] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        let cancelled = false;
-        setIsLoading(true);
-        Promise.all([fetchUserRoles(userId), fetchAssignableRoles()])
-            .then(([userRoles, assignable]) => {
-                if (cancelled) return;
-                setAvailableRoles(assignable);
-                setSelectedRoles(userRoles);
-            })
-            .catch(err => {
-                if (cancelled) return;
+    const { data: availableRoles = [], isLoading: rolesLoading } = useQuery({
+        queryKey: ["assignableRoles"],
+        queryFn: fetchAssignableRoles,
+        staleTime: 2 * 60 * 1000,
+    });
+
+    const { isLoading: userRolesLoading } = useQuery({
+        queryKey: ["userRoles", userId],
+        queryFn: async () => {
+            try {
+                const roles = await fetchUserRoles(userId);
+                setSelectedRoles(roles);
+                return roles;
+            } catch (err) {
                 showError(err.message);
-            })
-            .finally(() => {
-                if (!cancelled) setIsLoading(false);
-            });
-        return () => { cancelled = true; };
-    }, [userId, showError]);
+                return [];
+            }
+        },
+        staleTime: 2 * 60 * 1000,
+    });
+
+    const isLoading = rolesLoading || userRolesLoading;
 
     const toggleRole = (roleValue) => {
         setSelectedRoles(prev =>

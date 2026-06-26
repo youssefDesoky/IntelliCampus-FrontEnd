@@ -1,4 +1,4 @@
-import apiClient from "../utils/apiClient";
+import apiClient from "./apiClient";
 
 export async function fetchInboxMessages() {
   return apiClient('/api/messages/inbox');

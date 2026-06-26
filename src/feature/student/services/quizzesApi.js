@@ -1,7 +1,8 @@
-import apiClient from "../../../utils/apiClient";
+import apiClient from "../../../api/apiClient";
 
-export async function fetchCourseQuizzesOverview(courseId) {
-  return apiClient(`/api/courses/${courseId}/quizzes`);
+export async function fetchCourseQuizzesOverview(courseId, { pageIndex = 1, pageSize = 10 } = {}) {
+  const params = new URLSearchParams({ pageIndex, pageSize });
+  return apiClient(`/api/courses/${courseId}/quizzes?${params}`);
 }
 
 export async function fetchPracticeQuiz(courseId, quizId) {

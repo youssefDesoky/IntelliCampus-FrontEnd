@@ -1,15 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Section from "../../../components/ui/Section";
 
 import MyCourse from "../../../feature/student/courses/myCourses/MyCourse";
 import TranscriptView from "../../../feature/student/courses/myCourses/TranscriptView";
+import { MyCoursesPageSkeleton } from "../../../feature/student/courses/myCourses/SkeletonLoader";
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import DataBanner from "../../../components/ui/DataBanner";
+import PaginationButtons from "../../../components/ui/PaginationButtons";
 import MyCoursesHeader from "../../../feature/student/courses/myCourses/MyCoursesHeader";
 import { fetchMyStudentCourses } from "../../../feature/course/services/coursesApi";
-import { useError } from '../../../contexts/ErrorContext.jsx';
 
 
 function mapCourseToMyCourseProps(course) {
@@ -20,7 +22,7 @@ function mapCourseToMyCourseProps(course) {
         .toUpperCase()
         .slice(0, 2) || "CS";
 
-    const type = course.isElective ? "elective" : "core";
+    const type = course.isElective ? "elective" : "mandatory";
     const status = course.studentCourseStatusName === "Completed" ? "completed" : "in-progress";
 
     let attendanceValue = "0%";
@@ -30,7 +32,11 @@ function mapCourseToMyCourseProps(course) {
         attendanceStatus = course.attendance >= 75 ? "good" : course.attendance >= 50 ? "warning" : "risk";
     }
 
-    const gradeValue = course.grade != null ? `${Math.round(course.grade)}%` : "—";
+    const gradeValue = course.grade != null
+        ? typeof course.grade === "number"
+            ? `${Math.round(course.grade)}%`
+            : String(course.grade)
+        : "—";
     const section = course.className || "";
     const creditHours = course.creditHours || 0;
 
@@ -55,43 +61,40 @@ export default function MyCourses() {
     const { isMobile } = useDeviceType();
     const navigate = useNavigate();
     const location = useLocation();
-    const [courses, setCourses] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const { showError } = useError();
     const [showTranscript, setShowTranscript] = useState(() => location.state?.showTranscript || false);
-    
+
+    const PAGE_SIZE = 6;
+    const [page, setPage] = useState(1);
+
     const [viewMode, setViewMode] = useState(() => {
         return isMobile ? "list" : localStorage.getItem("myCoursesViewMode") || "grid";
     });
     const [filterStatus, setFilterStatus] = useState([]);
     const [filterType, setFilterType] = useState([]);
 
+    const backendStatus =
+        filterStatus.length === 1
+            ? filterStatus[0] === "in-progress"
+                ? "inprogress"
+                : filterStatus[0]
+            : null;
+
+    const {
+        data: courses = [],
+        isLoading: loading,
+    } = useQuery({
+        queryKey: ["myCourses", backendStatus],
+        queryFn: async () => {
+            const result = await fetchMyStudentCourses(backendStatus, 1, 100);
+            const raw = result?.data ?? (Array.isArray(result) ? result : []);
+            return raw.map(mapCourseToMyCourseProps);
+        },
+        staleTime: 2 * 60 * 1000,
+    });
+
     useEffect(() => {
         localStorage.setItem("myCoursesViewMode", viewMode);
     }, [viewMode]);
-
-    useEffect(() => {
-        let cancelled = false;
-        async function load() {
-            try {
-                setLoading(true);
-                const backendStatus =
-                    filterStatus.length === 1
-                        ? filterStatus[0] === "in-progress"
-                            ? "inprogress"
-                            : filterStatus[0]
-                        : null;
-                const data = await fetchMyStudentCourses(backendStatus);
-                if (!cancelled) setCourses((Array.isArray(data) ? data : []).map(mapCourseToMyCourseProps));
-            } catch (err) {
-                showError(err.message);
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }
-        load();
-        return () => { cancelled = true; };
-    }, [filterStatus, showError]);
 
     // Apply filters
     const filteredCourses = courses.filter(c => {
@@ -99,6 +102,16 @@ export default function MyCourses() {
         if (filterType.length > 0 && !filterType.includes(c.type)) return false;
         return true;
     });
+
+    // Reset page when filters change
+    useEffect(() => {
+        setPage(1);
+    }, [filterStatus, filterType]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
+    const from = (page - 1) * PAGE_SIZE + 1;
+    const to = Math.min(page * PAGE_SIZE, filteredCourses.length);
+    const paginatedCourses = filteredCourses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
     const handleEnterClassroom = useCallback((courseId) => {
         navigate(`/courses/${courseId}`);
@@ -121,7 +134,7 @@ export default function MyCourses() {
     ];
 
     return (
-        <>
+        <div className="flex flex-col min-h-[calc(100vh-160px)]">
             <MyCoursesHeader 
                 isMobile={isMobile}
                 viewMode={viewMode}
@@ -134,43 +147,52 @@ export default function MyCourses() {
                 setFilterType={setFilterType}
             />
 
-            {!showTranscript && (
-                <Section className="hidden md:grid grid-cols-4 gap-6 mb-6">
-                    <DataBanner
-                        title="Course Statistics"
-                        data={stats}
-                    />
-                </Section>
-            )}
+            {!showTranscript ? (
+                <div className="flex flex-col flex-1">
+                    <Section className="hidden md:grid grid-cols-4 gap-6 mb-6">
+                        <DataBanner
+                            title="Course Statistics"
+                            data={stats}
+                        />
+                    </Section>
 
-            {!showTranscript && loading && (
-                <div className="flex justify-center py-12">
-                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading courses...</p>
+                    {loading && <MyCoursesPageSkeleton viewMode={viewMode} />}
+
+                    {!loading && filteredCourses.length === 0 && (
+                        <div className="flex flex-col items-center justify-center flex-1 text-center">
+                            <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+                                {courses.length === 0 ? "No courses enrolled" : "No courses match your filters"}
+                            </h3>
+                            <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
+                                {courses.length === 0
+                                    ? "You are not currently enrolled in any courses."
+                                    : "Try adjusting the status or type filters above."}
+                            </p>
+                        </div>
+                    )}
+
+                    {!loading && paginatedCourses.length > 0 && (
+                        <Section className={`flex-1 ${viewMode === "grid" ? "grid grid-cols-2 gap-4 content-start" : "flex flex-col gap-4"}`}>
+                            {paginatedCourses.map((course) => (
+                                <MyCourse key={course.courseId} {...course} onEnterClassroom={() => handleEnterClassroom(course.courseId)} onViewMaterials={() => handleViewMaterials(course.courseId)} />
+                            ))}
+                        </Section>
+                    )}
+
+                    {!loading && totalPages > 1 && (
+                        <Section className="mt-auto mb-6">
+                            <PaginationButtons
+                                totalPages={totalPages}
+                                currentPage={page}
+                                setCurrentPage={setPage}
+                                {...(!isMobile ? { from, to, total: filteredCourses.length, label: "courses" } : {})}
+                            />
+                        </Section>
+                    )}
                 </div>
+            ) : (
+                <TranscriptView />
             )}
-
-            {!showTranscript && !loading && filteredCourses.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                        {courses.length === 0 ? "No courses enrolled" : "No courses match your filters"}
-                    </h3>
-                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
-                        {courses.length === 0
-                            ? "You are not currently enrolled in any courses."
-                            : "Try adjusting the status or type filters above."}
-                    </p>
-                </div>
-            )}
-
-            {!showTranscript && !loading && filteredCourses.length > 0 && (
-                <Section className={`mb-6 ${viewMode === "grid" ? "grid grid-cols-2 gap-4" : "flex flex-col gap-4"}`}>
-                    {filteredCourses.map((course) => (
-                        <MyCourse key={course.courseId} {...course} onEnterClassroom={() => handleEnterClassroom(course.courseId)} onViewMaterials={() => handleViewMaterials(course.courseId)} />
-                    ))}
-                </Section>
-            )}
-
-            {showTranscript && <TranscriptView />}
-        </>
+        </div>
     );
 }

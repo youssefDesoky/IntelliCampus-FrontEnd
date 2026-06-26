@@ -1,37 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 import { fetchCourseAnnouncements } from "../../../../course/components/announcements";
 import CourseAnnouncementCard from "../../../../course/components/announcements/CourseAnnouncementCard";
-import { useError } from '../../../../../contexts/ErrorContext.jsx';
+
 
 
 export default function CourseAnnouncements() {
     const outletContext = useOutletContext();
     const user = outletContext?.user;
     const courseId = outletContext?.courseId;
-    const [announcements, setAnnouncements] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const { showError } = useError();
-
-    const loadAnnouncements = useCallback(async () => {
-        if (!courseId) return;
-
-        setLoading(true);
-
-        try {
-            const data = await fetchCourseAnnouncements(courseId);
-            setAnnouncements(Array.isArray(data) ? data : []);
-        } catch (err) {
-            showError(err.message || "Failed to load announcements.");
-            setAnnouncements([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [courseId]);
-
-    useEffect(() => {
-        loadAnnouncements();
-    }, [loadAnnouncements]);
+    const { data: announcements = [], isLoading: loading } = useQuery({
+        queryKey: ["courseAnnouncements", courseId],
+        queryFn: () => fetchCourseAnnouncements(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+        select: (data) => Array.isArray(data) ? data : [],
+    });
 
 
     if (loading) {

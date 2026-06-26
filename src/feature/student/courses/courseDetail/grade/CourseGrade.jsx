@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 
 import AssessmentBreakdown from "./AssessmentBreakdown";
@@ -6,7 +7,7 @@ import CurrentGrade from "./CurrentGrade";
 import GradeComplaint from "./GradeComplaint";
 import GradeHistory from "./GradeHistory";
 import { fetchCourseGrade } from "../../gradeApi";
-import { useError } from '../../../../../contexts/ErrorContext.jsx';
+
 import { useDeviceType } from '../../../../../hooks';
 
 const PAGE_SIZE = 3;
@@ -15,28 +16,13 @@ export default function CourseGrade() {
 	const { course } = useOutletContext();
 	const { isPhone } = useDeviceType();
 	const [currentPage, setCurrentPage] = useState(1);
-	const [gradeData, setGradeData] = useState(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const { showError } = useError();
 
-	const loadGradeData = useCallback(async () => {
-		try {
-			setIsLoading(true);
-			const data = await fetchCourseGrade(course.id);
-			setGradeData(data || null);
-		} catch (err) {
-			showError(err.message);
-			setGradeData(null);
-		} finally {
-			setIsLoading(false);
-		}
-	}, [course.id]);
-
-	useEffect(() => {
-		if (course?.id) {
-			loadGradeData();
-		}
-	}, [loadGradeData, course?.id]);
+	const { data: gradeData = null, isLoading } = useQuery({
+		queryKey: ["courseGrade", course?.id],
+		queryFn: () => fetchCourseGrade(course.id),
+		staleTime: 5 * 60 * 1000,
+		enabled: !!course?.id,
+	});
 
 	if (isLoading) {
 		return (

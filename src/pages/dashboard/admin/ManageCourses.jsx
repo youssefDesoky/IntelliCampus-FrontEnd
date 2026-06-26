@@ -21,9 +21,9 @@ import {
   deleteCourse,
   activateCourse,
   deactivateCourse,
-  importCourses,
   updateCourseRegistrationSettings,
-} from "../../../feature/admin/services/adminApi";
+} from "../../../feature/admin/services/adminCoursesApi";
+import { importCourses } from "../../../feature/admin/services/adminImportsApi";
 import CourseRegistrationSettings from "../../../feature/admin/components/CourseRegistrationSettings";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 

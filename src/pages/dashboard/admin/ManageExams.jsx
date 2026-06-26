@@ -7,7 +7,7 @@ import ImportDialog from "../../../components/ui/ImportDialog";
 import { ArrowRotateRightIcon, CalendarCheckIcon, DownloadIcon, ImportIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
 import { useError } from '../../../contexts/ErrorContext.jsx';
-import { uploadExams } from "../../../feature/admin/services/adminApi";
+import { uploadExams } from "../../../feature/admin/services/adminSchedulingApi";
 import ExamScheduler from "../../../feature/admin/components/ExamScheduler";
 
 const examTypeOptions = [

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
@@ -7,6 +8,7 @@ import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
 import ExamSchedule from "../../../feature/student/schedule/ExamSchedule";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import { fetchMySchedule, exportSchedulePdf } from "../../../feature/student/schedule/scheduleApi";
+import { ScheduleSkeleton } from "../../../feature/student/schedule/SkeletonLoader";
 import { fetchMyExams, exportExamSchedulePdf } from "../../../feature/student/schedule/examScheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
@@ -16,33 +18,27 @@ const allowedTypeFilters = ["lecture", "section", "activity"];
 export default function Schedule() {
     const [currSchedule, setCurrSchedule] = useState(localStorage.getItem(scheduleStorageKey) || "weekly");
     const [selectedTypes, setSelectedTypes] = useState([]);
-    const [scheduleData, setScheduleData] = useState([]);
-    const [examsData, setExamsData] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const { isMobile } = useDeviceType();
     const { showError } = useError();
 
-    const loadScheduleData = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            const [schedule, exams] = await Promise.all([
-                fetchMySchedule(),
-                fetchMyExams(),
-            ]);
-            setScheduleData(Array.isArray(schedule) ? schedule : []);
-            setExamsData(Array.isArray(exams) ? exams : []);
-        } catch {
-            setScheduleData([]);
-            setExamsData([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+    const { data: scheduleData = [], isLoading: scheduleLoading } = useQuery({
+        queryKey: ["studentSchedule"],
+        queryFn: async () => {
+            try { return await fetchMySchedule(); } catch { return []; }
+        },
+        staleTime: 5 * 60 * 1000,
+    });
 
-    useEffect(() => {
-        loadScheduleData();
-    }, [loadScheduleData]);
+    const { data: examsData = [], isLoading: examsLoading } = useQuery({
+        queryKey: ["studentExams"],
+        queryFn: async () => {
+            try { return await fetchMyExams(); } catch { return []; }
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const isLoading = scheduleLoading || examsLoading;
 
     const getTypeGroup = (eventType) => {
         if (eventType === "lecture") return "lecture";
@@ -81,11 +77,7 @@ export default function Schedule() {
         : scheduleData.filter((event) => selectedTypes.includes(getTypeGroup(event.type)));
 
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-gray-600">Loading schedule...</p>
-            </div>
-        );
+        return <ScheduleSkeleton isMobile={isMobile} />;
     }
 
     return (

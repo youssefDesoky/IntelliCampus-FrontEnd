@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { fetchCourseAnalytics } from "../../../feature/instructor/components/analytics/instructorAnalyticsApi";
-import { useError } from '../../../contexts/ErrorContext.jsx';
 import { ChartBarIcon, BrainIcon, CheckIcon, UserCheckIcon } from "../../../components/ui/icons";
+import { fetchCourseAnalytics } from "../../../feature/instructor/services/analyticsApi";
+import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function ChartCard({ title, icon, children, className = "" }) {
     return (
@@ -30,59 +31,56 @@ const tooltipStyle = {
 };
 
 export default function InstructorCourseAnalytics() {
-    const { course, courseId } = useOutletContext();
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { courseId } = useOutletContext();
     const { showError } = useError();
 
-    const loadAnalytics = useCallback(async () => {
-        try {
-            setLoading(true);
-            const result = await fetchCourseAnalytics(courseId);
-            setData(result);
-        } catch (err) {
-            showError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }, [courseId, showError]);
+    const {
+        data: analytics,
+        isLoading: loading,
+        error,
+    } = useQuery({
+        queryKey: ["instructorCourseAnalytics", courseId],
+        queryFn: () => fetchCourseAnalytics(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+    });
 
-    useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
+    useEffect(() => {
+        if (error) showError(error.message || "Failed to load analytics");
+    }, [error, showError]);
 
     if (loading) {
         return (
-            <div className="space-y-4">
+            <div className="space-y-6">
+                <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-[360px]" />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-64" />
-                    ))}
+                    <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-[300px]" />
+                    <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-[300px]" />
                 </div>
             </div>
         );
     }
 
-    if (!data) {
+    if (!analytics) {
         return (
-            <div className="rounded-2xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-12 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                    <ChartBarIcon size={24} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
+            <div className="space-y-4">
+                <div className="rounded-2xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-12 text-center">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                        <ChartBarIcon size={24} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No analytics available</h3>
+                    <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        Analytics will appear once there is student activity.
+                    </p>
                 </div>
-                <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No analytics available</h3>
-                <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    Analytics will appear once there is course activity.
-                </p>
             </div>
         );
     }
 
-    const { assessmentPerformance, submissionRate, weeklyAttendance } = data;
+    const { assessmentPerformance, submissionRate, weeklyAttendance } = analytics;
 
     return (
         <div className="space-y-6">
-            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                {course?.title || `Course ${courseId}`} &middot; Analytics
-            </p>
-
             <ChartCard title="Assessment Performance" icon={<BrainIcon size={20} />}>
                 <ResponsiveContainer width="100%" height={320}>
                     <BarChart data={assessmentPerformance} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import Button from "../../../../components/ui/Button";
 import DropdownMenu from "../../../../components/ui/DropdownMenu";
-import { CommentsIcon, DownloadIcon, EllipsisVerticalIcon, XIcon, PinIcon, LinkIcon } from "../../../../components/ui/icons";
+import { CommentsIcon, DownloadIcon, EllipsisVerticalIcon, XIcon, PinIcon, LinkIcon, FilePenIcon, TrashIcon } from "../../../../components/ui/icons";
 import CommentInput from "../../../../components/ui/CommentInput";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import MaterialPreview from "../../../../components/ui/MaterialPreview";
@@ -303,6 +303,7 @@ export default function CourseAnnouncementCard({
                                                 role="menuitem"
                                                 size="sm"
                                                 className="w-full justify-start"
+                                                startIcon={<FilePenIcon size={16} />}
                                                 onClick={() => {
                                                     onEdit?.(announcement);
                                                     setShowActionsMenu(false);
@@ -330,6 +331,7 @@ export default function CourseAnnouncementCard({
                                                 role="menuitem"
                                                 size="sm"
                                                 className="w-full justify-start text-text-danger-default-light dark:text-text-danger-default-dark"
+                                                startIcon={<TrashIcon size={16} />}
                                                 onClick={() => {
                                                     handleDeleteAnnouncement();
                                                     setShowActionsMenu(false);

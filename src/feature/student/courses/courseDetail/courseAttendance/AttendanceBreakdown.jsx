@@ -2,7 +2,7 @@ import ProgressBox from "../../../../../components/ui/ProgressBox";
 import BaseComponent from "../../../../../components/ui/BaseComponent";
 
 export default function AttendanceBreakdown({ breakdown }) {
-    const { totalSessions, presentSessions, missedSessions, percentage, onTimePercentage, needsImprovementPercentage } = breakdown;
+    const { totalSessions = 0, presentSessions = 0, missedSessions = 0, percentage = 0, onTimePercentage = 0, needsImprovementPercentage = 0 } = breakdown ?? {};
 
     const attendanceStatus = percentage >= 85
         ? "Excellent"

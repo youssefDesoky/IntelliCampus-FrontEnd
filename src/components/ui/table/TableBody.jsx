@@ -8,7 +8,7 @@ import StudentForm from "../../../feature/admin/components/StudentForm";
 
 const buttonStyle = "w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
 
-export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true, columnAlignments }) {
+export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true, columnAlignments, columnClassNames }) {
 	const [editingRow, setEditingRow] = useState(null);
 	const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
 	const [actionButtonClicked, setActionButtonClicked] = useState(null);
@@ -128,7 +128,7 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 					)}
 
 					{Object.entries(row).filter(([key]) => !key.startsWith('_')).slice(0, columnCount).map(([key, cell], cellIndex) => (
-						<td key={cellIndex} className={`px-1 sm:px-3 py-2 align-middle ${columnAlignments?.[cellIndex] || "text-center"}`}>
+						<td key={cellIndex} className={`px-1 sm:px-3 py-2 align-middle ${columnAlignments?.[cellIndex] || "text-center"} ${columnClassNames?.[cellIndex] || ""}`}>
 							{cell}
 						</td>
 					))}

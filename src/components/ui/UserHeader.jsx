@@ -3,7 +3,8 @@ import PageHeader from "./PageHeader";
 import Button from "./Button";
 import ImportDialog from "./ImportDialog";
 import { ImportIcon, PlusIcon } from "./icons";
-import { fetchBylaws, uploadStudents } from "../../feature/admin/services/adminApi";
+import { fetchBylaws } from "../../feature/admin/services/adminBylawsApi";
+import { uploadStudents } from "../../feature/admin/services/adminImportsApi";
 import { useError } from '../../contexts/ErrorContext.jsx';
 
 const roleLabels = {

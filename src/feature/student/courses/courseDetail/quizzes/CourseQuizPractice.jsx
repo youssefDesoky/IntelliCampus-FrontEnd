@@ -6,7 +6,7 @@ import PaginationButtons from "../../../../../components/ui/PaginationButtons";
 import QuestionCard from "./QuestionCard";
 import QuizHeader from "./QuizHeader";
 import QuizSummary from "./QuizSummary";
-import { fetchPracticeQuiz, submitPracticeQuiz } from "../../quizzesApi";
+import { fetchPracticeQuiz, submitPracticeQuiz } from "../../../services/quizzesApi";
 
 const PAGE_SIZE = 3;
 
@@ -50,22 +50,19 @@ export default function CourseQuizPractice() {
 		}
 	}, [practiceQuizData?.durationSeconds]);
 
-	const quizQuestions = (practiceQuizData?.questions || []).map((q) => ({
-		...q,
-		type: q.type === "Written" ? "Written Question" : q.type,
-	}));
+	const quizQuestions = practiceQuizData?.questions || [];
 	const quizTitle = practiceQuizData?.title || "Practice Quiz";
 	const courseName = practiceQuizData?.courseName || course?.title || course?.name;
 	const isBackendSubmitted = Boolean(practiceQuizData?.previousSubmission) || Boolean(reviewMode);
-	const quizSummary = practiceQuizData?.questionsSummary || practiceQuizData?.questionSummary || { total: 0, tf: 0, mcq: 0, written: 0 };
+	const quizSummary = practiceQuizData?.questionsSummary || { total: 0, tf: 0, mcq: 0, written: 0 };
 
 	const answeredCount = quizQuestions.filter((q) => {
 		const answer = answers[q.id];
-		if (q.type === "Written Question") return typeof answer === "string" && answer.trim().length > 0;
+		if (q.type === "Written") return typeof answer === "string" && answer.trim().length > 0;
 		return answer !== undefined && answer !== null && String(answer).length > 0;
 	}).length;
 
-	const writtenQuestion = quizQuestions.find((q) => q.type === "Written Question" || q.type === "Written");
+	const writtenQuestion = quizQuestions.find((q) => q.type === "Written");
 	const writtenWordCount = writtenQuestion && answers[writtenQuestion.id] ? answers[writtenQuestion.id].trim().split(/\s+/).length : 0;
 	const progressPercent = quizSummary.total ? Math.round((answeredCount / quizSummary.total) * 100) : 0;
 	const pageSize = practiceQuizData?.pageSize || PAGE_SIZE;
@@ -77,7 +74,7 @@ export default function CourseQuizPractice() {
 
 	const tfAnswered = quizQuestions.filter((q) => q.type === "TF" && answers[q.id] !== undefined && answers[q.id] !== null).length;
 	const mcqAnswered = quizQuestions.filter((q) => q.type === "MCQ" && answers[q.id] !== undefined && answers[q.id] !== null).length;
-	const writtenAnswered = quizQuestions.filter((q) => (q.type === "Written Question" || q.type === "Written") && answers[q.id] && answers[q.id].trim().length > 0).length;
+	const writtenAnswered = quizQuestions.filter((q) => q.type === "Written" && answers[q.id] && answers[q.id].trim().length > 0).length;
 
 	const tfPercent = quizSummary.tf ? Math.round((tfAnswered / quizSummary.tf) * 100) : 0;
 	const mcqPercent = quizSummary.mcq ? Math.round((mcqAnswered / quizSummary.mcq) * 100) : 0;
@@ -86,7 +83,7 @@ export default function CourseQuizPractice() {
 	const backendResult = submissionResult || practiceQuizData?.previousSubmission || null;
 	const tfSummary = backendResult?.byType?.TF || { answered: tfAnswered, total: quizSummary.tf };
 	const mcqSummary = backendResult?.byType?.MCQ || { answered: mcqAnswered, total: quizSummary.mcq };
-	const writtenSummary = backendResult?.byType?.["Written Question"] || backendResult?.byType?.["Written"] || { answered: writtenAnswered, total: quizSummary.written };
+	const writtenSummary = backendResult?.byType?.Written || { answered: writtenAnswered, total: quizSummary.written };
 
 	const questionResultsMap = {};
 	if (backendResult?.questionResults) {

@@ -5,7 +5,7 @@ import BaseComponent from "./BaseComponent";
 import { TableHeader, TableHeaderActions, TableBody } from "./table/index";
 
 
-export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments }) {
+export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments, columnClassNames }) {
     const rawData = data || [];
     const hasPagingLimit = typeof displayRowLimit === 'number' && displayRowLimit > 0;
     const computedTotalPages = hasPagingLimit ? Math.max(1, Math.ceil(rawData.length / displayRowLimit)) : totalPages || 1;
@@ -93,6 +93,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         setSelectAll={handleSetSelectAll}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
+                        headerClassNames={columnClassNames}
                     />
 
                     <TableBody
@@ -110,6 +111,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
                         columnAlignments={columnAlignments}
+                        columnClassNames={columnClassNames}
                     />
                 </table>
 
@@ -142,6 +144,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         setSelectAll={handleSetSelectAll}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
+                        headerClassNames={columnClassNames}
                     />
 
                     <TableBody
@@ -159,6 +162,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
                         columnAlignments={columnAlignments}
+                        columnClassNames={columnClassNames}
                     />
                 </table>
 

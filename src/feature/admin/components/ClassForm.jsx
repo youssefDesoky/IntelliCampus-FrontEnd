@@ -11,7 +11,7 @@ import {
     fetchSectionInstructors,
     fetchLectureRooms,
     fetchSectionRooms,
-} from "../services/adminApi";
+} from "../services/adminCoursesApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const dayOptions = [

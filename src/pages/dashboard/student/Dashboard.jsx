@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+
 import { formatDistanceToNow } from "date-fns";
 import BoxData from "../../../components/ui/BoxData";
 import Section from "../../../components/ui/Section";
-import { BookIcon, ClipboardCheckIcon, ChartLineIcon, BullHornIcon, ArrowRightIcon, ChartBarIcon } from "../../../components/ui/icons";
+import { BookIcon, ClipboardCheckIcon, ChartLineIcon, BullHornIcon, ChartBarIcon } from "../../../components/ui/icons";
 
 import StudyTimer from "../../../feature/student/dashboard/StudyTimer";
 import TodayReminders from "../../../feature/student/dashboard/TodayReminders";
@@ -11,6 +11,7 @@ import {
   AttendanceTrendChart,
   GPATrendChart,
 } from "../../../feature/student/dashboard/charts";
+import { DashboardSkeleton } from "../../../feature/student/dashboard/SkeletonLoader";
 import { fetchStudentDashboard } from "../../../api/dashboard";
 
 const statIcons = {
@@ -26,36 +27,11 @@ const statIconStyles = {
 };
 
 export default function Dashboard() {
-  const [dashboard, setDashboard] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadDashboard() {
-      try {
-        const data = await fetchStudentDashboard();
-        if (!cancelled) {
-          setDashboard(data);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadDashboard();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data: dashboard, isLoading, error } = useQuery({
+    queryKey: ["studentDashboard"],
+    queryFn: fetchStudentDashboard,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const stats = dashboard?.stats ?? {};
   const statsData = [
@@ -83,11 +59,7 @@ export default function Dashboard() {
   ];
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-        Loading dashboard…
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {
@@ -119,7 +91,7 @@ export default function Dashboard() {
             <BullHornIcon className="w-6 h-6" />
           </div>
 
-          <menu className="flex flex-col gap-3 mb-6">
+          <menu className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 no-scrollbar">
             {dashboard.latestNews?.length > 0 ? (
               dashboard.latestNews.map((item) => (
                 <li
@@ -140,10 +112,6 @@ export default function Dashboard() {
             )}
           </menu>
 
-          <NavLink to="/courses" className="mt-auto text-text-accent-default-light dark:text-text-accent-default-dark hover:underline flex items-center gap-2 justify-center font-medium">
-            View All News
-            <ArrowRightIcon className="w-4 h-4" />
-          </NavLink>
         </div>
 
         <div className="lg:col-span-4 flex flex-col gap-6">

@@ -18,7 +18,11 @@ function formatLevel(level) {
     return labels[level] || `Level ${level}`;
 }
 
-export default function AcademicInfoCard({ user = {} }) {
+function Skeleton({ className = "" }) {
+    return <div className={`animate-pulse rounded bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ${className}`} />;
+}
+
+export default function AcademicInfoCard({ user = {}, loading = false }) {
     const [isBylawOpen, setIsBylawOpen] = useState(false);
 
     const isPostGrad = ["Masters", "PhD", "Diploma"].includes(user.studentType);
@@ -52,39 +56,54 @@ export default function AcademicInfoCard({ user = {} }) {
                 </div>
 
                 <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {academicInfo.map((field) => {
-                        const Icon = field.icon;
-                        const isBylaw = field.name === "bylaw";
+                    {loading ? (
+                        <>
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <div key={i} className={`flex items-center gap-3.5 p-3.5 rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark ${i === 5 ? "sm:col-span-2" : ""}`}>
+                                    <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
+                                    <div className="min-w-0 flex-1 space-y-2">
+                                        <Skeleton className="h-3 w-16" />
+                                        <Skeleton className="h-4 w-24" />
+                                    </div>
+                                    {i === 5 && <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />}
+                                </div>
+                            ))}
+                        </>
+                    ) : (
+                        academicInfo.map((field) => {
+                            const Icon = field.icon;
+                            const isBylaw = field.name === "bylaw";
 
-                        return (
-                            <div
-                                key={field.name}
-                                className={`flex items-center gap-3.5 p-3.5 rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-all group ${isBylaw ? "sm:col-span-2" : ""}`}
-                            >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-active-light dark:text-text-accent-active-dark group-hover:scale-105 transition-transform">
-                                    <Icon size={15} />
+                            return (
+                                <div
+                                    key={field.name}
+                                    className={`flex items-center gap-3.5 p-3.5 rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-all group ${isBylaw ? "sm:col-span-2" : ""}`}
+                                >
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-active-light dark:text-text-accent-active-dark group-hover:scale-105 transition-transform">
+                                        <Icon size={15} />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                                            {field.label}
+                                        </p>
+                                        <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mt-0.5 truncate">
+                                            {field.value}
+                                        </p>
+                                    </div>
+                                    {isBylaw && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsBylawOpen(true)}
+                                            className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-accent-active-light dark:hover:text-text-accent-active-dark transition-colors"
+                                            aria-label="Open bylaw"
+                                        >
+                                            <EyeIcon size={16} />
+                                        </button>
+                                    )}
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                                        {field.label}
-                                    </p>
-                                    <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mt-0.5 truncate">
-                                        {field.value}
-                                    </p>
-                                </div>
-                                {isBylaw && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsBylawOpen(true)}
-                                        className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-accent-active-light dark:hover:text-text-accent-active-dark transition-colors"
-                                        aria-label="Open bylaw"
-                                    >
-                                        <EyeIcon size={16} />
-                                    </button>
-                                )}
-                            </div>
-                        );
-                    })}
+                            );
+                        })
+                    )}
                 </div>
             </div>
 

@@ -3,7 +3,7 @@ import Button from "../../../components/ui/Button";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import Dialog from "../../../components/ui/Dialog";
 import { useError } from '../../../contexts/ErrorContext.jsx';
-import { uploadCourseGrades } from "../../../feature/admin/services/adminApi";
+import { uploadCourseGrades } from "../../../feature/admin/services/adminCoursesApi";
 
 export default function ManageCourseGradesTab({ courseId, courseName }) {
     const [isUploadOpen, setIsUploadOpen] = useState(false);

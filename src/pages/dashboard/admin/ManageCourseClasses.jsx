@@ -30,8 +30,8 @@ import {
   updateCourse,
   deactivateCourse,
   fetchCourses,
-  importClasses,
-} from "../../../feature/admin/services/adminApi";
+} from "../../../feature/admin/services/adminCoursesApi";
+import { importClasses } from "../../../feature/admin/services/adminImportsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const tabs = [

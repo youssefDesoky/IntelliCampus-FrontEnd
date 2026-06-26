@@ -5,7 +5,7 @@ import SelectBox from "../../../components/ui/SelectBox";
 import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
-import { fetchAdminRoles } from "../services/adminApi";
+import { fetchAdminRoles } from "../services/adminAccountsApi";
 import countryList from "react-select-country-list";
 import {
   validateNationalIdOrPassport,

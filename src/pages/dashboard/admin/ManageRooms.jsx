@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import ManageEntity from "../../../components/ui/ManageEntity";
 import RoomForm from "../../../feature/admin/components/RoomForm";
 import useDeviceType from "../../../hooks/useDeviceType";
-import { fetchRooms, createRoom, updateRoom, deleteRoom } from "../../../feature/admin/services/adminApi";
+import { fetchRooms, createRoom, updateRoom, deleteRoom } from "../../../feature/admin/services/adminFacilitiesApi";
 
 function buildRoomRow(room, isDesktop, isTablet) {
   const nameAr = room.nameAr || room.roomNameAr;

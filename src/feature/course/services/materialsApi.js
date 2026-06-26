@@ -1,7 +1,8 @@
-import apiClient from "../../../utils/apiClient";
+import apiClient from "../../../api/apiClient";
 
-export async function fetchCourseMaterialsOrganized(courseId) {
-  return apiClient(`/api/materials/course/${courseId}/organized`);
+export async function fetchCourseMaterialsOrganized(courseId, folderId = null) {
+  const query = folderId ? `?folderId=${encodeURIComponent(folderId)}` : '';
+  return apiClient(`/api/materials/course/${courseId}/organized${query}`);
 }
 
 export async function fetchCourseMaterials(courseId) {

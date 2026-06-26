@@ -8,7 +8,8 @@ import ImportDialog from "../../../components/ui/ImportDialog";
 import Button from "../../../components/ui/Button";
 import { UserIcon, PlusIcon, UserTieIcon, ImportIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
-import { fetchInstructors, createInstructor, updateInstructor, deleteInstructor, importInstructors } from "../../../feature/admin/services/adminApi";
+import { fetchInstructors, createInstructor, updateInstructor, deleteInstructor } from "../../../feature/admin/services/adminInstructorsApi";
+import { importInstructors } from "../../../feature/admin/services/adminImportsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function ManageInstructors() {

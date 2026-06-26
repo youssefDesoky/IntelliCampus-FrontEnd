@@ -16,7 +16,7 @@ import {
     unregisterStudentCourse,
     fetchStudentCourseSections,
     changeStudentCourseSection,
-} from "../../../feature/admin/services/adminApi";
+} from "../../../feature/admin/services/adminStudentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const ITEMS_PER_PAGE = 10;

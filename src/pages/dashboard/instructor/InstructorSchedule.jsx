@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
@@ -11,27 +12,22 @@ const allowedTypeFilters = ["lecture", "section", "activity"];
 
 export default function InstructorSchedule() {
     const [selectedTypes, setSelectedTypes] = useState([]);
-    const [scheduleData, setScheduleData] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
     const { isMobile } = useDeviceType();
     const { showError } = useError();
 
-    const loadScheduleData = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            const schedule = await fetchMySchedule();
-            setScheduleData(Array.isArray(schedule) ? schedule : []);
-        } catch (err) {
-            showError(err.message);
-            setScheduleData([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+    const {
+        data: scheduleData = [],
+        isLoading,
+        error,
+    } = useQuery({
+        queryKey: ["instructorSchedule"],
+        queryFn: fetchMySchedule,
+        staleTime: 5 * 60 * 1000,
+    });
 
     useEffect(() => {
-        loadScheduleData();
-    }, [loadScheduleData]);
+        if (error) showError(error.message || "Failed to load schedule");
+    }, [error, showError]);
 
     const getTypeGroup = (eventType) => {
         if (eventType === "lecture") return "lecture";
@@ -54,7 +50,7 @@ export default function InstructorSchedule() {
     const handleExport = async () => {
         try {
             await exportSchedulePdf(selectedTypes);
-        } catch (err) {
+        } catch {
             showError("Failed to export PDF. Please try again.");
         }
     };
