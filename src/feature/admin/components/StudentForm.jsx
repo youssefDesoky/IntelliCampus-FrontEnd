@@ -195,7 +195,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
         const form = e.currentTarget;
         const formData = Object.fromEntries(new FormData(form));
         if (!isEdit) formData.level = 1;
-        formData.profileImage = photoPreview;
+        formData.profileImage = photoPreview ?? "";
         formData.bylawId = selectedBylaw?.value || formData.bylawId;
         if (isSuperAdmin && !isEdit) {
             formData.studentType = selectedStudentType?.value || formData.studentType;

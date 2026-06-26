@@ -31,6 +31,7 @@ import {
   updateBucket as apiUpdateBucket,
   deleteBucket as apiDeleteBucket,
   updateBylawGradeWeights,
+  updateBylawPassingCourseGrades,
 } from "../../../feature/admin/services/adminBylawsApi";
 import { fetchCourses } from "../../../feature/admin/services/adminCoursesApi";
 import {
@@ -398,9 +399,8 @@ export default function ManageBylawDetailsPage() {
         id: b.electiveBucketId,
         name: b.name,
         nameAr: b.nameAr,
-        minCourses: b.requiredCourseCount || 1,
         requiredCreditHours: b.requiredCreditHours || 0,
-        courseIds: (b.courses || []).map(c => ({ courseId: c.courseId, creditHours: c.creditHours })),
+        courseIds: (b.courses || []).map(c => ({ courseId: c.courseId, creditHours: c.creditHours, bylawCourseId: c.bylawCourseId })),
         departmentId: b.departmentId || null,
         department: b.departmentName || "",
       }));
@@ -762,33 +762,20 @@ export default function ManageBylawDetailsPage() {
     setIsNewBucketOpen(true);
   };
 
-  const confirmNewBucket = async () => {
+  const confirmNewBucket = () => {
     if (!newBucketForm.name.trim()) return;
     setIsNewBucketOpen(false);
-    try {
-      const created = await apiCreateBucket({
-        name: newBucketForm.name.trim(),
-        nameAr: newBucketForm.nameAr.trim(),
-        bylawId: parseInt(bylawId),
-        departmentId: newBucketForm.departmentId,
-        requiredCreditHours: 0,
-        requiredCourseCount: 1,
-        courseIds: [],
-      });
-      setBuckets(prev => [...prev, {
-        id: created.electiveBucketId,
-        name: created.name,
-        nameAr: created.nameAr,
-        courseIds: [],
-        minCourses: 1,
-        requiredCreditHours: 0,
-        department: newBucketForm.department || "",
-        departmentId: newBucketForm.departmentId,
-      }]);
-      setNewBucketForm({ name: "", nameAr: "", department: "", departmentId: null });
-    } catch (err) {
-      showError(err.message || "Failed to create bucket");
-    }
+    const tempId = -Date.now();
+    setBuckets(prev => [...prev, {
+      id: tempId,
+      name: newBucketForm.name.trim(),
+      nameAr: newBucketForm.nameAr.trim(),
+      courseIds: [],
+      requiredCreditHours: 0,
+      department: newBucketForm.department || "",
+      departmentId: newBucketForm.departmentId,
+    }]);
+    setNewBucketForm({ name: "", nameAr: "", department: "", departmentId: null });
   };
 
   const updateBucket = (id, field, value) => {
@@ -929,18 +916,64 @@ export default function ManageBylawDetailsPage() {
         newBcIds[courseId] = result.bylawCourseId;
       }
 
-      // Build updated courseId -> bylawCourseId map for prerequisite conversion
+      // Build updated courseId -> bylawCourseId map for required courses
       const updatedMap = { ...courseIdToBylawCourseId, ...newBcIds };
 
-      // Set prerequisites for ALL current courses that have them
-      for (const entry of allCurrent) {
+      // Save buckets via ElectiveBuckets API (creates BylawCourse records for bucket courses)
+      const originalIds = new Set(originalBucketsRef.current);
+      const currentIds = new Set(buckets.map(b => b.id));
+      const bucketBcIds = {};
+      for (const bucket of buckets) {
+        const isNew = !originalIds.has(bucket.id);
+        let response;
+        if (isNew) {
+          response = await apiCreateBucket({
+            name: bucket.name,
+            nameAr: bucket.nameAr,
+            bylawId: parseInt(bylawId),
+            departmentId: bucket.departmentId || null,
+            requiredCreditHours: bucket.requiredCreditHours || 0,
+            courseIds: (bucket.courseIds || []).map(c => c.courseId),
+          });
+        } else {
+          response = await apiUpdateBucket(bucket.id, {
+            name: bucket.name,
+            nameAr: bucket.nameAr,
+            requiredCreditHours: bucket.requiredCreditHours || 0,
+            courseIds: (bucket.courseIds || []).map(c => c.courseId),
+          });
+        }
+        // Collect BylawCourseIds from bucket save response
+        if (response?.courses) {
+          for (const course of response.courses) {
+            if (course.bylawCourseId) {
+              bucketBcIds[course.courseId] = course.bylawCourseId;
+            }
+          }
+        }
+      }
+      for (const id of originalBucketsRef.current) {
+        if (!currentIds.has(id)) {
+          await apiDeleteBucket(id);
+        }
+      }
+
+      // Build full updatedMap including bucket course BylawCourseIds
+      const fullUpdatedMap = { ...updatedMap, ...bucketBcIds };
+
+      // Set prerequisites for ALL courses (required + bucket) that have them
+      const allCourseEntries = [
+        ...allCurrent,
+        ...buckets.flatMap(b => b.courseIds.map(c => ({ courseId: c.courseId })))
+      ];
+      for (const entry of allCourseEntries) {
         const prereqCourseIds = prerequisites[entry.courseId];
         if (prereqCourseIds && prereqCourseIds.length > 0) {
           const prereqBcIds = prereqCourseIds
-            .map(cid => updatedMap[cid])
+            .map(cid => fullUpdatedMap[cid])
             .filter(Boolean);
           if (prereqBcIds.length > 0) {
-            await setCoursePrerequisites(updatedMap[entry.courseId], {
+            await setCoursePrerequisites(fullUpdatedMap[entry.courseId], {
               prerequisiteBylawCourseIds: prereqBcIds,
             });
           }
@@ -949,7 +982,7 @@ export default function ManageBylawDetailsPage() {
 
       // Save credit hours for all current courses
       for (const entry of allCurrent) {
-        const bcId = updatedMap[entry.courseId];
+        const bcId = fullUpdatedMap[entry.courseId];
         if (bcId && entry.creditHours != null) {
           await updateBylawCourseCreditHours(bcId, { creditHours: entry.creditHours });
         }
@@ -957,7 +990,7 @@ export default function ManageBylawDetailsPage() {
 
       // Save allowed departments for all current courses
       for (const entry of allCurrent) {
-        const bcId = updatedMap[entry.courseId];
+        const bcId = fullUpdatedMap[entry.courseId];
         if (bcId && entry.allowedDepartments?.length > 0) {
           await updateBylawCourseAllowedDepartments(bcId, { departmentIds: entry.allowedDepartments });
         }
@@ -968,37 +1001,6 @@ export default function ManageBylawDetailsPage() {
         const bcId = courseIdToBylawCourseId[courseId];
         if (bcId) {
           await unmapCourseFromBylaw(bcId);
-        }
-      }
-
-      // Save buckets via ElectiveBuckets API
-      const originalIds = new Set(originalBucketsRef.current);
-      const currentIds = new Set(buckets.map(b => b.id));
-      for (const bucket of buckets) {
-        const isNew = !originalIds.has(bucket.id);
-        if (isNew) {
-          await apiCreateBucket({
-            name: bucket.name,
-            nameAr: bucket.nameAr,
-            bylawId: parseInt(bylawId),
-            departmentId: bucket.departmentId || null,
-            requiredCreditHours: bucket.requiredCreditHours || 0,
-            requiredCourseCount: bucket.minCourses || 1,
-            courseIds: (bucket.courseIds || []).map(c => c.courseId),
-          });
-        } else {
-          await apiUpdateBucket(bucket.id, {
-            name: bucket.name,
-            nameAr: bucket.nameAr,
-            requiredCreditHours: bucket.requiredCreditHours || 0,
-            requiredCourseCount: bucket.minCourses || 1,
-            courseIds: (bucket.courseIds || []).map(c => c.courseId),
-          });
-        }
-      }
-      for (const id of originalBucketsRef.current) {
-        if (!currentIds.has(id)) {
-          await apiDeleteBucket(id);
         }
       }
 
@@ -1692,23 +1694,25 @@ export default function ManageBylawDetailsPage() {
 
                     {/* Body */}
                     <div className="p-4">
-                      {/* Min courses bar */}
+                      {/* Min credit hours bar */}
                       <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark flex-wrap">
                         <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">
-                          Minimum selection:
+                          Minimum credit hours:
                         </label>
                         <NumberInput
-                          min="1"
-                          max={bucket.courseIds.length || 1}
-                          value={bucket.minCourses}
-                          onChange={(e) => updateBucket(bucket.id, "minCourses", parseInt(e.target.value) || 1)}
-                          className="w-16"
+                          min="0"
+                          value={bucket.requiredCreditHours}
+                          onChange={(e) => updateBucket(bucket.id, "requiredCreditHours", parseInt(e.target.value) || 0)}
+                          className="w-20"
                         />
                         <span className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                          / {bucket.courseIds.length} course{bucket.courseIds.length !== 1 ? "s" : ""}
+                          hrs
                         </span>
-                        {bucket.courseIds.length > 0 && bucket.minCourses > bucket.courseIds.length && (
-                          <span className="text-xs text-text-danger-default-light dark:text-text-danger-default-dark">(exceeds available courses)</span>
+                        <span className="text-xs font-medium text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                          (available: {bucket.courseIds.reduce((sum, c) => sum + (c.creditHours ?? allCourses.find(crs => crs.courseId === c.courseId)?.creditHours ?? 0), 0)} hrs)
+                        </span>
+                        {bucket.requiredCreditHours > 0 && bucket.courseIds.length > 0 && bucket.requiredCreditHours > bucket.courseIds.reduce((sum, c) => sum + (c.creditHours ?? allCourses.find(crs => crs.courseId === c.courseId)?.creditHours ?? 0), 0) && (
+                          <span className="text-xs text-text-danger-default-light dark:text-text-danger-default-dark">(exceeds available credits)</span>
                         )}
                       </div>
 
@@ -1753,6 +1757,14 @@ export default function ManageBylawDetailsPage() {
                                     placeholder={course?.creditHours?.toString() ?? "—"}
                                   />
                                 </div>
+                                <button
+                                  type="button"
+                                  onClick={() => openPrereqSelect(item.courseId)}
+                                  className="p-1.5 rounded-lg text-text-accent-active-light dark:text-text-accent-active-dark hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+                                  title="Set prerequisites"
+                                >
+                                  <LinkIcon size={16} />
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => removeBucketCourse(bucket.id, item.courseId)}

@@ -18,6 +18,7 @@ export default function ManageStudents() {
 
   const [assignRoleTarget, setAssignRoleTarget] = useState(null);
   const [filterDepartment, setFilterDepartment] = useState([]);
+  const [filterStudentType, setFilterStudentType] = useState([]);
 
   const studentTableHeaders = useMemo(() => {
     if (isDesktop) return ["Student ID", "Student", "National ID", "Department", "Bylaw", "GPA"];
@@ -31,21 +32,22 @@ export default function ManageStudents() {
     return ['text-left'];
   }, [isDesktop, isTablet]);
 
-  const searchFilter = useCallback((student, q) => {
+    const searchFilter = useCallback((student, q) => {
     if (q) {
       if (!(student.fullName?.toLowerCase().includes(q) ||
-          student.studentId?.toLowerCase().includes(q) ||
+          student.studentCode?.toLowerCase().includes(q) ||
           student.email?.toLowerCase().includes(q) ||
           student.faculty?.toLowerCase().includes(q) ||
           student.departmentName?.toLowerCase().includes(q))) return false;
     }
     if (filterDepartment.length > 0 && !filterDepartment.includes(student.department || student.departmentName || student.faculty)) return false;
+    if (filterStudentType.length > 0 && !filterStudentType.includes(student.studentType)) return false;
     return true;
-  }, [filterDepartment]);
+  }, [filterDepartment, filterStudentType]);
 
   const buildStudentRow = useCallback((student, { isDesktop, isTablet }) => {
     const row = {};
-    if (isDesktop || isTablet) row.studentID = student.studentId || "—";
+    if (isDesktop || isTablet) row.studentID = student.studentCode || "—";
     row.student = (
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-10 h-10 rounded-full shrink-0 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark overflow-hidden">
@@ -107,6 +109,7 @@ export default function ManageStudents() {
       )}
       renderFilters={({ rawItems, setCurrentPage }) => {
         const departments = [...new Set(rawItems.map(s => s.department || s.departmentName || s.faculty).filter(Boolean))].sort();
+        const studentTypes = [...new Set(rawItems.map(s => s.studentType).filter(Boolean))].sort();
         return (
           <>
             <FilterDropdown
@@ -114,6 +117,12 @@ export default function ManageStudents() {
               options={departments.map(d => ({ value: d, label: d }))}
               selectedValues={filterDepartment}
               onChange={(v) => { setFilterDepartment(v); setCurrentPage(1); }}
+            />
+            <FilterDropdown
+              label="Student Type"
+              options={studentTypes.map(t => ({ value: t, label: t }))}
+              selectedValues={filterStudentType}
+              onChange={(v) => { setFilterStudentType(v); setCurrentPage(1); }}
             />
           </>
         );
