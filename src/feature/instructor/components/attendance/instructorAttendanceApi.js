@@ -10,4 +10,6 @@ export {
   scanAttendanceQr,
   recordManualAttendance,
   generateStudentAttendanceQr,
+  fetchExcuses,
+  updateExcuseStatus,
 } from "../../services/attendanceApi";

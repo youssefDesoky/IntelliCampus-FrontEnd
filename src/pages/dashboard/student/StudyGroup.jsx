@@ -39,6 +39,14 @@ export default function StudyGroup() {
         };
     }
 
+    function extractPosts(data) {
+        if (Array.isArray(data)) return data;
+        if (data?.data && Array.isArray(data.data)) return data.data;
+        if (data?.questions && Array.isArray(data.questions)) return data.questions;
+        if (data?.content && Array.isArray(data.content)) return data.content;
+        return [];
+    }
+
     useEffect(() => {
         if (!courseId) return;
         let ignore = false;
@@ -46,7 +54,7 @@ export default function StudyGroup() {
         async function loadCommunities() {
             try {
                 const data = await fetchCommunityPosts(courseId);
-                if (!ignore) setPosts(Array.isArray(data) ? data.map(mapPost) : []);
+                if (!ignore) setPosts(extractPosts(data).map(mapPost));
             } catch {
                 if (!ignore) setPosts([]);
             }
@@ -64,7 +72,7 @@ export default function StudyGroup() {
             await createCommunityPost(courseId, postDraft);
             setPostDraft("");
             const data = await fetchCommunityPosts(courseId);
-            setPosts(Array.isArray(data) ? data.map(mapPost) : []);
+            setPosts(extractPosts(data).map(mapPost));
         } catch (err) {
             showError(err.message);
         }
@@ -75,7 +83,7 @@ export default function StudyGroup() {
         try {
             await toggleUpvote(courseId, postId);
             const data = await fetchCommunityPosts(courseId);
-            setPosts(Array.isArray(data) ? data.map(mapPost) : []);
+            setPosts(extractPosts(data).map(mapPost));
         } catch (err) {
             showError(err.message);
         }

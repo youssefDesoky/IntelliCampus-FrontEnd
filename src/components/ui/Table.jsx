@@ -5,7 +5,7 @@ import BaseComponent from "./BaseComponent";
 import { TableHeader, TableHeaderActions, TableBody } from "./table/index";
 
 
-export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments, columnClassNames }) {
+export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments, columnClassNames, emptyMessage = "No data found." }) {
     const rawData = data || [];
     const hasPagingLimit = typeof displayRowLimit === 'number' && displayRowLimit > 0;
     const computedTotalPages = hasPagingLimit ? Math.max(1, Math.ceil(rawData.length / displayRowLimit)) : totalPages || 1;
@@ -86,6 +86,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                     componentButton={componentButton}
                     contentClassName="flex flex-col gap-4 overflow-x-auto"
                 >
+                    <div className="rounded-lg overflow-hidden border border-border-primary-default-light dark:border-border-primary-default-dark">
                     <table className="min-w-full table-auto border-separate border-spacing-0">
                     <TableHeader
                         headerData={headers}
@@ -112,8 +113,10 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         showActionsColumn={showActionsColumn}
                         columnAlignments={columnAlignments}
                         columnClassNames={columnClassNames}
+                        emptyMessage={emptyMessage}
                     />
                 </table>
+                </div>
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">
@@ -137,7 +140,8 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                 </BaseComponent>
             ) : (
                 <div className="flex flex-col gap-4 overflow-x-auto">
-                    <table className={`min-w-full table-auto border-separate border-spacing-0 border border-border-primary-default-light dark:border-border-primary-default-dark`}>
+                    <div className="rounded-lg overflow-hidden border border-border-primary-default-light dark:border-border-primary-default-dark">
+                    <table className="min-w-full table-auto border-separate border-spacing-0">
                     <TableHeader
                         headerData={headers}
                         selectAll={allSelected}
@@ -163,8 +167,10 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         showActionsColumn={showActionsColumn}
                         columnAlignments={columnAlignments}
                         columnClassNames={columnClassNames}
+                        emptyMessage={emptyMessage}
                     />
                 </table>
+                </div>
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">

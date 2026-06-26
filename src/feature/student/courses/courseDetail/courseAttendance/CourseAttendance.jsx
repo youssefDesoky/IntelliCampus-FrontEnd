@@ -121,7 +121,7 @@ export default function CourseAttendance() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <AttendanceOverall attendance={summary} onRequestExcuse={openForm} />
                     <AttendanceBreakdown breakdown={breakdown} />
-                    <AttendanceExcuseCard />
+                    <AttendanceExcuseCard onRequestExcuse={openForm} />
                 </div>
             </Section>
 
@@ -153,6 +153,7 @@ export default function CourseAttendance() {
                     showHeaderActions={false}
                     showPagination={true}
                     displayRowLimit={10}
+                    itemsLabel="sessions"
                     showSelectionColumn={false}
                     showActionsColumn={false}
                     grouped={true}

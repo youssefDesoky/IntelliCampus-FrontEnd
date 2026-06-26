@@ -65,8 +65,8 @@ function QuizCard({ quiz, isUpcoming, onStartQuiz, onViewResults, onReviewResult
                 </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3">
+            <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3">
+                <div className="col-span-2 sm:col-span-1 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3">
                     <div className="flex items-center gap-2 text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs font-semibold uppercase tracking-wide mb-2">
                         <CalendarDaysIcon size={14} />
                         Deadline

@@ -1,8 +1,9 @@
 import Button from "../../../../../components/ui/Button";
-import { CheckIcon } from "../../../../../components/ui/icons";
+import { CheckIcon, ClockIcon, BookIcon } from "../../../../../components/ui/icons";
 
 export default function QuizHeader({
 	title,
+	courseName,
 	timeLeft,
 	formatTime,
 	progressPercent,
@@ -13,55 +14,93 @@ export default function QuizHeader({
 	hideControls = false,
 	score,
 }) {
+	const isUrgent = timeLeft < 60 && !hideControls;
+
 	return (
-		<div className="mb-6 rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
-			<div className="flex items-stretch">
-				<div className="flex-1 flex flex-col justify-center gap-1.5 px-6 py-5 border-r border-border-primary-default-light dark:border-border-primary-default-dark">
-					<h1 className="text-[19px] font-medium leading-snug text-text-primary-light dark:text-text-primary-dark">{title}</h1>
-					<div className="flex items-center gap-3 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-						<span>
-							<span className="font-medium text-text-primary-light dark:text-text-primary-dark">{answeredCount ?? "—"} of {totalCount ?? "—"}</span> answered
-						</span>
-						{currentQuestion && (
-							<>
-								<span className="opacity-30">·</span>
-								<span>
-									Question <span className="font-medium text-text-primary-light dark:text-text-primary-dark">{currentQuestion}</span>
-								</span>
-							</>
-						)}
+		<div className="sticky top-0 z-40 mb-6 rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light/80 dark:bg-bg-surface-primary-default-dark/80 backdrop-blur-md shadow-sm overflow-hidden">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 sm:px-6 py-4">
+				<div className="min-w-0">
+					<div className="flex items-center gap-2 text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">
+						<BookIcon size={13} />
+						<span className="truncate">{courseName}</span>
 					</div>
+					<h1 className="text-lg sm:text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+						{title}
+					</h1>
 				</div>
 
-				{hideControls && score ? (
-					<div className="flex flex-col items-center justify-center gap-1 px-6 py-5 min-w-[140px]">
-						<p className="text-[10px] font-medium uppercase tracking-widest text-text-secondary-default-light dark:text-text-secondary-default-dark mb-0.5">Your Score</p>
-						<p className="text-[28px] font-bold leading-none tracking-tight text-emerald-600 dark:text-emerald-400">
-							{score.score}<span className="text-base font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">/{score.maxScore}</span>
-						</p>
-						<p className="text-xs font-semibold text-emerald-500">{score.percentage}%</p>
-					</div>
-				) : !hideControls ? (
-					<div className="flex flex-col items-center justify-center gap-3 px-6 py-5">
-						<div className="text-center">
-							<p className="text-[10px] font-medium uppercase tracking-widest text-text-secondary-default-light dark:text-text-secondary-default-dark mb-0.5">Time left</p>
-							<p className="font-mono text-[30px] font-medium leading-none tracking-tight text-text-primary-light dark:text-text-primary-dark">{formatTime(timeLeft)}</p>
+				<div className="flex items-center gap-3 shrink-0">
+					{hideControls && score ? (
+						<div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+							<div className="text-right">
+								<p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+									Score
+								</p>
+								<p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+									{score.percentage}%
+								</p>
+							</div>
+							<div className="h-8 w-px bg-emerald-200 dark:bg-emerald-800" />
+							<div className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+								{score.score}
+								<span className="text-emerald-500">/{score.maxScore}</span>
+							</div>
 						</div>
-						<div className="flex gap-2">
-							<Button startIcon={<CheckIcon size={14} />} onClick={onSubmit}>
+					) : !hideControls ? (
+						<>
+							<div
+								className={`flex items-center gap-2 px-3 py-2 rounded-xl border bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ${
+									isUrgent
+										? "border-red-200 dark:border-red-900 text-red-600 dark:text-red-400"
+										: "border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
+									}`}
+							>
+								<ClockIcon
+									size={16}
+									className={
+										isUrgent
+											? "text-red-500"
+											: "text-text-secondary-default-light dark:text-text-secondary-default-dark"
+										}
+								/>
+								<span className="font-mono text-sm font-semibold tabular-nums">
+									{formatTime(timeLeft)}
+								</span>
+							</div>
+							<Button
+								startIcon={<CheckIcon size={14} />}
+								onClick={onSubmit}
+								className="shadow-sm"
+							>
 								Submit
 							</Button>
-						</div>
-					</div>
-				) : null}
+						</>
+					) : null}
+				</div>
 			</div>
 
-			<div className="px-6 pb-5">
-				<div className="flex items-center gap-3">
-					<div className="flex-1 h-0.75 rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden">
-						<div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: progressPercent + '%' }} />
-					</div>
-					<span className="text-xs font-medium text-emerald-500">{progressPercent}%</span>
+			<div className="px-5 sm:px-6 pb-4">
+				<div className="flex items-center justify-between text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">
+					<span>
+						<span className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+							{answeredCount ?? "—"} of {totalCount ?? "—"}
+						</span>{" "}
+						answered
+					</span>
+					{currentQuestion && (
+						<span>
+							Questions{" "}
+							<span className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+								{currentQuestion}
+							</span>
+						</span>
+					)}
+				</div>
+				<div className="h-2 w-full rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden">
+					<div
+						className="h-full rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark transition-all duration-700 ease-out"
+						style={{ width: `${progressPercent}%` }}
+					/>
 				</div>
 			</div>
 		</div>
