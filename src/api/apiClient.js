@@ -15,7 +15,7 @@ export default async function apiClient(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
 
   const fetchOptions = {
-    credentials: 'include',
+    credentials: options.credentials ?? 'include',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -47,6 +47,20 @@ export default async function apiClient(endpoint, options = {}) {
 
     switch (res.status) {
       case 401:
+        window.location.href = '/unauthorized';
+        break;
+      case 403:
+        if (body?.type === 'must_change_password') {
+          window.location.href = '/first-time-setup';
+        } else {
+          emitError({ title, message: detail });
+        }
+        break;
+      case 404:
+        emitError({ title, message: detail || 'Resource not found' });
+        break;
+      case 500:
+        window.location.href = '/internal-server-error';
         break;
       default:
         emitError({ title, message: detail });

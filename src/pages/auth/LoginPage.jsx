@@ -114,6 +114,9 @@ export default function LoginPage() {
                 <Link to="/forgot-password" className="text-blue-500 hover:text-blue-600 text-md block">
                     Forgot password?
                 </Link>
+                <Link to="/get-credentials" className="text-blue-500 hover:text-blue-600 text-md block">
+                    Get Credentials
+                </Link>
                 <p className="text-gray-400 text-sm">Accounts are created by administration</p>
             </div>
         </AuthLayout>
