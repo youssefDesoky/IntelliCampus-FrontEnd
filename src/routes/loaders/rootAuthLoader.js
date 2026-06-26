@@ -11,7 +11,13 @@ export default async function rootAuthLoader() {
             throw redirect("/login");
         }
 
-        return await res.json();
+        const data = await res.json();
+
+        if (data.mustChangePassword) {
+            throw redirect("/first-time-setup");
+        }
+
+        return data;
     } catch (err) {
         if (err instanceof Response) throw err; // re-throw redirects
         throw redirect("/login");

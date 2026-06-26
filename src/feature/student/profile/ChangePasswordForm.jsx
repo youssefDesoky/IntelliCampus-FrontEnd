@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import InputItem from "../../../components/form/InputItem";
 import { API_URL } from "../../../config/api";
 import { useError } from "../../../contexts/ErrorContext.jsx";
 
 export default function ChangePasswordForm({ isOpen, onClose }) {
+    const navigate = useNavigate();
     const { showError } = useError();
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
@@ -57,6 +59,7 @@ export default function ChangePasswordForm({ isOpen, onClose }) {
             }
 
             handleClose();
+            navigate("/login");
         } catch (err) {
             showError(err?.message || "Failed to change password.");
         } finally {

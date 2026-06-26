@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { KeyIcon, SignOutIcon } from "../../../components/ui/icons";
+import { KeyIcon, EnvelopIcon } from "../../../components/ui/icons";
 import ChangePasswordForm from "./ChangePasswordForm";
+import ChangeRetrievalMailForm from "./ChangeRetrievalMailForm";
 
 export default function AccountControlsCard({ className = "" }) {
-    const navigate = useNavigate();
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+    const [isChangeRetrievalMailOpen, setIsChangeRetrievalMailOpen] = useState(false);
 
     const [preferences, setPreferences] = useState({
         email: true,
@@ -15,10 +15,6 @@ export default function AccountControlsCard({ className = "" }) {
 
     const togglePreference = (id) => {
         setPreferences((prev) => ({ ...prev, [id]: !prev[id] }));
-    };
-
-    const handleLogout = () => {
-        navigate("/logout");
     };
 
     const preferenceOptions = [
@@ -70,11 +66,11 @@ export default function AccountControlsCard({ className = "" }) {
                         Reset Password
                     </button>
                     <button
-                        onClick={handleLogout}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 dark:border-red-900/30 bg-red-50/40 dark:bg-red-950/10 px-4 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 transition-all hover:bg-red-50 dark:hover:bg-red-950/20 hover:shadow-sm"
+                        onClick={() => setIsChangeRetrievalMailOpen(true)}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-2.5 text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark transition-all hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark hover:shadow-sm"
                     >
-                        <SignOutIcon size={14} />
-                        Logout
+                        <EnvelopIcon size={14} />
+                        Change Retrieval Mail
                     </button>
                 </div>
             </div>
@@ -82,6 +78,10 @@ export default function AccountControlsCard({ className = "" }) {
             <ChangePasswordForm
                 isOpen={isChangePasswordOpen}
                 onClose={() => setIsChangePasswordOpen(false)}
+            />
+            <ChangeRetrievalMailForm
+                isOpen={isChangeRetrievalMailOpen}
+                onClose={() => setIsChangeRetrievalMailOpen(false)}
             />
         </>
     );

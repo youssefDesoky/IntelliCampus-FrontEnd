@@ -14,7 +14,7 @@ import SidebarProvider from "./contexts/SidebarProvider";
 import CourseShell from "./feature/course/component/CourseShell";
 
 // Auth Pages
-import { LoginPage, ForgetPassword, ResetPassword, UnauthorizedPage, InternalServerErrorPage, ResourceNotFoundPage } from "./pages/auth";
+import { LoginPage, ForgetPassword, ResetPassword, GetCredentials, FirstTimeSetup, UnauthorizedPage, InternalServerErrorPage, ResourceNotFoundPage } from "./pages/auth";
 
 // Profile (shared across all roles)
 import Profile from "./pages/dashboard/Profile";
@@ -215,6 +215,8 @@ export default function App() {
     { path: "/login", element: <LoginPage />, action: authAction },
     { path: "/forgot-password", element: <ForgetPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
+    { path: "/get-credentials", element: <GetCredentials /> },
+    { path: "/first-time-setup", element: <FirstTimeSetup /> },
     { path: "/unauthorized", element: <UnauthorizedPage /> },
     { path: "/internal-server-error", element: <InternalServerErrorPage /> },
     { path: "/resource-not-found", element: <ResourceNotFoundPage /> },
