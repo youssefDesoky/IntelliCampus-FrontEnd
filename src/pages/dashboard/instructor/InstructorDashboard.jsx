@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
 
 import { formatDistanceToNow, format } from "date-fns";
@@ -27,42 +27,24 @@ const statIconStyles = {
 };
 
 export default function InstructorDashboard() {
-  const [dashboard, setDashboard] = useState(null);
-  const [reminders, setReminders] = useState([]);
-  const [remindersLoading, setRemindersLoading] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    data: dashboard,
+    isLoading: dashLoading,
+    error: dashError,
+  } = useQuery({
+    queryKey: ["instructorDashboard"],
+    queryFn: fetchInstructorDashboard,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadDashboard() {
-      try {
-        const data = await fetchInstructorDashboard();
-        if (!cancelled) setDashboard(data);
-      } catch (err) {
-        if (!cancelled) setError(err);
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-
-    async function loadReminders() {
-      try {
-        const data = await fetchRemindersByDay(new Date());
-        if (!cancelled) setReminders(data);
-      } catch {
-        if (!cancelled) setReminders([]);
-      } finally {
-        if (!cancelled) setRemindersLoading(false);
-      }
-    }
-
-    loadDashboard();
-    loadReminders();
-
-    return () => { cancelled = true; };
-  }, []);
+  const {
+    data: reminders = [],
+    isLoading: remindersLoading,
+  } = useQuery({
+    queryKey: ["instructorReminders", "today"],
+    queryFn: () => fetchRemindersByDay(new Date()),
+    staleTime: 60 * 1000,
+  });
 
   const stats = dashboard?.stats ?? {};
   const statsData = [
@@ -89,11 +71,11 @@ export default function InstructorDashboard() {
     },
   ];
 
-  if (isLoading) {
+  if (dashLoading) {
     return <DashboardSkeleton />;
   }
 
-  if (error) {
+  if (dashError) {
     return (
       <div className="flex items-center justify-center h-64 text-text-error-default-light dark:text-text-error-default-dark">
         Failed to load dashboard. Please try again later.

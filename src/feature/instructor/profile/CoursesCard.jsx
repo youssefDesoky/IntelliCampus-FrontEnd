@@ -1,0 +1,94 @@
+import {
+    BookIcon,
+    CheckIcon,
+    StarIcon,
+} from "../../../components/ui/icons";
+
+function Skeleton({ className = "" }) {
+    return <div className={`animate-pulse rounded bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ${className}`} />;
+}
+
+export default function CoursesCard({ courses = [], loading = false }) {
+    const stats = [
+        { label: "Courses Teaching", value: courses.length, color: "text-blue-500", icon: BookIcon },
+        { label: "Role", value: "Instructor", color: "text-purple-500", icon: StarIcon },
+        { label: "Status", value: "Active", color: "text-emerald-500", icon: CheckIcon },
+    ];
+
+    return (
+        <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {loading
+                    ? [1, 2, 3].map((i) => (
+                          <div key={i} className="flex items-center gap-3 p-4 rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+                              <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+                              <div className="space-y-2 flex-1">
+                                  <Skeleton className="h-3 w-16" />
+                                  <Skeleton className="h-5 w-12" />
+                              </div>
+                          </div>
+                      ))
+                    : stats.map((stat) => (
+                          <div key={stat.label} className="flex items-center gap-3 p-4 rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color} bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark`}>
+                                  <stat.icon size={18} />
+                              </div>
+                              <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{stat.label}</p>
+                                  <p className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{stat.value}</p>
+                              </div>
+                          </div>
+                      ))}
+            </div>
+
+            <div className="rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-linear-to-r from-bg-surface-secondary-default-light to-bg-surface-primary-default-light dark:from-bg-surface-secondary-default-dark dark:to-bg-surface-primary-default-dark">
+                    <div>
+                        <h3 className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                            Courses Taught
+                        </h3>
+                        <p className="text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-0.5">
+                            Current semester
+                        </p>
+                    </div>
+                    {!loading && (
+                        <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                            {courses.length} course{courses.length !== 1 ? "s" : ""}
+                        </span>
+                    )}
+                </div>
+                <div className="p-5">
+                    {loading ? (
+                        <div className="space-y-2">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+                                    <div className="space-y-2 flex-1">
+                                        <Skeleton className="h-4 w-32" />
+                                        <Skeleton className="h-3 w-20" />
+                                    </div>
+                                    <Skeleton className="h-6 w-20 shrink-0 rounded-full ml-3" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : courses.length === 0 ? (
+                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark text-center py-4">No courses assigned yet.</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {courses.map((c) => (
+                                <div key={c._id} className="flex items-center justify-between p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">{c.title}</p>
+                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{c.code || c.courseCode}</p>
+                                    </div>
+                                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark shrink-0 ml-3">
+                                        Section {c.section || "—"}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}

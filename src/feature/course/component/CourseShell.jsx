@@ -1,5 +1,6 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useMemo, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import CourseNavBar from "./CourseNavBar";
 
@@ -23,7 +24,7 @@ import {
 import { CourseShellSkeleton } from "./SkeletonLoader";
 import { fetchCourseMaterialsOrganized } from "../services/materialsApi";
 import { fetchCourseById } from "../services/coursesApi";
-import { useError } from '../../../contexts/ErrorContext.jsx';
+
 
 const links = [
     { to: "", end: true, icon: <BullHornIcon className="w-5 h-5" />, label: "Announcements" },
@@ -43,42 +44,35 @@ const STUDENT_HIDE = new Set(["analytics"]);
 
 export default function CourseShell() {
     const { courseId } = useParams();
-    const { pathname } = useLocation();
+    const location = useLocation();
+    const { pathname } = location;
     const navigate = useNavigate();
     const isInstructor = pathname.startsWith("/instructor");
-    const [materialsData, setMaterialsData] = useState(null);
-    const [courseData, setCourseData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const { showError } = useError();
 
-    const loadCourseData = useCallback(async (showLoading = true) => {
-        try {
-            if (showLoading) setIsLoading(true);
-            const searchParams = new URLSearchParams(location.search);
-            const folderId = searchParams.get('folderId');
+    const queryClient = useQueryClient();
+    const searchParams = new URLSearchParams(location.search);
+    const folderId = searchParams.get('folderId');
 
-            const [materials, course] = await Promise.all([
-                fetchCourseMaterialsOrganized(courseId, folderId),
-                fetchCourseById(courseId),
-            ]);
+    const { data: materialsData, isLoading: materialsLoading } = useQuery({
+        queryKey: ["courseMaterials", courseId, folderId],
+        queryFn: () => fetchCourseMaterialsOrganized(courseId, folderId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+    });
 
-            setMaterialsData(materials);
-            setCourseData(course);
-            return { materials, course };
-        } catch (err) {
-            showError(err.message);
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, [courseId, showError, location]);
+    const { data: courseData, isLoading: courseLoading } = useQuery({
+        queryKey: ["courseById", courseId],
+        queryFn: () => fetchCourseById(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+    });
 
-    // Refresh without showing full-page loading (for child components)
-    const refreshMaterials = useCallback(() => loadCourseData(false), [loadCourseData]);
+    const isLoading = materialsLoading || courseLoading;
 
-    useEffect(() => {
-        loadCourseData(true);
-    }, [loadCourseData]);
+    const refreshMaterials = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ["courseMaterials", courseId] });
+        queryClient.invalidateQueries({ queryKey: ["courseById", courseId] });
+    }, [queryClient, courseId]);
 
     // Build the course object for the header and child routes
     const course = {

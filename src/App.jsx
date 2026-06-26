@@ -141,7 +141,7 @@ export default function App() {
                             { path: "assignments", element: <InstructorCourseAssignments /> },
                             { path: "quizzes", element: <InstructorCourseQuizzes /> },
                             { path: "attendance", element: <InstructorCourseAttendance /> },
-                            { path: "attendance/:classId", element: <InstructorCourseAttendance /> },
+                            { path: "attendance/:sessionId", element: <InstructorCourseAttendance /> },
                             { path: "grades", element: <InstructorCourseGrades /> },
                             { path: "community", element: <InstructorCommunity /> },
                             { path: "community/questions/:postId", element: <StudentStudyGroupPostDetail /> },

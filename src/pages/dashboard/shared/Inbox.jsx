@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useDeviceType } from '../../../hooks';
 import * as signalR from "@microsoft/signalr";
@@ -280,8 +281,7 @@ export default function Inbox() {
   const currentUserEmail = user?.email ?? "";
   const { showError } = useError();
   const { isPhone } = useDeviceType();
-  const [threads, setThreads] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [expandedKey, setExpandedKey] = useState(null);
@@ -293,6 +293,30 @@ export default function Inbox() {
   const [sending, setSending] = useState(false);
   const connectionRef = useRef(null);
 
+  const inboxQueryKey = useMemo(() => ["inbox", currentUserId], [currentUserId]);
+
+  const { data: threads = [], isLoading } = useQuery({
+    queryKey: inboxQueryKey,
+    queryFn: async () => {
+      const [inboxData, sentData] = await Promise.all([
+        fetchInboxMessages(),
+        fetchSentMessages(),
+      ]);
+      const inbox = (Array.isArray(inboxData) ? inboxData : []).map((t) =>
+        decorateThread(t, currentUserId)
+      );
+      const sent = (Array.isArray(sentData) ? sentData : []).map((t) =>
+        decorateThread(t, currentUserId)
+      );
+      const merged = mergeThreads(inbox, sent);
+      merged.sort((a, b) => getThreadLatestTimestamp(b).getTime() - getThreadLatestTimestamp(a).getTime());
+      return merged;
+    },
+    staleTime: 0,
+    gcTime: 10 * 60 * 1000,
+    enabled: !!currentUserId,
+  });
+
   const resetCompose = () => {
     setRecipientEmail("");
     setSubject("");
@@ -302,7 +326,16 @@ export default function Inbox() {
     setShowCompose(false);
   };
 
-  const handleSend = async (e) => {
+  const sendMutation = useMutation({
+    mutationFn: sendMessage,
+    onSuccess: () => {
+      resetCompose();
+      queryClient.invalidateQueries({ queryKey: inboxQueryKey });
+    },
+    onError: (err) => showError(err.message || "Failed to send message"),
+  });
+
+  const handleSend = (e) => {
     e.preventDefault();
     if (!recipientEmail.trim()) {
       showError("Recipient email is missing.");
@@ -321,20 +354,14 @@ export default function Inbox() {
       return;
     }
     setSending(true);
-    try {
-      await sendMessage({
-        recipientEmail: recipientEmail.trim(),
-        subject: subject.trim(),
-        body: body.trim(),
-        parentMessageId: replyingTo?.messageId ?? undefined,
-      });
-      resetCompose();
-      loadMessages();
-    } catch (err) {
-      showError(err.message || "Failed to send message");
-    } finally {
-      setSending(false);
-    }
+    sendMutation.mutate({
+      recipientEmail: recipientEmail.trim(),
+      subject: subject.trim(),
+      body: body.trim(),
+      parentMessageId: replyingTo?.messageId ?? undefined,
+    }, {
+      onSettled: () => setSending(false),
+    });
   };
 
   const handleReply = (thread) => {
@@ -386,34 +413,6 @@ export default function Inbox() {
     return Array.from(map.values());
   }, []);
 
-  const loadMessages = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const [inboxData, sentData] = await Promise.all([
-        fetchInboxMessages(),
-        fetchSentMessages(),
-      ]);
-      const inbox = (Array.isArray(inboxData) ? inboxData : []).map((t) =>
-        decorateThread(t, currentUserId)
-      );
-      const sent = (Array.isArray(sentData) ? sentData : []).map((t) =>
-        decorateThread(t, currentUserId)
-      );
-      const merged = mergeThreads(inbox, sent);
-      merged.sort((a, b) => getThreadLatestTimestamp(b).getTime() - getThreadLatestTimestamp(a).getTime());
-      setThreads(merged);
-    } catch (err) {
-      showError(err.message || "Failed to load messages");
-      setThreads([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentUserId, mergeThreads, showError]);
-
-  useEffect(() => {
-    loadMessages();
-  }, [loadMessages]);
-
   useEffect(() => {
     const conn = new signalR.HubConnectionBuilder()
       .withUrl("/hubs/inbox", { withCredentials: true })
@@ -422,12 +421,11 @@ export default function Inbox() {
       .build();
 
     conn.on("NewMessage", (dto) => {
-      setThreads((prev) => {
+      queryClient.setQueryData(inboxQueryKey, (prev = []) => {
         const direction = getMessageDirection(dto, currentUserId);
         const newMsg = { ...dto, direction };
 
         if (dto.parentMessageId) {
-          // It's a reply - find the thread and append
           const idx = prev.findIndex((t) => t.messageId === dto.parentMessageId);
           if (idx !== -1) {
             const updated = [...prev];
@@ -439,15 +437,12 @@ export default function Inbox() {
             }
             thread.replies = replies;
             updated[idx] = thread;
-            // Re-sort threads by latest activity
             updated.sort((a, b) => getThreadLatestTimestamp(b).getTime() - getThreadLatestTimestamp(a).getTime());
             return updated;
           }
-          // Thread not found - add as new (orphan reply)
           return [newMsg, ...prev];
         }
 
-        // New root thread
         if (prev.some((t) => t.messageId === dto.messageId)) return prev;
         const decorated = decorateThread(dto, currentUserId);
         return [decorated, ...prev];
@@ -460,19 +455,7 @@ export default function Inbox() {
 
     conn.onreconnected(async () => {
       console.info("[InboxHub] Reconnected.");
-      try {
-        const [inboxData, sentData] = await Promise.all([
-          fetchInboxMessages(),
-          fetchSentMessages(),
-        ]);
-        const inbox = (Array.isArray(inboxData) ? inboxData : []).map((t) => decorateThread(t, currentUserId));
-        const sent = (Array.isArray(sentData) ? sentData : []).map((t) => decorateThread(t, currentUserId));
-        const merged = mergeThreads(inbox, sent);
-        merged.sort((a, b) => getThreadLatestTimestamp(b).getTime() - getThreadLatestTimestamp(a).getTime());
-        setThreads(merged);
-      } catch {
-        /* silently ignore reconnection fetch failures */
-      }
+      queryClient.invalidateQueries({ queryKey: inboxQueryKey });
     });
 
     conn.onclose((error) => {
@@ -501,7 +484,28 @@ export default function Inbox() {
         conn.stop();
       }
     };
-  }, [currentUserId, mergeThreads]);
+  }, [currentUserId, inboxQueryKey, queryClient]);
+
+  const markReadMutation = useMutation({
+    mutationFn: (ids) => Promise.all(ids.map((id) => markMessageAsRead(id))),
+    onSuccess: (_data, unreadIds) => {
+      queryClient.setQueryData(inboxQueryKey, (prev = []) =>
+        prev.map((t) => {
+          if (!unreadIds.includes(t.messageId) && !(t.replies || []).some((r) => unreadIds.includes(r.messageId))) {
+            return t;
+          }
+          return {
+            ...t,
+            isRead: unreadIds.includes(t.messageId) ? true : t.isRead,
+            replies: (t.replies || []).map((r) =>
+              unreadIds.includes(r.messageId) ? { ...r, isRead: true } : r
+            ),
+          };
+        })
+      );
+    },
+    onError: (err) => showError(err.message),
+  });
 
   const handleToggleExpand = async (thread) => {
     const key = `thread-${thread.messageId}`;
@@ -522,48 +526,33 @@ export default function Inbox() {
 
     if (unreadIds.length === 0) return;
 
-    try {
-      await Promise.all(unreadIds.map((id) => markMessageAsRead(id)));
-      setThreads((prev) =>
-        prev.map((t) => {
-          if (t.messageId !== thread.messageId) return t;
-          return {
-            ...t,
-            isRead: unreadIds.includes(t.messageId) ? true : t.isRead,
-            replies: (t.replies || []).map((r) =>
-              unreadIds.includes(r.messageId) ? { ...r, isRead: true } : r
-            ),
-          };
-        })
-      );
-    } catch (err) {
-      showError(err.message);
-    }
+    markReadMutation.mutate(unreadIds);
   };
 
-  const handleDelete = async (e, msg) => {
-    e.stopPropagation();
-    try {
-      await deleteMessage(msg.messageId);
-      if (msg.parentMessageId) {
-        // Deleting a reply
-        setThreads((prev) =>
-          prev.map((t) => {
-            if (t.messageId === msg.parentMessageId) {
-              return { ...t, replies: t.replies.filter((r) => r.messageId !== msg.messageId) };
-            }
-            return t;
-          })
+  const deleteMutation = useMutation({
+    mutationFn: deleteMessage,
+    onSuccess: (_data, messageId) => {
+      queryClient.setQueryData(inboxQueryKey, (prev = []) => {
+        const isRootReply = prev.some((t) =>
+          (t.replies || []).some((r) => r.messageId === messageId)
         );
-      } else {
-        // Deleting a root thread
-        setThreads((prev) => prev.filter((t) => t.messageId !== msg.messageId));
-        const key = `thread-${msg.messageId}`;
-        if (expandedKey === key) setExpandedKey(null);
-      }
-    } catch (err) {
-      showError(err.message);
-    }
+        if (isRootReply) {
+          return prev.map((t) => ({
+            ...t,
+            replies: (t.replies || []).filter((r) => r.messageId !== messageId),
+          }));
+        }
+        return prev.filter((t) => t.messageId !== messageId);
+      });
+      const key = `thread-${messageId}`;
+      if (expandedKey === key) setExpandedKey(null);
+    },
+    onError: (err) => showError(err.message),
+  });
+
+  const handleDelete = (e, msg) => {
+    e.stopPropagation();
+    deleteMutation.mutate(msg.messageId);
   };
 
   const unreadCount = threads.reduce(
