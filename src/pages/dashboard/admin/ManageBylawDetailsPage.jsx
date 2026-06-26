@@ -919,46 +919,7 @@ export default function ManageBylawDetailsPage() {
       // Build updated courseId -> bylawCourseId map for required courses
       const updatedMap = { ...courseIdToBylawCourseId, ...newBcIds };
 
-      // Set prerequisites for ALL current courses that have them
-      for (const entry of allCurrent) {
-        const prereqCourseIds = prerequisites[entry.courseId];
-        if (prereqCourseIds && prereqCourseIds.length > 0) {
-          const prereqBcIds = prereqCourseIds
-            .map(cid => updatedMap[cid])
-            .filter(Boolean);
-          if (prereqBcIds.length > 0) {
-            await setCoursePrerequisites(updatedMap[entry.courseId], {
-              prerequisiteBylawCourseIds: prereqBcIds,
-            });
-          }
-        }
-      }
-
-      // Save credit hours for all current courses
-      for (const entry of allCurrent) {
-        const bcId = updatedMap[entry.courseId];
-        if (bcId && entry.creditHours != null) {
-          await updateBylawCourseCreditHours(bcId, { creditHours: entry.creditHours });
-        }
-      }
-
-      // Save allowed departments for all current courses
-      for (const entry of allCurrent) {
-        const bcId = updatedMap[entry.courseId];
-        if (bcId && entry.allowedDepartments?.length > 0) {
-          await updateBylawCourseAllowedDepartments(bcId, { departmentIds: entry.allowedDepartments });
-        }
-      }
-
-      // Remove unmapped courses
-      for (const courseId of removedIds) {
-        const bcId = courseIdToBylawCourseId[courseId];
-        if (bcId) {
-          await unmapCourseFromBylaw(bcId);
-        }
-      }
-
-      // Save buckets via ElectiveBuckets API
+      // Save buckets via ElectiveBuckets API (creates BylawCourse records for bucket courses)
       const originalIds = new Set(originalBucketsRef.current);
       const currentIds = new Set(buckets.map(b => b.id));
       const bucketBcIds = {};

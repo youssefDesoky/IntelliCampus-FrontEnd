@@ -95,22 +95,6 @@ export default function ManageEntity({
     queryFn: () => fetchItems(),
   });
 
-  const rawItems = useMemo(() => {
-    if (!fetchResult) return [];
-    if (serverSidePagination && !Array.isArray(fetchResult)) {
-      return fetchResult.data || [];
-    }
-    return Array.isArray(fetchResult) ? fetchResult : [];
-  }, [fetchResult, serverSidePagination]);
-
-  const serverTotalCount = useMemo(() => {
-    if (!serverSidePagination) return null;
-    if (fetchResult && !Array.isArray(fetchResult)) {
-      return fetchResult.totalCount ?? null;
-    }
-    return null;
-  }, [fetchResult, serverSidePagination]);
-
   useEffect(() => {
     if (error) showError(error.message);
   }, [error, showError]);
