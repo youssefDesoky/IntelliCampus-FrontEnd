@@ -16,6 +16,7 @@ import {
     recordManualAttendance,
     scanAttendanceQr,
 } from "../../../feature/instructor/components/attendance/instructorAttendanceApi";
+import ExcuseList from "../../../feature/instructor/components/attendance/ExcuseList";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function formatTime(value) {
@@ -78,6 +79,7 @@ export default function InstructorCourseAttendance() {
     const { showError } = useError();
     const sessionInUrl = params.sessionId ? Number(params.sessionId) : null;
 
+    const [activeTab, setActiveTab] = useState("sessions");
     const [creatingSession, setCreatingSession] = useState(false);
     const [isCreateSessionOpen, setIsCreateSessionOpen] = useState(false);
     const [newSession, setNewSession] = useState({ topic: "", description: "" });
@@ -670,15 +672,55 @@ export default function InstructorCourseAttendance() {
         <div className="space-y-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-secondary-default-light dark:text-text-secondary-default-dark">Sessions</p>
-                    <h2 className="mt-1 text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Attendance Sessions</h2>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-secondary-default-light dark:text-text-secondary-default-dark">{activeTab === "excuses" ? "Excuses" : "Sessions"}</p>
+                    <h2 className="mt-1 text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                        {activeTab === "excuses" ? "Excuse Requests" : "Attendance Sessions"}
+                    </h2>
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{courseName}</p>
                 </div>
-                <Button type="button" variant="primary" onClick={() => setIsCreateSessionOpen(true)} startIcon={<PlusIcon size={18} />}>
-                    <span className="hidden sm:inline">Create Session</span>
-                </Button>
+                {activeTab === "sessions" && (
+                    <Button type="button" variant="primary" onClick={() => setIsCreateSessionOpen(true)} startIcon={<PlusIcon size={18} />}>
+                        <span className="hidden sm:inline">Create Session</span>
+                    </Button>
+                )}
             </div>
 
+            {/* Tab bar */}
+            <div className="flex border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("sessions")}
+                    className={`relative px-5 py-3 text-sm font-medium transition-colors ${
+                        activeTab === "sessions"
+                            ? "text-text-accent-default-light dark:text-text-accent-default-dark"
+                            : "text-text-secondary-default-light hover:text-text-primary-default-light dark:text-text-secondary-default-dark dark:hover:text-text-primary-default-dark"
+                    }`}
+                >
+                    Sessions
+                    {activeTab === "sessions" && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-accent-default-light dark:bg-text-accent-default-dark rounded-full" />
+                    )}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("excuses")}
+                    className={`relative px-5 py-3 text-sm font-medium transition-colors ${
+                        activeTab === "excuses"
+                            ? "text-text-accent-default-light dark:text-text-accent-default-dark"
+                            : "text-text-secondary-default-light hover:text-text-primary-default-light dark:text-text-secondary-default-dark dark:hover:text-text-primary-default-dark"
+                    }`}
+                >
+                    Excuse Requests
+                    {activeTab === "excuses" && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-accent-default-light dark:bg-text-accent-default-dark rounded-full" />
+                    )}
+                </button>
+            </div>
+
+            {activeTab === "excuses" ? (
+                <ExcuseList courseId={courseId} />
+            ) : (
+                <>
             {/* Class selector */}
             {classes.length > 1 && (
                 <div className="flex flex-wrap items-center gap-3">
@@ -892,6 +934,8 @@ export default function InstructorCourseAttendance() {
                     </div>
                 </ModelOverlay>
             )}
+            </>
+        )}
         </div>
     );
 }

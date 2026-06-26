@@ -5,6 +5,7 @@ import InputItem from "../../components/form/InputItem";
 import SelectBox from "../../components/ui/SelectBox";
 import Button from "../../components/ui/Button";
 import Turnstile from "../../components/ui/Turnstile";
+import ModelOverlay from "../../components/ui/ModelOverlay";
 import { useToast } from "../../contexts/ToastContext.jsx";
 import { fetchPublicFaculties, getCredentials } from "../../api/auth";
 import { validateNationalId, validatePhoneNumber } from "../../feature/admin/utils/validation";
@@ -19,6 +20,7 @@ export default function GetCredentials() {
     const [submitting, setSubmitting] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState(null);
     const [result, setResult] = useState(null);
+    const [showTurnstileModal, setShowTurnstileModal] = useState(false);
 
     useEffect(() => {
         fetchPublicFaculties()
@@ -40,18 +42,28 @@ export default function GetCredentials() {
         if (phoneErr) newErrors.phone = phoneErr;
 
         if (!selectedFaculty) newErrors.faculty = "Faculty is required";
-        if (!turnstileToken) newErrors.turnstile = "Verification required";
 
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) return;
 
+        setShowTurnstileModal(true);
+    };
+
+    const handleTurnstileVerify = (token) => {
+        if (!token) return;
+        setTurnstileToken(token);
+        setShowTurnstileModal(false);
+        submitCredentials(token);
+    };
+
+    const submitCredentials = async (token) => {
         setSubmitting(true);
         try {
             const data = await getCredentials({
                 nationalId,
                 phoneNumber: phone,
                 facultyId: selectedFaculty.value,
-                turnstileToken,
+                turnstileToken: token,
             });
             setResult(data);
             showToast({ type: "success", title: "Credentials Found", message: "Your email has been retrieved." });
@@ -116,10 +128,6 @@ export default function GetCredentials() {
                     onChange={setSelectedFaculty}
                 />
 
-                <div className="flex justify-center">
-                    <Turnstile onVerify={setTurnstileToken} />
-                </div>
-
                 <Button type="submit" width="w-full" disabled={submitting} loading={submitting}>
                     Get Credentials
                 </Button>
@@ -130,6 +138,14 @@ export default function GetCredentials() {
                     Back to Login
                 </Link>
             </div>
+
+            {showTurnstileModal && (
+                <ModelOverlay onClose={() => setShowTurnstileModal(false)} maxWidth="max-w-sm">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl">
+                        <Turnstile onVerify={handleTurnstileVerify} />
+                    </div>
+                </ModelOverlay>
+            )}
         </AuthLayout>
     );
 }

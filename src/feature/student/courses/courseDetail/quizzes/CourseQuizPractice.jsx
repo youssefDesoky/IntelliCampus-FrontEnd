@@ -7,6 +7,7 @@ import QuestionCard from "./QuestionCard";
 import QuizHeader from "./QuizHeader";
 import QuizSummary from "./QuizSummary";
 import { fetchPracticeQuiz, submitPracticeQuiz } from "../../../services/quizzesApi";
+import { ArrowRightIcon } from "../../../../../components/ui/icons";
 
 const PAGE_SIZE = 3;
 
@@ -141,29 +142,33 @@ export default function CourseQuizPractice() {
 		setCurrentPage(Math.max(1, Math.min(totalPages, page)));
 	}
 
-	return (
-		<div className="relative overflow-hidden">
-			<div className="absolute -top-24 right-0 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl dark:bg-amber-900/20" />
-			<div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-sky-200/30 blur-3xl dark:bg-sky-900/20" />
-
-			<div className="relative">
-				<QuizHeader
-					title={quizTitle}
-					courseName={courseName}
-					timeLeft={timeLeft}
-					formatTime={formatTime}
-					progressPercent={progressPercent}
-					answeredCount={answeredCount}
-					totalCount={quizSummary.total}
-					currentQuestion={currentQuestionLabel}
-					onSubmit={handleSubmitQuiz}
-					hideControls={Boolean(reviewMode)}
-					score={backendResult}
-				/>
+	if (isQuizLoading) {
+		return (
+			<div className="flex flex-col items-center justify-center py-20 gap-4">
+				<div className="h-10 w-10 rounded-full border-2 border-border-primary-default-light dark:border-border-primary-default-dark border-t-bg-fill-accent-default-light dark:border-t-bg-fill-accent-default-dark animate-spin" />
+				<p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading quiz...</p>
 			</div>
+		);
+	}
 
-			<div className="relative grid grid-cols-1 xl:grid-cols-3 gap-6">
-				<div className="xl:col-span-2 space-y-6">
+	return (
+		<div className="max-w-7xl mx-auto">
+			<QuizHeader
+				title={quizTitle}
+				courseName={courseName}
+				timeLeft={timeLeft}
+				formatTime={formatTime}
+				progressPercent={progressPercent}
+				answeredCount={answeredCount}
+				totalCount={quizSummary.total}
+				currentQuestion={currentQuestionLabel}
+				onSubmit={handleSubmitQuiz}
+				hideControls={Boolean(reviewMode)}
+				score={backendResult}
+			/>
+
+			<div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+				<div className="xl:col-span-2 space-y-5">
 					{visibleQuestions.map((question, index) => {
 						const questionNumber = (currentPage - 1) * pageSize + index + 1;
 						const result = questionResultsMap[question.id];
@@ -193,19 +198,37 @@ export default function CourseQuizPractice() {
 									</div>
 								) : (
 									<span className="text-xs font-semibold uppercase tracking-wide text-text-secondary-default-light dark:text-text-secondary-default-dark">
-										Question {questionNumber}
+										Q{questionNumber}
 									</span>
 								)}
 							/>
 						);
 					})}
 
-					<div className="mt-4 flex items-center justify-center">
+					<div className="flex items-center justify-between pt-2">
+						<button
+							onClick={() => handlePageChange(currentPage - 1)}
+							disabled={currentPage <= 1}
+							className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+						>
+							<ArrowRightIcon size={16} className="rotate-180" />
+							Previous
+						</button>
+
 						<PaginationButtons totalPages={totalPages} currentPage={currentPage} setCurrentPage={handlePageChange} />
+
+						<button
+							onClick={() => handlePageChange(currentPage + 1)}
+							disabled={currentPage >= totalPages}
+							className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+						>
+							Next
+							<ArrowRightIcon size={16} />
+						</button>
 					</div>
 				</div>
 
-				<div className="space-y-6">
+				<div>
 					<QuizSummary
 						backendResult={backendResult}
 						attemptLimit={practiceQuizData?.maxAttempts || 1}
@@ -218,6 +241,13 @@ export default function CourseQuizPractice() {
 						tfPercent={tfPercent}
 						mcqPercent={mcqPercent}
 						writtenPercent={writtenPercent}
+						questions={quizQuestions}
+						answers={answers}
+						currentPage={currentPage}
+						pageSize={pageSize}
+						onNavigate={handlePageChange}
+						reviewMode={reviewMode}
+						questionResultsMap={questionResultsMap}
 					/>
 				</div>
 			</div>

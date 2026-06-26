@@ -47,7 +47,7 @@ export default async function apiClient(endpoint, options = {}) {
 
     switch (res.status) {
       case 401:
-        window.location.href = '/unauthorized';
+        // Not authenticated — let calling code handle it (e.g., authAction for login errors)
         break;
       case 403:
         if (body?.type === 'must_change_password') {
