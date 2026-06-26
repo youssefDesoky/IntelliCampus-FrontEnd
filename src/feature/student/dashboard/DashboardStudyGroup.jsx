@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 
 import StudyGroupPost from "../../../components/ui/StudyGroupPost";
 import { ArrowRightIcon } from "../../../components/ui/icons";
-import { API_URL } from "../../../config/api";
+import { fetchCommunities } from "../services/profileApi";
 
 export default function DashboardStudyGroup({className}){
     const [communities, setCommunities] = useState([]);
@@ -13,9 +13,7 @@ export default function DashboardStudyGroup({className}){
 
         async function loadCommunities() {
             try {
-                const res = await fetch(`${API_URL}/api/communities`, { credentials: "include" });
-                if (!res.ok) throw new Error(`Failed to fetch communities: ${res.status}`);
-                const data = await res.json();
+                const data = await fetchCommunities();
                 if (!ignore) setCommunities(Array.isArray(data) ? data : []);
             } catch {
                 if (!ignore) setCommunities([]);
@@ -52,7 +50,7 @@ export default function DashboardStudyGroup({className}){
                         <StudyGroupPost 
                             key={index}
                             postData={sg.posts[0]} 
-                            department={sg.department} 
+                            courseTitle={sg.department} 
                         />)
                     )
                 )}

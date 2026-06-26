@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 
 import Button from "../../../components/ui/Button";
@@ -8,7 +9,7 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import MaterialPreview from "../../../components/ui/MaterialPreview";
 import DateTimeInput from "../../../components/form/DateTimeInput";
 import NumberInput from "../../../components/form/NumberInput";
-import { PlusIcon, TrashIcon, EyeIcon, DownloadIcon, XIcon } from "../../../components/ui/icons";
+import { PlusIcon, TrashIcon, EyeIcon, DownloadIcon, XIcon, FilePenIcon, CalendarDaysIcon, ChartBarIcon, UsersIcon, ClockIcon, ClipboardCheckIcon } from "../../../components/ui/icons";
 
 import {
     fetchInstructorAssignmentsByCourse,
@@ -16,6 +17,7 @@ import {
     deleteInstructorAssignment,
     updateInstructorAssignment,
     fetchAssignmentSubmissions,
+    gradeAssignmentSubmission,
 } from "../../../feature/instructor/components/assignments/instructorAssignmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
@@ -35,9 +37,8 @@ function formatDueDate(value) {
 export default function InstructorCourseAssignments() {
     const { courseId } = useOutletContext();
     
-    const [assignments, setAssignments] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
     const { showError } = useError();
+    const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -53,14 +54,22 @@ export default function InstructorCourseAssignments() {
     const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(false);
     const [previewFile, setPreviewFile] = useState(null);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
+    const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
+    const [selectedAssignmentTotalPoints, setSelectedAssignmentTotalPoints] = useState(null);
+    const [gradeModal, setGradeModal] = useState(null);
+    const [gradeScore, setGradeScore] = useState("");
+    const [gradeFeedback, setGradeFeedback] = useState("");
+    const [isGrading, setIsGrading] = useState(false);
     
-    const loadPageData = useCallback(async () => {
-        if (!courseId) return;
-        setIsLoading(true);
-        
-        try {
+    const {
+        data: assignments = [],
+        isLoading,
+        error,
+    } = useQuery({
+        queryKey: ["instructorCourseAssignments", courseId],
+        queryFn: async () => {
             const data = await fetchInstructorAssignmentsByCourse(courseId);
-            const mapped = (Array.isArray(data) ? data : []).map((item) => ({
+            return (Array.isArray(data) ? data : []).map((item) => ({
                 id: item.id,
                 title: item.title,
                 description: item.description,
@@ -69,18 +78,14 @@ export default function InstructorCourseAssignments() {
                 totalPoints: item.totalPoints,
                 attachments: item.attachments || [],
             }));
-            setAssignments(mapped);
-        } catch (err) {
-            showError(err.message || "Failed to load assignments.");
-            setAssignments([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [courseId]);
-    
+        },
+        staleTime: 2 * 60 * 1000,
+        enabled: !!courseId,
+    });
+
     useEffect(() => {
-        loadPageData();
-    }, [loadPageData]);
+        if (error) showError(error.message || "Failed to load assignments.");
+    }, [error, showError]);
     
     const sortedAssignments = useMemo(() => [...assignments].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)), [assignments]);
     
@@ -120,7 +125,7 @@ export default function InstructorCourseAssignments() {
             
             const created = await createInstructorAssignment(payload);
             
-            setAssignments((prev) => [
+            queryClient.setQueryData(["instructorCourseAssignments", courseId], (prev = []) => [
                 {
                     id: created.id,
                     title: created.title,
@@ -169,7 +174,7 @@ export default function InstructorCourseAssignments() {
             
             const updated = await updateInstructorAssignment(editingAssignmentId, payload);
             
-            setAssignments((prev) => prev.map((a) => (String(a.id) === String(editingAssignmentId) ? {
+            queryClient.setQueryData(["instructorCourseAssignments", courseId], (prev = []) => prev.map((a) => (String(a.id) === String(editingAssignmentId) ? {
                 id: updated.id,
                 title: updated.title,
                 description: updated.description,
@@ -192,6 +197,8 @@ export default function InstructorCourseAssignments() {
         setSubmissions([]);
         setIsSubmissionsOpen(true);
         setIsLoadingSubmissions(true);
+        setSelectedAssignmentId(assignment.id);
+        setSelectedAssignmentTotalPoints(assignment.totalPoints || 100);
         try {
             const data = await fetchAssignmentSubmissions(assignment.id);
             const normalized = (Array.isArray(data) ? data : []).map((s) => ({
@@ -201,6 +208,8 @@ export default function InstructorCourseAssignments() {
                 note: s.note || s.Note || null,
                 files: s.files || s.Files || [],
                 student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (s.student.fullName || s.student.name) : s.student) || null,
+                score: s.score ?? s.Score ?? null,
+                feedback: s.feedback ?? s.Feedback ?? null,
             }));
             setSubmissions(normalized);
         } catch (err) {
@@ -228,6 +237,33 @@ export default function InstructorCourseAssignments() {
         setPreviewFile(null);
         setSelectedSubmission(null);
     };
+
+    const handleGradeSubmit = async () => {
+        if (!gradeModal || !selectedAssignmentId) return;
+
+        const score = Number(gradeScore);
+        if (!gradeScore || isNaN(score) || score < 0) {
+            showError("Please enter a valid score.");
+            return;
+        }
+
+        setIsGrading(true);
+        try {
+            await gradeAssignmentSubmission(selectedAssignmentId, {
+                submissionId: gradeModal.id,
+                score,
+                feedback: gradeFeedback.trim() || null,
+            });
+            queryClient.invalidateQueries({ queryKey: ["instructorCourseAssignments", courseId] });
+            setGradeModal(null);
+            setGradeScore("");
+            setGradeFeedback("");
+        } catch (err) {
+            showError(err.message || "Failed to grade submission.");
+        } finally {
+            setIsGrading(false);
+        }
+    };
     
     const handleDeleteAssignment = async (assignmentId) => {
         const confirmed = window.confirm("Delete this assignment?");
@@ -235,7 +271,7 @@ export default function InstructorCourseAssignments() {
         
         try {
             await deleteInstructorAssignment(assignmentId);
-            setAssignments((prev) => prev.filter((a) => String(a.id) !== String(assignmentId)));
+            queryClient.setQueryData(["instructorCourseAssignments", courseId], (prev = []) => prev.filter((a) => String(a.id) !== String(assignmentId)));
         } catch (err) {
             showError(err.message || "Failed to delete assignment.");
         }
@@ -247,18 +283,20 @@ export default function InstructorCourseAssignments() {
     
     return (
         <div className="space-y-4">
-        <Button
-        type="button"
-        variant="primary"
-        onClick={() => setIsFormOpen(true)}
-        className="fixed bottom-5 right-5 z-50 group"
-        >
-        <PlusIcon size={24} />
-        <span className="max-w-0 -ml-2 group-hover:ml-0 overflow-hidden group-hover:max-w-40 transition-all! duration-300! whitespace-nowrap">
-        Add New Assignment
-        </span>
-        </Button>
-        
+        <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                Assignments
+            </h2>
+            <Button
+                type="button"
+                variant="primary"
+                onClick={() => setIsFormOpen(true)}
+                startIcon={<PlusIcon size={18} />}
+            >
+                Create Assignment
+            </Button>
+        </div>
+
         <BaseFormComponent
         isOpen={isFormOpen}
         title={editingAssignmentId ? "Edit Assignment" : "Create Assignment"}
@@ -310,81 +348,93 @@ export default function InstructorCourseAssignments() {
         </BaseFormComponent>
         
         {sortedAssignments.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-6 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
-            <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No assignments yet</h3>
+            <div className="rounded-2xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-12 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                <FilePenIcon size={24} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
+            </div>
+            <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No assignments yet</h3>
             <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
             Create your first assignment for this course.
             </p>
             </div>
         ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
             {sortedAssignments.map((assignment) => (
                 <div
                 key={assignment.id}
-                className="rounded-2xl border border-border-primary-default-light bg-bg-fill-secondary-default-light p-4 dark:border-border-primary-default-dark dark:bg-bg-fill-secondary-default-dark"
+                className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg transition-shadow duration-200"
                 >
-                <div className="flex items-start justify-between gap-3">
-                <div>
-                <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{assignment.title}</h3>
-                <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                Due: {formatDueDate(assignment.dueDate)}
-                </p>
-                <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                Total Points: {assignment.totalPoints}
-                </p>
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                        {assignment.title}
+                    </h3>
+                    {assignment.description && (
+                        <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">
+                        {assignment.description}
+                        </p>
+                    )}
+                    </div>
+                    {assignment.totalPoints && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap shrink-0 self-start">
+                        <ChartBarIcon size={14} />
+                        {assignment.totalPoints} pts
+                    </span>
+                    )}
                 </div>
-                
-                <div className="flex items-center">
-                <Button
-                type="button"
-                variant="text"
-                className="mr-2"
-                onClick={() => {
-                    setEditingAssignmentId(assignment.id);
-                    setTitle(assignment.title || "");
-                    setDescription(assignment.description || "");
-                    setInstructions(assignment.fullInstructions || "");
-                    try {
-                        const dt = new Date(assignment.dueDate);
-                        const tzOffset = dt.getTimezoneOffset() * 60000;
-                        const localISO = new Date(dt - tzOffset).toISOString().slice(0, 16);
-                        setDueDate(localISO);
-                    } catch {
-                        setDueDate(assignment.dueDate || "");
-                    }
-                    setTotalPoints(assignment.totalPoints || 100);
-                    setIsFormOpen(true);
-                }}
-                >
-                Edit
-                </Button>
-                
-                <Button
-                type="button"
-                variant="text"
-                className="mr-2"
-                onClick={() => openSubmissions(assignment)}
-                >
-                View Submissions
-                </Button>
-                
-                <Button
-                type="button"
-                variant="text"
-                className="text-text-danger-default-light dark:text-text-danger-default-dark"
-                startIcon={<TrashIcon size={16} />}
-                onClick={() => handleDeleteAssignment(assignment.id)}
-                >
-                Delete
-                </Button>
+
+                <div className="flex flex-wrap items-center gap-4 mt-3 text-sm">
+                    <div className="flex items-center gap-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                    <CalendarDaysIcon size={16} />
+                    <span>Due {formatDueDate(assignment.dueDate)}</span>
+                    </div>
                 </div>
+
+                <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
+                    <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    startIcon={<EyeIcon size={16} />}
+                    onClick={() => openSubmissions(assignment)}
+                    >
+                    Submissions
+                    </Button>
+                    <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    startIcon={<FilePenIcon size={16} />}
+                    onClick={() => {
+                        setEditingAssignmentId(assignment.id);
+                        setTitle(assignment.title || "");
+                        setDescription(assignment.description || "");
+                        setInstructions(assignment.fullInstructions || "");
+                        try {
+                            const dt = new Date(assignment.dueDate);
+                            const tzOffset = dt.getTimezoneOffset() * 60000;
+                            const localISO = new Date(dt - tzOffset).toISOString().slice(0, 16);
+                            setDueDate(localISO);
+                        } catch {
+                            setDueDate(assignment.dueDate || "");
+                        }
+                        setTotalPoints(assignment.totalPoints || 100);
+                        setIsFormOpen(true);
+                    }}
+                    >
+                    Edit
+                    </Button>
+                    <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    startIcon={<TrashIcon size={16} />}
+                    className="text-text-danger-default-light dark:text-text-danger-default-dark"
+                    onClick={() => handleDeleteAssignment(assignment.id)}
+                    >
+                    Delete
+                    </Button>
                 </div>
-                
-                {assignment.description ? (
-                    <p className="mt-3 text-sm text-text-primary-default-light dark:text-text-primary-default-dark whitespace-pre-line">
-                    {assignment.description}
-                    </p>
-                ) : null}
                 </div>
             ))}
             </div>
@@ -460,6 +510,18 @@ export default function InstructorCourseAssignments() {
                             <DownloadIcon size={16} />
                             </span>
                         )}
+                        <button
+                        type="button"
+                        className="p-2 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-green-600 dark:text-green-400 transition-colors"
+                        onClick={() => {
+                            setGradeScore(s.score ?? "");
+                            setGradeFeedback(s.feedback ?? "");
+                            setGradeModal(s);
+                        }}
+                        title="Grade submission"
+                        >
+                        <ClipboardCheckIcon size={16} />
+                        </button>
                         </div>
                         </div>
                         
@@ -476,6 +538,77 @@ export default function InstructorCourseAssignments() {
             </ModelOverlay>
         )}
         
+        {gradeModal && (
+            <ModelOverlay onClose={() => { setGradeModal(null); setGradeScore(""); setGradeFeedback(""); }} maxWidth="max-w-lg">
+            <div className="w-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark shadow-xl">
+            <div className="flex items-center justify-between p-5 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+            <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+            <ClipboardCheckIcon size={20} className="text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+            <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+            Grade Submission
+            </h2>
+            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+            {typeof gradeModal.student === 'string' ? gradeModal.student : `Student ${gradeModal.id}`}
+            </p>
+            </div>
+            </div>
+            <button
+            onClick={() => { setGradeModal(null); setGradeScore(""); setGradeFeedback(""); }}
+            className="p-2 rounded-lg hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors text-text-secondary-default-light dark:text-text-secondary-default-dark"
+            >
+            <XIcon size={18} />
+            </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+            <NumberInput
+            label={`Score (out of ${selectedAssignmentTotalPoints})`}
+            value={gradeScore}
+            onChange={(e) => setGradeScore(e.target.value)}
+            placeholder={`0 - ${selectedAssignmentTotalPoints}`}
+            min={0}
+            max={selectedAssignmentTotalPoints}
+            required
+            />
+
+            <div className="space-y-2">
+            <label className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+            Feedback
+            </label>
+            <TextArea
+            value={gradeFeedback}
+            onChange={(e) => setGradeFeedback(e.target.value)}
+            placeholder="Optional feedback for the student..."
+            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+            />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+            <Button
+            variant="secondary"
+            className="flex-1"
+            onClick={() => { setGradeModal(null); setGradeScore(""); setGradeFeedback(""); }}
+            >
+            Cancel
+            </Button>
+            <Button
+            variant="primary"
+            className="flex-1"
+            onClick={handleGradeSubmit}
+            loading={isGrading}
+            disabled={!gradeScore}
+            >
+            Submit Grade
+            </Button>
+            </div>
+            </div>
+            </div>
+            </ModelOverlay>
+        )}
+
         {previewFile && (
             <ModelOverlay onClose={closeFilePreview} maxWidth="max-w-4xl">
             <div className="w-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark shadow-xl">
@@ -497,6 +630,22 @@ export default function InstructorCourseAssignments() {
             </div>
             </div>
             <div className="flex items-center gap-2">
+            <button
+            type="button"
+            className="p-2 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-green-600 dark:text-green-400 transition-colors"
+            onClick={() => {
+                const sub = selectedSubmission;
+                if (sub) {
+                    setGradeScore(sub.score ?? "");
+                    setGradeFeedback(sub.feedback ?? "");
+                    setGradeModal(sub);
+                    closeFilePreview();
+                }
+            }}
+            title="Grade submission"
+            >
+            <ClipboardCheckIcon size={20} />
+            </button>
             <a href={previewFile.url} download={previewFile.name} className="p-2 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg">
             <DownloadIcon size={20} />
             </a>

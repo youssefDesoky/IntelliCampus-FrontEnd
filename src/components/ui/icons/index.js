@@ -13,6 +13,7 @@ export { default as BullHornIcon } from './BullHornIcon.jsx';
 export { default as BrainIcon } from './BrainIcon.jsx';
 export { default as BoldIcon } from './BoldIcon.jsx';
 export { default as BuildingIcon } from './BuildingIcon.jsx';
+export { default as BellSlashIcon } from './BellSlashIcon.jsx';
 
 export { default as CalendarCheckIcon } from './CalendarCheckIcon.jsx';
 export { default as CalendarDaysIcon  } from './CalendarDaysIcon.jsx';
@@ -46,6 +47,7 @@ export { default as FilePenIcon } from './FilePenIcon.jsx';
 export { default as FilterIcon } from './FilterIcon.jsx';
 export { default as FloppyDiskIcon } from './FloppyDiskIcon.jsx';
 export { default as FolderOpenIconDark } from './FolderOpenIconDark.jsx';
+export { default as FileSlashIcon } from './FileSlashIcon.jsx';
 
 export { default as Grid2ColIcon } from './Grid2ColIcon.jsx';
 export { default as Grid3ColIcon } from './Grid3ColIcon.jsx';

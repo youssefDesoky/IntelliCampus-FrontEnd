@@ -4,9 +4,11 @@ import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
 import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
-import RadioToggle from "../../../components/form/RadioToggle";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
-import { fetchInstructorRoles, fetchDepartments, fetchSpecializations } from "../services/adminApi";
+import { fetchInstructorRoles } from "../services/adminAccountsApi";
+import { fetchDepartments, fetchSpecializations } from "../services/adminDepartmentsApi";
+import { fetchRooms } from "../services/adminFacilitiesApi";
+import { fetchInstructors, fetchFaculties, fetchProfessorsByFaculty } from "../services/adminInstructorsApi";
 import countryList from "react-select-country-list";
 import {
   validateNationalIdOrPassport,
@@ -15,8 +17,9 @@ import {
   EXCLUDED_COUNTRIES,
 } from "../utils/validation";
 
-export default function InstructorForm({ onClose, method = "post", onSubmit, initialData = {} }) {
+export default function InstructorForm({ onClose, method = "post", onSubmit, initialData = {}, mode = "create" }) {
     const isEdit = method === "put";
+    const isLoanOnly = mode === "loan";
     const fileInputRef = useRef(null);
 
     const [photoPreview, setPhotoPreview] = useState(initialData.profileImage || null);
@@ -35,18 +38,33 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                 ) || nationalities[0] || null
             );
         }
-        return nationalities[0] || null;
+        return nationalities.find(n => n.value === "EG") || nationalities[0] || null;
     });
 
     const [selectedRole, setSelectedRole] = useState(null);
-    const [secondment, setSecondment] = useState(initialData.secondment || "no");
+    const [status, setStatus] = useState(initialData.status || "employed");
 
     const [departments, setDepartments] = useState([]);
     const [selectedDepartment, setSelectedDepartment] = useState(null);
     const [specializations, setSpecializations] = useState([]);
     const [selectedSpecialization, setSelectedSpecialization] = useState(null);
+    const [selectedLoanFaculty, setSelectedLoanFaculty] = useState(null);
+    const [loanFacultyOptions, setLoanFacultyOptions] = useState([]);
+    const [loanProfessorOptions, setLoanProfessorOptions] = useState([]);
+    const [selectedLoanProfessor, setSelectedLoanProfessor] = useState(null);
 
-    const isProfessor = selectedRole && ["professor", "associateprofessor"].includes(selectedRole.value);
+    const [allRooms, setAllRooms] = useState([]);
+    const [occupiedRoomIds, setOccupiedRoomIds] = useState(new Set());
+    const [selectedRoom, setSelectedRoom] = useState(null);
+
+    const isTAorAssistant = selectedRole && ["teachingassistant", "assistantlecturer"].includes(selectedRole.value);
+
+    const availableRoomOptions = useMemo(() => {
+        if (!allRooms.length) return [];
+        return allRooms
+            .filter(r => !occupiedRoomIds.has(r.roomId))
+            .map(r => ({ value: r.roomId, label: r.roomName }));
+    }, [allRooms, occupiedRoomIds]);
 
     const [errors, setErrors] = useState({});
     const isEgyptian = selectedNationality?.label === EGYPT_NATIONALITY;
@@ -97,6 +115,15 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
     }, [initialData.department]);
 
     useEffect(() => {
+        fetchFaculties()
+            .then(data => {
+                const options = (Array.isArray(data) ? data : []).map(f => ({ value: f.facultyId, label: f.facultyName }));
+                setLoanFacultyOptions(options);
+            })
+            .catch(console.error);
+    }, []);
+
+    useEffect(() => {
         if (!selectedDepartment?.value) {
             setSpecializations([]);
             setSelectedSpecialization(null);
@@ -116,6 +143,56 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
             })
             .catch(() => setSpecializations([]));
     }, [selectedDepartment]);
+
+    useEffect(() => {
+        if (!selectedLoanFaculty?.value) {
+            setLoanProfessorOptions([]);
+            setSelectedLoanProfessor(null);
+            return;
+        }
+        fetchProfessorsByFaculty(selectedLoanFaculty.value)
+            .then(data => {
+                const options = (Array.isArray(data) ? data : []).map(p => ({
+                    value: p.instructorId,
+                    label: p.fullName,
+                }));
+                setLoanProfessorOptions(options);
+                if (initialData.loanProfessorId && !selectedLoanProfessor) {
+                    const match = options.find(o => String(o.value) === String(initialData.loanProfessorId));
+                    if (match) setSelectedLoanProfessor(match);
+                } else if (options.length > 0 && !selectedLoanProfessor) {
+                    setSelectedLoanProfessor(options[0]);
+                }
+            })
+            .catch(() => setLoanProfessorOptions([]));
+    }, [selectedLoanFaculty]);
+
+    useEffect(() => {
+        Promise.all([fetchRooms(), fetchInstructors()])
+            .then(([rooms, instructors]) => {
+                const occupied = new Set(
+                    (instructors || [])
+                        .map(i => i.officeHoursRoomId)
+                        .filter(id => id != null)
+                );
+                if (initialData.officeHoursRoomId) {
+                    occupied.delete(initialData.officeHoursRoomId);
+                }
+                setOccupiedRoomIds(occupied);
+                setAllRooms(rooms || []);
+                if (initialData.officeHoursRoomId) {
+                    const match = (rooms || []).find(r => r.roomId === initialData.officeHoursRoomId);
+                    if (match) setSelectedRoom({ value: match.roomId, label: match.roomName });
+                }
+            })
+            .catch(console.error);
+    }, []);
+
+    useEffect(() => {
+        if (selectedRoom && !availableRoomOptions.find(o => o.value === selectedRoom.value)) {
+            setSelectedRoom(null);
+        }
+    }, [availableRoomOptions]);
 
     const handlePhotoClick = () => {
         fileInputRef.current?.click();
@@ -140,6 +217,21 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
         e.preventDefault();
         const form = e.currentTarget;
         const fd = new FormData(form);
+
+        if (isLoanOnly) {
+            const formData = Object.fromEntries(fd);
+            formData.status = "loan";
+            if (selectedLoanFaculty) {
+                formData.loanFromFacultyId = selectedLoanFaculty.value;
+            }
+            if (selectedLoanProfessor) {
+                formData.loanProfessorId = String(selectedLoanProfessor.value);
+            }
+            delete formData.departmentId;
+            onSubmit?.(formData);
+            return;
+        }
+
         const nationalId = fd.get("nationalId") || "";
         const phoneNumber = fd.get("phoneNumber") || "";
         const nationality = selectedNationality?.label || "";
@@ -157,6 +249,13 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
         formData.nationality = selectedNationality?.value;
         formData.departmentName = selectedDepartment?.label;
         formData.specializationId = selectedSpecialization?.value || null;
+        formData.officeHoursRoomId = selectedRoom?.value || null;
+        if (selectedLoanFaculty) {
+            formData.loanFromFacultyId = selectedLoanFaculty.value;
+        }
+        if (selectedLoanProfessor) {
+            formData.loanProfessorId = String(selectedLoanProfessor.value);
+        }
         delete formData.role;
         delete formData.departmentId;
         onSubmit?.(formData);
@@ -165,12 +264,43 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
     return (
         <BaseFormComponent
             isOpen={true}
-            title={isEdit ? "Edit Instructor" : "Create New Instructor"}
-            description={isEdit ? "Update the details below to edit this instructor." : "Fill in the details below to add a new instructor to the system."}
+            title={isLoanOnly ? "Loan Instructor" : isEdit ? "Edit Instructor" : "Create New Instructor"}
+            description={isLoanOnly ? "Fill in the details for the loaned instructor." : isEdit ? "Update the details below to edit this instructor." : "Fill in the details below to add a new instructor to the system."}
             onClose={onClose}
             onSubmit={handleSubmit}
-            submitText={isEdit ? "Save Changes" : "Create Instructor"}
+            submitText={isLoanOnly ? "Loan Instructor" : isEdit ? "Save Changes" : "Create Instructor"}
         >
+            {isLoanOnly ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&_.input-item]:w-full">
+                    <SelectBox
+                        className="w-full"
+                        label="Loan From College"
+                        name="loanFromFacultyId"
+                        labelDirection="flex-col"
+                        options={loanFacultyOptions}
+                        selectedOption={selectedLoanFaculty}
+                        onChange={setSelectedLoanFaculty}
+                        required
+                    />
+                    <SelectBox
+                        className="w-full"
+                        label="Loan Professor"
+                        name="loanProfessorId"
+                        labelDirection="flex-col"
+                        options={loanProfessorOptions}
+                        selectedOption={selectedLoanProfessor}
+                        onChange={setSelectedLoanProfessor}
+                        placeholder={loanProfessorOptions.length === 0 ? "Select a college first" : "Select professor"}
+                        required
+                    />
+                    <div>
+                        <DateInput label="Contract Start Date" name="contractStartDate" defaultValue={(initialData.contractStartDate || new Date().toISOString()).split("T")[0]} required />
+                    </div>
+                    <div>
+                        <DateInput label="Contract End Date" name="contractEndDate" defaultValue={(initialData.contractEndDate || "").split("T")[0]} required />
+                    </div>
+                </div>
+            ) : (
             <div className="flex flex-col sm:flex-row gap-6 items-stretch sm:items-start">
                 {/* Left: Photo */}
                 <div className="flex flex-col items-center shrink-0 self-center sm:self-start">
@@ -276,7 +406,7 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                                 onChange={setSelectedDepartment}
                             />
                             <SelectBox
-                                className="w-full"
+                                className={`w-full ${isEdit ? 'sm:col-span-2' : ''}`}
                                 label="Specialization"
                                 name="specializationId"
                                 labelDirection="flex-col"
@@ -284,27 +414,45 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                                 selectedOption={selectedSpecialization}
                                 onChange={setSelectedSpecialization}
                             />
-                            {isProfessor ? (
-                                <div className="flex flex-col">
-                                    <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Secondment</label>
-                                    <RadioToggle
-                                        name="secondment"
-                                        options={[
-                                            { value: "yes", label: "Yes" },
-                                            { value: "no", label: "No" },
-                                        ]}
-                                        value={secondment}
-                                        onChange={setSecondment}
-                                        className="w-full"
-                                    />
-                                </div>
-                            ) : (
-                                <div>
+                            {selectedRole && (
+                                <SelectBox
+                                    className="w-full"
+                                    label={isTAorAssistant ? "Common Room" : "Office Room"}
+                                    name="officeHoursRoomId"
+                                    labelDirection="flex-col"
+                                    options={availableRoomOptions}
+                                    selectedOption={selectedRoom}
+                                    onChange={setSelectedRoom}
+                                />
+                            )}
+                            {!isEdit && status === "employed" && (
+                                <div className={selectedRole ? 'sm:col-span-2' : ''}>
                                     <DateInput label="Hire Date" name="hireDate" defaultValue={(initialData.hireDate || new Date().toISOString()).split("T")[0]} required />
                                 </div>
                             )}
-                            {isProfessor && (
+                            {!isEdit && status === "loan" && (
                                 <>
+                                    <SelectBox
+                                        className="w-full"
+                                        label="Loan From College"
+                                        name="loanFromFacultyId"
+                                        labelDirection="flex-col"
+                                        options={loanFacultyOptions}
+                                        selectedOption={selectedLoanFaculty}
+                                        onChange={setSelectedLoanFaculty}
+                                        required
+                                    />
+                                    <SelectBox
+                                        className="w-full"
+                                        label="Loan Professor"
+                                        name="loanProfessorId"
+                                        labelDirection="flex-col"
+                                        options={loanProfessorOptions}
+                                        selectedOption={selectedLoanProfessor}
+                                        onChange={setSelectedLoanProfessor}
+                                        placeholder={loanProfessorOptions.length === 0 ? "Select a college first" : "Select professor"}
+                                        required
+                                    />
                                     <div>
                                         <DateInput label="Contract Start Date" name="contractStartDate" defaultValue={(initialData.contractStartDate || new Date().toISOString()).split("T")[0]} required />
                                     </div>
@@ -317,6 +465,7 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                     </div>
                 </div>
             </div>
+            )}
         </BaseFormComponent>
     );
 }

@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 import Section from "../../../../components/ui/Section";
+import Button from "../../../../components/ui/Button";
+import BaseComponent from "../../../../components/ui/BaseComponent";
 import DateTimeInput from "../../../../components/form/DateTimeInput";
-import { fetchCourseMeetings, createMeeting } from "../../../course/services/meetingsApi";
+import { createMeeting, fetchCourseMeetings } from "../../../course/services/meetingsApi";
 import MicIcon from "../../../../components/ui/icons/MicIcon";
 import MicSlashIcon from "../../../../components/ui/icons/MicSlashIcon";
 import VideoIcon from "../../../../components/ui/icons/VideoIcon";
@@ -14,6 +17,10 @@ import VolumeXIcon from "../../../../components/ui/icons/VolumeXIcon";
 import PhoneSlashIcon from "../../../../components/ui/icons/PhoneSlashIcon";
 import HandIcon from "../../../../components/ui/icons/HandIcon";
 import RecordIcon from "../../../../components/ui/icons/RecordIcon";
+import CalendarDaysIcon from "../../../../components/ui/icons/CalendarDaysIcon";
+import CalendarCheckIcon from "../../../../components/ui/icons/CalendarCheckIcon";
+import ClockIcon from "../../../../components/ui/icons/ClockIcon";
+import CheckIcon from "../../../../components/ui/icons/CheckIcon";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 
@@ -41,10 +48,8 @@ function ControlDivider() {
 export default function MeetingRoom() {
     const user = useRouteLoaderData("root");
     const { course, courseId } = useOutletContext();
-    const isInstructor = user?.role === "instructor" || user?.role === "Instructor";
+    const isInstructor = user?.roles?.some((r) => r === "Instructor");
 
-    const [meetings, setMeetings] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [title, setTitle] = useState("");
     const [dateTime, setDateTime] = useState("");
     const [creating, setCreating] = useState(false);
@@ -60,21 +65,14 @@ export default function MeetingRoom() {
     const containerRef = useRef(null);
     const apiRef = useRef(null);
 
-    const loadMeetings = useCallback(async () => {
-        try {
-            setLoading(true);
-            const data = await fetchCourseMeetings(courseId);
-            setMeetings(data);
-        } catch (err) {
-            showError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }, [courseId]);
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        loadMeetings();
-    }, [loadMeetings]);
+    const { data: meetings = [], isLoading: loading } = useQuery({
+        queryKey: ["courseMeetings", courseId],
+        queryFn: () => fetchCourseMeetings(courseId),
+        staleTime: 2 * 60 * 1000,
+        enabled: !!courseId,
+    });
 
     const initializeMeeting = () => {
         if (!activeMeeting) return;
@@ -153,7 +151,7 @@ export default function MeetingRoom() {
             });
             setTitle("");
             setDateTime("");
-            await loadMeetings();
+            queryClient.invalidateQueries({ queryKey: ["courseMeetings", courseId] });
             setActiveMeeting(meeting);
         } catch (err) {
             showError("Failed to create meeting. Please try again.");
@@ -238,13 +236,15 @@ export default function MeetingRoom() {
                         >
                             {isVideoMuted ? <VideoSlashIcon size={20} /> : <VideoIcon size={20} />}
                         </ControlButton>
-                        <ControlDivider />
-                        <ControlButton
-                            onClick={handleScreenShare}
-                            label="Share Screen"
-                        >
-                            <DesktopIcon size={20} />
-                        </ControlButton>
+                        <div className="hidden sm:contents">
+                            <ControlDivider />
+                            <ControlButton
+                                onClick={handleScreenShare}
+                                label="Share Screen"
+                            >
+                                <DesktopIcon size={20} />
+                            </ControlButton>
+                        </div>
                         <ControlButton
                             active={isChatOpen}
                             onClick={handleChat}
@@ -295,134 +295,205 @@ export default function MeetingRoom() {
     const upcomingMeetings = meetings.filter((m) => new Date(m.dateTime) > now);
     const pastMeetings = meetings.filter((m) => new Date(m.dateTime) <= now && !activeMeetingsList.find(a => a.meetingId === m.meetingId));
 
+    const stats = [
+        { label: "Total Meetings", value: meetings.length, icon: <CalendarDaysIcon size={20} />, color: "text-text-accent-default-light dark:text-text-accent-default-dark" },
+        { label: "Active", value: activeMeetingsList.length, icon: <VideoIcon size={20} />, color: "text-green-600 dark:text-green-400" },
+        { label: "Upcoming", value: upcomingMeetings.length, icon: <ClockIcon size={20} />, color: "text-blue-600 dark:text-blue-400" },
+        { label: "Past", value: pastMeetings.length, icon: <CheckIcon size={20} />, color: "text-text-tertiary-default-light dark:text-text-tertiary-default-dark" },
+    ];
+
+    const formatDateTime = (dateStr) => {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
+
     return (
         <Section>
-            <div className="space-y-6">
-                {isInstructor && (
-                    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-2xl p-6">
-                        <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">
-                            <i className="fas fa-plus-circle mr-2 text-text-accent-default-light dark:text-text-accent-default-dark"></i>
-                            Schedule a New Meeting
-                        </h2>
-                        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] items-end">
-                            <div>
-                                <label className="block text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">Meeting Title</label>
-                                <input
-                                    type="text" value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="w-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl px-4 py-2.5 text-text-primary-default-light dark:text-text-primary-default-dark placeholder-text-tertiary-default-light dark:placeholder-text-tertiary-default-dark focus:outline-none focus:ring-2 focus:ring-text-accent-default-light dark:focus:ring-text-accent-default-dark"
-                                    placeholder="e.g. Week 5 Lecture"
-                                />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    {isInstructor && (
+                        <BaseComponent title="Schedule a New Meeting" contentClassName="space-y-4">
+                            <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] items-end">
+                                <div>
+                                    <label className="block text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">
+                                        Meeting Title
+                                    </label>
+                                    <input
+                                        type="text" value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        className="w-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl px-4 py-2.5 text-text-primary-default-light dark:text-text-primary-default-dark placeholder-text-tertiary-default-light dark:placeholder-text-tertiary-default-dark focus:outline-none focus:ring-2 focus:ring-text-accent-default-light dark:focus:ring-text-accent-default-dark"
+                                        placeholder="e.g. Week 5 Lecture"
+                                    />
+                                </div>
+                                <DateTimeInput label="Date & Time" value={dateTime} onChange={(e) => setDateTime(e.target.value)} />
+                                <Button
+                                    onClick={handleCreate}
+                                    disabled={!title || !dateTime || creating}
+                                    loading={creating}
+                                    loadingText="Scheduling"
+                                    startIcon={<CalendarCheckIcon size={18} />}
+                                    className="w-full sm:w-fit"
+                                >
+                                    Schedule & Start
+                                </Button>
                             </div>
-                            <DateTimeInput label="Date & Time" value={dateTime} onChange={(e) => setDateTime(e.target.value)} />
-                            <button
-                                onClick={handleCreate}
-                                disabled={!title || !dateTime || creating}
-                                className="bg-text-accent-default-light dark:bg-text-accent-default-dark text-white px-6 py-2.5 rounded-xl hover:bg-text-accent-hover-light dark:hover:bg-text-accent-hover-dark disabled:opacity-50 transition-all flex items-center gap-2 whitespace-nowrap"
-                            >
-                                <i className="fas fa-calendar-plus"></i>
-                                {creating ? "Scheduling..." : "Schedule & Start"}
-                            </button>
-                        </div>
-                    </div>
-                )}
+                        </BaseComponent>
+                    )}
 
-                {!isInstructor && activeMeetingsList.length > 0 && (
-                    <div className="bg-bg-surface-green-default-light dark:bg-bg-surface-green-default-dark border border-green-500/30 rounded-2xl p-6">
-                        <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">
-                            <i className="fas fa-circle text-green-500 mr-2 animate-pulse"></i>
-                            Live Now
-                        </h2>
-                        <div className="space-y-3">
+                    {!isInstructor && activeMeetingsList.length > 0 && (
+                        <BaseComponent title="Live Now" contentClassName="space-y-3">
                             {activeMeetingsList.map((meeting) => (
-                                <div key={meeting.meetingId} className="flex items-center justify-between bg-white/50 dark:bg-white/10 rounded-xl p-4">
-                                    <div>
-                                        <h3 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{meeting.title}</h3>
-                                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                            Started at {new Date(meeting.dateTime).toLocaleTimeString()}
-                                        </p>
+                                <div
+                                    key={meeting.meetingId}
+                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bg-surface-green-default-light dark:bg-bg-surface-green-default-dark border border-green-500/30 rounded-xl p-4"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-green-100 dark:bg-green-900/30">
+                                            <VideoIcon size={20} className="text-green-600 dark:text-green-400" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                                                {meeting.title}
+                                            </h3>
+                                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                                Started at {new Date(meeting.dateTime).toLocaleTimeString()}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleJoin(meeting)}
-                                        className="bg-green-500 text-white px-6 py-2.5 rounded-xl hover:bg-green-600 transition-all flex items-center gap-2 font-semibold"
-                                    >
-                                        <i className="fas fa-sign-in-alt"></i>
+                                    <Button variant="success" onClick={() => handleJoin(meeting)} startIcon={<VideoIcon size={16} />} className="w-full sm:w-fit">
                                         Join Now
-                                    </button>
+                                    </Button>
                                 </div>
                             ))}
-                        </div>
-                    </div>
-                )}
+                        </BaseComponent>
+                    )}
 
-                <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-2xl p-6">
-                    <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">
-                        <i className="fas fa-video mr-2 text-green-500"></i>
-                        {isInstructor ? "Upcoming Meetings" : "Scheduled Meetings"}
-                    </h2>
-                    {loading ? (
-                        <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading meetings...</p>
-                    ) : meetings.length === 0 ? (
-                        <div className="text-center py-8 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            <i className="fas fa-video-slash text-3xl mb-2"></i>
-                            <p>No meetings scheduled for this course yet.</p>
-                        </div>
-                    ) : upcomingMeetings.length === 0 && activeMeetingsList.length === 0 ? (
-                        <div className="text-center py-8 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            <i className="fas fa-calendar-check text-3xl mb-2"></i>
-                            <p>No upcoming meetings.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {upcomingMeetings.map((meeting) => (
-                                <div key={meeting.meetingId} className="flex items-center justify-between bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-4">
-                                    <div>
-                                        <h3 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{meeting.title}</h3>
-                                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                            <i className="fas fa-clock mr-1"></i>
-                                            {new Date(meeting.dateTime).toLocaleString()}
-                                        </p>
+                    <BaseComponent
+                        title={isInstructor ? "Upcoming Meetings" : "Scheduled Meetings"}
+                        contentClassName="space-y-3"
+                    >
+                        {loading ? (
+                            <div className="space-y-3">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="animate-pulse flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-4">
+                                        <div className="w-10 h-10 shrink-0 rounded-full bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark" />
+                                        <div className="space-y-2 flex-1 w-full sm:w-auto">
+                                            <div className="h-4 w-3/4 sm:w-48 bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark rounded" />
+                                            <div className="h-3 w-1/2 sm:w-32 bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark rounded" />
+                                        </div>
+                                        <div className="h-9 w-full sm:w-20 bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark rounded-lg" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : meetings.length === 0 ? (
+                            <div className="text-center py-10 border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl">
+                                <VideoSlashIcon size={48} className="mx-auto text-text-tertiary-default-light dark:text-text-tertiary-default-dark mb-3" />
+                                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark font-medium">
+                                    No meetings scheduled yet
+                                </p>
+                                {isInstructor && (
+                                    <p className="text-sm text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-1">
+                                        Use the form above to schedule your first meeting
+                                    </p>
+                                )}
+                            </div>
+                        ) : upcomingMeetings.length === 0 && activeMeetingsList.length === 0 ? (
+                            <div className="text-center py-10 border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl">
+                                <CalendarCheckIcon size={48} className="mx-auto text-text-tertiary-default-light dark:text-text-tertiary-default-dark mb-3" />
+                                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark font-medium">
+                                    No upcoming meetings
+                                </p>
+                            </div>
+                        ) : (
+                            upcomingMeetings.map((meeting) => (
+                                <div
+                                    key={meeting.meetingId}
+                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-4 hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark transition-colors"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark">
+                                            <VideoIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                                                {meeting.title}
+                                            </h3>
+                                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark flex items-center gap-1.5 mt-0.5">
+                                                <ClockIcon size={14} />
+                                                {formatDateTime(meeting.dateTime)}
+                                            </p>
+                                        </div>
                                     </div>
                                     {isInstructor ? (
-                                        <button
-                                            onClick={() => handleJoin(meeting)}
-                                            className="bg-green-500 text-white px-5 py-2 rounded-xl hover:bg-green-600 transition-all flex items-center gap-2"
-                                        >
-                                            <i className="fas fa-sign-in-alt"></i>
+                                        <Button variant="primary" onClick={() => handleJoin(meeting)} startIcon={<VideoIcon size={16} />} className="w-full sm:w-fit">
                                             Start
-                                        </button>
+                                        </Button>
                                     ) : (
-                                        <span className="text-xs bg-text-accent-default-light dark:bg-text-accent-default-dark text-white px-3 py-1.5 rounded-full">
+                                        <span className="hidden sm:inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1.5 rounded-full text-xs font-semibold bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark text-blue-700 dark:text-blue-300">
+                                            <ClockIcon size={12} />
                                             Scheduled
                                         </span>
                                     )}
                                 </div>
+                            ))
+                        )}
+                    </BaseComponent>
+
+                    {isInstructor && pastMeetings.length > 0 && (
+                        <BaseComponent title="Past Meetings" contentClassName="space-y-2">
+                            {pastMeetings.map((meeting) => (
+                                <div
+                                    key={meeting.meetingId}
+                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-3 opacity-60 hover:opacity-80 transition-opacity"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark">
+                                            <CheckIcon size={16} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark text-sm truncate">
+                                                {meeting.title}
+                                            </h3>
+                                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark flex items-center gap-1 mt-0.5">
+                                                <ClockIcon size={12} />
+                                                {formatDateTime(meeting.dateTime)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark self-start sm:self-auto">Ended</span>
+                                </div>
                             ))}
-                        </div>
+                        </BaseComponent>
                     )}
                 </div>
 
-                {isInstructor && pastMeetings.length > 0 && (
-                    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-2xl p-6">
-                        <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">
-                            <i className="fas fa-history mr-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark"></i>
-                            Past Meetings
-                        </h2>
-                        <div className="space-y-2">
-                            {pastMeetings.map((meeting) => (
-                                <div key={meeting.meetingId} className="flex items-center justify-between bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-3 opacity-70">
-                                    <div>
-                                        <h3 className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{meeting.title}</h3>
-                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                            {new Date(meeting.dateTime).toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">Ended</span>
+                <div className="hidden lg:block space-y-6">
+                    <BaseComponent title="Overview" contentClassName="space-y-3">
+                        {stats.map((stat) => (
+                            <div
+                                key={stat.label}
+                                className="flex items-center justify-between p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg"
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <span className={stat.color}>{stat.icon}</span>
+                                    <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                        {stat.label}
+                                    </span>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                                <span className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                    {stat.value}
+                                </span>
+                            </div>
+                        ))}
+                    </BaseComponent>
+                </div>
             </div>
         </Section>
     );

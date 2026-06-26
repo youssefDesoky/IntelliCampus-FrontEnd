@@ -1,38 +1,30 @@
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Section from "../../../../components/ui/Section";
 import CoursePrerequisitesCard from "./CoursePrerequisitesCard";
-
-const courseData = [
-    {
-        id: 1, title: "Data Structures", code: "CS201", creditHours: 3,
-        prerequisites: [{ id: "CS101", title: "Introduction to Programming" }],
-    },
-    {
-        id: 2, title: "Algorithms", code: "CS202", creditHours: 3,
-        prerequisites: [{ id: "CS201", title: "Data Structures" }],
-    },
-    {
-        id: 3, title: "Operating Systems", code: "CS301", creditHours: 3,
-        prerequisites: [{ id: "CS201", title: "Data Structures" }],
-    },
-    {
-        id: 4, title: "Database Systems", code: "CS302", creditHours: 3,
-        prerequisites: [{ id: "CS201", title: "Data Structures" }],
-    },
-    {
-        id: 5, title: "Computer Networks", code: "CS303", creditHours: 3,
-        prerequisites: [{ id: "CS201", title: "Data Structures" }],
-    },
-    {
-        id: 6, title: "Artificial Intelligence", code: "CS401", creditHours: 3,
-        prerequisites: [
-            { id: "CS202", title: "Algorithms" },
-            { id: "CS301", title: "Operating Systems" },
-        ],
-    },
-];
+import { PrereqPageSkeleton } from "./SkeletonLoader";
+import { fetchCoursePrerequisites } from "../../services/profileApi";
 
 export default function CoursePrerequisitesBody({ search = "" }) {
+    const { data: courseData = [], isLoading: loading, error } = useQuery({
+        queryKey: ["coursePrerequisites"],
+        queryFn: async () => {
+            const data = await fetchCoursePrerequisites();
+            const list = Array.isArray(data) ? data : [];
+            return list.map((course) => ({
+                id: course.courseId,
+                title: course.courseName || "",
+                code: course.courseCode || "",
+                creditHours: course.creditHours || "",
+                prerequisites: (course.prerequisites || []).map((p) => ({
+                    id: p.code || "",
+                    title: p.title || "",
+                })),
+            }));
+        },
+        staleTime: 10 * 60 * 1000,
+    });
+
     const filtered = useMemo(() => {
         if (!search.trim()) return courseData;
         const q = search.toLowerCase();
@@ -44,7 +36,15 @@ export default function CoursePrerequisitesBody({ search = "" }) {
                     (p) => p.title.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)
                 )
         );
-    }, [search]);
+    }, [courseData, search]);
+
+    if (loading) {
+        return (
+            <Section>
+                <PrereqPageSkeleton />
+            </Section>
+        );
+    }
 
     return (
         <Section>
@@ -57,7 +57,7 @@ export default function CoursePrerequisitesBody({ search = "" }) {
             {filtered.length === 0 && (
                 <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-10 text-center">
                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        No courses match your search.
+                        {search.trim() ? "No courses match your search." : "No prerequisite data available."}
                     </p>
                 </div>
             )}

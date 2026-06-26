@@ -7,7 +7,9 @@ import RadioToggle from "../../../components/form/RadioToggle";
 import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
-import { fetchBylaws, fetchSpecializations, fetchDepartments, fetchStudentTypes } from "../services/adminApi";
+import { fetchBylaws } from "../services/adminBylawsApi";
+import { fetchSpecializations, fetchDepartments } from "../services/adminDepartmentsApi";
+import { fetchStudentTypes } from "../services/adminStudentsApi";
 import {
   validateNationalIdOrPassport,
   validatePhoneNumber,
@@ -28,7 +30,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
     const [photoPreview, setPhotoPreview] = useState(initialData.profileImage || null);
     const [photoFile, setPhotoFile] = useState(null);
 
-    const defaultType = defaultStudentType || 'undergrad';
+    const defaultType = defaultStudentType || 'bachelor';
     const [studentTypes, setStudentTypes] = useState([]);
     const [selectedStudentType, setSelectedStudentType] = useState(
         studentTypes.find(t => t.value === defaultType) || studentTypes[0]
@@ -37,9 +39,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
     // Synchronous — no fetch needed
     const nationalities = useMemo(() => countryList().getData().filter(c => !EXCLUDED_COUNTRIES.includes(c.value)), []);
 
-    const isPostgrad = isSuperAdmin
-        ? ["masters", "phd", "diploma"].includes(selectedStudentType?.value)
-        : ["masters", "phd", "diploma"].includes(defaultType);
+    const isPostgrad = ["masters", "phd", "diploma"].includes(selectedStudentType?.value);
 
     const [selectedProgram, setSelectedProgram] = useState(() => {
         if (initialData.program) {
@@ -47,6 +47,8 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
         }
         return programs[0];
     });
+
+    const isCredit = selectedProgram?.value === "Credit";
 
     const [departments, setDepartments] = useState([]);
     const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -65,7 +67,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                 ) || nationalities[0] || null
             );
         }
-        return nationalities[0] || null;
+        return nationalities.find(n => n.value === "EG") || nationalities[0] || null;
     });
 
     const [errors, setErrors] = useState({});
@@ -80,25 +82,37 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                 const options = data.map(t => ({ value: t.toLowerCase(), label: t }));
                 setStudentTypes(options);
                 if (options.length > 0) {
-                    const defaultOption = options.find(t => t.value === defaultType) || options[0];
+                    const initialType = isEdit && initialData.studentType
+                        ? initialData.studentType.toLowerCase()
+                        : defaultType;
+                    const defaultOption = options.find(t => t.value === initialType) || options[0];
                     setSelectedStudentType(defaultOption);
                 }
             })
             .catch(console.error);
-    }, [defaultType]);
+    }, [defaultType, isEdit, initialData.studentType]);
+
+    const bylawTypeMap = {
+        bachelor: 'Bachelor',
+        masters: 'Master',
+        phd: 'PhD',
+        diploma: 'Diploma',
+    };
 
     useEffect(() => {
-        fetchBylaws()
+        const type = selectedStudentType?.value ? bylawTypeMap[selectedStudentType.value] : undefined;
+        fetchBylaws(type)
             .then(data => {
                 const options = data.map(b => ({ value: b.bylawId, label: b.name }));
                 setBylaws(options);
+                setSelectedBylaw(null);
                 if (initialData.bylawId) {
                     const match = options.find(o => o.value === initialData.bylawId);
                     if (match) setSelectedBylaw(match);
                 }
             })
             .catch(console.error);
-    }, [initialData.bylawId]);
+    }, [selectedStudentType, initialData.bylawId]);
 
     useEffect(() => {
         fetchDepartments()
@@ -180,8 +194,8 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
         if (!validate(e.currentTarget)) return;
         const form = e.currentTarget;
         const formData = Object.fromEntries(new FormData(form));
-        formData.level = 1;
-        formData.profileImage = photoPreview;
+        if (!isEdit) formData.level = 1;
+        formData.profileImage = photoPreview ?? "";
         formData.bylawId = selectedBylaw?.value || formData.bylawId;
         if (isSuperAdmin && !isEdit) {
             formData.studentType = selectedStudentType?.value || formData.studentType;
@@ -302,7 +316,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                                     checked={selectedStudentType?.value === type.value}
                                                     onChange={() => {
                                                         setSelectedStudentType(type);
-                                                        if (type.value === 'undergrad') {
+                                                        if (type.value === 'bachelor') {
                                                             setSelectedDepartment(null);
                                                             setSelectedSpecialization(null);
                                                         }
@@ -319,19 +333,18 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                 </div>
                             )}
 
-                            <SelectBox
-                                className="w-full"
-                                label="Bylaw"
-                                name="bylawId"
-                                labelDirection="flex-col"
-                                options={bylaws}
-                                selectedOption={selectedBylaw}
-                                onChange={setSelectedBylaw}
-                            />
-
-                            {!isPostgrad && isEdit && (
-                                <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
+                            {!isPostgrad && (
+                                <SelectBox
+                                    className={`w-full ${isEdit ? 'sm:col-span-2' : ''}`}
+                                    label="Bylaw"
+                                    name="bylawId"
+                                    labelDirection="flex-col"
+                                    options={bylaws}
+                                    selectedOption={selectedBylaw}
+                                    onChange={setSelectedBylaw}
+                                />
                             )}
+
                             {!isPostgrad && !isEdit && (
                                 <div className="flex flex-col">
                                     <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Program</label>
@@ -348,14 +361,39 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                 </div>
                             )}
 
-                            {!isPostgrad && !isEdit && (
+                            {!isPostgrad && isCredit && !isEdit && (
+                                <SelectBox
+                                    className="w-full"
+                                    label="Department"
+                                    name="departmentId"
+                                    labelDirection="flex-col"
+                                    options={departments}
+                                    selectedOption={selectedDepartment}
+                                    onChange={setSelectedDepartment}
+                                />
+                            )}
+
+                            {!isPostgrad && isCredit && !isEdit && (
+                                <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={new Date().toISOString().split("T")[0]} required />
+                            )}
+
+                            {!isPostgrad && !isCredit && !isEdit && (
                                 <div className="col-span-1 sm:col-span-2">
-                                    <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
+                                    <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={new Date().toISOString().split("T")[0]} required />
                                 </div>
                             )}
 
                             {isPostgrad && (
                                 <>
+                                    <SelectBox
+                                        className={`w-full ${isEdit ? 'sm:col-span-2' : ''}`}
+                                        label="Bylaw"
+                                        name="bylawId"
+                                        labelDirection="flex-col"
+                                        options={bylaws}
+                                        selectedOption={selectedBylaw}
+                                        onChange={setSelectedBylaw}
+                                    />
                                     <SelectBox
                                         className="w-full"
                                         label="Department"
@@ -374,7 +412,26 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                         selectedOption={selectedSpecialization}
                                         onChange={setSelectedSpecialization}
                                     />
-                                    <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={(initialData.enrollmentDate || new Date().toISOString()).split("T")[0]} required />
+                                    {!isEdit && (
+                                        <div className="flex flex-col">
+                                            <label className="block mb-2 text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Program</label>
+                                            <RadioToggle
+                                                name="program"
+                                                options={programs}
+                                                value={selectedProgram.value}
+                                                onChange={(value) => {
+                                                    const selected = programs.find(p => p.value === value) || programs[0];
+                                                    setSelectedProgram(selected);
+                                                }}
+                                                className="w-full"
+                                            />
+                                        </div>
+                                    )}
+                                    {!isEdit && (
+                                        <div className="col-span-1 sm:col-span-2">
+                                            <DateInput label="Enrollment Date" name="enrollmentDate" defaultValue={new Date().toISOString().split("T")[0]} required />
+                                        </div>
+                                    )}
                                 </>
                             )}
                         </div>

@@ -18,10 +18,8 @@ import {
     fetchInstructorById,
     fetchInstructorCourses,
     fetchInstructorTASections,
-    fetchInstructorAvailableSections,
-    changeInstructorSection,
-    sendEmail,
-} from "../../../feature/admin/services/adminApi";
+} from "../../../feature/admin/services/adminInstructorsApi";
+import { sendEmail } from "../../../feature/admin/services/adminCommunicationApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 
@@ -52,10 +50,6 @@ export default function InstructorDetails() {
     const [courses, setCourses] = useState([]);
     const [taSections, setTaSections] = useState([]);
 
-    const [sectionChangeTarget, setSectionChangeTarget] = useState(null);
-    const [availableSections, setAvailableSections] = useState([]);
-    const [newSection, setNewSection] = useState("");
-
     const [isEmailOpen, setIsEmailOpen] = useState(false);
     const [emailSubject, setEmailSubject] = useState("");
     const [emailBody, setEmailBody] = useState("");
@@ -81,6 +75,47 @@ export default function InstructorDetails() {
         try {
             const data = await fetchInstructorById(instructorId);
             setInstructor(data);
+
+            const role = (data?.instructorRole || "").toLowerCase().replace(/\s+/g, "");
+            const isTA = role.includes("teachingassistant") || role.includes("assistantlecturer");
+
+            if (isTA) {
+                const [tas, instrCourses] = await Promise.all([
+                    fetchInstructorTASections(instructorId).catch(() => []),
+                    fetchInstructorCourses(instructorId).catch(() => []),
+                ]);
+                const semesterMap = {};
+                const taCourseIds = new Set();
+                const tasArr = Array.isArray(tas) ? tas : [];
+                const coursesArr = Array.isArray(instrCourses) ? instrCourses : [];
+                coursesArr.forEach(c => {
+                    semesterMap[c.courseId] = c.semester;
+                });
+                const enrichedTASections = tasArr.map(s => {
+                    taCourseIds.add(s.courseId);
+                    return {
+                        ...s,
+                        semester: s.semester || semesterMap[s.courseId] || "—",
+                    };
+                });
+                const courseEntries = coursesArr
+                    .filter(c => !taCourseIds.has(c.courseId))
+                    .map(c => ({
+                        courseName: c.courseName || "—",
+                        section: c.className || c.groupCode || "—",
+                        semester: c.semester || semesterMap[c.courseId] || "—",
+                        courseId: c.courseId,
+                        classId: c.classId,
+                        groupCode: c.className,
+                        isCourseEntry: true,
+                    }));
+                setTaSections([...enrichedTASections, ...courseEntries]);
+                setCourses([]);
+            } else {
+                const instrCourses = await fetchInstructorCourses(instructorId).catch(() => []);
+                setCourses(Array.isArray(instrCourses) ? instrCourses : []);
+                setTaSections([]);
+            }
         } catch (err) {
             showError(err.message);
         } finally {
@@ -88,43 +123,10 @@ export default function InstructorDetails() {
         }
     }, [instructorId]);
 
-    const loadCourses = useCallback(async () => {
-        try {
-            const [instrCourses, tas] = await Promise.all([
-                fetchInstructorCourses(instructorId),
-                fetchInstructorTASections(instructorId),
-            ]);
-            setCourses(instrCourses);
-            setTaSections(tas);
-        } catch (err) {
-            showError(err.message);
-        }
-    }, [instructorId]);
-
     useEffect(() => { loadInstructor(); }, [loadInstructor]);
-    useEffect(() => { loadCourses(); }, [loadCourses]);
 
-    const isTA = (instructor?.instructorRole || "").toLowerCase().includes("teaching assistant") || (instructor?.instructorRole || "").toLowerCase().includes("ta");
-
-    const handleOpenSectionChange = async (item) => {
-        setSectionChangeTarget(item);
-        setNewSection(item.section || "");
-        try {
-            const sections = await fetchInstructorAvailableSections(instructorId, item._id || item.courseId);
-            setAvailableSections(sections);
-        } catch { setAvailableSections(["A", "B", "C", "D"]); }
-    };
-
-    const handleConfirmSection = async () => {
-        if (!newSection || !sectionChangeTarget) return;
-        try {
-            await changeInstructorSection(instructorId, sectionChangeTarget._id || sectionChangeTarget.courseId, newSection);
-            await loadCourses();
-        } catch (err) {
-            showError(err.message);
-        }
-        setSectionChangeTarget(null);
-    };
+    const roleNormalized = (instructor?.instructorRole || "").toLowerCase().replace(/\s+/g, "");
+    const isTA = roleNormalized.includes("teachingassistant") || roleNormalized.includes("assistantlecturer");
 
     if (loading) {
         return (
@@ -173,7 +175,7 @@ export default function InstructorDetails() {
                             </h1>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs font-mono tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                    {instructor.instructorId}
+                                    {instructor.instructorCode}
                                 </span>
                             </div>
                         </div>
@@ -260,7 +262,7 @@ export default function InstructorDetails() {
                     <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {[
                             { label: "Department", value: instructor.departmentName || instructor.department || "—", color: "text-blue-500", icon: BookIcon },
-                            { label: "Role", value: instructor.role || "—", color: "text-purple-500", icon: StarIcon },
+                            { label: "Role", value: instructor.instructorRole || "—", color: "text-purple-500", icon: StarIcon },
                             { label: "Courses", value: courses.length, color: "text-amber-500", icon: CheckIcon },
                             { label: isTA ? "TA Sections" : "Status", value: isTA ? taSections.length : (instructor.status || "—"), color: "text-emerald-500", icon: CheckIcon },
                         ].map((stat) => (
@@ -361,59 +363,47 @@ export default function InstructorDetails() {
                         <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">No courses found.</p>
                     ) : (
                         <>
+                            {courses.length > 0 && (
                                 <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark overflow-hidden">
-                                <div className="px-5 py-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark flex items-center gap-2">
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Courses Taught</h3>
-                                    <span className="ml-auto text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{courses.length} course{courses.length !== 1 ? "s" : ""}</span>
-                                </div>
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                             <th className="text-left px-5 py-3 font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Course Name</th>
-                                            <th className="text-left px-5 py-3 font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Section</th>
                                             <th className="text-left px-5 py-3 font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Semester</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
                                         {courses.map((c) => (
-                                            <tr key={c._id} className="hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors">
-                                                <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{c.title}</td>
-                                                <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{c.section ?? "—"}</td>
-                                                <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{c.semester ?? "—"}</td>
+                                            <tr key={c.courseId} className="hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors">
+                                                <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{c.courseName || "—"}</td>
+                                                <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{c.semester || "—"}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
+                            )}
 
                             {isTA && taSections.length > 0 && (
                                 <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark overflow-hidden">
-                                    <div className="px-5 py-3 bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark flex items-center gap-2">
-                                        <StarIcon className="w-4 h-4 text-text-accent-active-light dark:text-text-accent-active-dark" />
-                                        <h3 className="text-xs font-bold uppercase tracking-wider text-text-accent-active-light dark:text-text-accent-active-dark">TA Section Assignments</h3>
-                                        <span className="ml-auto text-xs text-text-accent-active-light dark:text-text-accent-active-dark">{taSections.length} section{taSections.length !== 1 ? "s" : ""}</span>
-                                    </div>
-                                    <div className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
-                                        {taSections.map((ta) => (
-                                            <div key={ta._id} className="flex items-center justify-between px-5 py-4 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors">
-                                                <div className="flex items-center gap-4 min-w-0">
-                                                    <div className="w-10 h-10 rounded-lg bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center shrink-0">
-                                                        <StarIcon className="w-5 h-5 text-text-accent-active-light dark:text-text-accent-active-dark" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">{ta.courseTitle}</p>
-                                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{ta.courseCode}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3 shrink-0 ml-4">
-                                                    <span className="text-sm font-medium px-3 py-1 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark">
-                                                        Section {ta.section}
-                                                    </span>
-                                                    <Button variant="secondary" size="sm" onClick={() => handleOpenSectionChange(ta)}>Change</Button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                                <th className="text-left px-5 py-3 font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Course Name</th>
+                                                <th className="text-left px-5 py-3 font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Section</th>
+                                                <th className="text-left px-5 py-3 font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">Semester</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
+                                            {taSections.map((ta) => (
+                                                <tr key={ta.isCourseEntry ? `course-${ta.courseId}` : ta.classId} className="hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors">
+                                                    <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{ta.courseName || "—"}</td>
+                                                    <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{ta.groupCode || ta.section || "—"}</td>
+                                                    <td className="px-5 py-4 text-text-primary-default-light dark:text-text-primary-default-dark">{ta.semester || "—"}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             )}
                         </>
@@ -423,34 +413,6 @@ export default function InstructorDetails() {
 
             {isEditOpen && (
                 <InstructorForm method="put" initialData={instructor} onClose={() => setIsEditOpen(false)} />
-            )}
-
-            {sectionChangeTarget && (
-                <ModelOverlay onClose={() => setSectionChangeTarget(null)}>
-                    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl p-6 w-full max-w-md">
-                        <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">Change Section</h3>
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">
-                            {sectionChangeTarget.courseTitle || sectionChangeTarget.title}
-                        </p>
-                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-4">
-                            Current: Section <strong>{sectionChangeTarget.section}</strong>
-                        </p>
-                        <select
-                            value={newSection}
-                            onChange={(e) => setNewSection(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark mb-4 outline-none focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark"
-                        >
-                            <option value="">Select section...</option>
-                            {availableSections.map((s) => (
-                                <option key={s} value={s}>Section {s}</option>
-                            ))}
-                        </select>
-                        <div className="flex justify-end gap-3">
-                            <Button variant="secondary" onClick={() => setSectionChangeTarget(null)}>Cancel</Button>
-                            <Button variant="primary" onClick={handleConfirmSection} disabled={!newSection}>Confirm</Button>
-                        </div>
-                    </div>
-                </ModelOverlay>
             )}
         </div>
     );

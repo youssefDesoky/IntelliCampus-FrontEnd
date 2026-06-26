@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 import { fetchCourseAnnouncements, createCourseAnnouncement, updateCourseAnnouncement } from "../../../course/components/announcements";
 import CourseAnnouncementCard from "../../../course/components/announcements/CourseAnnouncementCard";
@@ -12,8 +13,6 @@ export default function InstructorCourseAnnouncements() {
     const outletContext = useOutletContext();
     const user = outletContext?.user;
     const courseId = outletContext?.courseId;
-    const [announcements, setAnnouncements] = useState([]);
-    const [loading, setLoading] = useState(true);
     const { showError } = useError();
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [content, setContent] = useState("");
@@ -21,25 +20,15 @@ export default function InstructorCourseAnnouncements() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingAnnouncement, setEditingAnnouncement] = useState(null);
 
-    const loadAnnouncements = useCallback(async () => {
-        if (!courseId) return;
+    const queryClient = useQueryClient();
 
-        setLoading(true);
-
-        try {
-            const data = await fetchCourseAnnouncements(courseId);
-            setAnnouncements(Array.isArray(data) ? data : []);
-        } catch (err) {
-            showError(err.message || "Failed to load announcements.");
-            setAnnouncements([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [courseId]);
-
-    useEffect(() => {
-        loadAnnouncements();
-    }, [loadAnnouncements]);
+    const { data: announcements = [], isLoading: loading } = useQuery({
+        queryKey: ["instructorCourseAnnouncements", courseId],
+        queryFn: () => fetchCourseAnnouncements(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+        select: (data) => Array.isArray(data) ? data : [],
+    });
 
     const handleAddAttachment = (event) => {
         const selectedFiles = Array.from(event.target.files || []);
@@ -75,7 +64,7 @@ export default function InstructorCourseAnnouncements() {
             setAttachments([]);
             setEditingAnnouncement(null);
             setShowCreateForm(false);
-            await loadAnnouncements();
+            queryClient.invalidateQueries({ queryKey: ["instructorCourseAnnouncements", courseId] });
         } catch (err) {
             showError(`Failed to ${editingAnnouncement ? "update" : "create"} announcement: ${err.message}`);
         } finally {
@@ -98,23 +87,15 @@ export default function InstructorCourseAnnouncements() {
     };
 
     const handleDeleteAnnouncement = (announcementId) => {
-        setAnnouncements((prev) => prev.filter((a) => a.id !== announcementId));
+        queryClient.invalidateQueries({ queryKey: ["instructorCourseAnnouncements", courseId] });
     };
 
     const handlePinAnnouncement = (announcementId) => {
-        setAnnouncements((prev) =>
-            prev.map((a) =>
-                a.id === announcementId ? { ...a, isPinned: true } : a
-            )
-        );
+        queryClient.invalidateQueries({ queryKey: ["instructorCourseAnnouncements", courseId] });
     };
 
     const handleUnpinAnnouncement = (announcementId) => {
-        setAnnouncements((prev) =>
-            prev.map((a) =>
-                a.id === announcementId ? { ...a, isPinned: false } : a
-            )
-        );
+        queryClient.invalidateQueries({ queryKey: ["instructorCourseAnnouncements", courseId] });
     };
 
     // Sort announcements: pinned first, then by date descending
@@ -131,18 +112,19 @@ export default function InstructorCourseAnnouncements() {
 
     return (
         <div className="space-y-4">
-            {/* Create Announcement Button */}
-            <Button
-                type="button"
-                variant="primary"
-                onClick={() => setShowCreateForm(true)}
-                className="fixed bottom-5 right-5 z-50 group"
-            >
-                <PlusIcon size={24} />
-                <span className="max-w-0 -ml-2 group-hover:ml-0 overflow-hidden group-hover:max-w-40 transition-all! duration-300! whitespace-nowrap">
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                    Announcements
+                </h2>
+                <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => setShowCreateForm(true)}
+                    startIcon={<PlusIcon size={18} />}
+                >
                     Add New Announcement
-                </span>
-            </Button>
+                </Button>
+            </div>
 
             {/* Create/Edit Announcement Form Modal */}
             <BaseFormComponent

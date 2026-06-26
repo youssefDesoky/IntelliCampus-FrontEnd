@@ -1,9 +1,9 @@
 import { Navigate, Outlet, useRouteLoaderData } from "react-router-dom";
 
 const ROLE_GROUP_MAP = {
-  student: ["student_undergrad", "student_masters", "student_phd", "student_diploma"],
+  student: ["student_bachelor", "student_masters", "student_phd", "student_diploma"],
   instructor: ["instructor"],
-  admin: ["admin_undergrad", "admin_postgrad", "admin_academicstaff", "superadmin"],
+  admin: ["admin_bachelor", "admin_masters", "admin_postgrad", "admin_phd", "admin_diploma", "admin_academicstaff", "superadmin"],
   superadmin: ["superadmin"],
 };
 

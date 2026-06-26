@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Section from "../../../components/ui/Section";
-import { EllipsisVerticalIcon, FileIcon, FileLinesIcon, ClipboardCheckIcon, BookIcon } from "../../../components/ui/icons";
+import { BellSlashIcon, EllipsisVerticalIcon, FileIcon, FileLinesIcon, ClipboardCheckIcon, BookIcon } from "../../../components/ui/icons";
 import { addDays, format, isSameDay } from "date-fns";
 
 const categoryStyles = {
@@ -143,7 +143,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
     ];
 
     return (
-        <Section className={`${className} bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 md:p-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark`}>
+        <Section className={`${className} flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 md:p-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark`}>
             {/* Header */}
             <div className="mb-6 flex items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
@@ -155,9 +155,10 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
             </div>
 
             {/* Timeline groups */}
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-8 flex-1">
                 {filteredItems.length === 0 && (
-                    <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark px-4 py-8 text-center text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                    <div className="flex-1 flex flex-col items-center justify-center w-full h-full rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark px-4 py-8 text-center text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                        <BellSlashIcon size={48} className="mb-4 opacity-40" />
                         No reminders found for the selected date range.
                     </div>
                 )}

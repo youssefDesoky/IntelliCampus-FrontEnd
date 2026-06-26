@@ -1,9 +1,25 @@
-import { useState } from "react";
-import { PaperclipIcon, PaperPlaneIcon } from "../../../components/ui/icons";
+import { useState, useRef, useEffect } from "react";
+import { PaperclipIcon, PaperPlaneIcon, ImageIcon, FileIcon } from "../../../components/ui/icons";
 
-export default function ChatControls({ sendMessage, onInputChange }) {
+export default function ChatControls({ sendMessage, onInputChange, onAttachFile }) {
   const [text, setText] = useState("");
   const [focused, setFocused] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [menuOpen]);
 
   const handleSend = () => {
     const trimmed = text.trim();
@@ -20,11 +36,21 @@ export default function ChatControls({ sendMessage, onInputChange }) {
     }
   };
 
+  const handleFileSelect = (e, type) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (onAttachFile) {
+      onAttachFile(file, type);
+    }
+    setMenuOpen(false);
+    e.target.value = "";
+  };
+
   const canSend = text.trim().length > 0;
   const isTyping = text.length > 0;
 
   return (
-    <div className="pt-3 border-t border-white/8 mt-2">
+    <div className="pt-3 border-t border-white/8 mt-2 relative">
       <div
         className={`
           flex items-center gap-2 w-full
@@ -36,12 +62,51 @@ export default function ChatControls({ sendMessage, onInputChange }) {
         `}
       >
         {/* Attachment */}
-        <button
-          type="button"
-          className="flex-shrink-0 p-1 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-white/6 transition-colors"
-        >
-          <PaperclipIcon size={17} />
-        </button>
+        <div className="relative flex-shrink-0" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="p-1 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-white/6 transition-colors"
+            aria-label="Attach file"
+          >
+            <PaperclipIcon size={17} />
+          </button>
+
+          {menuOpen && (
+            <div className="absolute bottom-full left-0 mb-2 w-44 rounded-xl border border-white/10 bg-[var(--surface)] shadow-xl p-1.5 z-50">
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-white/6 transition-colors text-left"
+              >
+                <ImageIcon size={16} className="text-[var(--primary)]" />
+                Photo / Video
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-white/6 transition-colors text-left"
+              >
+                <FileIcon size={16} className="text-[var(--primary)]" />
+                Document
+              </button>
+            </div>
+          )}
+
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={(e) => handleFileSelect(e, "media")}
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={(e) => handleFileSelect(e, "file")}
+          />
+        </div>
 
         {/* Input */}
         <input
@@ -82,7 +147,7 @@ export default function ChatControls({ sendMessage, onInputChange }) {
         </button>
       </div>
 
-      <p className="text-center text-[10px] text-[var(--text-tertiary)] mt-2">
+      <p className="hidden md:block text-center text-[10px] text-[var(--text-tertiary)] mt-2">
         Enter to send · Shift+Enter for new line
       </p>
 

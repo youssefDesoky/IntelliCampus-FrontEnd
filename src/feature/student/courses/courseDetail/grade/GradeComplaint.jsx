@@ -14,7 +14,7 @@ const complaintTypes = [
 	{ value: "final", label: "Final Exam" },
 ];
 
-export default function GradeComplaint({ className = "", items = [] }) {
+export default function GradeComplaint({ className = "", items = [], compact = false }) {
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [complaintType, setComplaintType] = useState("");
 	const [assessmentId, setAssessmentId] = useState("");
@@ -72,32 +72,43 @@ export default function GradeComplaint({ className = "", items = [] }) {
 
 	return (
 		<>
-			<BaseComponent
-				title="Grade Review"
-				description="Request a review of your grades"
-				className={`flex flex-col ${className}`}
-				contentClassName="flex flex-1 flex-col justify-center px-5 py-5 sm:px-6"
-			>
-				<div className="flex flex-col items-center space-y-4 text-center">
-					<div className="flex flex-row items-start gap-4 text-left">
-						<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-danger-default-light/30 bg-bg-surface-danger-default-light/40 text-text-danger-active-light shadow-sm ring-4 ring-bg-surface-danger-default-light/10 dark:border-border-danger-default-dark/30 dark:bg-bg-surface-danger-default-dark/40 dark:text-text-danger-active-dark dark:ring-bg-surface-danger-default-dark/10">
-							<ExclamationIcon size={22} />
+			{compact ? (
+				<Button
+					type="button"
+					variant="danger"
+					className="w-full"
+					onClick={openForm}
+				>
+					Fill a Complaint
+				</Button>
+			) : (
+				<BaseComponent
+					title="Grade Review"
+					description="Request a review of your grades"
+					className={`flex flex-col ${className}`}
+					contentClassName="flex flex-1 flex-col justify-center px-5 py-5 sm:px-6"
+				>
+					<div className="flex flex-col items-center space-y-4 text-center">
+						<div className="flex flex-row items-start gap-4 text-left">
+							<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-danger-default-light/30 bg-bg-surface-danger-default-light/40 text-text-danger-active-light shadow-sm ring-4 ring-bg-surface-danger-default-light/10 dark:border-border-danger-default-dark/30 dark:bg-bg-surface-danger-default-dark/40 dark:text-text-danger-active-dark dark:ring-bg-surface-danger-default-dark/10">
+								<ExclamationIcon size={22} />
+							</div>
+							<p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+								If you believe there is an error in your grades, you can file a formal complaint to have your assessments reviewed by the instructor.
+							</p>
 						</div>
-						<p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-							If you believe there is an error in your grades, you can file a formal complaint to have your assessments reviewed by the instructor.
-						</p>
-					</div>
 
-					<Button
-						type="button"
-						variant="secondary"
-						className="w-full text-text-danger-active-light hover:bg-bg-surface-danger-default-light dark:text-text-danger-active-dark dark:hover:bg-bg-surface-danger-default-dark"
-						onClick={openForm}
-					>
-						Fill a Complaint
-					</Button>
-				</div>
-			</BaseComponent>
+						<Button
+							type="button"
+							variant="secondary"
+							className="w-full text-text-danger-active-light hover:bg-bg-surface-danger-default-light dark:text-text-danger-active-dark dark:hover:bg-bg-surface-danger-default-dark"
+							onClick={openForm}
+						>
+							Fill a Complaint
+						</Button>
+					</div>
+				</BaseComponent>
+			)}
 
 			<BaseFormComponent
 				isOpen={isFormOpen}

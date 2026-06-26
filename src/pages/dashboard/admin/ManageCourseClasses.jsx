@@ -9,28 +9,29 @@ import CourseForm from "../../../feature/admin/components/CourseForm";
 import ManageCourseStudentsTab from "./ManageCourseStudentsTab";
 import ManageCourseGradesTab from "./ManageCourseGradesTab";
 import {
-    PlusIcon,
-    ImportIcon,
-    FilePenIcon,
-    TrashIcon,
-    CalendarIcon,
-    LocationDotIcon,
-    UserTieIcon,
-    AngleDownIcon,
-    ArrowRightIcon,
+  PlusIcon,
+  ImportIcon,
+  FilePenIcon,
+  TrashIcon,
+  CalendarIcon,
+  LocationDotIcon,
+  UserTieIcon,
+  AngleDownIcon,
+  ArrowRightIcon,
 } from "../../../components/ui/icons";
 import {
-    fetchCourseById,
-    fetchCourseClasses,
-    addClassToCourse,
-    createLecture,
-    createSection,
-    updateClass,
-    deleteClassFromCourse,
-    updateCourse,
-    deactivateCourse,
-    fetchCourses,
-} from "../../../feature/admin/services/adminApi";
+  fetchCourseById,
+  fetchCourseClasses,
+  addClassToCourse,
+  createLecture,
+  createSection,
+  updateClass,
+  deleteClassFromCourse,
+  updateCourse,
+  deactivateCourse,
+  fetchCourses,
+} from "../../../feature/admin/services/adminCoursesApi";
+import { importClasses } from "../../../feature/admin/services/adminImportsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const tabs = [
@@ -269,8 +270,10 @@ export default function ManageCourseClasses() {
             _classId: cls.classId,
             type: cls.classTypeName,
             instructor: cls.instructorName,
+            instructorId: cls.instructorId,
             schedule: scheduleStr,
             room: cls.room,
+            roomId: cls.roomId,
         });
     };
 
@@ -467,6 +470,15 @@ export default function ManageCourseClasses() {
                     title="Import Classes"
                     subtitle="Upload a file to bulk-import classes for this course."
                     onClose={() => setIsImportOpen(false)}
+                    onImport={async (file) => {
+                        try {
+                            await importClasses(file);
+                            setIsImportOpen(false);
+                            await loadData();
+                        } catch (err) {
+                            showError(err.message);
+                        }
+                    }}
                 />
             )}
 

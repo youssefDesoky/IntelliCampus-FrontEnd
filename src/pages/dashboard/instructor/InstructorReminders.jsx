@@ -6,6 +6,7 @@ import RemindersHeader from "../../../feature/student/reminders/RemindersHeader"
 import Timeline from "../../../feature/student/reminders/Timeline";
 import CalenderWidget from "../../../components/ui/CalendarWidget"
 import AddReminderForm from "../../../feature/student/reminders/AddReminderForm";
+import { RemindersSkeleton } from "../../../feature/student/reminders/SkeletonLoader";
 import { fetchRemindersByDay, createReminder as createReminderApi, updateReminder as updateReminderApi, deleteReminder as deleteReminderApi } from "../../../feature/instructor/reminders/remindersApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
@@ -24,17 +25,16 @@ export default function InstructorReminders() {
     const [selectedCategory, setSelectedCategory] = useState(categoryOptions[0]);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [reminders, setReminders] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [hasLoaded, setHasLoaded] = useState(false);
 
     const loadReminders = useCallback(async () => {
         try {
-            setIsLoading(true);
             const data = await fetchRemindersByDay(selectedDate);
             setReminders(Array.isArray(data) ? data : []);
         } catch (err) {
             setReminders([]);
         } finally {
-            setIsLoading(false);
+            setHasLoaded(true);
         }
     }, [selectedDate]);
 
@@ -106,13 +106,17 @@ export default function InstructorReminders() {
         }),
     };
 
+    if (!hasLoaded) {
+        return <RemindersSkeleton />;
+    }
+
     return (
-        <>
+        <div className="flex flex-col min-h-[calc(100vh-160px)]">
             <RemindersHeader setIsFormOpen={handleSetIsFormOpen} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} reminders={reminders} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 grid-rows-1 gap-4 flex-1 min-h-0">
                 <Timeline
-                    className="lg:col-span-3 min-h-dvh md:min-h-0"
+                    className="lg:col-span-3 md:min-h-0 min-h-0"
                     reminders={groupedReminders}
                     selectedCategory={selectedCategory}
                     selectedDate={selectedDate}
@@ -120,7 +124,7 @@ export default function InstructorReminders() {
                     onDeleteReminder={handleDeleteReminder}
                 />
 
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6 min-h-0">
                     <CalenderWidget selectedDate={selectedDate} onDateSelect={setSelectedDate} />
                     <div className="hidden lg:block">
                         <Categories
@@ -140,6 +144,6 @@ export default function InstructorReminders() {
                     initialReminder={editingReminder}
                 />
             )}
-        </>
+        </div>
     );
 }

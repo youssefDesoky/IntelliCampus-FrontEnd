@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import Section from "../../../components/ui/Section";
-import WeeklySchedule from "../../../components/ui/WeeklySchedule";
+import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
+import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
 import Dialog from "../../../components/ui/Dialog";
 
@@ -11,6 +13,7 @@ import CourseCard from "../../../feature/student/courses/courseRegister/CourseCa
 import CourseRegistrationNote from "../../../feature/student/courses/courseRegister/CourseRegistrationNote";
 import CourseRegistrationHeader from "../../../feature/student/courses/courseRegister/CourseRegistrationHeader";
 import CoursesRegistrationActionButtons from "../../../feature/student/courses/courseRegister/CourseRegistrationActionButtons";
+import { RegistrationPageSkeleton } from "../../../feature/student/courses/courseRegister/SkeletonLoader";
 
 import {
     fetchActiveCourses,
@@ -19,78 +22,34 @@ import {
     registerForCourse,
     unregisterFromCourse,
 } from "../../../feature/student/courses/courseRegister/registrationApi";
+import { fetchMySchedule } from "../../../feature/student/schedule/scheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 
-const sampleSchedule = [
-    {
-        id: 1,
-        title: "Data Structures",
-        day: "sat",
-        startTime: "8:00 AM",
-        endTime: "10:00 AM",
-        type: "lecture",
-        location: "Room 101",
-        instructor: "Dr. Ahmed"
-    },
-    {
-        id: 2,
-        title: "Database Lab",
-        day: "sat",
-        startTime: "11:00 AM",
-        endTime: "1:00 PM",
-        type: "lab",
-        location: "Lab 3",
-        instructor: "Eng. Sara"
-    },
-    {
-        id: 3,
-        title: "Web Development",
-        day: "sun",
-        startTime: "9:00 AM",
-        endTime: "11:00 AM",
-        type: "lecture",
-        location: "Room 205",
-        instructor: "Dr. Mohamed"
-    }
-];
-
-/**
- * Maps a StudentRegistrationDto (from GET /api/registration/my-courses)
- * to the shape that <CourseCard> expects.
- *
- * Missing backend fields are shown as "{field} is missing".
- */
 function mapRegistrationToCard(reg) {
     return {
-        id:          reg.courseCode  ?? reg.code ?? reg.courseId ?? "code is missing",
-        title:       reg.courseName  ?? "courseName is missing",
-        code:        reg.courseCode  ?? reg.code ?? "code is missing",
-        creditHours: reg.creditHours ?? "creditHours is missing",
-        professor:   reg.professorName ?? reg.professor ?? "professor is missing",
-        schedule:    reg.schedule    ?? "schedule is missing",
-        room:        reg.room        ?? "room is missing",
+        id:          reg.courseCode  ?? reg.code ?? reg.courseId ?? "",
+        title:       reg.courseName  ?? "",
+        code:        reg.courseCode  ?? reg.code ?? "",
+        creditHours: reg.creditHours ?? "",
+        professor:   reg.professorName ?? reg.professor ?? "",
+        schedule:    reg.schedule    ?? "",
+        room:        reg.room        ?? "",
         courseId:     reg.courseId,
         classId:      reg.classId,
         isRegistered: true,
     };
 }
 
-/**
- * Maps an active‑course object (from GET /api/courses/active)
- * to the shape that <CourseCard> expects.
- *
- * Missing backend fields are shown as "{field} is missing".
- */
 function mapActiveCourseToCard(course) {
     return {
-        id:            course.courseCode  ?? course.code ?? course.courseId ?? course.id ?? "code is missing",
-        title:         course.courseName  ?? course.title   ?? "courseName is missing",
-        code:          course.courseCode  ?? course.code ?? "code is missing",
-        creditHours:   course.creditHours ?? "creditHours is missing",
-        professor:     course.professorName ?? course.professor ?? course.instructor ?? "professor is missing",
-        schedule:      course.schedule    ?? "schedule is missing",
-        room:          course.room        ?? "room is missing",
+        id:            course.courseCode  ?? course.code ?? course.courseId ?? course.id ?? "",
+        title:         course.courseName  ?? course.title   ?? "",
+        code:          course.courseCode  ?? course.code ?? "",
+        creditHours:   course.creditHours ?? "",
+        professor:     course.professorName ?? course.professor ?? course.instructor ?? "",
+        schedule:      course.schedule    ?? "",
+        room:          course.room        ?? "",
         preRequisites: course.prerequisites ?? course.preRequisites ?? null,
         courseId:       course.courseId    ?? course.id,
         classId:       course.classId,
@@ -101,15 +60,45 @@ function mapActiveCourseToCard(course) {
 const ITEMS_PER_PAGE = 3;
 
 export default function CoursesRegistration() {
-    const { isDesktop }  = useDeviceType();
+    const { isDesktop, isMobile } = useDeviceType();
 
-    const [selectedCourses, setSelectedCourses]   = useState([]);
-    const [availableCourses, setAvailableCourses] = useState([]);
+    const [locallyAddedCourses, setLocallyAddedCourses] = useState([]);
     const [sectionOptionsByCourseId, setSectionOptionsByCourseId] = useState({});
     const [selectedSectionByCourseId, setSelectedSectionByCourseId] = useState({});
     const [pendingRemovalCourseIds, setPendingRemovalCourseIds] = useState([]);
     const { showError } = useError();
-    const [loading, setLoading]   = useState(true);
+    const queryClient = useQueryClient();
+
+    const { data: registrationData, isLoading: loading } = useQuery({
+        queryKey: ["coursesRegistration"],
+        queryFn: async () => {
+            const [registrations, courses] = await Promise.all([getMyRegistrations(), fetchActiveCourses()]);
+            return { registrations, courses };
+        },
+        staleTime: 2 * 60 * 1000,
+    });
+
+    const { data: scheduleData = [], isLoading: schedulePreviewLoading } = useQuery({
+        queryKey: ["studentSchedule"],
+        queryFn: fetchMySchedule,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const selectedCourses = useMemo(() => {
+        const serverSelected = (registrationData?.registrations || []).map(mapRegistrationToCard);
+        return [...serverSelected, ...locallyAddedCourses];
+    }, [registrationData, locallyAddedCourses]);
+
+    const availableCourses = useMemo(() => {
+        const registeredIds = new Set((registrationData?.registrations || []).map(r => r.courseId));
+        const serverAvailable = (registrationData?.courses
+            ? (Array.isArray(registrationData.courses) ? registrationData.courses : [])
+                .filter(c => !registeredIds.has(c.courseId ?? c.id))
+                .map(mapActiveCourseToCard)
+            : []);
+        const addedIds = new Set(locallyAddedCourses.map(c => c.courseId));
+        return serverAvailable.filter(c => !addedIds.has(c.courseId));
+    }, [registrationData, locallyAddedCourses]);
 
     const [selectedCoursesPage, setSelectedCoursesPage]   = useState(1);
     const [availableCoursesPage, setAvailableCoursesPage] = useState(1);
@@ -117,34 +106,7 @@ export default function CoursesRegistration() {
     const [showResultDialog, setShowResultDialog]   = useState(false);
     const [resultDialogVariant, setResultDialogVariant] = useState("success");
     const [resultDialogMessage, setResultDialogMessage] = useState("");
-
-    /* ── Fetch data on mount ── */
-    const loadData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [registrations, activeCourses] = await Promise.all([
-                getMyRegistrations(),
-                fetchActiveCourses(),
-            ]);
-
-            const registeredIds = new Set(
-                registrations.map((r) => r.courseId)
-            );
-
-            setSelectedCourses(registrations.map(mapRegistrationToCard));
-            setAvailableCourses(
-                (Array.isArray(activeCourses) ? activeCourses : [])
-                    .filter((c) => !registeredIds.has(c.courseId ?? c.id))
-                    .map(mapActiveCourseToCard)
-            );
-        } catch (err) {
-            showError(err.message || "Failed to load courses");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => { loadData(); }, [loadData]);
+    const schedulePreview = Array.isArray(scheduleData) ? scheduleData : [];
 
     /* ── Load sections for selected courses ── */
     useEffect(() => {
@@ -171,9 +133,9 @@ export default function CoursesRegistration() {
                         });
 
                         const options = sections.map((cls) => {
-                            const groupName = cls.groupCode ?? cls.group ?? cls.groupName ?? cls.className ?? "groupCode is missing";
-                            const taName = cls.instructorName ?? cls.taName ?? "TA is missing";
-                            const classId = cls.classId ?? cls.id ?? "classId is missing";
+                            const groupName = cls.groupCode ?? cls.group ?? cls.groupName ?? cls.className ?? "";
+                            const taName = cls.instructorName ?? cls.taName ?? "";
+                            const classId = cls.classId ?? cls.id ?? "";
                             return {
                                 value: classId,
                                 label: `${groupName} — ${taName}`,
@@ -230,17 +192,15 @@ export default function CoursesRegistration() {
 
     /* ── Register / Unregister handlers ── */
     const handleRegister = (course) => {
-        setSelectedCourses((prev) => {
+        setLocallyAddedCourses((prev) => {
             if (prev.some((c) => c.courseId === course.courseId)) return prev;
             return [...prev, { ...course, isRegistered: false }];
         });
-        setAvailableCourses((prev) => prev.filter((c) => c.courseId !== course.courseId));
     };
 
     const handleUnregister = (course) => {
         if (!course.isRegistered) {
-            setSelectedCourses((prev) => prev.filter((c) => c.courseId !== course.courseId));
-            setAvailableCourses((prev) => [...prev, { ...course, isRegistered: false }]);
+            setLocallyAddedCourses((prev) => prev.filter((c) => c.courseId !== course.courseId));
             return;
         }
 
@@ -266,26 +226,44 @@ export default function CoursesRegistration() {
             }
         }
 
-        try {
-            for (const course of pendingRemovals) {
-                await unregisterFromCourse(course.courseId);
-            }
-            for (const course of pending) {
-                const section = selectedSectionByCourseId[course.courseId];
-                await registerForCourse(course.courseId, section.value);
-            }
-            setPendingRemovalCourseIds([]);
-            await loadData();
+        const successMsgs = [];
+        const failureMsgs = [];
 
-            const msgs = [];
-            if (pending.length > 0) msgs.push(`${pending.length} course(s) registered`);
-            if (pendingRemovals.length > 0) msgs.push(`${pendingRemovals.length} course(s) removed`);
-            setResultDialogVariant("success");
-            setResultDialogMessage(msgs.join(" and ") + " successfully!");
-            setShowResultDialog(true);
-        } catch (err) {
-            showError(err.message || "Failed to confirm registration.");
+        for (const course of pendingRemovals) {
+            try {
+                await unregisterFromCourse(course.courseId);
+                successMsgs.push(`Removed ${course.title}`);
+            } catch {
+                failureMsgs.push(`Failed to remove ${course.title}`);
+            }
         }
+        for (const course of pending) {
+            const section = selectedSectionByCourseId[course.courseId];
+            try {
+                await registerForCourse(course.courseId, section.value);
+                successMsgs.push(`Registered ${course.title}`);
+            } catch {
+                failureMsgs.push(`Failed to register ${course.title}`);
+            }
+        }
+
+        setPendingRemovalCourseIds([]);
+        setLocallyAddedCourses([]);
+        await queryClient.invalidateQueries({ queryKey: ["coursesRegistration"] });
+
+        if (failureMsgs.length === 0) {
+            setResultDialogVariant("success");
+            setResultDialogMessage(successMsgs.join(", ") + " successfully!");
+        } else if (successMsgs.length === 0) {
+            setResultDialogVariant("error");
+            setResultDialogMessage(failureMsgs.join(", "));
+        } else {
+            setResultDialogVariant("warning");
+            setResultDialogMessage(
+                "Partial success:\n" + successMsgs.join(", ") + "\n\nFailures:\n" + failureMsgs.join(", ")
+            );
+        }
+        setShowResultDialog(true);
     };
 
     return (
@@ -293,9 +271,7 @@ export default function CoursesRegistration() {
             <CourseRegistrationHeader deviceType={isDesktop ? "desktop" : "mobile"} selectedCourses={selectedCourses} />
 
             {loading ? (
-                <p className="text-center py-10 text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                    Loading courses…
-                </p>
+                <RegistrationPageSkeleton />
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Section>
@@ -355,9 +331,14 @@ export default function CoursesRegistration() {
                     <div>
                         <h3 className="text-md font-semibold">Weekly Schedule Preview</h3>
 
-                        <WeeklySchedule schedule={sampleSchedule} />
+                        {schedulePreviewLoading ? (
+                            <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl h-48 w-full" />
+                        ) : isMobile ? (
+                            <WeeklyScheduleAgenda days={days} schedule={schedulePreview} variant="default" />
+                        ) : (
+                            <WeeklySchedule schedule={schedulePreview} />
+                        )}
                     </div>
-                    
                 </Section>
 
                 <div className="md:col-span-2 flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-t-2 border-border-primary-default-light dark:border-border-primary-default-dark pt-6">
@@ -371,7 +352,7 @@ export default function CoursesRegistration() {
             <Dialog
                 isOpen={showResultDialog}
                 variant={resultDialogVariant}
-                title={resultDialogVariant === "success" ? "Registration Complete" : "Registration Failed"}
+                title={resultDialogVariant === "success" ? "Registration Complete" : resultDialogVariant === "warning" ? "Partial Completion" : "Registration Failed"}
                 onClose={() => setShowResultDialog(false)}
                 confirmText="OK"
             >

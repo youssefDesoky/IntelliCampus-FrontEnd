@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 
-export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQuery, onSearchChange }) {
+export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQuery, onSearchChange, isPhone, onBack }) {
   const inputRef = useRef(null);
   const [isSearching, setIsSearching] = React.useState(false);
 
@@ -29,11 +29,23 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
   } = chatPartner;
 
   return (
-    <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 dark:border-gray-700/80 bg-white dark:bg-gray-800 shrink-0 shadow-sm z-10 transition-colors duration-200">
+    <div className={`flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700/80 bg-white dark:bg-gray-800 shrink-0 shadow-sm z-10 transition-colors duration-200 px-6'}`}>
 
-      {/* Left side: Avatar and User Info */}
-      <div className="flex items-center gap-3.5 min-w-0">
-        <div className="relative shrink-0">
+      {/* Left side: Back button + Avatar and User Info */}
+      <div className="flex items-center gap-2 min-w-0">
+        {isPhone && onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center justify-center rounded-xl text-gray-500 hover:text-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-100 transition-all active:scale-90 shrink-0"
+            aria-label="Back to members"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 12L6 8l4-4" />
+            </svg>
+          </button>
+        )}
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="relative shrink-0">
           {avatar ? (
             <img
               className="w-10 h-10 rounded-xl object-cover ring-2 ring-gray-100 dark:ring-gray-700/50"
@@ -76,11 +88,12 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
           </div>
         </div>
       </div>
+      </div>
 
       {/* Right side: Search / Actions */}
-      <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+      <div className={`flex items-center gap-1 text-gray-500 dark:text-gray-400 ${isSearching ? 'flex-1 min-w-0' : ''}`}>
         {isSearching ? (
-          <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-700/60 rounded-lg px-2 py-1">
+          <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-700/60 rounded-lg px-2 py-1 w-full">
             <input
               ref={inputRef}
               type="text"
@@ -88,9 +101,9 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
               onChange={(e) => onSearchChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search messages…"
-              className="w-40 bg-transparent text-sm outline-none text-gray-900 dark:text-white placeholder-gray-400"
+              className={`${isPhone ? 'w-full' : 'w-40'} bg-transparent text-sm outline-none text-gray-900 dark:text-white placeholder-gray-400 min-w-0`}
             />
-            <button onClick={handleClear} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
+            <button onClick={handleClear} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors shrink-0">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>

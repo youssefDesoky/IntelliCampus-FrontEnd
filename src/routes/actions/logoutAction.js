@@ -1,12 +1,17 @@
 import { redirect } from "react-router-dom";
-import { API_URL } from "../../config/api";
+import { logout, unregisterDevice } from "../../api/authService";
 
 export default async function logoutAction() {
     try {
-        await fetch(`${API_URL}/api/auth/logout`, {
-            method: "POST",
-            credentials: "include",
-        });
+        const endpoint = localStorage.getItem('push_endpoint');
+        if (endpoint) {
+            await unregisterDevice(endpoint).catch(() => {});
+        }
+    } catch { /* ignore */ }
+    localStorage.removeItem('push_endpoint');
+
+    try {
+        await logout();
     } catch {
         // ignore network errors on logout
     }

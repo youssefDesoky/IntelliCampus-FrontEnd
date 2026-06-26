@@ -35,20 +35,22 @@ export default function TextEditorToolBar({ editor }) {
     if (!editor) return null
 
     return (
-        <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border-primary-default-light dark:border-border-primary-default-dark shrink-0">
-            <div className="flex items-center gap-0.5">
+        <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border-primary-default-light dark:border-border-primary-default-dark shrink-0 overflow-x-auto">
+            <div className="flex items-center gap-0.5 flex-nowrap">
 
                 {/* ── Size ── */}
-                <Btn
-                    icon={<LargeSmallIcon />}
-                    active={isLarge}
-                    title="Large text"
-                    onClick={() => {
-                        isLarge
-                            ? editor.chain().focus().unsetFontSize().run()
-                            : editor.chain().focus().setFontSize('1.25rem').run()
-                    }}
-                />
+                <span className="hidden sm:inline-flex">
+                    <Btn
+                        icon={<LargeSmallIcon />}
+                        active={isLarge}
+                        title="Large text"
+                        onClick={() => {
+                            isLarge
+                                ? editor.chain().focus().unsetFontSize().run()
+                                : editor.chain().focus().setFontSize('1.25rem').run()
+                        }}
+                    />
+                </span>
 
                 <Sep />
 
@@ -64,26 +66,30 @@ export default function TextEditorToolBar({ editor }) {
                 {/* ── Lists + link ── */}
                 <Btn icon={<OrderedListIcon />}    active={isOrderedList} title="Numbered list" onClick={() => editor.chain().focus().toggleOrderedList().run()} />
                 <Btn icon={<UnorderedListIcon />}  active={isBulletList}  title="Bullet list"   onClick={() => editor.chain().focus().toggleBulletList().run()} />
-                <Btn
-                    icon={<LinkIcon />}
-                    active={isLink}
-                    title="Insert link"
-                    onClick={() => {
-                        const url = window.prompt('Enter URL')
-                        if (url) editor.chain().focus().setLink({ href: url }).run()
-                    }}
-                />
+                <span className="hidden sm:inline-flex">
+                    <Btn
+                        icon={<LinkIcon />}
+                        active={isLink}
+                        title="Insert link"
+                        onClick={() => {
+                            const url = window.prompt('Enter URL')
+                            if (url) editor.chain().focus().setLink({ href: url }).run()
+                        }}
+                    />
+                </span>
 
-                <Sep />
+                <span className="hidden sm:flex items-center gap-0.5">
+                    <Sep />
 
-                {/* ── Alignment ── */}
-                <Btn icon={<AlignStartIcon />}                        active={isAlignLeft}   title="Align left"   onClick={() => editor.chain().focus().setTextAlign('left').run()} />
-                <Btn icon={<AlignCenterIcon />}                       active={isAlignCenter} title="Align center" onClick={() => editor.chain().focus().setTextAlign('center').run()} />
-                <Btn icon={<AlignStartIcon className="-scale-x-100" />} active={isAlignRight} title="Align right"  onClick={() => editor.chain().focus().setTextAlign('right').run()} />
+                    {/* ── Alignment ── */}
+                    <Btn icon={<AlignStartIcon />}                        active={isAlignLeft}   title="Align left"   onClick={() => editor.chain().focus().setTextAlign('left').run()} />
+                    <Btn icon={<AlignCenterIcon />}                       active={isAlignCenter} title="Align center" onClick={() => editor.chain().focus().setTextAlign('center').run()} />
+                    <Btn icon={<AlignStartIcon className="-scale-x-100" />} active={isAlignRight} title="Align right"  onClick={() => editor.chain().focus().setTextAlign('right').run()} />
+                </span>
             </div>
 
             {/* ── Undo / Redo ── */}
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5 shrink-0">
                 <Btn icon={<UndoIcon />}                         title="Undo" disabled={!canUndo} onClick={() => editor.chain().focus().undo().run()} />
                 <Btn icon={<UndoIcon className="-scale-x-100" />} title="Redo" disabled={!canRedo} onClick={() => editor.chain().focus().redo().run()} />
             </div>

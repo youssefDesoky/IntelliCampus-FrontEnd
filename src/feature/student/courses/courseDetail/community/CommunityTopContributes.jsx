@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 
+const RANK_BADGES = ["🥇", "🥈", "🥉"];
+
 export default function CommunityTopContributes({ posts = [], className = "" }) {
     const topUsers = useMemo(() => {
         const map = {};
@@ -19,26 +21,63 @@ export default function CommunityTopContributes({ posts = [], className = "" }) 
     }, [posts]);
 
     return (
-        <div className={`p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark ${className}`}>
-            <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-3">
-                Top Contributors
-            </h3>
+        <div className={`rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5 sm:p-6 ${className}`}>
+            <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                    Top Contributors
+                </h3>
+                <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{topUsers.length} users</span>
+            </div>
+
             {topUsers.length === 0 ? (
-                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    No contributions yet.
-                </p>
+                <div className="rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-6 text-center">
+                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        No contributions yet.
+                    </p>
+                    <p className="mt-0.5 text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                        Start a discussion to get things going.
+                    </p>
+                </div>
             ) : (
                 <ul className="space-y-2">
-                    {topUsers.map((user, i) => (
-                        <li key={i} className="flex items-center justify-between text-sm">
-                            <span className="truncate text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {user.name}
-                            </span>
-                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark shrink-0 ml-2">
-                                {user.posts + user.comments}
-                            </span>
-                        </li>
-                    ))}
+                    {topUsers.map((user, i) => {
+                        const total = user.posts + user.comments;
+                        const maxTotal = topUsers[0].posts + topUsers[0].comments;
+                        const barWidth = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+                        const rankBadge = RANK_BADGES[i];
+
+                        return (
+                            <li key={i}>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-xs font-bold text-white">
+                                        {rankBadge || <span className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{i + 1}</span>}
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="truncate text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                {user.name}
+                                            </span>
+                                            <span className="shrink-0 text-xs font-semibold text-text-accent-default-light dark:text-text-accent-default-dark">
+                                                {total}
+                                            </span>
+                                        </div>
+                                        <div className="mt-1 flex items-center gap-2 text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                                            <span>{user.posts} {user.posts === 1 ? "post" : "posts"}</span>
+                                            <span className="h-1 w-1 rounded-full bg-text-tertiary-default-light dark:bg-text-tertiary-default-dark" />
+                                            <span>{user.comments} {user.comments === 1 ? "comment" : "comments"}</span>
+                                        </div>
+                                        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                            <div
+                                                className="h-full rounded-full bg-text-accent-default-light dark:bg-text-accent-default-dark transition-all"
+                                                style={{ width: `${barWidth}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
         </div>

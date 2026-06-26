@@ -1,5 +1,6 @@
 {
     "dashboard": "Dashboard",
+    "inbox": "Inbox",
     "reminders": "Reminders",
     "courses": "Courses",
     "allCourses": "My Courses",
@@ -7,5 +8,6 @@
     "coursePrerequisites": "Prerequisites",
     "community": "Community",
     "smartNotes": "Smart Notes",
-    "schedule" : "Schedule"
+    "schedule" : "Schedule",
+    "specializationPreference": "Specialization Preference"
 }

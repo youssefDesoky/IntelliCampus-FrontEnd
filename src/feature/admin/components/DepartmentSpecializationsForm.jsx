@@ -1,35 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
+import NumberInput from "../../../components/form/NumberInput";
 import { PlusIcon, TrashIcon, XIcon } from "../../../components/ui/icons";
-import { fetchSpecializations, createSpecialization, deleteSpecialization } from "../services/adminApi";
+import { fetchSpecializations, createSpecialization, deleteSpecialization } from "../services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function DepartmentSpecializationsForm({ department, onClose, onUpdate }) {
     const { showError } = useError();
-    const [specializations, setSpecializations] = useState([]);
     const [newName, setNewName] = useState("");
     const [newNameAr, setNewNameAr] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [newMaxCapacity, setNewMaxCapacity] = useState("");
     const [adding, setAdding] = useState(false);
 
     const departmentId = department?.id ?? department?.departmentId;
 
-    const loadSpecializations = async () => {
-        try {
-            setLoading(true);
-            const data = await fetchSpecializations(departmentId);
-            setSpecializations(Array.isArray(data) ? data : []);
-        } catch (err) {
-            showError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (departmentId) loadSpecializations();
-    }, [departmentId]);
+    const { data: specializations = [], isLoading: loading, refetch } = useQuery({
+        queryKey: ["departmentSpecializations", departmentId],
+        queryFn: async () => {
+            try {
+                const data = await fetchSpecializations(departmentId);
+                return Array.isArray(data) ? data : [];
+            } catch (err) {
+                showError(err.message);
+                return [];
+            }
+        },
+        staleTime: 5 * 60 * 1000,
+        enabled: !!departmentId,
+    });
 
     const handleAdd = async () => {
         const name = newName.trim();
@@ -37,10 +37,12 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
         if (!name) return;
         try {
             setAdding(true);
-            const created = await createSpecialization(departmentId, { name, nameAr: nameAr || null });
-            setSpecializations(prev => [...prev, created]);
+            const maxCap = newMaxCapacity ? parseInt(newMaxCapacity) : null;
+            await createSpecialization(departmentId, { name, nameAr: nameAr || null, maxCapacity: maxCap });
+            refetch();
             setNewName("");
             setNewNameAr("");
+            setNewMaxCapacity("");
             onUpdate?.();
         } catch (err) {
             showError(err.message);
@@ -52,7 +54,7 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
     const handleDelete = async (specId) => {
         try {
             await deleteSpecialization(departmentId, specId);
-            setSpecializations(prev => prev.filter(s => (s.id ?? s.specializationId) !== specId));
+            refetch();
             onUpdate?.();
         } catch (err) {
             showError(err.message);
@@ -96,7 +98,7 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                     ) : (
                         <>
                             <div className="space-y-4 mb-6">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <input
                                         type="text"
                                         value={newName}
@@ -115,6 +117,13 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                                             className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm"
                                         />
                                     </div>
+                                    <NumberInput
+                                        value={newMaxCapacity}
+                                        onChange={(e) => setNewMaxCapacity(e.target.value)}
+                                        placeholder="Max capacity (optional)"
+                                        min="0"
+                                        className="w-full"
+                                    />
                                 </div>
                                 <div className="flex justify-end">
                                     <Button

@@ -21,7 +21,7 @@ export default function CourseMaterials() {
         return () => window.clearTimeout(timer);
     }, [folderId]);
 
-    if (!course.folders || course.folders.length === 0) {
+    if (!course?.folders || course.folders.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
                 <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">

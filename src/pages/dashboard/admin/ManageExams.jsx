@@ -7,7 +7,7 @@ import ImportDialog from "../../../components/ui/ImportDialog";
 import { ArrowRotateRightIcon, CalendarCheckIcon, DownloadIcon, ImportIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
 import { useError } from '../../../contexts/ErrorContext.jsx';
-import { uploadExams } from "../../../feature/admin/services/adminApi";
+import { uploadExams } from "../../../feature/admin/services/adminSchedulingApi";
 import ExamScheduler from "../../../feature/admin/components/ExamScheduler";
 
 const examTypeOptions = [
@@ -45,6 +45,7 @@ export default function ManageExams() {
     const [isUploading, setIsUploading] = useState(false);
     const [confirmReset, setConfirmReset] = useState(false);
     const [result, setResult] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [selectedExamType, setSelectedExamType] = useState(examTypeOptions[0]);
 
     const handleImport = async (file) => {
@@ -60,7 +61,7 @@ export default function ManageExams() {
                 ].join("\n");
                 showError(msg);
             } else {
-                showError(`Successfully imported ${res.successCount} exams`);
+                setSuccessMessage(`Successfully imported ${res.successCount} exams`);
             }
         } catch (err) {
             showError(err.message);
@@ -132,6 +133,17 @@ export default function ManageExams() {
                 onConfirm={() => { schedulerRef.current?.handleReset?.(); setConfirmReset(false); }}
             >
                 This will remove all scheduled exams. This action cannot be undone.
+            </Dialog>
+
+            <Dialog
+                isOpen={successMessage !== null}
+                variant="success"
+                title="Success"
+                onClose={() => setSuccessMessage(null)}
+                confirmText="OK"
+                showCloseButton={true}
+            >
+                {successMessage}
             </Dialog>
 
             {isImportOpen && (

@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import Section from "./Section";
 import PaginationButtons from "./PaginationButtons";
 import BaseComponent from "./BaseComponent";
-import { TableHeader, TableHeaderActions, TableBody } from "./table";
+import { TableHeader, TableHeaderActions, TableBody } from "./table/index";
 
 
-export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments }) {
+export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments, columnClassNames }) {
     const rawData = data || [];
     const hasPagingLimit = typeof displayRowLimit === 'number' && displayRowLimit > 0;
     const computedTotalPages = hasPagingLimit ? Math.max(1, Math.ceil(rawData.length / displayRowLimit)) : totalPages || 1;
@@ -93,6 +93,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         setSelectAll={handleSetSelectAll}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
+                        headerClassNames={columnClassNames}
                     />
 
                     <TableBody
@@ -110,12 +111,13 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
                         columnAlignments={columnAlignments}
+                        columnClassNames={columnClassNames}
                     />
                 </table>
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">
-                        <div className="text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
                             {(hasPagingLimit && rawData.length > displayRowLimit)
                                 ? (itemsLabel
                                     ? `Showing ${(currentPage - 1) * displayRowLimit + 1}–${Math.min(currentPage * displayRowLimit, rawData.length)} of ${rawData.length} ${itemsLabel}`
@@ -142,6 +144,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         setSelectAll={handleSetSelectAll}
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
+                        headerClassNames={columnClassNames}
                     />
 
                     <TableBody
@@ -159,12 +162,13 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         showSelectionColumn={showSelectionColumn}
                         showActionsColumn={showActionsColumn}
                         columnAlignments={columnAlignments}
+                        columnClassNames={columnClassNames}
                     />
                 </table>
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">
-                        <div className="text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
                             {(hasPagingLimit && rawData.length > displayRowLimit)
                                 ? (itemsLabel
                                     ? `Showing ${(currentPage - 1) * displayRowLimit + 1}–${Math.min(currentPage * displayRowLimit, rawData.length)} of ${rawData.length} ${itemsLabel}`

@@ -55,7 +55,7 @@ export default function FilterDropdown({
             {isOpen && (
                 <div
                     role="menu"
-                    className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+8px)] z-20 w-56 rounded-xl border border-border-primary-default-light bg-bg-surface-primary-default-light p-3 shadow-lg dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark"
+                    className="absolute left-0 sm:left-1/2 translate-x-0 sm:-translate-x-1/2 top-[calc(100%+8px)] z-20 w-56 rounded-xl border border-border-primary-default-light bg-bg-surface-primary-default-light p-3 shadow-lg dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark"
                 >
                     <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                         {headerLabel || `Filter by ${label.toLowerCase()}`}

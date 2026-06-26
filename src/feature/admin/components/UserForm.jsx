@@ -26,7 +26,7 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
             const match = options.find(n => n.value === initialNationality || n.label === initialNationality);
             return match || options[0];
         }
-        return options[0];
+        return options.find(n => n.value === "EG") || options[0];
     });
 
     useEffect(() => {
@@ -35,7 +35,7 @@ export default function UserForm({ role, method = "post", onClose, onSubmit, ini
             const match = options.find(n => n.value === initialNationality || n.label === initialNationality);
             if (match) setSelectedNationality(match);
         } else if (options.length > 0) {
-            setSelectedNationality(options[0]);
+            setSelectedNationality(options.find(n => n.value === "EG") || options[0]);
         }
     }, [initialData.nationality, options]);
 

@@ -6,7 +6,7 @@ import AssignRoleModal from "../../../feature/admin/components/AssignRoleModal";
 import FilterDropdown from "../../../components/ui/FilterDropdown";
 import { UserIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
-import { fetchStudents, createStudent, updateStudent, deleteStudent } from "../../../feature/admin/services/adminApi";
+import { fetchStudents, createStudent, updateStudent, deleteStudent } from "../../../feature/admin/services/adminStudentsApi";
 
 export default function ManageStudents() {
   const { isDesktop, isTablet } = useDeviceType();
@@ -14,41 +14,40 @@ export default function ManageStudents() {
   const user = useRouteLoaderData("root");
   const isSuperAdmin = (user?.roles || []).some(r => r.toLowerCase() === 'superadmin');
   const isPostgradAdmin = (user?.roles || []).some(r => r.toLowerCase() === 'admin_postgrad');
-  const defaultStudentType = isPostgradAdmin ? 'masters' : 'undergrad';
+  const defaultStudentType = isPostgradAdmin ? 'masters' : 'bachelor';
 
   const [assignRoleTarget, setAssignRoleTarget] = useState(null);
-  const [filterLevel, setFilterLevel] = useState([]);
   const [filterDepartment, setFilterDepartment] = useState([]);
+  const [filterStudentType, setFilterStudentType] = useState([]);
 
   const studentTableHeaders = useMemo(() => {
-    if (isDesktop) return ["Student ID", "Student", "National ID", "Department", "Level", "Bylaw", "Program", "GPA"];
-    if (isTablet) return ["Student ID", "Student", "Department", "Level"];
+    if (isDesktop) return ["Student ID", "Student", "National ID", "Department", "Bylaw", "GPA"];
+    if (isTablet) return ["Student ID", "Student", "Department"];
     return ["Student"];
   }, [isDesktop, isTablet]);
 
   const studentColumnAlignments = useMemo(() => {
-    if (isDesktop) return ['text-center', 'text-left', 'text-center', 'text-left', 'text-center', 'text-left', 'text-center', 'text-center'];
-    if (isTablet) return ['text-center', 'text-left', 'text-left', 'text-center'];
+    if (isDesktop) return ['text-center', 'text-left', 'text-center', 'text-left', 'text-left', 'text-center'];
+    if (isTablet) return ['text-center', 'text-left', 'text-left'];
     return ['text-left'];
   }, [isDesktop, isTablet]);
 
-  const searchFilter = useCallback((student, q) => {
+    const searchFilter = useCallback((student, q) => {
     if (q) {
       if (!(student.fullName?.toLowerCase().includes(q) ||
-          student.studentId?.toLowerCase().includes(q) ||
+          student.studentCode?.toLowerCase().includes(q) ||
           student.email?.toLowerCase().includes(q) ||
-          student.program?.toLowerCase().includes(q) ||
           student.faculty?.toLowerCase().includes(q) ||
           student.departmentName?.toLowerCase().includes(q))) return false;
     }
-    if (filterLevel.length > 0 && student.level != null && !filterLevel.includes(String(student.level))) return false;
     if (filterDepartment.length > 0 && !filterDepartment.includes(student.department || student.departmentName || student.faculty)) return false;
+    if (filterStudentType.length > 0 && !filterStudentType.includes(student.studentType)) return false;
     return true;
-  }, [filterLevel, filterDepartment]);
+  }, [filterDepartment, filterStudentType]);
 
   const buildStudentRow = useCallback((student, { isDesktop, isTablet }) => {
     const row = {};
-    if (isDesktop || isTablet) row.studentID = student.studentId || "—";
+    if (isDesktop || isTablet) row.studentID = student.studentCode || "—";
     row.student = (
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-10 h-10 rounded-full shrink-0 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark overflow-hidden">
@@ -63,11 +62,9 @@ export default function ManageStudents() {
     if (isDesktop) row.nationalId = student.nationalId || "—";
     if (isDesktop || isTablet) {
       row.specialization = student.department || student.departmentName || student.faculty || "—";
-      row.level = student.level ?? "—";
     }
     if (isDesktop) {
       row.bylaw = student.bylawName ?? "—";
-      row.program = student.program ?? "—";
       row.gpa = student.gpa != null ? Number(student.gpa).toFixed(2) : "—";
     }
     return row;
@@ -92,7 +89,7 @@ export default function ManageStudents() {
       buildRow={buildStudentRow}
       onPreview={(student) => navigate(`/admin/students/${student.userId || student._id || student.studentId}`)}
       rowActions={(item, { onEdit, onDelete }) => {
-        const isTargetUndergrad = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_undergrad';
+        const isTargetBachelor = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_bachelor';
         const isTargetSuperAdmin = item.roles?.some(r => r.toLowerCase() === 'superadmin');
         const items = [
           { label: 'View Details', onClick: () => navigate(`/admin/students/${item.userId || item._id}`) },
@@ -102,7 +99,7 @@ export default function ManageStudents() {
         const isTargetMasters = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_masters';
         const isTargetPhD = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_phd';
         const isTargetDiploma = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_diploma';
-        if (isSuperAdmin && !isTargetUndergrad && !isTargetMasters && !isTargetPhD && !isTargetDiploma && !isTargetSuperAdmin) {
+        if (isSuperAdmin && !isTargetBachelor && !isTargetMasters && !isTargetPhD && !isTargetDiploma && !isTargetSuperAdmin) {
           items.push({ label: 'Assign Role', onClick: () => setAssignRoleTarget(item) });
         }
         return items;
@@ -111,21 +108,21 @@ export default function ManageStudents() {
         <>Are you sure you want to delete <strong>{item?.fullName}</strong> ({item?.studentId})? This action cannot be undone.</>
       )}
       renderFilters={({ rawItems, setCurrentPage }) => {
-        const levels = [...new Set(rawItems.map(s => s.level).filter(l => l != null))].sort((a, b) => a - b);
         const departments = [...new Set(rawItems.map(s => s.department || s.departmentName || s.faculty).filter(Boolean))].sort();
+        const studentTypes = [...new Set(rawItems.map(s => s.studentType).filter(Boolean))].sort();
         return (
           <>
-            <FilterDropdown
-              label="Level"
-              options={levels.map(l => ({ value: String(l), label: `Level ${l}` }))}
-              selectedValues={filterLevel}
-              onChange={(v) => { setFilterLevel(v); setCurrentPage(1); }}
-            />
             <FilterDropdown
               label="Department"
               options={departments.map(d => ({ value: d, label: d }))}
               selectedValues={filterDepartment}
               onChange={(v) => { setFilterDepartment(v); setCurrentPage(1); }}
+            />
+            <FilterDropdown
+              label="Student Type"
+              options={studentTypes.map(t => ({ value: t, label: t }))}
+              selectedValues={filterStudentType}
+              onChange={(v) => { setFilterStudentType(v); setCurrentPage(1); }}
             />
           </>
         );

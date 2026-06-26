@@ -7,7 +7,25 @@ import AssignRoleModal from "../../../feature/admin/components/AssignRoleModal";
 import Button from "../../../components/ui/Button";
 import { UserIcon, XIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
-import { fetchAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../feature/admin/services/adminApi";
+import { fetchAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../feature/admin/services/adminAccountsApi";
+
+function getAdminRoleDisplay(admin) {
+  if (admin.role) return admin.role;
+  const roles = admin.roles || [];
+  if (roles.length === 0) return null;
+  const roleMap = {
+    'admin_bachelor': 'Bachelor Admin',
+    'admin_masters': 'Masters Admin',
+    'admin_postgrad': 'PostGrad Admin',
+    'admin_phd': 'PhD Admin',
+    'admin_diploma': 'Diploma Admin',
+    'admin_academicstaff': 'Academic Staff Admin',
+    'superadmin': 'Super Admin',
+    'admin': 'Admin',
+  };
+  const key = roles[0].toLowerCase();
+  return roleMap[key] || roles[0];
+}
 
 export default function ManageAdmins() {
   const { isDesktop, isTablet } = useDeviceType();
@@ -36,7 +54,7 @@ export default function ManageAdmins() {
       String(admin.adminId)?.toLowerCase().includes(q) ||
       admin.email?.toLowerCase().includes(q) ||
       admin.department?.toLowerCase().includes(q) ||
-      admin.role?.toLowerCase().includes(q)
+      getAdminRoleDisplay(admin)?.toLowerCase().includes(q)
     );
   }, []);
 
@@ -58,7 +76,7 @@ export default function ManageAdmins() {
         </div>
       </div>
     );
-    if (isDesktop || isTablet) row.role = admin.role || "—";
+    if (isDesktop || isTablet) row.role = getAdminRoleDisplay(admin) || "—";
     if (isDesktop) { row.phone = admin.phoneNumber || admin.phone || "—"; row.hireDate = admin.hireDate || "—"; }
     return row;
   }, []);
@@ -136,7 +154,7 @@ export default function ManageAdmins() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                     <div className="p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                       <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Role</span>
-                      <span className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.role || "—"}</span>
+                      <span className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{getAdminRoleDisplay(previewAdmin) || "—"}</span>
                     </div>
                     <div className="p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                       <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Phone</span>
@@ -154,7 +172,7 @@ export default function ManageAdmins() {
                     </div>
                     <div className="flex items-center gap-3 px-1">
                       <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark w-20">Role</span>
-                      <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.role || "—"}</span>
+                      <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{getAdminRoleDisplay(previewAdmin) || "—"}</span>
                     </div>
                     <div className="flex items-center gap-3 px-1">
                       <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark w-20">Hire Date</span>

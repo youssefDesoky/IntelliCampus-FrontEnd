@@ -1,25 +1,33 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { AngleDownIcon } from "../ui/icons"
 
-export default function SelectBox({ 
-    options, 
-    selectedOption, 
-    label, 
+export default function SelectBox({
+    options,
+    selectedOption,
+    label,
     name,
-    className, 
-    labelDirection = "flex-row", 
+    className,
+    labelDirection = "flex-row",
     yPadding = 'py-2',
     onChange,
     compact = false,
-    showLabel = true
+    showLabel = true,
+    disabled = false
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const [minWidth, setMinWidth] = useState(0);
+    const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
     const measureRef = useRef(null);
     const rowRef = useRef(null);
+    const containerRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    const toggleOpen = () => setIsOpen(!isOpen);
+    const toggleOpen = () => {
+        if (disabled) return;
+        if (!isOpen) updatePosition();
+        setIsOpen(!isOpen);
+    };
 
     const selected = selectedOption 
         ? options.find(opt => opt.value === selectedOption.value) || selectedOption
@@ -31,9 +39,34 @@ export default function SelectBox({
         }
     }, [options, label, labelDirection, yPadding, selected]);
 
+    const updatePosition = () => {
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            setCoords({
+                top: rect.bottom,
+                left: rect.left,
+                width: rect.width,
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        updatePosition();
+        window.addEventListener("scroll", updatePosition, true);
+        window.addEventListener("resize", updatePosition);
+        return () => {
+            window.removeEventListener("scroll", updatePosition, true);
+            window.removeEventListener("resize", updatePosition);
+        };
+    }, [isOpen]);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (
+                containerRef.current && !containerRef.current.contains(event.target) &&
+                dropdownRef.current && !dropdownRef.current.contains(event.target)
+            ) {
                 setIsOpen(false);
             }
         };
@@ -63,12 +96,9 @@ export default function SelectBox({
     const buttonStyle = isFull
         ? {}
         : (!compact && minWidth > 0 ? { minWidth: `${Math.min(minWidth, 320)}px` } : {});
-    const dropdownStyle = isFull
-        ? { width: '100%' }
-        : (!compact && minWidth > 0 ? { minWidth: `${Math.min(minWidth, 320)}px`, maxWidth: '100%' } : { width: '100%' });
 
     return (
-        <div ref={dropdownRef} className={`relative block text-left max-w-full ${className} ${compact ? 'text-xs' : 'text-xs md:text-sm'}`} data-cursor="clickable">
+        <div ref={containerRef} className={`relative block text-left max-w-full ${className} ${compact ? 'text-xs' : 'text-xs md:text-sm'}`} data-cursor="clickable">
             {/* Hidden input so FormData captures the selected value */}
             {name && <input type="hidden" name={name} value={selected?.value ?? ""} />}
             {/* Hidden element to measure longest option */}
@@ -87,8 +117,8 @@ export default function SelectBox({
                 className={`flex ${labelDirection} ${labelDirection === "flex-row" ? "items-center" : "items-start"} justify-between gap-2`}
             >
                 {showLabel && label && (
-                    <label 
-                        className={`block font-semibold text-text-primary-active-light dark:text-text-primary-active-dark ${compact ? 'text-xs' : 'text-sm'}`}
+                    <label
+                        className={`block font-semibold text-text-primary-active-light dark:text-text-primary-active-dark ${compact ? 'text-xs' : 'text-sm'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                         onClick={toggleOpen}
                     >
                         {label}
@@ -96,7 +126,8 @@ export default function SelectBox({
                 )}
                 <button
                     type="button"
-                    className={`${isFull ? 'w-full' : 'flex-1'} min-w-0 max-w-full inline-flex items-center justify-between rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark shadow-sm px-3 ${yPadding} ${compactClasses} bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark font-medium text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark focus:outline-none transition-colors duration-150`}
+                    disabled={disabled}
+                    className={`${isFull ? 'w-full' : 'flex-1'} min-w-0 max-w-full inline-flex items-center justify-between rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark shadow-sm px-3 ${yPadding} ${compactClasses} bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark font-medium text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark focus:outline-none transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed`}
                     style={buttonStyle}
                     onClick={toggleOpen}
                 >
@@ -105,18 +136,24 @@ export default function SelectBox({
                 </button>
             </div>
 
-            {isOpen && (
+            {isOpen && createPortal(
                 <div 
-                    className="origin-top-right absolute right-0 mt-1 rounded-md shadow-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark ring-1 ring-black ring-opacity-5 z-50 max-h-60 overflow-y-auto overflow-x-hidden no-scrollbar"
-                    style={dropdownStyle}
+                    ref={dropdownRef}
+                    className="rounded-md shadow-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark ring-1 ring-black ring-opacity-5 z-[9999] max-h-60 overflow-y-auto overflow-x-hidden no-scrollbar"
+                    style={{
+                        position: 'fixed',
+                        top: `${coords.top}px`,
+                        left: `${coords.left}px`,
+                        ...(isFull ? { width: `${coords.width}px` } : { minWidth: `${Math.min(minWidth || coords.width, 320)}px` }),
+                    }}
                 >
                     <div className="py-1">
                         {options.map((option) => (
                             <div
                                 key={option.value}
-                                className={`block px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark truncate ${
+                                className={`block px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark truncate ${
                                     selected?.value === option.value 
-                                        ? 'bg-bg-surface-primary-active-light dark:bg-bg-surface-primary-active-dark font-medium text-text-accent-default-light dark:text-text-accent-default-dark' 
+                                        ? 'bg-bg-surface-secondary-hover-light dark:bg-bg-surface-secondary-hover-dark font-medium text-text-accent-default-light dark:text-text-accent-default-dark' 
                                         : ''
                                 }`}
                                 data-cursor="clickable"
@@ -126,7 +163,8 @@ export default function SelectBox({
                             </div>
                         ))}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

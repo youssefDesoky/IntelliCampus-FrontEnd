@@ -1,4 +1,4 @@
-import apiClient from "../utils/apiClient";
+import apiClient from "./apiClient";
 
 export async function fetchInboxMessages() {
   return apiClient('/api/messages/inbox');
@@ -18,9 +18,9 @@ export async function deleteMessage(messageId) {
   return true;
 }
 
-export async function sendMessage({ recipientIds, subject, body }) {
-  return apiClient('/api/messages/send', {
+export async function sendMessage({ recipientEmail, subject, body, parentMessageId }) {
+  return apiClient('/api/messages', {
     method: 'POST',
-    body: JSON.stringify({ recipientIds, subject, body }),
+    body: JSON.stringify({ recipientEmail, subject, body, parentMessageId }),
   });
 }

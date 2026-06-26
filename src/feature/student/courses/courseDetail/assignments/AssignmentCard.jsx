@@ -18,7 +18,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
 
     return (
         <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg transition-shadow duration-200">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+            <div className="flex flex-row items-start justify-between gap-3 mb-3">
                 <div className="flex-1">
                     <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1">
                         {title}

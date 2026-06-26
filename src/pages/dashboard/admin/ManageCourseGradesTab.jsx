@@ -3,7 +3,7 @@ import Button from "../../../components/ui/Button";
 import ImportDialog from "../../../components/ui/ImportDialog";
 import Dialog from "../../../components/ui/Dialog";
 import { useError } from '../../../contexts/ErrorContext.jsx';
-import { uploadCourseGrades } from "../../../feature/admin/services/adminApi";
+import { uploadCourseGrades } from "../../../feature/admin/services/adminCoursesApi";
 
 export default function ManageCourseGradesTab({ courseId, courseName }) {
     const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -14,7 +14,10 @@ export default function ManageCourseGradesTab({ courseId, courseName }) {
         setUploading(true);
         try {
             const result = await uploadCourseGrades(courseId, file);
-            setUploadResult(result?.message || "Grades uploaded successfully.");
+            const msg = result?.successCount !== undefined
+                ? `${result.successCount} grades uploaded, ${result.failCount || 0} failed.`
+                : "Grades uploaded successfully.";
+            setUploadResult(msg);
             setIsUploadOpen(false);
         } catch (err) {
             showError(err.message);

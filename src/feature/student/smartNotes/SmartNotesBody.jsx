@@ -18,11 +18,11 @@ const emptyNote = {
     modified: "",
 };
 
-export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, setViewMode, onSaveNote }) {
+export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, setViewMode, onSaveNote, onDeleteNote, studentId, courseId: propCourseId }) {
     // Get course data from CourseShell context if available
     const courseCtx = useOutletContext()
     const courseFolders = courseCtx?.course?.folders || []
-    const courseId = courseCtx?.courseId || null
+    const courseId = propCourseId ?? courseCtx?.courseId ?? null
     const itemsPerPage = isPhone ? 6 : isTablet ? 8 : 12;
     const [currentPage, setCurrentPage] = useState(1);
     const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -40,6 +40,17 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="w-full lg:w-fit flex items-center justify-between gap-4">
                         <SearchBar placeholder="Search notes..." />
+
+                        {isPhone && (
+                            <button
+                                type="button"
+                                disabled={!studentId}
+                                onClick={() => setIsComposerOpen(true)}
+                                className="flex items-center justify-center p-2 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark rounded-md hover:scale-[1.02] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <PlusIcon className="w-5 h-5" />
+                            </button>
+                        )}
 
                         {!isPhone && setViewMode && (
                             <div className="flex items-center">
@@ -63,14 +74,17 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
                         )}
                     </div>
 
-                    <Button
-                        type="button"
-                        onClick={() => setIsComposerOpen(true)}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark rounded-md hover:scale-[1.02]"
-                    >
-                        <PlusIcon className="w-5 h-5" />
-                        {!isPhone && <span className="font-semibold">Add New Note</span>}
-                    </Button>
+                    {!isPhone && (
+                        <Button
+                            type="button"
+                            disabled={!studentId}
+                            onClick={() => setIsComposerOpen(true)}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark rounded-md hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <PlusIcon className="w-5 h-5" />
+                            <span className="font-semibold">Add New Note</span>
+                        </Button>
+                    )}
                 </div>
             </Section>
 
@@ -80,6 +94,7 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
                     onClose={() => setIsComposerOpen(false)}
                     courseFolders={courseFolders}
                     courseId={courseId}
+                    studentId={studentId}
                     onSaveNote={onSaveNote}
                 />
             )}
@@ -98,7 +113,9 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
                             isTablet={isTablet}
                             courseFolders={courseFolders}
                             courseId={courseId}
+                            studentId={studentId}
                             onSaveNote={onSaveNote}
+                            onDeleteNote={onDeleteNote}
                         />
                     ))
                 )}

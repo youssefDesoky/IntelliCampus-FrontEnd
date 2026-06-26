@@ -1,7 +1,7 @@
-import apiClient from "../utils/apiClient";
+import apiClient from "./apiClient";
 
 export async function fetchMyNotifications() {
-  return apiClient('/api/notifications/unread');
+  return apiClient('/api/notifications');
 }
 
 export function dispatchNotificationsChanged() {
@@ -23,9 +23,23 @@ export async function markAllNotificationsAsRead() {
   return true;
 }
 
-export async function sendBulkNotification(userIds = [], message = '', type = 0) {
+export async function sendBulkNotification(userIds = [], message = '', type = 0, title = null, clickUrl = null, imageUrl = null) {
   return apiClient('/api/notifications/send', {
     method: 'POST',
-    body: JSON.stringify({ userIds, message, type }),
+    body: JSON.stringify({ userIds, message, type, title, clickUrl, imageUrl }),
+  });
+}
+
+export async function registerPushSubscription(subscription) {
+  return apiClient('/api/devices/register', {
+    method: 'POST',
+    body: JSON.stringify(subscription),
+  });
+}
+
+export async function unregisterPushSubscription(endpoint) {
+  return apiClient('/api/devices/unregister', {
+    method: 'POST',
+    body: JSON.stringify({ endpoint }),
   });
 }

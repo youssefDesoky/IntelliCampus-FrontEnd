@@ -17,8 +17,8 @@ import {
     fetchStudentCompletedCourses,
     fetchAvailableCoursesForStudent,
     updateStudent,
-    sendEmail,
-} from "../../../feature/admin/services/adminApi";
+} from "../../../feature/admin/services/adminStudentsApi";
+import { sendEmail } from "../../../feature/admin/services/adminCommunicationApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import StudentForm from "../../../feature/admin/components/StudentForm";
 import StudentInfoTab from "./StudentInfoTab";
@@ -75,6 +75,7 @@ export default function StudentDetails() {
             setEmailSubject("");
             setEmailBody("");
         } catch (err) {
+            showError(err.message || "Failed to send email");
         } finally {
             setSendingEmail(false);
         }
@@ -103,6 +104,7 @@ export default function StudentDetails() {
             setCompletedCourses(completed);
             setAvailableCourses(available);
         } catch (err) {
+            showError(err.message || "Failed to load courses");
         } finally {
             setCoursesLoading(false);
         }
@@ -164,7 +166,7 @@ export default function StudentDetails() {
                             </h1>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs font-mono tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                    {student.studentCode || student.studentId}
+                                    {student.studentCode || "—"}
                                 </span>
                             </div>
                         </div>

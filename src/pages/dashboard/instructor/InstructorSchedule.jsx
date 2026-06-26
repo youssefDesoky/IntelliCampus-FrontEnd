@@ -1,45 +1,33 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import useDeviceType from "../../../hooks/useDeviceType";
 
-import WeeklySchedule from "../../../components/ui/WeeklySchedule";
+import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
+import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
-import ExamSchedule from "../../../feature/student/schedule/ExamSchedule";
 import { fetchMySchedule, exportSchedulePdf } from "../../../feature/instructor/schedule/scheduleApi";
-import { fetchMyExams, exportExamSchedulePdf } from "../../../feature/instructor/schedule/examScheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const allowedTypeFilters = ["lecture", "section", "activity"];
 
 export default function InstructorSchedule() {
-    const [currSchedule, setCurrSchedule] = useState("weekly");
     const [selectedTypes, setSelectedTypes] = useState([]);
-    const [scheduleData, setScheduleData] = useState([]);
-    const [examsData, setExamsData] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
     const { isMobile } = useDeviceType();
     const { showError } = useError();
 
-    const loadScheduleData = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            const [schedule, exams] = await Promise.all([
-                fetchMySchedule(),
-                fetchMyExams(),
-            ]);
-            setScheduleData(Array.isArray(schedule) ? schedule : []);
-            setExamsData(Array.isArray(exams) ? exams : []);
-        } catch (err) {
-            showError(err.message);
-            setScheduleData([]);
-            setExamsData([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+    const {
+        data: scheduleData = [],
+        isLoading,
+        error,
+    } = useQuery({
+        queryKey: ["instructorSchedule"],
+        queryFn: fetchMySchedule,
+        staleTime: 5 * 60 * 1000,
+    });
 
     useEffect(() => {
-        loadScheduleData();
-    }, [loadScheduleData]);
+        if (error) showError(error.message || "Failed to load schedule");
+    }, [error, showError]);
 
     const getTypeGroup = (eventType) => {
         if (eventType === "lecture") return "lecture";
@@ -61,12 +49,8 @@ export default function InstructorSchedule() {
 
     const handleExport = async () => {
         try {
-            if (currSchedule === "weekly") {
-                await exportSchedulePdf(selectedTypes);
-            } else {
-                await exportExamSchedulePdf();
-            }
-        } catch (err) {
+            await exportSchedulePdf(selectedTypes);
+        } catch {
             showError("Failed to export PDF. Please try again.");
         }
     };
@@ -86,23 +70,28 @@ export default function InstructorSchedule() {
     return (
         <>        
             <ScheduleHeader
-                currSchedule={currSchedule}
-                setCurrSchedule={setCurrSchedule}
+                currSchedule="weekly"
                 isMobile={isMobile}
                 selectedTypes={selectedTypes}
                 onToggleType={toggleTypeFilter}
                 onClearTypes={clearTypeFilters}
                 onExport={handleExport}
+                hideToggle
             />
 
-            {currSchedule === "weekly" ? (
+            {isMobile ? (
+                <WeeklyScheduleAgenda
+                    days={days}
+                    schedule={filteredSchedule}
+                    variant="default"
+                    onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
+                />
+            ) : (
                 <WeeklySchedule
                     schedule={filteredSchedule}
                     isMobile={isMobile}
                     onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
                 />
-            ) : (
-                <ExamSchedule exams={examsData} />
             )}
         </>
     );

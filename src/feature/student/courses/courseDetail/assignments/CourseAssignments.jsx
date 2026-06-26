@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 import QuickUpload from "../../../../../components/ui/QuickUpload";
 import Section from "../../../../../components/ui/Section";
@@ -10,7 +11,7 @@ import ViewSubmission from "./ViewSubmission";
 import ViewInstructions from "./ViewInstructions";
 import ModelOverlay from "../../../../../components/ui/ModelOverlay";
 import { fetchAssignmentsByCourse, submitAssignment, fetchAssignmentStats } from "../../assignmentsApi";
-import { useError } from '../../../../../contexts/ErrorContext.jsx';
+
 
 const PAGE_SIZE = 2;
 
@@ -22,89 +23,75 @@ export default function CourseAssignments() {
     const [gradeModal, setGradeModal] = useState(null);
     const [submissionModal, setSubmissionModal] = useState(null);
     const [instructionsModal, setInstructionsModal] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const { showError } = useError();
-    const [assignments, setAssignments] = useState([]);
-    const [stats, setStats] = useState({ pending: 0, submitted: 0, graded: 0, averageGrade: null });
+    const queryClient = useQueryClient();
 
-    const loadAssignments = useCallback(async () => {
-        if (!course?.id) return;
-        try {
-            setIsLoading(true);
-            const assignmentsData = await fetchAssignmentsByCourse(course.id);
-            const normalized = (Array.isArray(assignmentsData) ? assignmentsData : []).map((a) => {
-                // normalize property names and derived flags for frontend components
-                const due = a.dueDate ? new Date(a.dueDate) : null;
-                const now = new Date();
-                const daysLeft = due ? Math.max(0, Math.ceil((due - now) / (1000 * 60 * 60 * 24))) : null;
+    const normalizeAssignments = (assignmentsData) => {
+        const raw = Array.isArray(assignmentsData) ? assignmentsData : (assignmentsData?.data ?? []);
+        return raw.map((a) => {
+            const due = a.dueDate ? new Date(a.dueDate) : null;
+            const now = new Date();
+            const daysLeft = due ? Math.max(0, Math.ceil((due - now) / (1000 * 60 * 60 * 24))) : null;
 
-                // determine whether backend marked submitted (support various shapes)
-                    const isSubmitted = Boolean(
-                        a.isSubmitted || a.submitted || a.submittedDate || a.submissionDate ||
-                        (a.status && String(a.status).toLowerCase().includes("submit")) ||
-                        a.submission || a.Submission || a.SubmissionDto
-                    );
+            const isSubmitted = Boolean(
+                a.isSubmitted || a.submitted || a.submittedDate || a.submissionDate ||
+                (a.status && String(a.status).toLowerCase().includes("submit")) ||
+                a.submission || a.Submission || a.SubmissionDto
+            );
 
-                // normalize status to one of: pending, submitted, graded
-                let status = "pending";
-                if (a.status) {
-                    const s = String(a.status).toLowerCase();
-                    if (s.includes("graded")) status = "graded";
-                    else if (s.includes("submit")) status = "submitted";
-                    else status = s;
-                } else {
-                    if (isSubmitted && (typeof a.score === "number" || a.score)) status = "graded";
-                    else if (isSubmitted) status = "submitted";
-                }
-
-                return {
-                        ...a,
-                        isSubmitted,
-                        status,
-                        daysLeft,
-                        // normalize submission payload (backend uses `Submission` singular)
-                        submissions: (a.submission && Array.isArray(a.submission.files) ? a.submission.files :
-                                      a.Submission && Array.isArray(a.Submission.files) ? a.Submission.files :
-                                      a.Submission && Array.isArray(a.Submission.Files) ? a.Submission.Files :
-                                      a.submission && Array.isArray(a.submission.Files) ? a.submission.Files :
-                                      a.submissions) || [],
-                        submittedDate: a.submission?.submittedAt || a.Submission?.submittedAt || a.submission?.SubmittedAt || a.Submission?.SubmittedAt || a.submittedDate || a.SubmittedDate || null,
-                        submissionNote: a.submission?.note || a.Submission?.note || a.submission?.Note || a.Submission?.Note || a.submissionNote || null,
-                        // grade/feedback normalization
-                        feedback: a.grade?.feedback || a.Grade?.feedback || a.grade?.Feedback || a.Grade?.Feedback || a.feedback || null,
-                        gradedBy: a.grade?.gradedBy || a.Grade?.gradedBy || a.grade?.GradedBy || a.Grade?.GradedBy || a.gradedBy || null,
-                        gradedDate: a.grade?.gradedAt || a.Grade?.gradedAt || a.grade?.GradedAt || a.Grade?.GradedAt || a.gradedDate || null,
-                        score: (a.grade?.score ?? a.Grade?.score ?? a.grade?.Score ?? a.Grade?.Score ?? a.score) ?? undefined,
-                    };
-            });
-
-            setAssignments(normalized);
-            
-            // Load stats from backend
-            try {
-                const statsData = await fetchAssignmentStats(course.id);
-                setStats({
-                    pending: statsData.pending || 0,
-                    submitted: statsData.submitted || 0,
-                    graded: statsData.graded || 0,
-                    averageGrade: statsData.averageGrade
-                });
-            } catch (statsErr) {
+            let status = "pending";
+            if (a.status) {
+                const s = String(a.status).toLowerCase();
+                if (s.includes("graded")) status = "graded";
+                else if (s.includes("submit")) status = "submitted";
+                else status = s;
+            } else {
+                if (isSubmitted && (typeof a.score === "number" || a.score)) status = "graded";
+                else if (isSubmitted) status = "submitted";
             }
-        } catch (err) {
-            showError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [course?.id]);
 
-    useEffect(() => {
-        loadAssignments();
-    }, [loadAssignments]);
+            return {
+                ...a,
+                isSubmitted,
+                status,
+                daysLeft,
+                submissions: (a.submission && Array.isArray(a.submission.files) ? a.submission.files :
+                              a.Submission && Array.isArray(a.Submission.files) ? a.Submission.files :
+                              a.Submission && Array.isArray(a.Submission.Files) ? a.Submission.Files :
+                              a.submission && Array.isArray(a.submission.Files) ? a.submission.Files :
+                              a.submissions) || [],
+                submittedDate: a.submission?.submittedAt || a.Submission?.submittedAt || a.submission?.SubmittedAt || a.Submission?.SubmittedAt || a.submittedDate || a.SubmittedDate || null,
+                submissionNote: a.submission?.note || a.Submission?.note || a.submission?.Note || a.Submission?.Note || a.submissionNote || null,
+                feedback: a.grade?.feedback || a.Grade?.feedback || a.grade?.Feedback || a.Grade?.Feedback || a.feedback || null,
+                gradedBy: a.grade?.gradedBy || a.Grade?.gradedBy || a.grade?.GradedBy || a.Grade?.GradedBy || a.gradedBy || null,
+                gradedDate: a.grade?.gradedAt || a.Grade?.gradedAt || a.grade?.GradedAt || a.Grade?.GradedAt || a.gradedDate || null,
+                score: (a.grade?.score ?? a.Grade?.score ?? a.grade?.Score ?? a.Grade?.Score ?? a.score) ?? undefined,
+            };
+        });
+    };
+
+    const { data: assignments = [], isLoading } = useQuery({
+        queryKey: ["courseAssignments", course?.id],
+        queryFn: () => fetchAssignmentsByCourse(course.id).then(normalizeAssignments),
+        staleTime: 2 * 60 * 1000,
+        enabled: !!course?.id,
+    });
+
+    const { data: stats = { pending: 0, submitted: 0, graded: 0, averageGrade: null } } = useQuery({
+        queryKey: ["assignmentStats", course?.id],
+        queryFn: () => fetchAssignmentStats(course.id),
+        staleTime: 2 * 60 * 1000,
+        enabled: !!course?.id,
+        select: (data) => ({
+            pending: data.pending || 0,
+            submitted: data.submitted || 0,
+            graded: data.graded || 0,
+            averageGrade: data.averageGrade ?? null,
+        }),
+    });
 
     const upcomingAssignments = assignments.filter((a) => !a.isSubmitted && new Date(a.dueDate) > new Date()) || [];
 
-    const pastAssignments = assignments.filter((a) => a.isSubmitted || new Date(a.dueDate) <= new Date()) || [];
+        const pastAssignments = assignments.filter((a) => a.isSubmitted || (a.dueDate && new Date(a.dueDate) <= new Date())) || [];
 
     if (isLoading) {
         return (
@@ -205,7 +192,7 @@ export default function CourseAssignments() {
                     )}
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             showing {pagedAssignments.length} of {pastAssignments.length} assignments
                         </p>
 
@@ -215,7 +202,7 @@ export default function CourseAssignments() {
             </div>
 
             {/* Sidebar */}
-            <div>
+            <div className="hidden lg:block">
                 <BaseComponent
                     title="Assignment Stats"
                     description="Overview of your assignment activity for this course"
@@ -257,7 +244,8 @@ export default function CourseAssignments() {
                             });
 
                             await submitAssignment(submitModal.id, formData);
-                            await loadAssignments();
+                            queryClient.invalidateQueries({ queryKey: ["courseAssignments", course?.id] });
+                            queryClient.invalidateQueries({ queryKey: ["assignmentStats", course?.id] });
                             setSubmitModal(null);
                         }}
                     />

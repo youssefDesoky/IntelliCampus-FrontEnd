@@ -334,7 +334,7 @@
   --color-shadow-dark: rgb(74 144 226 / 0.25);
 }
 
-* {
+*, *::before, *::after, html, body {
   box-sizing: border-box;
 	cursor: none !important;
   transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
@@ -484,6 +484,36 @@ input[type="password"]::-ms-clear {
   animation: fade-in-down 0.3s ease-out;
 }
 
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-slide-out-right {
+  animation: slide-out-right 0.3s ease-in forwards;
+}
+
+@keyframes fade-out-up {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-1rem);
+    opacity: 0;
+  }
+}
+
+.animate-fade-out-up {
+  animation: fade-out-up 0.3s ease-in forwards;
+}
+
 /* Tiptap Styles */
 .ProseMirror ul {
     list-style-type: disc;
@@ -505,7 +535,6 @@ input[type="password"]::-ms-clear {
 .ProseMirror a {
     color: var(--color-text-accent-default-light);
     text-decoration: underline;
-    cursor: pointer !important;
 }
 
 .ProseMirror a:hover {

@@ -42,7 +42,7 @@ export default function AttendanceExcuseCard() {
 
     return (
         <BaseComponent
-            className="lg:col-span-1 h-full flex flex-col"
+            className="hidden sm:flex lg:col-span-1 h-full flex-col"
             contentClassName="flex flex-1 flex-col justify-center"
             title="Quick Action"
             description="Submit an attendance excuse request directly from this page."
