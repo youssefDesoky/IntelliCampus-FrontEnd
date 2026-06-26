@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import Section from "../../../components/ui/Section";
 import DataBanner from "../../../components/ui/DataBanner";
@@ -8,7 +9,6 @@ import useDeviceType from "../../../hooks/useDeviceType";
 import InstructorCourseCard from "../../../feature/instructor/components/courses/InstructorCourseCard";
 import InstructorCoursesHeader from "../../../feature/instructor/components/courses/InstructorCoursesHeader";
 import { fetchMyTeachingCourses } from "../../../feature/course/services/coursesApi";
-import { useError } from '../../../contexts/ErrorContext.jsx';
 
 
 function mapCourseToCardProps(course) {
@@ -35,9 +35,14 @@ function mapCourseToCardProps(course) {
 export default function InstructorCourses() {
     const { isMobile } = useDeviceType();
     const navigate = useNavigate();
-    const [courses, setCourses] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const { showError } = useError();
+    const { data: courses = [], isLoading: loading, error } = useQuery({
+        queryKey: ["instructorCourses"],
+        queryFn: async () => {
+            const data = await fetchMyTeachingCourses();
+            return (Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []).map(mapCourseToCardProps);
+        },
+        staleTime: 5 * 60 * 1000,
+    });
 
     const [viewMode, setViewMode] = useState(() => {
         return isMobile ? "list" : localStorage.getItem("instructorCoursesViewMode") || "grid";
@@ -46,23 +51,6 @@ export default function InstructorCourses() {
     useEffect(() => {
         localStorage.setItem("instructorCoursesViewMode", viewMode);
     }, [viewMode]);
-
-    useEffect(() => {
-        let cancelled = false;
-        async function load() {
-            try {
-                setLoading(true);
-                const data = await fetchMyTeachingCourses();
-                if (!cancelled) setCourses((Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []).map(mapCourseToCardProps));
-            } catch (err) {
-                showError(err.message);
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }
-        load();
-        return () => { cancelled = true; };
-    }, []);
 
     // Compute stats from real data
     const totalHours = courses.reduce((sum, c) => sum + (c.creditHours || 0), 0);

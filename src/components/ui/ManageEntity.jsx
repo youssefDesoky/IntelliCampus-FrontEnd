@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import UserHeader from "./UserHeader";
 import PageHeader from "./PageHeader";
 import Section from "./Section";
@@ -44,6 +44,8 @@ export default function ManageEntity({
   renderExtraDialogs,
   renderBeforeTable,
   extraDeps = [],
+  serverSidePagination = false,
+  defaultPageSize = 10,
 }) {
   const { isDesktop, isTablet, isPhone } = useDeviceType();
   const { showError } = useError();
@@ -51,6 +53,7 @@ export default function ManageEntity({
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [editingItem, setEditingItem] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedRowIds, setSelectedRowIds] = useState([]);
@@ -58,19 +61,38 @@ export default function ManageEntity({
   const [currentPage, setCurrentPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formIsLoading, setFormIsLoading] = useState(false);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(defaultPageSize);
   const tableContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (!serverSidePagination) return;
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, serverSidePagination]);
 
   const getId = useMemo(
     () => (typeof entityIdField === "function" ? entityIdField : (item) => item?.[entityIdField]),
     [entityIdField]
   );
   const pluralLower = entityNamePlural.toLowerCase();
-  const queryKey = [pluralLower];
+  const queryKey = useMemo(() => {
+    if (serverSidePagination) {
+      return [pluralLower, currentPage, itemsPerPage, debouncedSearch, ...extraDeps];
+    }
+    return [pluralLower];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverSidePagination, pluralLower, currentPage, itemsPerPage, debouncedSearch, ...extraDeps]);
 
-  const { data: rawItems = [], isLoading, error, refetch } = useQuery({
+  const queryFn = useCallback(async () => {
+    if (serverSidePagination) {
+      return fetchItems({ pageIndex: currentPage, pageSize: itemsPerPage, searchQuery: debouncedSearch });
+    }
+    return fetchItems();
+  }, [serverSidePagination, fetchItems, currentPage, itemsPerPage, debouncedSearch]);
+
+  const { data: fetchResult, isLoading, isFetching, error, refetch } = useQuery({
     queryKey,
-    queryFn: () => fetchItems(),
+    queryFn: fetchItems,
   });
 
   useEffect(() => {
@@ -117,6 +139,7 @@ export default function ManageEntity({
   });
 
   useEffect(() => {
+    if (serverSidePagination) return;
     const calculateItemsPerPage = () => {
       if (!tableContainerRef.current) return;
       const rect = tableContainerRef.current.getBoundingClientRect();
@@ -131,23 +154,27 @@ export default function ManageEntity({
       window.removeEventListener("resize", calculateItemsPerPage);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawItems.length, isPhone, isTablet, ...extraDeps]);
+  }, [serverSidePagination, rawItems.length, isPhone, isTablet, ...extraDeps]);
 
   const filteredItems = useMemo(() => {
+    if (serverSidePagination) return rawItems;
     const q = (searchQuery || "").toLowerCase();
     return rawItems.filter((item) => searchFilter(item, q));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawItems, searchQuery, searchFilter, ...extraDeps]);
+  }, [rawItems, searchQuery, searchFilter, serverSidePagination, ...extraDeps]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
+  const totalItemsCount = serverTotalCount ?? filteredItems.length;
+  const totalPages = Math.max(1, Math.ceil(totalItemsCount / itemsPerPage));
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages, currentPage]);
 
   const paginatedItems = useMemo(() =>
-    filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
-    [filteredItems, currentPage, itemsPerPage]
+    serverSidePagination
+      ? rawItems
+      : filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
+    [filteredItems, currentPage, itemsPerPage, serverSidePagination, rawItems]
   );
 
   const resolvedHeaders = useMemo(() => {
@@ -287,14 +314,14 @@ export default function ManageEntity({
           Loading {pluralLower}...
         </p>
       ) : (
-        <Section>
+        <Section className={isFetching ? "opacity-60 transition-opacity" : ""}>
           <div className="flex flex-col gap-4 mb-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center justify-between gap-3 sm:contents">
                 <h2 className="text-xl font-semibold whitespace-nowrap shrink-0">
                   {entityNamePlural}{" "}
                   <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    ({filteredItems.length})
+                    ({totalItemsCount})
                   </span>
                 </h2>
                 <div className="flex-1 min-w-0 sm:hidden">
@@ -358,10 +385,10 @@ export default function ManageEntity({
                 page={currentPage}
                 onPageChange={setCurrentPage}
                 totalPages={totalPages}
-                totalItems={isSm ? filteredItems.length : undefined}
+                totalItems={isSm ? totalItemsCount : undefined}
                 itemsLabel={entityNamePlural}
-                from={isSm ? (currentPage - 1) * itemsPerPage + 1 : undefined}
-                to={isSm ? Math.min(currentPage * itemsPerPage, filteredItems.length) : undefined}
+                from={isSm && totalItemsCount > 0 ? (currentPage - 1) * itemsPerPage + 1 : undefined}
+                to={isSm ? Math.min(currentPage * itemsPerPage, totalItemsCount) : undefined}
                 onSelectionChange={(indices) => {
                   const visibleIds = new Set(tableRows.map(r => r._id).filter(Boolean));
                   setSelectedRowIds([

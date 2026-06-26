@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -30,24 +31,23 @@ const tooltipStyle = {
 };
 
 export default function InstructorCourseAnalytics() {
-    const { course, courseId } = useOutletContext();
-    const [analytics, setAnalytics] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { courseId } = useOutletContext();
     const { showError } = useError();
 
-    const loadAnalytics = useCallback(async () => {
-        try {
-            setLoading(true);
-            const data = await fetchCourseAnalytics(courseId);
-            setAnalytics(data);
-        } catch (err) {
-            showError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }, [courseId, showError]);
+    const {
+        data: analytics,
+        isLoading: loading,
+        error,
+    } = useQuery({
+        queryKey: ["instructorCourseAnalytics", courseId],
+        queryFn: () => fetchCourseAnalytics(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+    });
 
-    useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
+    useEffect(() => {
+        if (error) showError(error.message || "Failed to load analytics");
+    }, [error, showError]);
 
     if (loading) {
         return (

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { addDays, subDays, isSameDay, startOfDay, format } from "date-fns";
 
 import Categories from "../../../feature/student/reminders/Categories";
@@ -62,67 +63,61 @@ const MobileDateStrip = ({ selectedDate, onDateSelect }) => {
 
 export default function Reminders() {
     const { showError } = useError();
+    const queryClient = useQueryClient();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(categoryOptions[0]);
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [reminders, setReminders] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        let cancelled = false;
-        setIsLoading(true);
-        async function load() {
-            try {
-                const data = await fetchRemindersByDay(selectedDate);
-                if (!cancelled) setReminders(Array.isArray(data) ? data : []);
-            } catch (err) {
-                if (!cancelled) {
-                    showError(err.message);
-                    setReminders([]);
-                }
-            } finally {
-                if (!cancelled) setIsLoading(false);
-            }
-        }
-        load();
-        return () => { cancelled = true; };
-    }, [selectedDate, showError]);
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
 
-    const reloadReminders = async () => {
-        try {
-            const data = await fetchRemindersByDay(selectedDate);
-            setReminders(Array.isArray(data) ? data : []);
-        } catch (err) {
-            showError(err.message);
-            setReminders([]);
-        }
-    };
+    const {
+        data: reminders = [],
+        isLoading,
+    } = useQuery({
+        queryKey: ["reminders", dateStr],
+        queryFn: () => fetchRemindersByDay(selectedDate),
+        staleTime: 60 * 1000,
+    });
+
+    const createMutation = useMutation({
+        mutationFn: createReminderApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["reminders"] });
+            setIsFormOpen(false);
+        },
+        onError: (err) => showError(err.message),
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, data }) => updateReminderApi(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["reminders"] });
+            setEditingReminder(null);
+            setIsFormOpen(false);
+        },
+        onError: (err) => showError(err.message),
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => deleteReminderApi(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["reminders"] });
+        },
+        onError: (err) => showError(err.message),
+    });
 
     const handleSetIsFormOpen = (isOpen) => {
         if (isOpen) setEditingReminder(null);
         setIsFormOpen(isOpen);
     };
 
-    const handleAddReminder = async (reminder) => {
-        try {
-            await createReminderApi(reminder);
-            await reloadReminders();
-            setIsFormOpen(false);
-        } catch (err) {
-            showError(err.message);
-        }
+    const handleAddReminder = (reminder) => {
+        createMutation.mutate(reminder);
     };
 
-    const handleSaveReminder = async (updatedReminder) => {
-        try {
-            await updateReminderApi(updatedReminder.id, updatedReminder);
-            await reloadReminders();
-            setEditingReminder(null);
-            setIsFormOpen(false);
-        } catch (err) {
-            showError(err.message);
-        }
+    const handleSaveReminder = (updatedReminder) => {
+        updateMutation.mutate({ id: updatedReminder.id, data: updatedReminder });
     };
 
     const handleEditReminder = (reminder) => {
@@ -130,13 +125,8 @@ export default function Reminders() {
         setIsFormOpen(true);
     };
 
-    const handleDeleteReminder = async (reminderToDelete) => {
-        try {
-            await deleteReminderApi(reminderToDelete.id);
-            await reloadReminders();
-        } catch (err) {
-            showError(err.message);
-        }
+    const handleDeleteReminder = (reminderToDelete) => {
+        deleteMutation.mutate(reminderToDelete.id);
     };
 
     const getReminderDay = (reminderDate) => startOfDay(new Date(reminderDate));
@@ -168,15 +158,15 @@ export default function Reminders() {
     }
 
     return (
-        <>
+        <div className="flex flex-col min-h-[calc(100vh-160px)]">
             <RemindersHeader setIsFormOpen={handleSetIsFormOpen} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} reminders={reminders} />
 
             {/* Mobile Date Ribbon */}
             <MobileDateStrip selectedDate={selectedDate} onDateSelect={setSelectedDate} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 grid-rows-1 gap-4 flex-1 min-h-0">
                 <Timeline
-                    className="lg:col-span-3 min-h-dvh md:min-h-0"
+                    className="lg:col-span-3 md:min-h-0 min-h-0"
                     reminders={groupedReminders}
                     selectedCategory={selectedCategory}
                     selectedDate={selectedDate}
@@ -184,7 +174,7 @@ export default function Reminders() {
                     onDeleteReminder={handleDeleteReminder}
                 />
 
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6 min-h-0">
                     {/* Desktop Calendar Widget */}
                     <div className="hidden lg:block">
                         <CalenderWidget selectedDate={selectedDate} onDateSelect={setSelectedDate} />
@@ -207,6 +197,6 @@ export default function Reminders() {
                     initialReminder={editingReminder}
                 />
             )}
-        </>
+        </div>
     );
 }

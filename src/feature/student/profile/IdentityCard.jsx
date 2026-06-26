@@ -99,7 +99,7 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
 
     return (
         <>
-        <div className={`group perspective-distant min-h-105 h-full ${className}`}>
+        <div className={`group perspective-distant min-h-[28rem] h-full ${className}`}>
             <div
                 className={`relative w-full h-full transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] preserve-3d ${isFlipped ? "rotate-y-180" : ""}`}
                 style={{ transformStyle: "preserve-3d", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
@@ -202,10 +202,10 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
 
                 {/* BACK: QR Code */}
                 <div
-                    className="absolute inset-0 w-full h-full backface-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden shadow-xl rotate-y-180 flex flex-col"
+                    className="absolute inset-0 w-full h-full backface-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark shadow-xl rotate-y-180 flex flex-col"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                 >
-                    <div className="relative flex-1 flex flex-col px-8 pt-4 bg-linear-to-b from-bg-surface-primary-default-light dark:from-bg-surface-primary-default-dark to-bg-surface-secondary-default-light dark:to-bg-surface-secondary-default-dark">
+                    <div className="relative flex-1 flex flex-col px-6 pt-4 pb-6 bg-linear-to-b from-bg-surface-primary-default-light dark:from-bg-surface-primary-default-dark to-bg-surface-secondary-default-light dark:to-bg-surface-secondary-default-dark">
                         <button
                             onClick={() => setIsFlipped(false)}
                             className="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-xs font-semibold transition-all"
@@ -219,19 +219,21 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
                             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Scan this code at the attendance gate to check in</p>
                         </div>
 
-                        <div className="flex-1 flex items-center justify-center pt-4 px-4 pb-8">
-                            <div className="rounded-3xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg border border-border-primary-default-light dark:border-border-primary-default-dark flex items-center justify-center relative overflow-hidden p-3">
-                                <BrandedQRCode token={qrPayload} />
-                                {isExpired && (
-                                    <button
-                                        type="button"
-                                        onClick={generateAttendanceQr}
-                                        disabled={isGeneratingQr}
-                                        className="absolute inset-0 rounded-3xl bg-white/40 dark:bg-black/40 backdrop-blur-sm flex items-center justify-center transition-colors hover:bg-white/30 dark:hover:bg-black/30"
-                                    >
-                                        <ArrowRotateRightIcon size={50} className="text-white text-sm scale-x-[-1]" />
-                                    </button>
-                                )}
+                        <div className="flex-1 flex items-center justify-center min-h-0">
+                            <div className="rounded-3xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg border border-border-primary-default-light dark:border-border-primary-default-dark flex items-center justify-center p-2 max-w-full">
+                                <div className="relative inline-flex">
+                                    <BrandedQRCode token={qrPayload} />
+                                    {isExpired && (
+                                        <button
+                                            type="button"
+                                            onClick={generateAttendanceQr}
+                                            disabled={isGeneratingQr}
+                                            className="absolute inset-0 rounded-2xl bg-white/40 dark:bg-black/40 backdrop-blur-sm flex items-center justify-center transition-colors hover:bg-white/30 dark:hover:bg-black/30"
+                                        >
+                                            <ArrowRotateRightIcon size={50} className="text-white text-sm scale-x-[-1]" />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

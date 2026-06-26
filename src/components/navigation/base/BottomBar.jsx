@@ -14,9 +14,14 @@ export default function BottomBar({ links = [], leftLinks = [], rightLinks = [],
         if (to === "/") return pathname === "/";
         if (pathname === to) return true;
         if (pathname.startsWith(to + "/")) {
-            return !allLinks.some(link =>
-                link.to !== to && (pathname === link.to || pathname.startsWith(link.to + "/"))
-            );
+            return !allLinks.some(link => {
+                if (link.to === to) return false;
+                if (pathname === link.to) return true;
+                if (pathname.startsWith(link.to + "/")) {
+                    return link.to.length > to.length;
+                }
+                return false;
+            });
         }
         return false;
     };

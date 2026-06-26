@@ -4,8 +4,9 @@ export async function fetchClassesByCourse(courseId) {
   return apiClient(`/api/classes/course/${courseId}`);
 }
 
-export async function fetchAttendanceReport(classId) {
-  return apiClient(`/api/attendance/report/class/${classId}`);
+export async function fetchAttendanceReport(classId, { pageIndex = 1, pageSize = 10 } = {}) {
+  const params = new URLSearchParams({ pageIndex, pageSize });
+  return apiClient(`/api/attendance/report/class/${classId}?${params}`);
 }
 
 export async function fetchSessionAttendance(sessionId) {
@@ -25,6 +26,10 @@ export async function recordAttendance(payload) {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function getSessionById(sessionId) {
+  return apiClient(`/api/attendance/sessions/${sessionId}`);
 }
 
 export async function getSessionsByClass(classId) {

@@ -16,7 +16,7 @@ export default function MyCoursesHeader({
     setFilterType,
 }) {
     return (
-        <PageHeader title="My Courses" subtitle="Spring 2025 Semester">
+        <PageHeader title="My Courses" subtitle="Your enrolled courses" headerDir={showTranscript ? "row" : "col"} className={showTranscript ? "items-center" : "sm:flex-row sm:items-center"}>
             {showTranscript ? (
                 <Button
                     variant="primary"
@@ -25,11 +25,10 @@ export default function MyCoursesHeader({
                     onClick={() => setShowTranscript(false)}
                     className="rounded-full shadow-sm hover:shadow-md transition-shadow"
                 >
-                    <span className="sm:hidden">Back</span>
-                    <span className="hidden sm:inline">Back to Courses</span>
+                    Back
                 </Button>
             ) : (
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex flex-wrap items-center gap-2 justify-between sm:gap-3 w-full sm:w-auto">
                     <FilterDropdown
                         label="Status"
                         options={[
@@ -42,12 +41,22 @@ export default function MyCoursesHeader({
                     <FilterDropdown
                         label="Type"
                         options={[
-                            { value: "core", label: "Core" },
+                            { value: "mandatory", label: "Mandatory" },
                             { value: "elective", label: "Elective" },
                         ]}
                         selectedValues={filterType}
                         onChange={setFilterType}
                     />
+
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        startIcon={<FileLinesIcon className="w-4 h-4" />}
+                        onClick={() => setShowTranscript(true)}
+                        className="rounded-full shadow-sm hover:shadow-md transition-shadow"
+                    >
+                        Transcript
+                    </Button>
 
                     {!isMobile && (
                         <>
@@ -62,17 +71,6 @@ export default function MyCoursesHeader({
                             <div className="h-6 w-px bg-border-primary-default-light dark:bg-border-primary-default-dark" />
                         </>
                     )}
-
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        startIcon={<FileLinesIcon className="w-4 h-4" />}
-                        onClick={() => setShowTranscript(true)}
-                        className="rounded-full shadow-sm hover:shadow-md transition-shadow"
-                    >
-                        <span className="sm:hidden">Transcript</span>
-                        <span className="hidden sm:inline">View Transcript</span>
-                    </Button>
                 </div>
             )}
         </PageHeader>

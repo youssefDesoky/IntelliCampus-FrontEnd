@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
 import DateInput from "../../../components/form/DateInput";
@@ -21,14 +22,20 @@ export default function CourseRegistrationSettings({ onClose, onSave }) {
   const [regEndDate, setRegEndDate] = useState("");
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [selectedDeptIds, setSelectedDeptIds] = useState([]);
-  const [departments, setDepartments] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchDepartments()
-      .then(data => setDepartments(Array.isArray(data) ? data : []))
-      .catch(() => {});
-  }, []);
+  const { data: departments = [] } = useQuery({
+    queryKey: ["departments"],
+    queryFn: async () => {
+      try {
+        const data = await fetchDepartments();
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 10 * 60 * 1000,
+  });
 
   const toggleLevel = (level) => {
     setSelectedLevels(prev =>

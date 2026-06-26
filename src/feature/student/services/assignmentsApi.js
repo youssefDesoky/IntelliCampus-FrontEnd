@@ -1,8 +1,9 @@
 import apiClient from "../../../api/apiClient";
 import { dispatchNotificationsChanged } from "../../../api/notifications";
 
-export async function fetchAssignmentsByCourse(courseId) {
-  return apiClient(`/api/assignments/${courseId}`);
+export async function fetchAssignmentsByCourse(courseId, { pageIndex = 1, pageSize = 10 } = {}) {
+  const params = new URLSearchParams({ pageIndex, pageSize });
+  return apiClient(`/api/assignments/${courseId}?${params}`);
 }
 
 export async function fetchAssignmentStats(courseId) {

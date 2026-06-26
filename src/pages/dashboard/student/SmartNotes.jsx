@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useOutletContext, useRouteLoaderData } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import useDeviceType from "../../../hooks/useDeviceType";
-import { useError } from '../../../contexts/ErrorContext.jsx';
 
 import SmartNotesBody from "../../../feature/student/smartNotes/SmartNotesBody";
 import { fromBackendLinkedLecture } from "../../../feature/student/smartNotes/notesApi";
@@ -17,66 +17,36 @@ export default function SmartNotes() {
         localStorage.getItem('notesViewMode') === 'grid-3' ? 'grid-3' : 'grid-2'
     );
 
-    const [notes, setNotes] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const { showError } = useError();
+    const queryClient = useQueryClient();
 
     const studentId = authUser?.roles?.some(r => r.toLowerCase().startsWith("student")) ? authUser?.userId : null;
     const currentCourseId = outletCtx?.courseId || null;
 
+    const { data: notes = [], isLoading: loading, error } = useQuery({
+        queryKey: ["smartNotes"],
+        queryFn: async () => {
+            if (!studentId) return [];
+            const student = await fetchStudentNotes(studentId);
+            const courses = currentCourseId
+                ? (student?.courses || []).filter((course) => String(course?.id) === String(currentCourseId))
+                : (student?.courses || []);
+            return courses.flatMap((course) =>
+                (course?.notes || []).map((note) => ({
+                    ...note,
+                    course: course?.title || course?.courseName || "",
+                    linkedLecture: fromBackendLinkedLecture(note?.linkedLecture),
+                }))
+            );
+        },
+        staleTime: 5 * 60 * 1000,
+        enabled: !!studentId,
+    });
+
     function handleDeleteNote(deletedNoteId) {
-        setNotes((prevNotes) => prevNotes.filter((item) => String(item.id) !== String(deletedNoteId)));
+        queryClient.setQueryData(["smartNotes"], (prevNotes) =>
+            (prevNotes || []).filter((item) => String(item.id) !== String(deletedNoteId))
+        );
     }
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function loadNotes() {
-            if (!studentId) {
-                if (!cancelled) {
-                    setNotes([]);
-                    setLoading(false);
-                }
-                return;
-            }
-
-            try {
-                setLoading(true);
-
-                const student = await fetchStudentNotes(studentId);
-                const courses = currentCourseId
-                    ? (student?.courses || []).filter((course) => String(course?.id) === String(currentCourseId))
-                    : (student?.courses || []);
-
-                const mappedNotes = courses.flatMap((course) =>
-                    (course?.notes || []).map((note) => ({
-                        ...note,
-                        course: course?.title || course?.courseName || "",
-                        linkedLecture: fromBackendLinkedLecture(note?.linkedLecture),
-                    }))
-                );
-
-                if (!cancelled) {
-                    setNotes(mappedNotes);
-                }
-            } catch (err) {
-                if (!cancelled) {
-                    showError(err?.message || "Failed to load notes");
-                    setNotes([]);
-                }
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
-            }
-        }
-
-        loadNotes();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [studentId, currentCourseId, showError]);
 
     const sortedNotes = useMemo(() => {
         return [...notes].sort((a, b) => {
@@ -88,14 +58,12 @@ export default function SmartNotes() {
 
     function handleSaveNote(savedNote) {
         if (!savedNote) return;
-
-        setNotes((prevNotes) => {
+        queryClient.setQueryData(["smartNotes"], (prevNotes) => {
+            if (!prevNotes) return [savedNote];
             const existingIndex = prevNotes.findIndex((item) => String(item.id) === String(savedNote.id));
-
             if (existingIndex !== -1) {
                 return prevNotes.map((item, idx) => (idx === existingIndex ? savedNote : item));
             }
-
             return [savedNote, ...prevNotes];
         });
     }

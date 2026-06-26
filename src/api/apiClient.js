@@ -46,17 +46,7 @@ export default async function apiClient(endpoint, options = {}) {
     const error = new ApiError(res.status, title, detail, body);
 
     switch (res.status) {
-      case 400:
-        emitError({ title, message: detail });
-        break;
       case 401:
-        window.location.href = '/unauthorized';
-        break;
-      case 404:
-        emitError({ title, message: detail || 'Resource not found' });
-        break;
-      case 500:
-        emitError({ title, message: detail });
         break;
       default:
         emitError({ title, message: detail });

@@ -66,12 +66,12 @@ export function TimelineGroupSkeleton() {
 
 export function TimelineSkeleton() {
   return (
-    <div className="lg:col-span-3 flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 md:p-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
+    <div className="lg:col-span-3 md:min-h-0 min-h-0 flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 md:p-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark mb-4">
       <div className="flex items-center justify-between mb-6">
         <SkeletonBar className="h-5 w-20" />
         <SkeletonBar className="h-4 w-40" />
       </div>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-8 flex-1">
         {Array.from({ length: 3 }).map((_, i) => (
           <TimelineGroupSkeleton key={i} />
         ))}
@@ -121,12 +121,12 @@ export function CategoriesSkeleton() {
 
 export function RemindersSkeleton() {
   return (
-    <>
+    <div className="flex flex-col min-h-[calc(100vh-160px)]">
       <RemindersHeaderSkeleton />
       <MobileDateStripSkeleton />
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 grid-rows-1 gap-4 flex-1 min-h-0">
         <TimelineSkeleton />
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 min-h-0">
           <div className="hidden lg:block">
             <CalendarSkeleton />
           </div>
@@ -135,6 +135,6 @@ export function RemindersSkeleton() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
