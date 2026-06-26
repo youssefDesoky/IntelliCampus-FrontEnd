@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import Section from "../../../../components/ui/Section";
 import Button from "../../../../components/ui/Button";
@@ -8,27 +9,13 @@ import { DownloadIcon } from "../../../../components/ui/icons";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 export default function TranscriptView() {
-    const [transcript, setTranscript] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { data: transcript = [], isLoading: loading, error } = useQuery({
+        queryKey: ["transcript"],
+        queryFn: fetchTranscript,
+        staleTime: 10 * 60 * 1000,
+    });
     const [exporting, setExporting] = useState(false);
     const { showError } = useError();
-
-    useEffect(() => {
-        let cancelled = false;
-        async function load() {
-            try {
-                setLoading(true);
-                const data = await fetchTranscript();
-                if (!cancelled) setTranscript(data);
-            } catch (err) {
-                showError(err.message);
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }
-        load();
-        return () => { cancelled = true; };
-    }, []);
 
     const handleExport = async () => {
         setExporting(true);
@@ -93,9 +80,9 @@ export default function TranscriptView() {
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark">
-                            <th className="text-left px-4 py-3 font-semibold">Code</th>
+                            <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">Code</th>
                             <th className="text-left px-4 py-3 font-semibold">Course Name</th>
-                            <th className="text-center px-4 py-3 font-semibold">Credit Hrs</th>
+                            <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">Credit Hrs</th>
                             <th className="text-center px-4 py-3 font-semibold">Coursework</th>
                             <th className="text-center px-4 py-3 font-semibold">Total</th>
                             <th className="text-center px-4 py-3 font-semibold">Grade</th>
@@ -111,13 +98,13 @@ export default function TranscriptView() {
                                         : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark"
                                 }`}
                             >
-                                <td className="px-4 py-3 text-text-secondary-active-light dark:text-text-secondary-active-dark font-mono text-xs">
+                                <td className="px-4 py-3 text-text-secondary-active-light dark:text-text-secondary-active-dark font-mono text-xs hidden sm:table-cell">
                                     {course.courseCode}
                                 </td>
                                 <td className="px-4 py-3 text-text-primary-active-light dark:text-text-primary-active-dark font-medium">
                                     {course.courseName}
                                 </td>
-                                <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                                <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark hidden sm:table-cell">
                                     {course.creditHours}
                                 </td>
                                 <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark">

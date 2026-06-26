@@ -11,9 +11,11 @@ export async function fetchMyTeachingCourses(params = {}) {
   return apiClient(`/api/courses/my-teaching${qs ? `?${qs}` : ''}`);
 }
 
-export async function fetchMyStudentCourses(status = null) {
+export async function fetchMyStudentCourses(status = null, pageIndex = 1, pageSize = 100) {
   const params = new URLSearchParams();
   if (status) params.set('status', status);
+  params.set('pageIndex', pageIndex);
+  params.set('pageSize', pageSize);
   const query = params.toString();
   return apiClient(`/api/courses/my-courses${query ? `?${query}` : ''}`);
 }

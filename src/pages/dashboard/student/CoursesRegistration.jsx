@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import useDeviceType from "../../../hooks/useDeviceType";
 
@@ -61,13 +62,43 @@ const ITEMS_PER_PAGE = 3;
 export default function CoursesRegistration() {
     const { isDesktop, isMobile } = useDeviceType();
 
-    const [selectedCourses, setSelectedCourses]   = useState([]);
-    const [availableCourses, setAvailableCourses] = useState([]);
+    const [locallyAddedCourses, setLocallyAddedCourses] = useState([]);
     const [sectionOptionsByCourseId, setSectionOptionsByCourseId] = useState({});
     const [selectedSectionByCourseId, setSelectedSectionByCourseId] = useState({});
     const [pendingRemovalCourseIds, setPendingRemovalCourseIds] = useState([]);
     const { showError } = useError();
-    const [loading, setLoading]   = useState(true);
+    const queryClient = useQueryClient();
+
+    const { data: registrationData, isLoading: loading } = useQuery({
+        queryKey: ["coursesRegistration"],
+        queryFn: async () => {
+            const [registrations, courses] = await Promise.all([getMyRegistrations(), fetchActiveCourses()]);
+            return { registrations, courses };
+        },
+        staleTime: 2 * 60 * 1000,
+    });
+
+    const { data: scheduleData = [], isLoading: schedulePreviewLoading } = useQuery({
+        queryKey: ["studentSchedule"],
+        queryFn: fetchMySchedule,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const selectedCourses = useMemo(() => {
+        const serverSelected = (registrationData?.registrations || []).map(mapRegistrationToCard);
+        return [...serverSelected, ...locallyAddedCourses];
+    }, [registrationData, locallyAddedCourses]);
+
+    const availableCourses = useMemo(() => {
+        const registeredIds = new Set((registrationData?.registrations || []).map(r => r.courseId));
+        const serverAvailable = (registrationData?.courses
+            ? (Array.isArray(registrationData.courses) ? registrationData.courses : [])
+                .filter(c => !registeredIds.has(c.courseId ?? c.id))
+                .map(mapActiveCourseToCard)
+            : []);
+        const addedIds = new Set(locallyAddedCourses.map(c => c.courseId));
+        return serverAvailable.filter(c => !addedIds.has(c.courseId));
+    }, [registrationData, locallyAddedCourses]);
 
     const [selectedCoursesPage, setSelectedCoursesPage]   = useState(1);
     const [availableCoursesPage, setAvailableCoursesPage] = useState(1);
@@ -75,54 +106,7 @@ export default function CoursesRegistration() {
     const [showResultDialog, setShowResultDialog]   = useState(false);
     const [resultDialogVariant, setResultDialogVariant] = useState("success");
     const [resultDialogMessage, setResultDialogMessage] = useState("");
-    const [schedulePreview, setSchedulePreview] = useState([]);
-    const [schedulePreviewLoading, setSchedulePreviewLoading] = useState(false);
-
-    /* ── Fetch data on mount ── */
-    const loadData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [registrations, activeCourses] = await Promise.all([
-                getMyRegistrations(),
-                fetchActiveCourses(),
-            ]);
-
-            const registeredIds = new Set(
-                registrations.map((r) => r.courseId)
-            );
-
-            setSelectedCourses(registrations.map(mapRegistrationToCard));
-            setAvailableCourses(
-                (Array.isArray(activeCourses) ? activeCourses : [])
-                    .filter((c) => !registeredIds.has(c.courseId ?? c.id))
-                    .map(mapActiveCourseToCard)
-            );
-        } catch (err) {
-            showError(err.message || "Failed to load courses");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => { loadData(); }, [loadData]);
-
-    /* ── Load schedule preview on mount ── */
-    useEffect(() => {
-        let cancelled = false;
-        async function loadSchedule() {
-            setSchedulePreviewLoading(true);
-            try {
-                const data = await fetchMySchedule();
-                if (!cancelled) setSchedulePreview(Array.isArray(data) ? data : []);
-            } catch {
-                if (!cancelled) setSchedulePreview([]);
-            } finally {
-                if (!cancelled) setSchedulePreviewLoading(false);
-            }
-        }
-        loadSchedule();
-        return () => { cancelled = true; };
-    }, []);
+    const schedulePreview = Array.isArray(scheduleData) ? scheduleData : [];
 
     /* ── Load sections for selected courses ── */
     useEffect(() => {
@@ -208,17 +192,15 @@ export default function CoursesRegistration() {
 
     /* ── Register / Unregister handlers ── */
     const handleRegister = (course) => {
-        setSelectedCourses((prev) => {
+        setLocallyAddedCourses((prev) => {
             if (prev.some((c) => c.courseId === course.courseId)) return prev;
             return [...prev, { ...course, isRegistered: false }];
         });
-        setAvailableCourses((prev) => prev.filter((c) => c.courseId !== course.courseId));
     };
 
     const handleUnregister = (course) => {
         if (!course.isRegistered) {
-            setSelectedCourses((prev) => prev.filter((c) => c.courseId !== course.courseId));
-            setAvailableCourses((prev) => [...prev, { ...course, isRegistered: false }]);
+            setLocallyAddedCourses((prev) => prev.filter((c) => c.courseId !== course.courseId));
             return;
         }
 
@@ -266,7 +248,8 @@ export default function CoursesRegistration() {
         }
 
         setPendingRemovalCourseIds([]);
-        await loadData();
+        setLocallyAddedCourses([]);
+        await queryClient.invalidateQueries({ queryKey: ["coursesRegistration"] });
 
         if (failureMsgs.length === 0) {
             setResultDialogVariant("success");

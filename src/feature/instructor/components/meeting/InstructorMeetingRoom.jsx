@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 import Section from "../../../../components/ui/Section";
 import Button from "../../../../components/ui/Button";
@@ -49,8 +50,6 @@ export default function MeetingRoom() {
     const { course, courseId } = useOutletContext();
     const isInstructor = user?.roles?.some((r) => r === "Instructor");
 
-    const [meetings, setMeetings] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [title, setTitle] = useState("");
     const [dateTime, setDateTime] = useState("");
     const [creating, setCreating] = useState(false);
@@ -66,21 +65,14 @@ export default function MeetingRoom() {
     const containerRef = useRef(null);
     const apiRef = useRef(null);
 
-    const loadMeetings = useCallback(async () => {
-        setLoading(true);
-        try {
-            const data = await fetchCourseMeetings(courseId);
-            setMeetings(data);
-        } catch (err) {
-            showError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }, [courseId]);
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        loadMeetings();
-    }, [loadMeetings]);
+    const { data: meetings = [], isLoading: loading } = useQuery({
+        queryKey: ["courseMeetings", courseId],
+        queryFn: () => fetchCourseMeetings(courseId),
+        staleTime: 2 * 60 * 1000,
+        enabled: !!courseId,
+    });
 
     const initializeMeeting = () => {
         if (!activeMeeting) return;
@@ -159,7 +151,7 @@ export default function MeetingRoom() {
             });
             setTitle("");
             setDateTime("");
-            await loadMeetings();
+            queryClient.invalidateQueries({ queryKey: ["courseMeetings", courseId] });
             setActiveMeeting(meeting);
         } catch (err) {
             showError("Failed to create meeting. Please try again.");

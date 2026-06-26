@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
 
 import TodayReminderItem from "./upcomingDeadlines/TodayReminderItem";
@@ -7,35 +7,11 @@ import { BellIconDark, ArrowRightIcon } from "../../../components/ui/icons";
 import { fetchRemindersByDay } from "../remindersApi";
 
 export default function TodayReminders({ className }) {
-    const [reminders, setReminders] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function loadReminders() {
-            try {
-                const data = await fetchRemindersByDay(new Date());
-                if (!cancelled) {
-                    setReminders(data);
-                }
-            } catch {
-                if (!cancelled) {
-                    setReminders([]);
-                }
-            } finally {
-                if (!cancelled) {
-                    setIsLoading(false);
-                }
-            }
-        }
-
-        loadReminders();
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+    const { data: reminders = [], isLoading, error } = useQuery({
+        queryKey: ["todayReminders"],
+        queryFn: () => fetchRemindersByDay(new Date()),
+        staleTime: 60 * 1000,
+    });
 
     return (
         <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>

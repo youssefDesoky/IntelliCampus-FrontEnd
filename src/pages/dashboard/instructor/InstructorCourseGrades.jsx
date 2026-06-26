@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 import { fetchCourseGrades } from "../../../feature/instructor/services/gradesApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
@@ -44,25 +45,23 @@ function getGradeTextColor(percent) {
 }
 
 export default function InstructorCourseGrades() {
-    const { course, courseId } = useOutletContext();
-    const [grades, setGrades] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { courseId } = useOutletContext();
     const { showError } = useError();
-    const [selectedStudent, setSelectedStudent] = useState(null);
 
-    const loadGrades = useCallback(async () => {
-        try {
-            setLoading(true);
-            const data = await fetchCourseGrades(courseId);
-            setGrades(data);
-        } catch (err) {
-            showError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }, [courseId, showError]);
+    const {
+        data: grades,
+        isLoading: loading,
+        error,
+    } = useQuery({
+        queryKey: ["instructorCourseGrades", courseId],
+        queryFn: () => fetchCourseGrades(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+    });
 
-    useEffect(() => { loadGrades(); }, [loadGrades]);
+    useEffect(() => {
+        if (error) showError(error.message || "Failed to load grades");
+    }, [error, showError]);
 
     if (loading) {
         return (

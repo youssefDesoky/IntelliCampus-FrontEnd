@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
 import IdentityCard from "../../../feature/student/profile/IdentityCard";
 import AccountControlsCard from "../../../feature/student/profile/AccountControlsCard";
 import AcademicInfoCard from "../../../feature/student/profile/AcademicInfoCard";
 import PerformanceCard from "../../../feature/student/profile/PerformanceCard";
 import { fetchStudentProfile } from "../../../api/studentProfile";
-import { useError } from "../../../contexts/ErrorContext";
-
 function mapBackendToUserData(student) {
     return {
         name: student.fullName,
@@ -55,44 +53,18 @@ function mapAuthToUserData(auth) {
 export default function Profile() {
     const authUser = useRouteLoaderData("root");
     const studentId = authUser?.roles?.some((r) => r.toLowerCase().startsWith("student")) ? authUser?.userId : null;
-    const { showError } = useError();
     const initialData = mapAuthToUserData(authUser);
-    const [userData, setUserData] = useState(initialData);
-    const [detailedLoading, setDetailedLoading] = useState(!!studentId);
 
-    const loadProfile = useCallback(async () => {
-        if (!studentId) return;
-        const student = await fetchStudentProfile(studentId);
-        return student;
-    }, [studentId]);
-
-    const refreshUserData = useCallback(async () => {
-        try {
-            const student = await loadProfile();
-            if (student) setUserData(mapBackendToUserData(student));
-        } catch (err) {
-            showError(err?.message || "Failed to load profile");
-        }
-    }, [loadProfile, showError]);
-
-    useEffect(() => {
-        if (!studentId) return;
-        let cancelled = false;
-
-        async function init() {
-            try {
-                const student = await fetchStudentProfile(studentId);
-                if (!cancelled) setUserData(mapBackendToUserData(student));
-            } catch (err) {
-                if (!cancelled) showError(err?.message || "Failed to load profile");
-            } finally {
-                if (!cancelled) setDetailedLoading(false);
-            }
-        }
-
-        init();
-        return () => { cancelled = true; };
-    }, [studentId, showError]);
+    const { data: userData = null, isLoading: detailedLoading, refetch, error } = useQuery({
+        queryKey: ["studentProfile"],
+        queryFn: async () => {
+            const student = await fetchStudentProfile(studentId);
+            return mapBackendToUserData(student);
+        },
+        staleTime: 10 * 60 * 1000,
+        enabled: !!studentId,
+        placeholderData: initialData,
+    });
 
     if (!userData && !studentId) {
         return (
@@ -107,7 +79,7 @@ export default function Profile() {
             <div className="mx-auto max-w-7xl space-y-6">
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_2fr] items-stretch">
                     <div className="flex h-full flex-col gap-6 lg:sticky lg:top-6 self-start">
-                        <IdentityCard user={userData} onProfileUpdate={refreshUserData} />
+                        <IdentityCard user={userData} onProfileUpdate={refetch} />
                         <AccountControlsCard className="shrink-0" />
                     </div>
                     <div className="flex h-full flex-col gap-6">

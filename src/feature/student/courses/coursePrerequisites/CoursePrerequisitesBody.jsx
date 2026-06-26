@@ -1,44 +1,29 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Section from "../../../../components/ui/Section";
 import CoursePrerequisitesCard from "./CoursePrerequisitesCard";
 import { PrereqPageSkeleton } from "./SkeletonLoader";
-import { useError } from "../../../../contexts/ErrorContext.jsx";
 import { fetchCoursePrerequisites } from "../../services/profileApi";
 
 export default function CoursePrerequisitesBody({ search = "" }) {
-    const [courseData, setCourseData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const { showError } = useError();
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function load() {
-            try {
-                setLoading(true);
-                const data = await fetchCoursePrerequisites();
-                const list = Array.isArray(data) ? data : [];
-                const mapped = list.map((course) => ({
-                    id: course.courseId,
-                    title: course.courseName || "",
-                    code: course.courseCode || "",
-                    creditHours: course.creditHours || "",
-                    prerequisites: (course.prerequisites || []).map((p) => ({
-                        id: p.code || "",
-                        title: p.title || "",
-                    })),
-                }));
-                if (!cancelled) setCourseData(mapped);
-            } catch (err) {
-                if (!cancelled) showError(err.message || "Failed to load prerequisites");
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }
-
-        load();
-        return () => { cancelled = true; };
-    }, []);
+    const { data: courseData = [], isLoading: loading, error } = useQuery({
+        queryKey: ["coursePrerequisites"],
+        queryFn: async () => {
+            const data = await fetchCoursePrerequisites();
+            const list = Array.isArray(data) ? data : [];
+            return list.map((course) => ({
+                id: course.courseId,
+                title: course.courseName || "",
+                code: course.courseCode || "",
+                creditHours: course.creditHours || "",
+                prerequisites: (course.prerequisites || []).map((p) => ({
+                    id: p.code || "",
+                    title: p.title || "",
+                })),
+            }));
+        },
+        staleTime: 10 * 60 * 1000,
+    });
 
     const filtered = useMemo(() => {
         if (!search.trim()) return courseData;

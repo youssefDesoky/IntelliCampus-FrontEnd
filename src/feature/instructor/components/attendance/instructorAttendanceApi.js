@@ -4,6 +4,7 @@ export {
   fetchSessionAttendance,
   createClass,
   recordAttendance,
+  getSessionById,
   getSessionsByClass,
   createSession,
   scanAttendanceQr,

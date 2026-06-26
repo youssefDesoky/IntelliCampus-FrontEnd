@@ -4,4 +4,5 @@ export {
   deleteInstructorAssignment,
   updateInstructorAssignment,
   fetchAssignmentSubmissions,
+  gradeAssignmentSubmission,
 } from "../../services/assignmentsApi";

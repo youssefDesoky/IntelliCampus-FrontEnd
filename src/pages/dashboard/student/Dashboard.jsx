@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { formatDistanceToNow } from "date-fns";
 import BoxData from "../../../components/ui/BoxData";
@@ -27,36 +27,11 @@ const statIconStyles = {
 };
 
 export default function Dashboard() {
-  const [dashboard, setDashboard] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadDashboard() {
-      try {
-        const data = await fetchStudentDashboard();
-        if (!cancelled) {
-          setDashboard(data);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadDashboard();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data: dashboard, isLoading, error } = useQuery({
+    queryKey: ["studentDashboard"],
+    queryFn: fetchStudentDashboard,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const stats = dashboard?.stats ?? {};
   const statsData = [

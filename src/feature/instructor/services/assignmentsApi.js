@@ -27,3 +27,10 @@ export async function updateInstructorAssignment(assignmentId, payload) {
 export async function fetchAssignmentSubmissions(assignmentId) {
   return apiClient(`/api/assignments/${assignmentId}/submissions`);
 }
+
+export async function gradeAssignmentSubmission(assignmentId, payload) {
+  return apiClient(`/api/assignments/${assignmentId}/grade`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

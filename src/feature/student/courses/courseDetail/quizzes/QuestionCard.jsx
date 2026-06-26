@@ -2,15 +2,17 @@ import TextArea from "../../../../../components/ui/TextArea";
 import { ClipboardCheckIcon } from "../../../../../components/ui/icons";
 
 export function TypeBadge({ type }) {
+    const normalizedType = type === "Written" ? "Written" : type;
+    const label = type === "Written" ? "Written" : type;
     const styles = {
         TF: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
         MCQ: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
-        "Written Question": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+        Written: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
     };
 
     return (
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${styles[type]}`}>
-            {type}
+        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${styles[normalizedType] || styles.Written}`}>
+            {label}
         </span>
     );
 }
@@ -80,18 +82,18 @@ function QuestionControls({ question, questionType, answer, onAnswerChange, writ
         );
     }
 
-    if (type === "Written Question") {
+    if (type === "Written Question" || type === "Written") {
         return (
             <>
                 <TextArea
                     value={answer || ""}
                     onChange={(e) => onAnswerChange && onAnswerChange(e.target.value)}
-                    placeholder={question.placeholder}
+                    placeholder="Write your answer here..."
                     readOnly={disabled}
                     className={`w-full rounded-2xl border px-4 py-3 ${disabled ? "opacity-70" : ""}`}
                 />
                 <div className="mt-3 flex items-center justify-between text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    <span>Write at least {question.minWords} words for a strong response.</span>
+                    <span>Write a detailed response for full credit.</span>
                     <span>{writtenWordCount} words</span>
                 </div>
             </>
