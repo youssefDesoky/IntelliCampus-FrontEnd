@@ -1,6 +1,5 @@
 import { useState } from "react";
 import ToggleTheme from "../components/ui/ToggleTheme";
-// useDeviceType is no longer needed here
 
 export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", children }) {
     const [currTheme, setCurrTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -15,12 +14,7 @@ export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", c
     return (
         <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-linear-to-r/shorter from-bg-surface-primary-default-light dark:from-bg-surface-primary-default-dark to-blue-50 dark:to-blue-950 px-4">
 
-            {/*
-             * Mobile background — lives on the stable min-h-screen container,
-             * not on the form column. Height never changes → no more shifting.
-             * lg:hidden removes it on desktop (left column takes over).
-             * Pure CSS: zero JS, zero re-render flash.
-             */}
+            {/* Mobile background */}
             <div className="absolute inset-0 lg:hidden" style={bgStyle} />
 
             <div className="relative grid grid-cols-100
@@ -28,11 +22,7 @@ export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", c
                             rounded-2xl lg:shadow-2xl
                             w-full lg:w-3/4 lg:h-[80vh]">
 
-                {/*
-                 * Left panel — hidden lg:flex is CSS-only.
-                 * display:none removes it from grid flow on mobile
-                 * so col-span-45 only "counts" on desktop. No JS flash.
-                 */}
+                {/* Left panel */}
                 <div
                     className="hidden lg:flex p-5 flex-col items-left justify-start space-y-5 rounded-l-2xl col-span-45"
                     style={bgStyle}
@@ -54,16 +44,23 @@ export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", c
                     </div>
                 </div>
 
-                {/* Right panel — transparent on mobile so the background image shows through */}
+                {/* Right panel */}
+                {/* CHANGED: Reduced p-6 to p-0 on mobile, kicking in p-4 on sm, and p-8 on lg */}
                 <div className="flex flex-col justify-center
                                 bg-transparent lg:bg-bg-surface-primary-default-light dark:lg:bg-bg-surface-primary-default-dark
-                                col-span-100 p-6 rounded-2xl lg:rounded-bl-none lg:col-span-55 lg:p-8">
-                    <div className="w-full mx-auto
+                                col-span-100 p-0 sm:p-4 rounded-2xl lg:rounded-bl-none lg:col-span-55 lg:p-8">
+                    
+                    {/* CHANGED: Toned down mobile padding from p-6 to p-5, kept p-6 for sm, and p-12 for lg */}
+                    <div className="relative w-full mx-auto
                                     bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark
                                     border border-border-primary-default-light dark:border-border-primary-default-dark
-                                    p-6 lg:p-12 rounded-2xl shadow-2xl min-h-125 max-w-125
+                                    p-5 sm:p-6 lg:p-12 rounded-2xl shadow-2xl min-h-125 max-w-125
                                     flex flex-col justify-center">
-                        <div className="mb-6 space-y-2 md:space-y-3">
+                        
+                        {/* CHANGED: Adjusted to top-3 right-3 so it stays snug in the corner with the new padding */}
+                        <ToggleTheme className="absolute top-3 right-3 sm:top-4 sm:right-4" onChange={setCurrTheme} />
+
+                        <div className="mb-6 space-y-2 md:space-y-3 pt-2">
                             <h2 className="text-2xl lg:text-3xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
                                 {title}
                             </h2>
@@ -74,8 +71,6 @@ export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", c
                         <div>{children}</div>
                     </div>
                 </div>
-
-                <ToggleTheme className="absolute top-2.5 right-2.5" onChange={setCurrTheme} />
             </div>
         </div>
     );

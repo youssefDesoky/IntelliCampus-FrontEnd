@@ -56,7 +56,7 @@ export default function AttendanceOverall({ attendance, onRequestExcuse }) {
                 </div>
             </div>
 
-            <Button variant="primary" startIcon={<PaperclipIcon size={18} />} className="mt-6 w-full justify-center" onClick={onRequestExcuse}>
+            <Button variant="primary" startIcon={<PaperclipIcon size={18} />} className="mt-6 w-full justify-center sm:hidden" onClick={onRequestExcuse}>
                 Request Excuse
             </Button>
         </BaseComponent>

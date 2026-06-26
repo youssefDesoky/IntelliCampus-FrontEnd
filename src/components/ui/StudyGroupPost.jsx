@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import ArrowUpIcon from "./icons/ArrowUpIcon";
 import CommentIcon from "./icons/CommentIcon";
+import { fetchSinglePost, addComment } from "../../feature/student/courses/courseDetail/community/communityService";
+import { useError } from '../../contexts/ErrorContext.jsx';
 
 const CONTENT_PREVIEW_LENGTH = 240;
 
 export default function StudyGroupPost({ className = "", postData, courseId, courseTitle = null, onUpvote }) {
-    const navigate = useNavigate();
-    const location = useLocation();
     const [hasUpvoted, setHasUpvoted] = useState(false);
-
-    const basePath = location.pathname.startsWith("/instructor") ? `/instructor/courses/${courseId}` : `/courses/${courseId}`;
     const [expanded, setExpanded] = useState(false);
+    const [showComments, setShowComments] = useState(false);
+    const [comments, setComments] = useState(postData.comments || []);
+    const [commentText, setCommentText] = useState("");
+    const [commentsLoading, setCommentsLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const { showError } = useError();
 
     const content = postData.content || "";
     const isLongContent = content.length > CONTENT_PREVIEW_LENGTH;
@@ -19,6 +22,59 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
     const handleUpvote = () => {
         setHasUpvoted((prev) => !prev);
         onUpvote?.();
+    };
+
+    const handleToggleComments = async () => {
+        if (showComments) {
+            setShowComments(false);
+            return;
+        }
+        if (!courseId) return;
+        setShowComments(true);
+        setCommentsLoading(true);
+        try {
+            const data = await fetchSinglePost(courseId, postData.id);
+            const mapped = (data.comments || []).map(c => ({
+                commentId: c.commentId,
+                authorName: c.authorName,
+                authorAvatar: c.authorProfileImage || c.authorAvatar || null,
+                content: c.content,
+                createdAt: c.createdAt,
+                isRecommended: c.isRecommended || false,
+                recommendationRank: c.recommendationRank || null,
+                instructorRole: c.instructorRole || null,
+            }));
+            setComments(mapped);
+        } catch (err) {
+            showError(err.message);
+        } finally {
+            setCommentsLoading(false);
+        }
+    };
+
+    const handleAddComment = async () => {
+        if (!commentText.trim() || !courseId) return;
+        setSubmitting(true);
+        try {
+            await addComment(courseId, postData.id, commentText);
+            setCommentText("");
+            const data = await fetchSinglePost(courseId, postData.id);
+            const mapped = (data.comments || []).map(c => ({
+                commentId: c.commentId,
+                authorName: c.authorName,
+                authorAvatar: c.authorProfileImage || c.authorAvatar || null,
+                content: c.content,
+                createdAt: c.createdAt,
+                isRecommended: c.isRecommended || false,
+                recommendationRank: c.recommendationRank || null,
+                instructorRole: c.instructorRole || null,
+            }));
+            setComments(mapped);
+        } catch (err) {
+            showError(err.message);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -86,13 +142,88 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                     <span>{postData.likes}</span>
                 </button>
                 <button
-                    onClick={() => navigate(`${basePath}/community/questions/${postData.id}`)}
-                    className="px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors duration-150"
+                    onClick={handleToggleComments}
+                    className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm font-medium transition-colors duration-150 ${
+                        showComments
+                            ? "text-text-accent-active-light dark:text-text-accent-active-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
+                            : "text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark"
+                    }`}
                 >
                     <CommentIcon className="w-4 h-4" />
-                    <span>{postData.comments?.length || 0}</span>
+                    <span>{comments.length}</span>
                 </button>
             </div>
+
+            {showComments && (
+                <div className="border-t border-border-primary-default-light dark:border-border-primary-default-dark pt-4 space-y-3">
+                    {commentsLoading ? (
+                        <p className="text-sm text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-center py-4">
+                            Loading comments...
+                        </p>
+                    ) : (
+                        <>
+                            {comments.length > 0 ? (
+                                <ul className="flex flex-col gap-3">
+                                    {comments.map((comment, idx) => (
+                                        <li key={comment.commentId || idx} className="flex items-start gap-2">
+                                            <img
+                                                src={comment.authorAvatar}
+                                                alt={comment.authorName}
+                                                className="w-7 h-7 rounded-full shrink-0 object-cover"
+                                            />
+                                            <div className="flex flex-col gap-0.5 rounded-2xl rounded-tl-sm bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 max-w-[85%]">
+                                                <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                                                    <span className="text-[13px] font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                        {comment.authorName || "Unknown"}
+                                                    </span>
+                                                    {comment.isRecommended && (
+                                                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-tight bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                                                            Recommended #{comment.recommendationRank}
+                                                        </span>
+                                                    )}
+                                                    {comment.instructorRole && (
+                                                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-tight bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+                                                            {comment.instructorRole}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-[14px] text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-pre-wrap">
+                                                    {comment.content}
+                                                </span>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-[13px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-center py-2">
+                                    No comments yet — start the conversation.
+                                </p>
+                            )}
+
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    value={commentText}
+                                    onChange={(e) => setCommentText(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
+                                    placeholder="Write a comment..."
+                                    disabled={submitting}
+                                    className="flex-1 px-4 py-2 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-tertiary-default-light dark:placeholder:text-text-tertiary-default-dark focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark transition-colors duration-150"
+                                />
+                                <button
+                                    onClick={handleAddComment}
+                                    disabled={!commentText.trim() || submitting}
+                                    className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-white hover:bg-bg-surface-accent-hover-light dark:hover:bg-bg-surface-accent-hover-dark disabled:opacity-40 transition-colors duration-150"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" aria-hidden="true">
+                                        <path d="M3 11l18-8-8 18-2-8-8-2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
         </li>
     );
 }

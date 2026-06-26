@@ -8,7 +8,7 @@ import StudentForm from "../../../feature/admin/components/StudentForm";
 
 const buttonStyle = "w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
 
-export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true, columnAlignments, columnClassNames }) {
+export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true, columnAlignments, columnClassNames, emptyMessage = "No data found." }) {
 	const [editingRow, setEditingRow] = useState(null);
 	const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
 	const [actionButtonClicked, setActionButtonClicked] = useState(null);
@@ -144,10 +144,25 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 							</button>
 						</td>
 					)}
-				</tr>
-			))}
+                </tr>
+            ))}
 
-			{showActionsColumn && actionButtonClicked !== null && 
+            {rowData.length === 0 && (
+                <tr>
+                    <td
+                        colSpan={
+                            (showSelectionColumn ? 1 : 0) +
+                            columnCount +
+                            (showActionsColumn ? 1 : 0)
+                        }
+                        className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark"
+                    >
+                        {emptyMessage}
+                    </td>
+                </tr>
+            )}
+
+            {showActionsColumn && actionButtonClicked !== null && 
 				<DropdownMenu 
 					direction="bottom" 
 					position="middle" 
