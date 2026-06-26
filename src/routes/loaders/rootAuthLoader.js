@@ -3,7 +3,21 @@ import { verifyAuth } from "../../api/authService";
 
 export default async function rootAuthLoader() {
     try {
-        return await verifyAuth();
+        const res = await fetch(`${API_URL}/api/auth/me`, {
+            credentials: "include",
+        });
+
+        if (res.status === 401) {
+            throw redirect("/login");
+        }
+
+        const data = await res.json();
+
+        if (data.mustChangePassword) {
+            throw redirect("/first-time-setup");
+        }
+
+        return data;
     } catch (err) {
         if (err instanceof Response) throw err;
         throw redirect("/login");
