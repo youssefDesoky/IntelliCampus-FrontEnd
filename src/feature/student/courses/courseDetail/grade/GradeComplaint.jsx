@@ -29,8 +29,6 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 		return items.filter((item) => item.type === complaintType);
 	}, [complaintType, items]);
 
-	const requiresSpecificAssessment = complaintType === "quiz" || complaintType === "assignment";
-
 	const submitMutation = useMutation({
 		mutationFn: fileGradeComplaint,
 		onSuccess: () => {
@@ -62,8 +60,10 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 
 	const handleComplaintTypeChange = (event) => {
 		const nextType = event.target.value;
+		const filtered = items.filter((item) => item.type === nextType);
+		const nextId = filtered.length === 1 ? String(filtered[0].id) : "";
 		setComplaintType(nextType);
-		setAssessmentId("");
+		setAssessmentId(nextId);
 		setFormError("");
 	};
 
@@ -78,7 +78,12 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 			return;
 		}
 
-		if (requiresSpecificAssessment && !assessmentId) {
+		if (complaintItemOptions.length === 0) {
+			setFormError(`No ${complaintType} items are available to complain about.`);
+			return;
+		}
+
+		if (complaintItemOptions.length > 1 && !assessmentId) {
 			setFormError(`Select the specific ${complaintType} you want reviewed.`);
 			return;
 		}
@@ -86,10 +91,9 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 		setFormError("");
 
 		submitMutation.mutate({
-			courseId,
 			complaintType,
-			assessmentId: requiresSpecificAssessment ? assessmentId : undefined,
-			reason: complaintReason.trim(),
+			gradeId: parseInt(complaintItemOptions.length === 1 ? String(complaintItemOptions[0].id) : assessmentId),
+			details: complaintReason.trim(),
 		});
 	};
 
@@ -136,7 +140,7 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 			<BaseFormComponent
 				isOpen={isFormOpen}
 				title="File a grade complaint"
-				description="Select the assessment type, pick the specific item when needed, and explain what should be reviewed."
+				description="Select the assessment type and explain what should be reviewed."
 				onClose={closeForm}
 				onSubmit={handleSubmit}
 				submitText={submitMutation.isPending ? "Submitting..." : "Submit Complaint"}
@@ -153,7 +157,7 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 				) : null}
 
 				<div className="space-y-4">
-					<div className={`grid grid-cols-1 gap-4 ${requiresSpecificAssessment ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" : ""}`}>
+					<div className={`grid grid-cols-1 gap-4 ${complaintItemOptions.length > 1 ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" : ""}`}>
 						<div className="space-y-2">
 							<label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
 								Complaint type
@@ -172,7 +176,7 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 							</select>
 						</div>
 
-						{requiresSpecificAssessment && (
+						{complaintItemOptions.length > 1 && (
 							<div className="space-y-2">
 								<label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
 									Select {complaintType}
@@ -180,8 +184,7 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 								<select
 									value={assessmentId}
 									onChange={(event) => setAssessmentId(event.target.value)}
-									disabled={complaintItemOptions.length === 0}
-									className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 disabled:opacity-60 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+									className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
 								>
 									<option value="">Choose a {complaintType}</option>
 									{complaintItemOptions.map((item) => (
@@ -190,12 +193,12 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 										</option>
 									))}
 								</select>
-								{complaintItemOptions.length === 0 ? (
-									<p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-										No {complaintType} items are available in this course yet.
-									</p>
-								) : null}
 							</div>
+						)}
+						{complaintItemOptions.length === 0 && (
+							<p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+								No {complaintType} items are available in this course yet.
+							</p>
 						)}
 					</div>
 
