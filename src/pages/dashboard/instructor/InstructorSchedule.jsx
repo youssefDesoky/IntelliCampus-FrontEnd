@@ -5,6 +5,7 @@ import useDeviceType from "../../../hooks/useDeviceType";
 import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
 import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
+import { ScheduleSkeleton } from "../../../feature/student/schedule/SkeletonLoader";
 import { fetchMySchedule, exportSchedulePdf } from "../../../feature/instructor/schedule/scheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
@@ -60,11 +61,7 @@ export default function InstructorSchedule() {
         : scheduleData.filter((event) => selectedTypes.includes(getTypeGroup(event.type)));
 
     if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-gray-600">Loading schedule...</p>
-            </div>
-        );
+        return <ScheduleSkeleton isMobile={isMobile} />;
     }
 
     return (

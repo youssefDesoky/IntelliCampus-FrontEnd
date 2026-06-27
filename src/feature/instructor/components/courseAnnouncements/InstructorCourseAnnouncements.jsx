@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 import { fetchCourseAnnouncements, createCourseAnnouncement, updateCourseAnnouncement } from "../../../course/components/announcements";
 import CourseAnnouncementCard from "../../../course/components/announcements/CourseAnnouncementCard";
 import Button from "../../../../components/ui/Button";
@@ -10,8 +10,8 @@ import BaseFormComponent from "../../../../components/ui/BaseFormComponent";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 export default function InstructorCourseAnnouncements() {
+    const user = useRouteLoaderData("root");
     const outletContext = useOutletContext();
-    const user = outletContext?.user;
     const courseId = outletContext?.courseId;
     const { showError } = useError();
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -27,7 +27,11 @@ export default function InstructorCourseAnnouncements() {
         queryFn: () => fetchCourseAnnouncements(courseId),
         staleTime: 5 * 60 * 1000,
         enabled: !!courseId,
-        select: (data) => Array.isArray(data) ? data : [],
+        select: (data) => {
+            if (Array.isArray(data)) return data;
+            if (data?.data && Array.isArray(data.data)) return data.data;
+            return [];
+        },
     });
 
     const handleAddAttachment = (event) => {
@@ -122,7 +126,7 @@ export default function InstructorCourseAnnouncements() {
                     onClick={() => setShowCreateForm(true)}
                     startIcon={<PlusIcon size={18} />}
                 >
-                    Add New Announcement
+                    <span className="hidden sm:inline">Add New Announcement</span>
                 </Button>
             </div>
 

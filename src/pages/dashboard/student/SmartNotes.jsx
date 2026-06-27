@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import SmartNotesBody from "../../../feature/student/smartNotes/SmartNotesBody";
+import { SmartNotesPageSkeleton } from "../../../feature/student/smartNotes/SkeletonLoader";
 import { fromBackendLinkedLecture } from "../../../feature/student/smartNotes/notesApi";
 import { fetchStudentNotes } from "../../../feature/student/services/profileApi";
 
@@ -69,11 +70,7 @@ export default function SmartNotes() {
     }
 
     if (loading) {
-        return (
-            <div className="flex justify-center py-12">
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading notes...</p>
-            </div>
-        );
+        return <SmartNotesPageSkeleton isPhone={isPhone} isTablet={isTablet} viewMode={viewMode} />;
     }
 
     return (

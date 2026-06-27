@@ -104,7 +104,7 @@ export default function InstructorCourseMaterials() {
                     onClick={() => setShowAddFolder(true)}
                     startIcon={<PlusIcon size={18} />}
                 >
-                    Add New Folder
+                    <span className="hidden sm:inline">Add New Folder</span>
                 </Button>
             </div>
 
@@ -178,8 +178,8 @@ export default function InstructorCourseMaterials() {
                         Start building your course by adding a folder and uploading materials.
                     </p>
                     <Button variant="primary" onClick={() => setShowAddFolder(true)}>
-                        <PlusIcon size={18} />
-                        Add First Folder
+                        <PlusIcon size={18} /                    >
+                        <span className="hidden sm:inline">Add First Folder</span>
                     </Button>
                 </div>
             ) : (

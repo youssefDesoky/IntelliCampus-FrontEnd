@@ -43,7 +43,7 @@ export default function CourseGrade() {
 		);
 	}
 
-	const { overallGrade, assessmentBreakdown, history } = gradeData;
+	const { overallGrade = {}, assessmentBreakdown = [], history = [] } = gradeData || {};
 	const gradedItems = history?.filter((item) => item.status === "Graded") || [];
 
 	return (
@@ -53,10 +53,8 @@ export default function CourseGrade() {
 
 			{isPhone ? (
 				<div className="relative flex flex-col gap-6">
-					<CurrentGrade gradePercent={overallGrade.percent} letterGrade={overallGrade.letter} gradedItems={gradedItems} items={history} />
-					<AssessmentBreakdown groups={assessmentBreakdown} />
+					<CurrentGrade gradePercent={overallGrade.percent} letterGrade={overallGrade.letter} gradedItems={gradedItems} items={history} courseId={course.id} />
 					<GradeHistory items={history} currentPage={currentPage} setCurrentPage={setCurrentPage} />
-					<GradeComplaint items={history} />
 				</div>
 			) : (
 				<div className="relative grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -65,7 +63,7 @@ export default function CourseGrade() {
 					</div>
 					<div className="flex flex-col gap-6 lg:h-full">
 						<CurrentGrade className="flex-1" gradePercent={overallGrade.percent} letterGrade={overallGrade.letter} gradedItems={gradedItems} />
-						<GradeComplaint className="flex-1" items={history} />
+						<GradeComplaint className="flex-1" items={history} courseId={course.id} />
 					</div>
 				</div>
 			)}

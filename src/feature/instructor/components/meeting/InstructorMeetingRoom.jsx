@@ -21,6 +21,7 @@ import CalendarDaysIcon from "../../../../components/ui/icons/CalendarDaysIcon";
 import CalendarCheckIcon from "../../../../components/ui/icons/CalendarCheckIcon";
 import ClockIcon from "../../../../components/ui/icons/ClockIcon";
 import CheckIcon from "../../../../components/ui/icons/CheckIcon";
+import { MeetingListSkeleton } from "../../SkeletonLoader";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 
@@ -380,18 +381,7 @@ export default function MeetingRoom() {
                         contentClassName="space-y-3"
                     >
                         {loading ? (
-                            <div className="space-y-3">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="animate-pulse flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-4">
-                                        <div className="w-10 h-10 shrink-0 rounded-full bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark" />
-                                        <div className="space-y-2 flex-1 w-full sm:w-auto">
-                                            <div className="h-4 w-3/4 sm:w-48 bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark rounded" />
-                                            <div className="h-3 w-1/2 sm:w-32 bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark rounded" />
-                                        </div>
-                                        <div className="h-9 w-full sm:w-20 bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark rounded-lg" />
-                                    </div>
-                                ))}
-                            </div>
+                            <MeetingListSkeleton />
                         ) : meetings.length === 0 ? (
                             <div className="text-center py-10 border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl">
                                 <VideoSlashIcon size={48} className="mx-auto text-text-tertiary-default-light dark:text-text-tertiary-default-dark mb-3" />

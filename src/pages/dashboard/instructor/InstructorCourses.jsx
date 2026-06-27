@@ -9,6 +9,7 @@ import useDeviceType from "../../../hooks/useDeviceType";
 import InstructorCourseCard from "../../../feature/instructor/components/courses/InstructorCourseCard";
 import InstructorCoursesHeader from "../../../feature/instructor/components/courses/InstructorCoursesHeader";
 import { fetchMyTeachingCourses } from "../../../feature/course/services/coursesApi";
+import { InstructorCoursesSkeleton } from "../../../feature/instructor/SkeletonLoader";
 
 
 function mapCourseToCardProps(course) {
@@ -81,11 +82,7 @@ export default function InstructorCourses() {
                 />
             </Section>
 
-            {loading && (
-                <div className="flex justify-center py-12">
-                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading courses...</p>
-                </div>
-            )}
+            {loading && <InstructorCoursesSkeleton viewMode={viewMode} />}
 
             {!loading && courses.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -99,7 +96,7 @@ export default function InstructorCourses() {
             )}
 
             {!loading && courses.length > 0 && (
-                <Section className={`mb-6 ${viewMode === "grid" ? "grid grid-cols-2 gap-4" : "flex flex-col gap-4"}`}>
+                <Section className={`mb-6 ${viewMode === "grid" ? "flex flex-wrap justify-evenly gap-4 sm:grid sm:grid-cols-2" : "flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-evenly"}`}>
                     {courses.map((course) => (
                         <InstructorCourseCard key={course.courseId} {...course} onEnterClassroom={() => handleEnterClassroom(course.courseId)} />
                     ))}

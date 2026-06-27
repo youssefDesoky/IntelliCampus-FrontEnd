@@ -15,34 +15,43 @@ export default function AssessmentBreakdown({ groups = [] }) {
 			title="Assessment Breakdown"
 			description="Overview of your performance across different assessment categories"
 			subtitle={`By Category`}
-			contentClassName="px-5 py-5 sm:px-6 space-y-3"
+			className="h-full flex flex-col"
+			contentClassName="px-5 py-5 sm:px-6 space-y-3 flex-1 flex flex-col"
 		>
-			{groups.map((group) => {
-				const percent = group.percent || 0;
-				const tier = getTier(percent);
+			{groups.length === 0 ? (
+				<div className="flex-1 flex flex-col items-center justify-center text-center">
+					<p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+						No assessment categories available yet.
+					</p>
+				</div>
+			) : (
+				groups.map((group) => {
+					const percent = group.percent || 0;
+					const tier = getTier(percent);
 
-				return (
-					<div key={group.category} className="flex items-centers gap-3 p-3 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors">
-						<div className="flex-1">
-							<div className="flex items-center justify-between mb-2">
-								<p className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">{group.category}</p>
-								<span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">{group.totalWeight}% weight</span>
-							</div>
-							<div className="h-1.5 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-full overflow-hidden">
-								<div className={`h-full rounded-full transition-all ${tier.progressClass}`} style={{ width: percent + "%" }} />
-							</div>
-							<div className="flex items-center justify-between mt-2 gap-2">
-								<span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-									{group.totalMaxScore ? `${group.totalScore}/${group.totalMaxScore}` : "Not graded"}
-								</span>
-								<span className={`text-xs font-semibold ${tier.metricClass}`}>
-									{percent}%
-								</span>
+					return (
+						<div key={group.category} className="flex items-centers gap-3 p-3 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors">
+							<div className="flex-1">
+								<div className="flex items-center justify-between mb-2">
+									<p className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">{group.category}</p>
+									<span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">{group.totalWeight}% weight</span>
+								</div>
+								<div className="h-1.5 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-full overflow-hidden">
+									<div className={`h-full rounded-full transition-all ${tier.progressClass}`} style={{ width: percent + "%" }} />
+								</div>
+								<div className="flex items-center justify-between mt-2 gap-2">
+									<span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+										{group.totalMaxScore ? `${group.totalScore}/${group.totalMaxScore}` : "Not graded"}
+									</span>
+									<span className={`text-xs font-semibold ${tier.metricClass}`}>
+										{percent}%
+									</span>
+								</div>
 							</div>
 						</div>
-					</div>
-				);
-			})}
+					);
+				})
+			)}
 		</BaseComponent>
 	);
 }

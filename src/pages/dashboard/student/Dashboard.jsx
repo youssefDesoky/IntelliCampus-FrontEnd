@@ -72,7 +72,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <Section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+      <Section className="hidden sm:grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {statsData.map((stat) => (
           <BoxData
             key={stat.id}
@@ -84,7 +84,7 @@ export default function Dashboard() {
         ))}
       </Section>
 
-      <Section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <Section className="flex flex-col justify-evenly lg:grid lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold">Latest News</h2>
@@ -120,7 +120,7 @@ export default function Dashboard() {
         </div>
       </Section>
 
-      <Section>
+      <Section className="hidden sm:block">
         <div className="flex items-center gap-3 mb-6">
           <ChartBarIcon className="w-7 h-7 text-text-accent-default-light dark:text-text-accent-default-dark" />
           <h2 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">Analytics</h2>

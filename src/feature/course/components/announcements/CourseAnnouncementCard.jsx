@@ -154,12 +154,12 @@ export default function CourseAnnouncementCard({
                 if (createdComment) {
                     setComments((currentComments) => [...currentComments, createdComment]);
                 }
-            }
 
-            if (typeof response?.commentCount === "number") {
-                setCommentCount(response.commentCount);
-            } else {
-                setCommentCount((currentCount) => currentCount + 1);
+                if (typeof response?.commentCount === "number") {
+                    setCommentCount(response.commentCount);
+                } else {
+                    setCommentCount((currentCount) => currentCount + 1);
+                }
             }
 
             setNewComment("");
@@ -237,9 +237,9 @@ export default function CourseAnnouncementCard({
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <img src={announcement.sender.avatar} alt={announcement.sender.name} className="w-10 h-10 rounded-full" />
+                        <img src={announcement.sender?.avatar || ""} alt={announcement.sender?.name || "User"} className="w-10 h-10 rounded-full" />
                         <div className="flex flex-col">
-                            <h3 className="font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{announcement.sender.name}</h3>
+                            <h3 className="font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{announcement.sender?.name || "Unknown"}</h3>
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{formatAnnouncementDate(announcement.date)}</p>
                         </div>
                     </div>

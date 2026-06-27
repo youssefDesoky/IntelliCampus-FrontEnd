@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useOutletContext, useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 import { fetchSinglePost, addComment, toggleUpvote } from "../../../feature/student/courses/courseDetail/community/communityService";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import ArrowUpIcon from "../../../components/ui/icons/ArrowUpIcon";
 import CommentIcon from "../../../components/ui/icons/CommentIcon";
+import { StudyGroupPostDetailSkeleton } from "../../../feature/student/studyGroup/SkeletonLoader";
+
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
 export default function StudyGroupPostDetail() {
     const { courseId, postId } = useParams();
@@ -23,6 +27,7 @@ export default function StudyGroupPostDetail() {
             content: raw.content,
             createdAt: raw.createdAt,
             likes: raw.upvoteCount || 0,
+            hasUpvoted: raw.isUpvoted || raw.hasUpvoted || false,
             comments: (raw.comments || []).map(c => ({
                 commentId: c.commentId,
                 authorName: c.authorName,
@@ -42,7 +47,11 @@ export default function StudyGroupPostDetail() {
         async function load() {
             try {
                 const data = await fetchSinglePost(courseId, postId);
-                if (!ignore) setPost(mapPost(data));
+                if (!ignore) {
+                    const mapped = mapPost(data);
+                    setPost(mapped);
+                    setHasUpvoted(mapped.hasUpvoted);
+                }
             } catch (err) {
                 if (!ignore) showError(err.message);
             } finally {
@@ -71,18 +80,16 @@ export default function StudyGroupPostDetail() {
             await toggleUpvote(courseId, postId);
             setHasUpvoted(prev => !prev);
             const data = await fetchSinglePost(courseId, postId);
-            setPost(mapPost(data));
+            const mapped = mapPost(data);
+            setPost(mapped);
+            setHasUpvoted(mapped.hasUpvoted);
         } catch (err) {
             showError(err.message);
         }
     };
 
     if (loading) {
-        return (
-            <div className="py-10 text-center">
-                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading post...</p>
-            </div>
-        );
+        return <StudyGroupPostDetailSkeleton />;
     }
 
     if (!post) {
@@ -104,17 +111,28 @@ export default function StudyGroupPostDetail() {
 
             <div className="rounded-2xl p-5 sm:p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark">
                 <div className="flex items-center gap-3 mb-4">
-                    <img
-                        src={post.senderAvatar}
-                        alt={post.sender}
-                        className="w-11 h-11 rounded-full shrink-0 object-cover ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark"
-                    />
+                    <div className="w-11 h-11 rounded-full shrink-0 ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark overflow-hidden">
+                        {post.senderAvatar ? (
+                            <img
+                                src={post.senderAvatar}
+                                alt={post.sender}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_AVATAR; }}
+                            />
+                        ) : (
+                            <img
+                                src={DEFAULT_AVATAR}
+                                alt={post.sender}
+                                className="w-full h-full object-cover"
+                            />
+                        )}
+                    </div>
                     <div>
                         <h3 className="font-semibold text-[15px] text-text-primary-default-light dark:text-text-primary-default-dark">
                             {post.sender}
                         </h3>
                         <span className="text-[13px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                            {post.createdAt}
+                            {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : ""}
                         </span>
                     </div>
                 </div>
@@ -154,11 +172,22 @@ export default function StudyGroupPostDetail() {
                     <ul className="flex flex-col gap-3 mb-4">
                         {post.comments.map((comment, idx) => (
                             <li key={comment.commentId || idx} className="flex items-start gap-2">
-                                <img
-                                    src={comment.authorAvatar}
-                                    alt={comment.authorName}
-                                    className="w-7 h-7 rounded-full shrink-0 object-cover"
-                                />
+                                <div className="w-7 h-7 rounded-full shrink-0 overflow-hidden">
+                                    {comment.authorAvatar ? (
+                                        <img
+                                            src={comment.authorAvatar}
+                                            alt={comment.authorName}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_AVATAR; }}
+                                        />
+                                    ) : (
+                                        <img
+                                            src={DEFAULT_AVATAR}
+                                            alt={comment.authorName}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    )}
+                                </div>
                                 <div className="flex flex-col gap-0.5 rounded-2xl rounded-tl-sm bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 max-w-[85%]">
                                     <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                                         <span className="text-[13px] font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">

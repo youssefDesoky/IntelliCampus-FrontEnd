@@ -1,23 +1,67 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { formatDistanceToNow } from "date-fns";
 import ArrowUpIcon from "./icons/ArrowUpIcon";
 import CommentIcon from "./icons/CommentIcon";
+import EllipsisVerticalIcon from "./icons/EllipsisVerticalIcon";
+import PenSquareIcon from "./icons/PenSquareIcon";
+import TrashIcon from "./icons/TrashIcon";
 import { fetchSinglePost, addComment } from "../../feature/student/courses/courseDetail/community/communityService";
 import { useError } from '../../contexts/ErrorContext.jsx';
 
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+
 const CONTENT_PREVIEW_LENGTH = 240;
 
-export default function StudyGroupPost({ className = "", postData, courseId, courseTitle = null, onUpvote }) {
-    const [hasUpvoted, setHasUpvoted] = useState(false);
+export default function StudyGroupPost({ className = "", postData, courseId, courseTitle = null, onUpvote, onEdit, onDelete }) {
+    const [hasUpvoted, setHasUpvoted] = useState(postData.hasUpvoted || false);
     const [expanded, setExpanded] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState(postData.comments || []);
     const [commentText, setCommentText] = useState("");
     const [commentsLoading, setCommentsLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [editContent, setEditContent] = useState(postData.content || "");
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const menuRef = useRef(null);
+    const editRef = useRef(null);
     const { showError } = useError();
 
     const content = postData.content || "";
     const isLongContent = content.length > CONTENT_PREVIEW_LENGTH;
+    const canEdit = postData.canEdit || false;
+    const canDelete = postData.canDelete || false;
+    const hasMenu = canEdit || canDelete;
+
+    useEffect(() => {
+        setHasUpvoted(postData.hasUpvoted || false);
+    }, [postData.hasUpvoted]);
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handleClick = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setMenuOpen(false);
+            }
+        };
+        const handleKey = (e) => {
+            if (e.key === "Escape") setMenuOpen(false);
+        };
+        document.addEventListener("mousedown", handleClick);
+        document.addEventListener("keydown", handleKey);
+        return () => {
+            document.removeEventListener("mousedown", handleClick);
+            document.removeEventListener("keydown", handleKey);
+        };
+    }, [menuOpen]);
+
+    useEffect(() => {
+        if (!editing || !editRef.current) return;
+        editRef.current.focus();
+        const len = editRef.current.value.length;
+        editRef.current.setSelectionRange(len, len);
+    }, [editing]);
 
     const handleUpvote = () => {
         setHasUpvoted((prev) => !prev);
@@ -77,18 +121,69 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
         }
     };
 
+    const handleEditStart = () => {
+        setMenuOpen(false);
+        setEditContent(content);
+        setEditing(true);
+    };
+
+    const handleEditSave = async () => {
+        if (!editContent.trim() || !courseId) return;
+        try {
+            await onEdit?.(postData.id, editContent);
+            setEditing(false);
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
+    const handleEditCancel = () => {
+        setEditing(false);
+        setEditContent(content);
+    };
+
+    const handleEditKeyDown = (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleEditSave();
+        }
+        if (e.key === "Escape") {
+            handleEditCancel();
+        }
+    };
+
+    const handleDeleteConfirm = async () => {
+        setShowDeleteConfirm(false);
+        try {
+            await onDelete?.(postData.id);
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
     return (
         <li
             aria-label="post-item"
             className={`flex flex-col gap-4 rounded-2xl p-5 sm:p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark transition-shadow duration-200 hover:shadow-sm ${className}`}
         >
             <div aria-label="post-header" className="flex items-center gap-3">
-                <img
-                    src={postData.senderAvatar}
-                    alt={postData.sender}
-                    className="w-11 h-11 rounded-full shrink-0 object-cover ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark"
-                />
-                <div className="flex flex-col gap-1 min-w-0">
+                <div className="w-11 h-11 rounded-full shrink-0 ring-2 ring-border-primary-default-light dark:ring-border-primary-default-dark overflow-hidden">
+                    {postData.senderAvatar ? (
+                        <img
+                            src={postData.senderAvatar}
+                            alt={postData.sender}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_AVATAR; }}
+                        />
+                    ) : (
+                        <img
+                            src={DEFAULT_AVATAR}
+                            alt={postData.sender}
+                            className="w-full h-full object-cover"
+                        />
+                    )}
+                </div>
+                <div className="flex flex-col gap-1 min-w-0 flex-1">
                     <h3 className="font-semibold text-[15px] text-text-primary-default-light dark:text-text-primary-default-dark leading-tight">
                         {postData.sender}
                     </h3>
@@ -101,29 +196,119 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                 <span className="w-1 h-1 rounded-full shrink-0 bg-text-tertiary-default-light dark:bg-text-tertiary-default-dark" />
                             </>
                         )}
-                        <span className="shrink-0">{postData.createdAt}</span>
+                        <span className="shrink-0">{postData.createdAt ? formatDistanceToNow(new Date(postData.createdAt), { addSuffix: true }) : ""}</span>
                     </div>
                 </div>
+                {hasMenu && (
+                    <div className="relative shrink-0" ref={menuRef}>
+                        <button
+                            onClick={() => setMenuOpen((prev) => !prev)}
+                            className="p-1.5 rounded-full text-text-tertiary-default-light dark:text-text-tertiary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+                            aria-label="Post actions"
+                        >
+                            <EllipsisVerticalIcon size={18} />
+                        </button>
+                        {menuOpen && (
+                            <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg py-1">
+                                {canEdit && (
+                                    <button
+                                        onClick={handleEditStart}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+                                    >
+                                        <PenSquareIcon size={16} />
+                                        Edit
+                                    </button>
+                                )}
+                                {canDelete && (
+                                    <button
+                                        onClick={() => { setMenuOpen(false); setShowDeleteConfirm(true); }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+                                    >
+                                        <TrashIcon size={16} />
+                                        Delete
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div aria-label="post-content" className="flex flex-col gap-1.5">
-                <p
-                    className={`text-[15px] leading-relaxed text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-pre-wrap ${
-                        isLongContent && !expanded ? "line-clamp-4" : ""
-                    }`}
-                >
-                    {content}
-                </p>
-                {isLongContent && (
-                    <button
-                        type="button"
-                        onClick={() => setExpanded((prev) => !prev)}
-                        className="self-start text-[13px] font-medium text-text-accent-default-light dark:text-text-accent-default-dark hover:text-text-accent-active-light dark:hover:text-text-accent-active-dark transition-colors duration-150"
-                    >
-                        {expanded ? "Show less" : "Show more"}
-                    </button>
+                {editing ? (
+                    <div className="flex flex-col gap-2">
+                        <textarea
+                            ref={editRef}
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            onKeyDown={handleEditKeyDown}
+                            className="w-full rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 text-[15px] text-text-primary-default-light dark:text-text-primary-default-dark outline-none transition-colors resize-none focus:border-text-accent-default-light dark:focus:border-text-accent-default-dark"
+                            rows={3}
+                        />
+                        <div className="flex items-center gap-2 self-end">
+                            <button
+                                onClick={handleEditCancel}
+                                className="px-3 py-1.5 rounded-lg text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleEditSave}
+                                disabled={!editContent.trim()}
+                                className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-text-accent-default-light dark:bg-text-accent-default-dark hover:bg-text-accent-hover-light dark:hover:bg-text-accent-hover-dark disabled:opacity-50 transition-colors"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <p
+                            className={`text-[15px] leading-relaxed text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-pre-wrap ${
+                                isLongContent && !expanded ? "line-clamp-4" : ""
+                            }`}
+                        >
+                            {content}
+                        </p>
+                        {isLongContent && (
+                            <button
+                                type="button"
+                                onClick={() => setExpanded((prev) => !prev)}
+                                className="self-start text-[13px] font-medium text-text-accent-default-light dark:text-text-accent-default-dark hover:text-text-accent-active-light dark:hover:text-text-accent-active-dark transition-colors duration-150"
+                            >
+                                {expanded ? "Show less" : "Show more"}
+                            </button>
+                        )}
+                    </>
                 )}
             </div>
+
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowDeleteConfirm(false)}>
+                    <div className="rounded-2xl p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark shadow-xl max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+                            Delete post
+                        </h3>
+                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-5">
+                            Are you sure you want to delete this post? This action cannot be undone.
+                        </p>
+                        <div className="flex items-center justify-end gap-2">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="px-4 py-2 rounded-lg text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteConfirm}
+                                className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div
                 aria-label="post-actions"
@@ -166,11 +351,22 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                 <ul className="flex flex-col gap-3">
                                     {comments.map((comment, idx) => (
                                         <li key={comment.commentId || idx} className="flex items-start gap-2">
-                                            <img
-                                                src={comment.authorAvatar}
-                                                alt={comment.authorName}
-                                                className="w-7 h-7 rounded-full shrink-0 object-cover"
-                                            />
+                                            <div className="w-7 h-7 rounded-full shrink-0 overflow-hidden">
+                                                {comment.authorAvatar ? (
+                                                    <img
+                                                        src={comment.authorAvatar}
+                                                        alt={comment.authorName}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_AVATAR; }}
+                                                    />
+                                                ) : (
+                                                    <img
+                                                        src={DEFAULT_AVATAR}
+                                                        alt={comment.authorName}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                )}
+                                            </div>
                                             <div className="flex flex-col gap-0.5 rounded-2xl rounded-tl-sm bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 max-w-[85%]">
                                                 <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                                                     <span className="text-[13px] font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
