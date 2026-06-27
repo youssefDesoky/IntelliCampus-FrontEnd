@@ -10,7 +10,7 @@ export default function CoursePrerequisitesBody({ search = "" }) {
         queryKey: ["coursePrerequisites"],
         queryFn: async () => {
             const data = await fetchCoursePrerequisites();
-            const list = Array.isArray(data) ? data : (data?.data ?? []);
+            const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
             return list.map((course) => ({
                 id: course.courseId,
                 title: course.courseName || "",
