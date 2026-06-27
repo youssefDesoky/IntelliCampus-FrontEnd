@@ -34,7 +34,7 @@ export async function fetchCommunities() {
 }
 
 export async function fetchCoursePrerequisites() {
-  return apiClient('/api/courses/prerequisites');
+  return apiClient('/api/courses/prerequisites?PageSize=500');
 }
 
 export async function fetchMyAttendance(courseId) {

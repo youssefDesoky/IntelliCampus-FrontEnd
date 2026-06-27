@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import TextArea from "../../../components/ui/TextArea";
 import { ImageIcon } from "../../../components/ui/icons";
+import BasePanel from "./BasePanel";
 
 export default function CreateGroupPanel({
   friends = [],
@@ -11,12 +12,17 @@ export default function CreateGroupPanel({
   const [description, setDescription] = useState("");
   const [profileImage, setProfileImage] = useState(null);
   const [selectedFriends, setSelectedFriends] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef(null);
 
   const handleToggleFriend = (id) => {
     setSelectedFriends((prev) =>
       prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]
     );
+  };
+
+  const handleRemoveSelected = (id) => {
+    setSelectedFriends((prev) => prev.filter((fid) => fid !== id));
   };
 
   const handleImageSelect = (e) => {
@@ -35,26 +41,30 @@ export default function CreateGroupPanel({
 
   const canCreate = title.trim() && selectedFriends.length > 0;
 
+  const filteredFriends = useMemo(
+    () =>
+      friends.filter(
+        (f) =>
+          !searchQuery.trim() ||
+          f.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(f.id).includes(searchQuery)
+      ),
+    [friends, searchQuery]
+  );
+
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-[0_1px_3px_-1px_rgba(0,0,0,0.04)] dark:shadow-none">
-        <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-blue-50 dark:bg-blue-900/40">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-400">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-        </div>
-        <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-tight">
-          Create Group
-        </h2>
-      </div>
-
-      {/* Scrollable Body */}
+    <BasePanel
+      icon={
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-400">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      }
+      title="Create Group"
+      onBack={onCancel}
+    >
       <div className="flex flex-col gap-5 px-5 py-5 overflow-y-auto flex-1 no-scrollbar">
-
-        {/* Group Image */}
         <div className="flex flex-col items-center gap-2.5">
           <button
             type="button"
@@ -87,7 +97,6 @@ export default function CreateGroupPanel({
           />
         </div>
 
-        {/* Group Title */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">
             Group Title
@@ -101,7 +110,6 @@ export default function CreateGroupPanel({
           />
         </div>
 
-        {/* Description */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">
             Description
@@ -117,7 +125,6 @@ export default function CreateGroupPanel({
           />
         </div>
 
-        {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
           <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Members</span>
@@ -129,9 +136,52 @@ export default function CreateGroupPanel({
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
         </div>
 
-        {/* Friends List */}
-        <div className="flex flex-col gap-1">
-          {friends.length === 0 ? (
+        {selectedFriends.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {selectedFriends.map((id) => {
+              const friend = friends.find((f) => f.id === id);
+              if (!friend) return null;
+              return (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium ring-1 ring-blue-200 dark:ring-blue-800"
+                >
+                  <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold">
+                    {friend.name?.[0]?.toUpperCase() ?? "?"}
+                  </span>
+                  {friend.name}
+                  <button
+                    onClick={() => handleRemoveSelected(id)}
+                    className="ml-0.5 text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M4 4l8 8M12 4l-8 8" />
+                    </svg>
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="7" cy="7" r="5" />
+              <path d="M11 11l3 3" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all"
+            placeholder="Search friends..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 max-h-[200px] overflow-y-auto no-scrollbar -mx-1 px-1">
+          {filteredFriends.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
               <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
@@ -139,10 +189,12 @@ export default function CreateGroupPanel({
                   <circle cx="9" cy="7" r="4" />
                 </svg>
               </div>
-              <p className="text-sm text-gray-400 dark:text-gray-500">No friends to add yet</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                {searchQuery ? "No friends match your search" : "No friends to add yet"}
+              </p>
             </div>
           ) : (
-            friends.map((friend) => {
+            filteredFriends.map((friend) => {
               const isSelected = selectedFriends.includes(friend.id);
               return (
                 <button
@@ -154,7 +206,6 @@ export default function CreateGroupPanel({
                       : "hover:bg-white dark:hover:bg-gray-800/60 hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:hover:shadow-none hover:ring-1 hover:ring-gray-100 dark:hover:ring-gray-700/50"
                   }`}
                 >
-                  {/* Avatar */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-colors ${
                     isSelected
                       ? "bg-blue-600 text-white"
@@ -163,8 +214,7 @@ export default function CreateGroupPanel({
                     {friend.name?.[0]?.toUpperCase() ?? "?"}
                   </div>
 
-                  {/* Name */}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 text-left">
                     <p className={`text-sm font-medium truncate leading-tight transition-colors ${
                       isSelected ? "text-blue-700 dark:text-blue-300" : "text-gray-800 dark:text-gray-100"
                     }`}>
@@ -175,7 +225,6 @@ export default function CreateGroupPanel({
                     </p>
                   </div>
 
-                  {/* Checkmark */}
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                     isSelected
                       ? "bg-blue-600 border-blue-600"
@@ -194,8 +243,7 @@ export default function CreateGroupPanel({
         </div>
       </div>
 
-      {/* Footer Actions */}
-      <div className="flex items-center gap-2 px-5 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="flex items-center gap-2 px-5 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
         <button
           onClick={onCancel}
           className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all"
@@ -213,6 +261,6 @@ export default function CreateGroupPanel({
           Create Group
         </button>
       </div>
-    </div>
+    </BasePanel>
   );
 }

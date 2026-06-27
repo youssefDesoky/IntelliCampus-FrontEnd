@@ -11,6 +11,8 @@ import {
     fetchCommunityPosts,
     createCommunityPost,
     toggleUpvote,
+    updateCommunityPost,
+    deleteCommunityPost,
 } from "./communityService";
 import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
@@ -30,6 +32,9 @@ export default function MyCommunities() {
             content: raw.content,
             createdAt: raw.createdAt,
             likes: raw.upvoteCount || 0,
+            hasUpvoted: raw.isUpvoted || raw.hasUpvoted || false,
+            canEdit: raw.canEdit || false,
+            canDelete: raw.canDelete || false,
             comments: (raw.comments || []).map(c => ({
                 commentId: c.commentId,
                 authorName: c.authorName,
@@ -90,6 +95,20 @@ export default function MyCommunities() {
         } catch (err) {
             showError(err.message);
         }
+    };
+
+    const handleEdit = async (postId, newContent) => {
+        if (!courseId) return;
+        await updateCommunityPost(courseId, postId, newContent);
+        const data = await fetchCommunityPosts(courseId);
+        setPosts(extractPosts(data).map(mapPost));
+    };
+
+    const handleDelete = async (postId) => {
+        if (!courseId) return;
+        await deleteCommunityPost(courseId, postId);
+        const data = await fetchCommunityPosts(courseId);
+        setPosts(extractPosts(data).map(mapPost));
     };
 
     const handleAttachmentChange = (event) => {
@@ -214,6 +233,8 @@ export default function MyCommunities() {
                             postData={post}
                             courseId={courseId}
                             onUpvote={() => handleUpvote(post.id)}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
                         />
                     ))
                 ) : (

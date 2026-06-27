@@ -8,8 +8,9 @@ import {
     CommentsIcon,
     PaperPlaneIcon,
 } from "../../../components/ui/icons";
-import { fetchCommunityPosts, createCommunityPost, toggleUpvote } from "../../../feature/student/courses/courseDetail/community/communityService";
+import { fetchCommunityPosts, createCommunityPost, toggleUpvote, updateCommunityPost, deleteCommunityPost } from "../../../feature/student/courses/courseDetail/community/communityService";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { StudyGroupPageSkeleton } from "../../../feature/student/studyGroup/SkeletonLoader";
 
 export default function StudyGroup() {
     const { course } = useOutletContext();
@@ -27,6 +28,9 @@ export default function StudyGroup() {
             content: raw.content,
             createdAt: raw.createdAt,
             likes: raw.upvoteCount || 0,
+            hasUpvoted: raw.isUpvoted || raw.hasUpvoted || false,
+            canEdit: raw.canEdit || false,
+            canDelete: raw.canDelete || false,
             comments: (raw.comments || []).map(c => ({
                 commentId: c.commentId,
                 authorName: c.authorName,
@@ -89,12 +93,22 @@ export default function StudyGroup() {
         }
     };
 
+    const handleEdit = async (postId, newContent) => {
+        if (!courseId) return;
+        await updateCommunityPost(courseId, postId, newContent);
+        const data = await fetchCommunityPosts(courseId);
+        setPosts(extractPosts(data).map(mapPost));
+    };
+
+    const handleDelete = async (postId) => {
+        if (!courseId) return;
+        await deleteCommunityPost(courseId, postId);
+        const data = await fetchCommunityPosts(courseId);
+        setPosts(extractPosts(data).map(mapPost));
+    };
+
     if (!course) {
-        return (
-            <div className="py-10 text-center">
-                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading course...</p>
-            </div>
-        );
+        return <StudyGroupPageSkeleton />;
     }
 
     return (
@@ -139,6 +153,8 @@ export default function StudyGroup() {
                                 postData={post}
                                 courseId={courseId}
                                 onUpvote={() => handleUpvote(post.id)}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
                             />
                         ))
                     ) : (

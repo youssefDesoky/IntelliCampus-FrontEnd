@@ -1,22 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 import { fetchCourseAnnouncements } from "../../../../course/components/announcements";
 import CourseAnnouncementCard from "../../../../course/components/announcements/CourseAnnouncementCard";
 
 
 
 export default function CourseAnnouncements() {
+    const user = useRouteLoaderData("root");
     const outletContext = useOutletContext();
-    const user = outletContext?.user;
     const courseId = outletContext?.courseId;
     const { data: announcements = [], isLoading: loading } = useQuery({
         queryKey: ["courseAnnouncements", courseId],
         queryFn: () => fetchCourseAnnouncements(courseId),
         staleTime: 5 * 60 * 1000,
         enabled: !!courseId,
-        select: (data) => Array.isArray(data) ? data : [],
+        select: (data) => {
+            if (Array.isArray(data)) return data;
+            if (data?.data && Array.isArray(data.data)) return data.data;
+            return [];
+        },
     });
 
+    const sortedAnnouncements = [...announcements].sort((a, b) => {
+        if (a.isPinned === b.isPinned) {
+            return new Date(b.date) - new Date(a.date);
+        }
+        return a.isPinned ? -1 : 1;
+    });
 
     if (loading) {
         return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading announcements...</p>;
@@ -35,7 +45,7 @@ export default function CourseAnnouncements() {
 
 	return (
 		<div className="space-y-4">
-            {announcements.map((announcement) => (
+            {sortedAnnouncements.map((announcement) => (
                 <CourseAnnouncementCard
                     key={announcement.id}
                     announcement={announcement}

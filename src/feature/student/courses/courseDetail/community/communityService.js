@@ -1,6 +1,7 @@
 export {
   fetchCommunityPosts,
   createCommunityPost,
+  updateCommunityPost,
   deleteCommunityPost,
   fetchSinglePost,
   addComment,

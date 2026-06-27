@@ -7,6 +7,7 @@ import {
 } from "recharts";
 import { ChartBarIcon, BrainIcon, CheckIcon, UserCheckIcon } from "../../../components/ui/icons";
 import { fetchCourseAnalytics } from "../../../feature/instructor/services/analyticsApi";
+import { CourseAnalyticsSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function ChartCard({ title, icon, children, className = "" }) {
@@ -50,15 +51,7 @@ export default function InstructorCourseAnalytics() {
     }, [error, showError]);
 
     if (loading) {
-        return (
-            <div className="space-y-6">
-                <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-[360px]" />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-[300px]" />
-                    <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-[300px]" />
-                </div>
-            </div>
-        );
+        return <CourseAnalyticsSkeleton />;
     }
 
     if (!analytics) {

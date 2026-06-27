@@ -19,6 +19,7 @@ import {
     fetchAssignmentSubmissions,
     gradeAssignmentSubmission,
 } from "../../../feature/instructor/components/assignments/instructorAssignmentsApi";
+import { CourseAssignmentsSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function formatDueDate(value) {
@@ -278,7 +279,7 @@ export default function InstructorCourseAssignments() {
     };
     
     if (isLoading) {
-        return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading assignments...</p>;
+        return <CourseAssignmentsSkeleton />;
     }
     
     return (
@@ -293,7 +294,7 @@ export default function InstructorCourseAssignments() {
                 onClick={() => setIsFormOpen(true)}
                 startIcon={<PlusIcon size={18} />}
             >
-                Create Assignment
+                <span className="hidden sm:inline">Create Assignment</span>
             </Button>
         </div>
 
@@ -398,7 +399,7 @@ export default function InstructorCourseAssignments() {
                     startIcon={<EyeIcon size={16} />}
                     onClick={() => openSubmissions(assignment)}
                     >
-                    Submissions
+                    <span className="hidden sm:inline">Submissions</span>
                     </Button>
                     <Button
                     type="button"
@@ -422,7 +423,7 @@ export default function InstructorCourseAssignments() {
                         setIsFormOpen(true);
                     }}
                     >
-                    Edit
+                    <span className="hidden sm:inline">Edit</span>
                     </Button>
                     <Button
                     type="button"
@@ -432,7 +433,7 @@ export default function InstructorCourseAssignments() {
                     className="text-text-danger-default-light dark:text-text-danger-default-dark"
                     onClick={() => handleDeleteAssignment(assignment.id)}
                     >
-                    Delete
+                    <span className="hidden sm:inline">Delete</span>
                     </Button>
                 </div>
                 </div>

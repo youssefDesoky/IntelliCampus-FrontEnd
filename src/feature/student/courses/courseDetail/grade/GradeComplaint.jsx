@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 import TextArea from "../../../../../components/ui/TextArea";
 import BaseComponent from "../../../../../components/ui/BaseComponent";
 import BaseFormComponent from "../../../../../components/ui/BaseFormComponent";
 import Button from "../../../../../components/ui/Button";
 import { ExclamationIcon } from "../../../../../components/ui/icons";
+import { fileGradeComplaint } from "../../../services/gradeApi";
+import { useToast } from "../../../../../contexts/ToastContext";
 
 const complaintTypes = [
 	{ value: "quiz", label: "Quiz" },
@@ -14,13 +17,13 @@ const complaintTypes = [
 	{ value: "final", label: "Final Exam" },
 ];
 
-export default function GradeComplaint({ className = "", items = [], compact = false }) {
+export default function GradeComplaint({ className = "", items = [], compact = false, courseId }) {
+	const { showToast } = useToast();
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [complaintType, setComplaintType] = useState("");
 	const [assessmentId, setAssessmentId] = useState("");
 	const [complaintReason, setComplaintReason] = useState("");
 	const [formError, setFormError] = useState("");
-	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const complaintItemOptions = useMemo(() => {
 		return items.filter((item) => item.type === complaintType);
@@ -28,18 +31,33 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 
 	const requiresSpecificAssessment = complaintType === "quiz" || complaintType === "assignment";
 
+	const submitMutation = useMutation({
+		mutationFn: fileGradeComplaint,
+		onSuccess: () => {
+			showToast({ type: "success", title: "Complaint Submitted", message: "Your grade complaint has been sent to the instructor." });
+			setIsFormOpen(false);
+			setFormError("");
+			setComplaintType("");
+			setAssessmentId("");
+			setComplaintReason("");
+		},
+		onError: (err) => {
+			setFormError(err.message || "Failed to submit complaint. Please try again.");
+		},
+	});
+
 	const openForm = () => {
 		setFormError("");
 		setIsFormOpen(true);
 	};
 
 	const closeForm = () => {
+		if (submitMutation.isPending) return;
 		setIsFormOpen(false);
 		setFormError("");
 		setComplaintType("");
 		setAssessmentId("");
 		setComplaintReason("");
-		setIsSubmitting(false);
 	};
 
 	const handleComplaintTypeChange = (event) => {
@@ -65,9 +83,14 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 			return;
 		}
 
-		setIsSubmitting(true);
 		setFormError("");
-		closeForm();
+
+		submitMutation.mutate({
+			courseId,
+			complaintType,
+			assessmentId: requiresSpecificAssessment ? assessmentId : undefined,
+			reason: complaintReason.trim(),
+		});
 	};
 
 	return (
@@ -116,10 +139,11 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 				description="Select the assessment type, pick the specific item when needed, and explain what should be reviewed."
 				onClose={closeForm}
 				onSubmit={handleSubmit}
-				submitText={isSubmitting ? "Submitting..." : "Submit Complaint"}
+				submitText={submitMutation.isPending ? "Submitting..." : "Submit Complaint"}
 				cancelText="Cancel"
 				maxWidth="max-w-2xl"
-				submitDisabled={isSubmitting}
+				submitDisabled={submitMutation.isPending}
+				submitLoading={submitMutation.isPending}
 				contentClassName="space-y-6"
 			>
 				{formError ? (

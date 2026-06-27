@@ -13,6 +13,7 @@ import { PlusIcon, TrashIcon, EyeIcon, FilePenIcon, ClockIcon, ChartBarIcon, Cal
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import { createQuiz, fetchQuizzesByCourse, updateQuiz, deleteQuiz, fetchQuizSubmissions, gradeQuizSubmission } from "../../../feature/instructor/components/quiz/instructorQuizApi";
 import ManageQuizQuestions from "../../../feature/instructor/components/quiz/ManageQuizQuestions";
+import { CourseQuizzesSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function formatDate(value) {
@@ -232,11 +233,11 @@ export default function InstructorCourseQuizzes() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Quizzes</h2>
-                <Button type="button" variant="primary" onClick={openCreate} startIcon={<PlusIcon size={18} />}>Create Quiz</Button>
+                <Button type="button" variant="primary" onClick={openCreate} startIcon={<PlusIcon size={18} />}><span className="hidden sm:inline">Create Quiz</span></Button>
             </div>
 
             {loading ? (
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading quizzes...</p>
+                <CourseQuizzesSkeleton />
             ) : quizzes.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-12 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
                     <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
@@ -279,17 +280,17 @@ export default function InstructorCourseQuizzes() {
                             <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
                                 {isQuizPast(quiz) && (
                                     <Button type="button" variant="secondary" size="sm" startIcon={<EyeIcon size={16} />} onClick={() => openSubmissions(quiz)}>
-                                        Submissions
+                                        <span className="hidden sm:inline">Submissions</span>
                                     </Button>
                                 )}
                                 <Button type="button" variant="secondary" size="sm" startIcon={<ListIcon size={16} />} onClick={() => setManageQuiz(quiz)}>
-                                    Manage Questions
+                                    <span className="hidden sm:inline">Manage Questions</span>
                                 </Button>
                                 <Button type="button" variant="secondary" size="sm" startIcon={<FilePenIcon size={16} />} onClick={() => handleEdit(quiz)}>
-                                    Edit
+                                    <span className="hidden sm:inline">Edit</span>
                                 </Button>
                                 <Button type="button" variant="secondary" size="sm" startIcon={<TrashIcon size={16} />} className="text-text-danger-default-light dark:text-text-danger-default-dark" onClick={() => setDeletingQuiz(quiz)}>
-                                    Delete
+                                    <span className="hidden sm:inline">Delete</span>
                                 </Button>
                             </div>
                         </div>

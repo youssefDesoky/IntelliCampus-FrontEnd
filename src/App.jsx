@@ -49,7 +49,7 @@ import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, Student
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
-import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule, InstructorDashboard } from "./pages/dashboard/instructor"
+import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseComplaints, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule, InstructorDashboard } from "./pages/dashboard/instructor"
 import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
 import { InstructorMeetingRoom } from "./pages/dashboard/instructor"
 import InstructorCommunity from "./feature/student/courses/courseDetail/community/MyCommunities"
@@ -143,6 +143,7 @@ export default function App() {
                             { path: "attendance", element: <InstructorCourseAttendance /> },
                             { path: "attendance/:sessionId", element: <InstructorCourseAttendance /> },
                             { path: "grades", element: <InstructorCourseGrades /> },
+                            { path: "grades/complaints", element: <InstructorCourseComplaints /> },
                             { path: "community", element: <InstructorCommunity /> },
                             { path: "community/questions/:postId", element: <StudentStudyGroupPostDetail /> },
                             { path: "smart-notes", element: <StudentSmartNotes /> },

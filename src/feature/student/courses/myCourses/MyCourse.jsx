@@ -33,7 +33,7 @@ const attendanceStyles = {
 function StatusBadge({ label, className }) {
   return (
     <span
-      className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${className}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border leading-none ${className}`}
     >
       {label}
     </span>
@@ -123,7 +123,7 @@ export default function MyCourse({
               <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs">
                 {semester}
               </span>
-              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${typeAccent.badge}`}>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border leading-none ${typeAccent.badge}`}>
                 {typeAccent.label}
               </span>
             </div>

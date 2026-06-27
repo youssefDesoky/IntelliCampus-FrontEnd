@@ -1,4 +1,5 @@
 export { default as AngleDownIcon } from './AngleDownIcon.jsx';
+export { default as ArrowDownIcon } from './ArrowDownIcon.jsx';
 export { default as ArrowRightIcon } from './ArrowRightIcon.jsx';
 export { default as ArrowUpIcon } from './ArrowUpIcon.jsx';
 export { default as AlignCenterIcon } from './AlignCenterIcon.jsx';

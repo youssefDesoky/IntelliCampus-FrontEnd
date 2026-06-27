@@ -5,7 +5,7 @@ import QrScanner from "qr-scanner";
 import Button from "../../../components/ui/Button";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Table from "../../../components/ui/Table";
-import { AngleDownIcon, ArrowRightIcon, CalendarIcon, ClockIcon, DownloadIcon, PlusIcon, QRCodeIcon, UsersIcon, XIcon } from "../../../components/ui/icons";
+import { AngleDownIcon, ArrowRightIcon, CalendarIcon, ClockIcon, DownloadIcon, PlusIcon, QRCodeIcon, UsersIcon, WarningIcon, XIcon } from "../../../components/ui/icons";
 
 import {
     fetchSessionAttendance,
@@ -17,6 +17,7 @@ import {
     scanAttendanceQr,
 } from "../../../feature/instructor/components/attendance/instructorAttendanceApi";
 import ExcuseList from "../../../feature/instructor/components/attendance/ExcuseList";
+import { CourseAttendanceSkeleton, CourseAttendanceDetailSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 function formatTime(value) {
@@ -79,7 +80,7 @@ export default function InstructorCourseAttendance() {
     const { showError } = useError();
     const sessionInUrl = params.sessionId ? Number(params.sessionId) : null;
 
-    const [activeTab, setActiveTab] = useState("sessions");
+    const [isExcuseModalOpen, setIsExcuseModalOpen] = useState(false);
     const [creatingSession, setCreatingSession] = useState(false);
     const [isCreateSessionOpen, setIsCreateSessionOpen] = useState(false);
     const [newSession, setNewSession] = useState({ topic: "", description: "" });
@@ -342,11 +343,11 @@ export default function InstructorCourseAttendance() {
         document.body.removeChild(link);
     };
 
-    if (isLoadingClasses) return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading...</p>;
+    if (isLoadingClasses) return <CourseAttendanceSkeleton />;
 
     // ─── SESSION DETAIL VIEW ───
     if (sessionInUrl) {
-        if (isLoadingReport) return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading attendance report...</p>;
+        if (isLoadingReport) return <CourseAttendanceDetailSkeleton />;
         if (!report) return <p className="text-sm text-text-danger-default-light dark:text-text-danger-default-dark">No attendance data available for this session.</p>;
 
         return (
@@ -670,57 +671,43 @@ export default function InstructorCourseAttendance() {
     // ─── SESSION LIST VIEW ───
     return (
         <div className="space-y-6">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-secondary-default-light dark:text-text-secondary-default-dark">{activeTab === "excuses" ? "Excuses" : "Sessions"}</p>
-                    <h2 className="mt-1 text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                        {activeTab === "excuses" ? "Excuse Requests" : "Attendance Sessions"}
-                    </h2>
-                    <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{courseName}</p>
-                </div>
-                {activeTab === "sessions" && (
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+                    Attendance
+                </h2>
+                <div className="flex items-center gap-3">
                     <Button type="button" variant="primary" onClick={() => setIsCreateSessionOpen(true)} startIcon={<PlusIcon size={18} />}>
                         <span className="hidden sm:inline">Create Session</span>
                     </Button>
-                )}
+                    <Button type="button" variant="secondary" onClick={() => setIsExcuseModalOpen(true)} startIcon={<WarningIcon size={18} />}>
+                        <span className="hidden sm:inline">Excuse Requests</span>
+                    </Button>
+                </div>
             </div>
 
-            {/* Tab bar */}
-            <div className="flex border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("sessions")}
-                    className={`relative px-5 py-3 text-sm font-medium transition-colors ${
-                        activeTab === "sessions"
-                            ? "text-text-accent-default-light dark:text-text-accent-default-dark"
-                            : "text-text-secondary-default-light hover:text-text-primary-default-light dark:text-text-secondary-default-dark dark:hover:text-text-primary-default-dark"
-                    }`}
-                >
-                    Sessions
-                    {activeTab === "sessions" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-accent-default-light dark:bg-text-accent-default-dark rounded-full" />
-                    )}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("excuses")}
-                    className={`relative px-5 py-3 text-sm font-medium transition-colors ${
-                        activeTab === "excuses"
-                            ? "text-text-accent-default-light dark:text-text-accent-default-dark"
-                            : "text-text-secondary-default-light hover:text-text-primary-default-light dark:text-text-secondary-default-dark dark:hover:text-text-primary-default-dark"
-                    }`}
-                >
-                    Excuse Requests
-                    {activeTab === "excuses" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-accent-default-light dark:bg-text-accent-default-dark rounded-full" />
-                    )}
-                </button>
-            </div>
+            {/* Excuse Requests Modal */}
+            {isExcuseModalOpen && (
+                <ModelOverlay onClose={() => setIsExcuseModalOpen(false)} maxWidth="max-w-2xl">
+                    <div className="relative w-full overflow-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
+                        <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-5 dark:border-border-primary-default-dark">
+                            <h3 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Excuse Requests</h3>
+                            <button
+                                type="button"
+                                onClick={() => setIsExcuseModalOpen(false)}
+                                className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2.5 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
+                                aria-label="Close"
+                            >
+                                <XIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
+                            <ExcuseList courseId={courseId} />
+                        </div>
+                    </div>
+                </ModelOverlay>
+            )}
 
-            {activeTab === "excuses" ? (
-                <ExcuseList courseId={courseId} />
-            ) : (
-                <>
+            
             {/* Class selector */}
             {classes.length > 1 && (
                 <div className="flex flex-wrap items-center gap-3">
@@ -767,7 +754,7 @@ export default function InstructorCourseAttendance() {
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Contact an administrator to get assigned to a class before creating sessions.</p>
                 </div>
             ) : isLoadingSessions ? (
-                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading sessions...</p>
+                <CourseAttendanceSkeleton />
             ) : sessions.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-border-primary-default-light bg-bg-surface-secondary-default-light p-8 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark">
                     <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-primary-default-light text-text-primary-default-light dark:bg-bg-surface-primary-default-dark dark:text-text-primary-default-dark">
@@ -934,8 +921,6 @@ export default function InstructorCourseAttendance() {
                     </div>
                 </ModelOverlay>
             )}
-            </>
-        )}
         </div>
     );
 }
