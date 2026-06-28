@@ -35,6 +35,7 @@ import {
     CoursePrerequisites as StudentCoursePrerequisites, 
     CoursesRegistration as StudentCoursesRegistration,
     SpecializationPreference as StudentSpecializationPreference,
+    AcademicProgress as StudentAcademicProgress,
 } from "./pages/dashboard/student";
 
 import CourseAttendance from "./feature/student/courses/courseDetail/courseAttendance/CourseAttendance";
@@ -115,6 +116,7 @@ export default function App() {
 
                     { path: "courses/registration", element: <StudentCoursesRegistration /> },
                     { path: "courses/prerequisites", element: <StudentCoursePrerequisites /> },
+                    { path: "courses/academic-progress", element: <StudentAcademicProgress /> },
                     { path: "reminders", element: <StudentReminders /> },
                     { path: "smart-notes", element: <StudentSmartNotes /> },
                     { path: "schedule", element: <StudentSchedule /> },

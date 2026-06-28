@@ -1,21 +1,24 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import Section from "../../../../components/ui/Section";
 import Button from "../../../../components/ui/Button";
+import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import { TranscriptSkeleton } from "./SkeletonLoader";
 import { fetchTranscript, exportTranscriptPdf } from "../gradeApi";
 import { DownloadIcon } from "../../../../components/ui/icons";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 export default function TranscriptView() {
-    const { data: transcript = [], isLoading: loading, error } = useQuery({
+    const { data: transcript = [], isLoading: loading } = useQuery({
         queryKey: ["transcript"],
         queryFn: fetchTranscript,
         staleTime: 10 * 60 * 1000,
     });
     const [exporting, setExporting] = useState(false);
     const { showError } = useError();
+    const [filterLevel, setFilterLevel] = useState([]);
+    const [filterSemester, setFilterSemester] = useState([]);
 
     const handleExport = async () => {
         setExporting(true);
@@ -28,7 +31,27 @@ export default function TranscriptView() {
         }
     };
 
-    const totalCredits = transcript.reduce((sum, c) => sum + (c.creditHours || 0), 0);
+    const levelOptions = useMemo(() => {
+        const levels = new Set(transcript.map(c => c.level).filter(l => l != null));
+        return [...levels].sort((a, b) => a - b).map(l => ({ value: String(l), label: `Level ${l}` }));
+    }, [transcript]);
+
+    const semesterOptions = useMemo(() => {
+        const semesters = new Set(transcript.map(c => c.semester).filter(s => s));
+        return [...semesters].sort().map(s => ({ value: s, label: s }));
+    }, [transcript]);
+
+    const filteredTranscript = useMemo(() => {
+        return transcript.filter(c => {
+            if (filterLevel.length > 0 && c.level != null && !filterLevel.includes(String(c.level))) return false;
+            if (filterLevel.length > 0 && c.level == null) return false;
+            if (filterSemester.length > 0 && c.semester && !filterSemester.includes(c.semester)) return false;
+            if (filterSemester.length > 0 && !c.semester) return false;
+            return true;
+        });
+    }, [transcript, filterLevel, filterSemester]);
+
+    const totalCredits = filteredTranscript.reduce((sum, c) => sum + (c.creditHours || 0), 0);
 
     if (loading) {
         return (
@@ -55,7 +78,7 @@ export default function TranscriptView() {
 
     return (
         <Section className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg shadow-sm">
-            <div className="p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark flex items-center justify-between">
+            <div className="p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 className="text-lg font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
                         Academic Transcript
@@ -64,16 +87,34 @@ export default function TranscriptView() {
                         Total Credits: {totalCredits}
                     </p>
                 </div>
-                <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleExport}
-                    loading={exporting}
-                    loadingText="Exporting"
-                    startIcon={<DownloadIcon className="w-4 h-4" />}
-                >
-                    Export PDF
-                </Button>
+                <div className="flex items-center gap-2 flex-wrap">
+                    {levelOptions.length > 0 && (
+                        <FilterDropdown
+                            label="Level"
+                            options={levelOptions}
+                            selectedValues={filterLevel}
+                            onChange={setFilterLevel}
+                        />
+                    )}
+                    {semesterOptions.length > 0 && (
+                        <FilterDropdown
+                            label="Semester"
+                            options={semesterOptions}
+                            selectedValues={filterSemester}
+                            onChange={setFilterSemester}
+                        />
+                    )}
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleExport}
+                        loading={exporting}
+                        loadingText="Exporting"
+                        startIcon={<DownloadIcon className="w-4 h-4" />}
+                    >
+                        Export PDF
+                    </Button>
+                </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -83,13 +124,15 @@ export default function TranscriptView() {
                             <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">Code</th>
                             <th className="text-left px-4 py-3 font-semibold">Course Name</th>
                             <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">Credit Hrs</th>
+                            <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">Level</th>
+                            <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">Semester</th>
                             <th className="text-center px-4 py-3 font-semibold">Coursework</th>
                             <th className="text-center px-4 py-3 font-semibold">Total</th>
                             <th className="text-center px-4 py-3 font-semibold">Grade</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {transcript.map((course, idx) => (
+                        {filteredTranscript.map((course, idx) => (
                             <tr
                                 key={course.courseId || idx}
                                 className={`border-t border-border-primary-default-light dark:border-border-primary-default-dark ${
@@ -106,6 +149,12 @@ export default function TranscriptView() {
                                 </td>
                                 <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark hidden sm:table-cell">
                                     {course.creditHours}
+                                </td>
+                                <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark hidden sm:table-cell">
+                                    {course.level ?? "—"}
+                                </td>
+                                <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark hidden sm:table-cell">
+                                    {course.semester ?? "—"}
                                 </td>
                                 <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
                                     {course.coursework}

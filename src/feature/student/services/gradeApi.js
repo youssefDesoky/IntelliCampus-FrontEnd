@@ -29,6 +29,10 @@ export const fetchTranscript = async () => {
   return apiClient('/api/grades/transcript');
 };
 
+export const fetchAcademicProgress = async () => {
+  return apiClient('/api/grades/academic-progress');
+};
+
 export const exportTranscriptPdf = async () => {
   await downloadBlob('/api/grades/transcript/export', 'Transcript.pdf');
 };

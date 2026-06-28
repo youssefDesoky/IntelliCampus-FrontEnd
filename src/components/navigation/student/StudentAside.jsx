@@ -7,7 +7,7 @@ import { getNavigationLinks } from "../../../data/student/navigationLinks";
 import Aside from "../base/Aside";
 
 import DropdownMenu from "../../ui/DropdownMenu";
-import { BookIcon, AngleDownIcon } from "../../ui/icons";
+import { BookIcon, AngleDownIcon, ChartBarIcon } from "../../ui/icons";
 
 
 export default function StudentAside({height}) {
@@ -74,6 +74,11 @@ export default function StudentAside({height}) {
                                     <span className="text-sm font-semibold whitespace-nowrap">{t('coursePrerequisites')}</span>
                                 </NavLink>
                             </li>
+                            <li>
+                                <NavLink to="/courses/academic-progress" className={({ isActive }) => linkCls(isActive)}>
+                                    <span className="text-sm font-semibold whitespace-nowrap">{t('academicProgress')}</span>
+                                </NavLink>
+                            </li>
                         </DropdownMenu> 
                     }
                 </div>
@@ -93,6 +98,11 @@ export default function StudentAside({height}) {
                         <li>
                             <NavLink to="/courses/prerequisites" className={({ isActive }) => linkCls(isActive)}>
                                 <span className="text-base font-semibold whitespace-nowrap">{t('coursePrerequisites')}</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/courses/academic-progress" className={({ isActive }) => linkCls(isActive)}>
+                                <span className="text-base font-semibold whitespace-nowrap">{t('academicProgress')}</span>
                             </NavLink>
                         </li>
                     </menu>
