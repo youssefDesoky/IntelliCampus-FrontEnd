@@ -161,13 +161,15 @@ export default function Header({ avatar, notifications: initialNotifications, is
         localStorage.setItem("lang", lng);
     };
 
+    const dashboardRoute = activeView === 'instructor' ? '/instructor' : activeView === 'admin' ? '/admin' : '/';
+
     return (
         <header 
             className={`${isMobile ? 'p-2 h-15' : 'p-4 h-20'} sticky w-screen top-0 left-0 right-0 flex items-center justify-between z-50 border-b border-border-primary-default-light bg-bg-surface-primary-default-light text-text-primary-active-light dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-primary-active-dark`}
         >
             <div id="header-logo" >
                {/* Need To Change Color using variables */}
-                <Link to="/" className="flex flex-row items-center gap-2">
+                <Link to={dashboardRoute} className="flex flex-row items-center gap-2">
                     <IntelliCampusIcon className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'}`} />
                     <div className={`text-lg font-bold flex flex-col leading-none logo-title`}>
                         <span

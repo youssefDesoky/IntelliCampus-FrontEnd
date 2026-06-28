@@ -1,75 +1,51 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
+import { API_URL } from "../../../config/api";
 import AccountControlsCard from "../../../feature/student/profile/AccountControlsCard";
 import InstructorIdentityCard from "../../../feature/instructor/profile/InstructorIdentityCard";
 import ProfessionalInfoCard from "../../../feature/instructor/profile/ProfessionalInfoCard";
-import CoursesCard from "../../../feature/instructor/profile/CoursesCard";
-import { fetchInstructorProfile, fetchInstructorCourses } from "../../../feature/instructor/services/profileApi";
+import OfficeHoursCard from "../../../feature/instructor/profile/OfficeHoursCard";
 
-function mapBackendToUserData(instructor) {
+function mapProfileToUserData(profile) {
+    if (!profile) return null;
     return {
-        name: instructor.fullName,
-        fullName: instructor.fullName,
-        avatar: instructor.profileImage || "",
-        specialization: instructor.specializationName || instructor.specialization || "",
-        department: instructor.departmentName || instructor.department || "",
-        faculty: instructor.facultyName || instructor.faculty || "",
-        email: instructor.email || "",
-        phone: instructor.phoneNumber || "",
-        address: instructor.address || "",
-        instructorCode: instructor.instructorCode || instructor.instructorId || "",
-        nationality: instructor.nationality || "",
-        role: instructor.instructorRole || instructor.role || "",
-        joinedDate: instructor.enrollmentDate || instructor.createdAt || "",
-        facultyName: instructor.facultyName || instructor.faculty || "",
-    };
-}
-
-function mapAuthToUserData(auth) {
-    if (!auth) return null;
-    return {
-        name: auth.fullName || auth.name || "",
-        fullName: auth.fullName || auth.name || "",
-        avatar: auth.profileImage || "",
-        specialization: auth.specialization || auth.specializationName || "",
-        department: auth.departmentName || auth.department || "",
-        faculty: auth.facultyName || auth.faculty || "",
-        email: auth.email || "",
-        phone: auth.phoneNumber || auth.phone || "",
-        address: auth.address || "",
-        instructorCode: auth.instructorCode || auth.instructorId || "",
-        nationality: auth.nationality || "",
-        role: auth.instructorRole || auth.role || "",
-        joinedDate: auth.enrollmentDate || auth.createdAt || "",
-        facultyName: auth.facultyName || auth.faculty || "",
+        name: profile.fullName || "",
+        fullName: profile.fullName || "",
+        avatar: profile.profileImage || "",
+        specialization: profile.specialization || "",
+        department: profile.departmentName || "",
+        faculty: profile.facultyName || "",
+        email: profile.email || "",
+        phone: profile.phoneNumber || "",
+        address: profile.address || "",
+        instructorCode: profile.instructorCode || "",
+        nationality: profile.nationality || "",
+        role: profile.instructorRole || "",
+        joinedDate: profile.hireDate || "",
+        facultyName: profile.facultyName || "",
+        officeHoursRoom: profile.officeHoursRoomName || "",
+        officeHoursLocation: profile.officeHoursRoomLocation || "",
     };
 }
 
 export default function InstructorProfile() {
     const authUser = useRouteLoaderData("root");
-    const instructorId = authUser?.userId;
-    const initialData = mapAuthToUserData(authUser);
+    const initialData = mapProfileToUserData(authUser);
 
     const { data: userData, isLoading: profileLoading, refetch } = useQuery({
-        queryKey: ["instructorProfile", instructorId],
+        queryKey: ["instructorProfile"],
         queryFn: async () => {
-            const instructor = await fetchInstructorProfile(instructorId);
-            return mapBackendToUserData(instructor);
+            const res = await fetch(`${API_URL}/api/auth/profile`, {
+                credentials: "include",
+            });
+            if (!res.ok) return initialData;
+            const profile = await res.json();
+            return mapProfileToUserData(profile);
         },
         staleTime: 10 * 60 * 1000,
-        enabled: !!instructorId,
-        placeholderData: initialData,
     });
 
-    const { data: courses = [], isLoading: coursesLoading } = useQuery({
-        queryKey: ["instructorCourses", instructorId],
-        queryFn: () => fetchInstructorCourses(instructorId),
-        staleTime: 5 * 60 * 1000,
-        enabled: !!instructorId,
-        select: (data) => (Array.isArray(data) ? data : []),
-    });
-
-    if (!userData && !instructorId) {
+    if (!userData && !authUser) {
         return (
             <div className="flex items-center justify-center py-20">
                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Unable to load profile.</p>
@@ -87,7 +63,7 @@ export default function InstructorProfile() {
                     </div>
                     <div className="flex h-full flex-col gap-6">
                         <ProfessionalInfoCard user={userData} loading={profileLoading} />
-                        <CoursesCard courses={courses} loading={coursesLoading} />
+                        <OfficeHoursCard user={userData} />
                     </div>
                 </div>
             </div>

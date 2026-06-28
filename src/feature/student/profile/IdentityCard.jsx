@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRevalidator } from "react-router-dom";
 import BrandedQRCode from "../../../components/ui/BrandedQRCode";
 import {
     UserIcon,
@@ -18,6 +19,7 @@ import EditProfileForm from "./EditProfileForm";
 import { updateProfileImage, generateAttendanceQr as generateAttendanceQrApi } from "../services/profileApi";
 
 export default function IdentityCard({ user, className = "", onProfileUpdate }) {
+    const { revalidate } = useRevalidator();
     const [isFlipped, setIsFlipped] = useState(false);
     const [qrPayload, setQrPayload] = useState(user.qrCode || "");
     const [isGeneratingQr, setIsGeneratingQr] = useState(false);
@@ -39,23 +41,19 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
 
     const handleAvatarChange = async (e) => {
         const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-            const dataUrl = reader.result;
-            setAvatarPreview(dataUrl);
-            setUploadingAvatar(true);
-            try {
-                await updateProfileImage(dataUrl);
-                onProfileUpdate?.();
-            } catch (err) {
-                showError(err?.message || "Failed to update profile image");
-                setAvatarPreview(user?.avatar || "");
-            } finally {
-                setUploadingAvatar(false);
-            }
-        };
-        reader.readAsDataURL(file);
+        if (!file || uploadingAvatar) return;
+        setAvatarPreview(URL.createObjectURL(file));
+        setUploadingAvatar(true);
+        try {
+            await updateProfileImage(file);
+            onProfileUpdate?.();
+            revalidate();
+        } catch (err) {
+            showError(err?.message || "Failed to update profile image");
+            setAvatarPreview(user?.avatar || "");
+        } finally {
+            setUploadingAvatar(false);
+        }
     };
 
     useEffect(() => {

@@ -75,7 +75,7 @@ export default function CoursesCard({ courses = [], loading = false }) {
                     ) : (
                         <div className="space-y-2">
                             {courses.map((c) => (
-                                <div key={c._id} className="flex items-center justify-between p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+                                <div key={c.id || c.courseId || c._id} className="flex items-center justify-between p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">{c.title}</p>
                                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{c.code || c.courseCode}</p>

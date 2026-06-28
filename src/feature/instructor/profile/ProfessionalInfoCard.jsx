@@ -3,7 +3,6 @@ import {
     CalendarDaysIcon,
     HashIcon,
     StarIcon,
-    UserTieIcon,
 } from "../../../components/ui/icons";
 
 function Skeleton({ className = "" }) {
@@ -12,11 +11,9 @@ function Skeleton({ className = "" }) {
 
 export default function ProfessionalInfoCard({ user = {}, loading = false }) {
     const infoFields = [
+        { label: "Instructor Code", value: user.instructorCode || user.instructorId || "–", icon: HashIcon },
         { label: "Department", value: user.department || user.departmentName || "–", icon: BookIcon },
         { label: "Specialization", value: user.specialization || user.specializationName || "–", icon: StarIcon },
-        { label: "Instructor Code", value: user.instructorCode || user.instructorId || "–", icon: HashIcon },
-        { label: "Nationality", value: user.nationality || "–", icon: UserTieIcon },
-        { label: "Faculty", value: user.faculty || user.facultyName || "–", icon: BookIcon },
         { label: "Joined", value: user.joinedDate || user.enrollmentDate || "–", icon: CalendarDaysIcon },
     ];
 
@@ -39,7 +36,7 @@ export default function ProfessionalInfoCard({ user = {}, loading = false }) {
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {loading ? (
                     <>
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                        {[1, 2, 3, 4].map((i) => (
                             <div key={i} className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark">
                                 <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
                                 <div className="min-w-0 flex-1 space-y-2">

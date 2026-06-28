@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useRevalidator } from "react-router-dom";
 import {
     BookIcon,
     CameraIcon,
-    HouseIcon,
     LocationDotIcon,
     MailIconDark,
     PenSquareIcon,
@@ -16,6 +16,7 @@ import { updateProfileImage } from "../services/profileApi";
 import EditProfileForm from "./EditProfileForm";
 
 export default function InstructorIdentityCard({ user = {}, className = "", onProfileUpdate }) {
+    const { revalidate } = useRevalidator();
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -32,23 +33,19 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
 
     const handleAvatarChange = async (e) => {
         const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-            const dataUrl = reader.result;
-            setAvatarPreview(dataUrl);
-            setUploadingAvatar(true);
-            try {
-                await updateProfileImage(dataUrl);
-                onProfileUpdate?.();
-            } catch (err) {
-                showError(err?.message || "Failed to update profile image");
-                setAvatarPreview(user?.avatar || "");
-            } finally {
-                setUploadingAvatar(false);
-            }
-        };
-        reader.readAsDataURL(file);
+        if (!file || uploadingAvatar) return;
+        setAvatarPreview(URL.createObjectURL(file));
+        setUploadingAvatar(true);
+        try {
+            await updateProfileImage(file);
+            onProfileUpdate?.();
+            revalidate();
+        } catch (err) {
+            showError(err?.message || "Failed to update profile image");
+            setAvatarPreview(user?.avatar || "");
+        } finally {
+            setUploadingAvatar(false);
+        }
     };
 
     return (
@@ -108,10 +105,6 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
                 </div>
 
                 <div className="px-6 mt-4 flex-1 flex flex-col justify-center space-y-3">
-                    <div className="flex items-center gap-2.5 text-sm">
-                        <HouseIcon size={14} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
-                        <span className="text-text-primary-default-light dark:text-text-primary-default-dark font-medium">{user.faculty}</span>
-                    </div>
                     <div className="flex items-center gap-2.5 text-sm">
                         <MailIconDark size={14} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
                         <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">{user.email}</span>

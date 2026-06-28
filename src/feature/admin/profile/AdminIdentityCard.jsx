@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useRevalidator } from "react-router-dom";
 import {
     CameraIcon,
     HashIcon,
@@ -16,6 +17,7 @@ import { updateProfileImage } from "../services/profileApi";
 import EditProfileForm from "./EditProfileForm";
 
 export default function AdminIdentityCard({ user = {}, className = "", onProfileUpdate }) {
+    const { revalidate } = useRevalidator();
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -32,23 +34,19 @@ export default function AdminIdentityCard({ user = {}, className = "", onProfile
 
     const handleAvatarChange = async (e) => {
         const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-            const dataUrl = reader.result;
-            setAvatarPreview(dataUrl);
-            setUploadingAvatar(true);
-            try {
-                await updateProfileImage(dataUrl);
-                onProfileUpdate?.();
-            } catch (err) {
-                showError(err?.message || "Failed to update profile image");
-                setAvatarPreview(user?.avatar || "");
-            } finally {
-                setUploadingAvatar(false);
-            }
-        };
-        reader.readAsDataURL(file);
+        if (!file || uploadingAvatar) return;
+        setAvatarPreview(URL.createObjectURL(file));
+        setUploadingAvatar(true);
+        try {
+            await updateProfileImage(file);
+            onProfileUpdate?.();
+            revalidate();
+        } catch (err) {
+            showError(err?.message || "Failed to update profile image");
+            setAvatarPreview(user?.avatar || "");
+        } finally {
+            setUploadingAvatar(false);
+        }
     };
 
     return (
