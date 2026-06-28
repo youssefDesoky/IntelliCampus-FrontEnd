@@ -95,7 +95,7 @@ export default function Dashboard() {
             {dashboard.latestNews?.length > 0 ? (
               dashboard.latestNews.map((item) => (
                 <li
-                  key={item.id}
+                  key={`${item.kind ?? "Course"}-${item.id}`}
                   className="p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
                 >
                   <p className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{item.title}</p>

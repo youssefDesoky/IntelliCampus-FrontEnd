@@ -30,7 +30,6 @@ import {
   CalendarDaysIcon,
   LocationDotIcon,
   ChartBarIcon,
-  ClockIcon,
   BullHornIcon,
   PaperPlaneIcon,
 } from "../../../components/ui/icons";
@@ -65,61 +64,8 @@ const statLabels = {
   rooms:         "Rooms",
 };
 
-// ─── Mock chart fallback data ─────────────────────────────────────────────────
-
-const MOCK_ENROLLMENT = [
-  { month: "Sep", students: 380 },
-  { month: "Oct", students: 420 },
-  { month: "Nov", students: 405 },
-  { month: "Dec", students: 365 },
-  { month: "Jan", students: 450 },
-  { month: "Feb", students: 478 },
-  { month: "Mar", students: 490 },
-  { month: "Apr", students: 462 },
-];
-
-const MOCK_GRADES = [
-  { name: "A",  value: 280 },
-  { name: "B",  value: 350 },
-  { name: "C",  value: 220 },
-  { name: "D",  value: 95  },
-  { name: "F",  value: 55  },
-];
-
-const MOCK_TOP_COURSES = [
-  { course: "CS101 – Intro to CS",       enrolled: 145 },
-  { course: "MATH201 – Calculus II",     enrolled: 132 },
-  { course: "ENG301 – Tech Writing",     enrolled: 118 },
-  { course: "PHY101 – Physics I",        enrolled: 105 },
-  { course: "BUS201 – Business Mgmt",    enrolled: 98  },
-];
-
-const MOCK_DEPT_STATUS = [
-  { dept: "CS",   active: 12, completed: 28, upcoming: 5 },
-  { dept: "Math", active: 8,  completed: 22, upcoming: 4 },
-  { dept: "Eng",  active: 10, completed: 25, upcoming: 6 },
-  { dept: "Bio",  active: 6,  completed: 18, upcoming: 3 },
-  { dept: "Bus",  active: 9,  completed: 20, upcoming: 5 },
-];
-
 const GRADE_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#f97316", "#ef4444"];
-
-// ─── Utility ──────────────────────────────────────────────────────────────────
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
-}
-
-function getFormattedDate() {
-  return new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-}
+const COURSE_STATUS_COLORS = ["#22c55e", "#f59e0b"];
 
 // ─── Shared chart primitives ──────────────────────────────────────────────────
 
@@ -144,12 +90,12 @@ function CustomTooltip({ active, payload, label }) {
 
 // ─── Chart components ─────────────────────────────────────────────────────────
 
-function EnrollmentTrendChart({ data }) {
+function AttendanceTrendChart({ data }) {
   return (
     <ChartCard
-      title="Enrollment Trend"
-      subtitle="Monthly student count — current academic year"
-      chartType="area" chartData={data} categoryField="month" series={[{ field: "students", name: "Students" }]}
+      title="Attendance Rate"
+      subtitle="Weekly attendance % across all classes"
+      chartType="area" chartData={data} categoryField="week" series={[{ field: "attendance", name: "Attendance %" }]}
     >
       <ResponsiveContainer width="100%" height={210}>
         <AreaChart data={data} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
@@ -165,7 +111,7 @@ function EnrollmentTrendChart({ data }) {
             vertical={false}
           />
           <XAxis
-            dataKey="month"
+            dataKey="week"
             tick={{ fontSize: 11, fill: "currentColor" }}
             tickLine={false}
             axisLine={false}
@@ -178,8 +124,8 @@ function EnrollmentTrendChart({ data }) {
           <Tooltip content={<CustomTooltip />} />
           <Area
             type="monotone"
-            dataKey="students"
-            name="Students"
+            dataKey="attendance"
+            name="Attendance %"
             stroke="#3b82f6"
             strokeWidth={2}
             fill="url(#enrollGrad)"
@@ -358,16 +304,98 @@ function CourseStatusChart({ data }) {
   );
 }
 
+function CourseStatusBreakdownChart({ data }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+
+  const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    if (percent < 0.06) return null;
+    const RAD = Math.PI / 180;
+    const r = innerRadius + (outerRadius - innerRadius) * 0.55;
+    const x = cx + r * Math.cos(-midAngle * RAD);
+    const y = cy + r * Math.sin(-midAngle * RAD);
+    return (
+      <text
+        x={x} y={y}
+        fill="white"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={11}
+        fontWeight={700}
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
+  return (
+    <ChartCard
+      title="Course Catalog Status"
+      subtitle="Active, inactive, and archived courses"
+      chartType="pie" chartData={data} categoryField="name" series={[{ field: "value", name: "Courses" }]}
+    >
+      <div className="flex items-center gap-6">
+        <ResponsiveContainer width="55%" height={210}>
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%" cy="50%"
+              innerRadius={52}
+              outerRadius={84}
+              dataKey="value"
+              labelLine={false}
+              label={renderLabel}
+              strokeWidth={0}
+            >
+              {data.map((_, i) => (
+                <Cell key={i} fill={COURSE_STATUS_COLORS[i] ?? "#9ca3af"} />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+          </PieChart>
+        </ResponsiveContainer>
+
+        <div className="flex-1 space-y-2.5">
+          {data.map((entry, i) => (
+            <div key={entry.name} className="flex items-center gap-2.5">
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: COURSE_STATUS_COLORS[i] ?? "#9ca3af" }}
+              />
+              <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark flex-1">
+                {entry.name}
+              </span>
+              <span className="text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark tabular-nums">
+                {entry.value.toLocaleString()}
+              </span>
+            </div>
+          ))}
+          <div className="pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                Total
+              </span>
+              <span className="text-xs font-bold text-text-primary-active-light dark:text-text-primary-active-dark tabular-nums">
+                {total.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ChartCard>
+  );
+}
+
 // ─── Academic Snapshot panel ──────────────────────────────────────────────────
 
-const SNAPSHOT_METRICS = [
-  { label: "Pass Rate",          value: "84%",      progress: 84, color: "#22c55e" },
-  { label: "Course Completion",  value: "71%",      progress: 71, color: "#3b82f6" },
-  { label: "Student Retention",  value: "92%",      progress: 92, color: "#8b5cf6" },
-  { label: "Average GPA",        value: "3.1 / 4.0",progress: 77.5, color: "#f59e0b" },
-];
+function AcademicSnapshot({ stats, snapshot }) {
+  const snap = snapshot ?? {};
+  const metrics = [
+    { label: "Pass Rate",          value: `${(snap.passRate ?? 0).toFixed(0)}%`,      progress: snap.passRate ?? 0, color: "#22c55e" },
+    { label: "Course Completion",  value: `${(snap.courseCompletion ?? 0).toFixed(0)}%`, progress: snap.courseCompletion ?? 0, color: "#3b82f6" },
+    { label: "Student Retention",  value: `${(snap.studentRetention ?? 0).toFixed(0)}%`, progress: snap.studentRetention ?? 0, color: "#8b5cf6" },
+    { label: "Average GPA",        value: `${(snap.averageGpa ?? 0).toFixed(2)} / 4.0`,progress: ((snap.averageGpa ?? 0) / 4 * 100), color: "#f59e0b" },
+  ];
 
-function AcademicSnapshot({ stats }) {
   return (
     <div className="h-full p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl flex flex-col">
       <div className="mb-6">
@@ -380,7 +408,7 @@ function AcademicSnapshot({ stats }) {
       </div>
 
       <div className="flex flex-col gap-5 flex-1">
-        {SNAPSHOT_METRICS.map((m) => (
+        {metrics.map((m) => (
           <div key={m.label}>
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
@@ -393,7 +421,7 @@ function AcademicSnapshot({ stats }) {
             <div className="h-1.5 w-full rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${m.progress}%`, backgroundColor: m.color }}
+                style={{ width: `${Math.min(m.progress, 100)}%`, backgroundColor: m.color }}
               />
             </div>
           </div>
@@ -456,11 +484,12 @@ export default function Dashboard() {
     iconStyle: statIconStyles[key],
   }));
 
-  // Use API-provided chart data when available, fall back to representative mock data
-  const enrollmentData  = dashboard?.charts?.enrollmentTrend    ?? MOCK_ENROLLMENT;
-  const gradeData       = dashboard?.charts?.gradeDistribution  ?? MOCK_GRADES;
-  const topCoursesData  = dashboard?.charts?.topCourses         ?? MOCK_TOP_COURSES;
-  const deptStatusData  = dashboard?.charts?.departmentStatus   ?? MOCK_DEPT_STATUS;
+  // Use API-provided chart data
+  const attendanceData = dashboard?.charts?.attendanceTrend ?? [];
+  const gradeData      = dashboard?.charts?.gradeDistribution  ?? [];
+  const topCoursesData = dashboard?.charts?.topCourses         ?? [];
+  const deptStatusData = dashboard?.charts?.departmentStatus   ?? [];
+  const courseStatusData = dashboard?.charts?.courseStatusBreakdown ?? [];
 
   const textAreaClasses =
     "w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark";
@@ -483,55 +512,8 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* ── Header ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
-            {getGreeting()}, Admin
-          </h1>
-          <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 flex items-center gap-2 text-sm">
-            <ClockIcon className="w-4 h-4" />
-            {getFormattedDate()}
-          </p>
-        </div>
-
-        {/* Quick-glance metric pills */}
-        <div className="flex flex-wrap gap-2 sm:justify-end">
-          {[
-            {
-              label: "Pass Rate",
-              value: "84%",
-              className:
-                "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-bg-surface-green-default-dark",
-            },
-            {
-              label: "Retention",
-              value: "92%",
-              className:
-                "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-bg-surface-blue-default-dark",
-            },
-            {
-              label: "Avg GPA",
-              value: "3.1",
-              className:
-                "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-bg-surface-yellow-default-dark",
-            },
-          ].map((pill) => (
-            <span
-              key={pill.label}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs ${pill.className}`}
-            >
-              <span className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                {pill.label}
-              </span>
-              <span className="font-bold">{pill.value}</span>
-            </span>
-          ))}
-        </div>
-      </div>
-
       {/* ── Stats Grid ────────────────────────────────────────────────── */}
-      <Section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+      <Section className="hidden sm:grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {statsData.map((stat) => (
           <BoxData
             key={stat.id}
@@ -587,7 +569,7 @@ export default function Dashboard() {
             {dashboard.latestNews?.length > 0 ? (
               dashboard.latestNews.map((item) => (
                 <li
-                  key={item.id}
+                  key={`${item.kind ?? "Broadcast"}-${item.id}`}
                   className="flex gap-4 p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
                 >
                   {/* Colored accent bar */}
@@ -621,8 +603,9 @@ export default function Dashboard() {
         </div>
 
         {/* Academic KPI snapshot */}
-        <div className="lg:col-span-4">
-          <AcademicSnapshot stats={stats} />
+        <div className="lg:col-span-4 flex flex-col gap-6">
+          <AcademicSnapshot stats={stats} snapshot={dashboard?.snapshot} />
+          <CourseStatusBreakdownChart data={courseStatusData} />
         </div>
       </Section>
 
@@ -641,7 +624,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <EnrollmentTrendChart data={enrollmentData} />
+          <AttendanceTrendChart data={attendanceData} />
           <GradeDistributionChart data={gradeData} />
         </div>
 

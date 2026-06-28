@@ -137,35 +137,13 @@ export async function fetchInstructorDashboard() {
   };
 }
 
-let adminNewsIdCounter = 10;
-let adminLatestNews = [
-  { id: 5, title: "Campus will be closed for maintenance on July 4th", course: "General", date: "2026-06-25T08:00:00Z" },
-  { id: 6, title: "New scholarship applications are now open for Fall 2026", course: "Administration", date: "2026-06-24T12:00:00Z" },
-  { id: 7, title: "Faculty meeting scheduled for next Monday at 3 PM", course: "Academic Staff", date: "2026-06-23T09:30:00Z" },
-  { id: 8, title: "System maintenance window: Saturday 2 AM - 6 AM", course: "IT Department", date: "2026-06-22T16:00:00Z" },
-];
-
 export async function fetchAdminDashboard() {
-  return {
-    stats: {
-      totalStudents: 1560,
-      instructors: 85,
-      courses: 79,
-      departments: 6,
-      activeClasses: 42,
-      rooms: 18,
-    },
-    latestNews: adminLatestNews,
-  };
+  return apiClient("/api/dashboard/admin");
 }
 
 export async function publishNews(title) {
-  const newNews = {
-    id: ++adminNewsIdCounter,
-    title,
-    course: "General",
-    date: new Date().toISOString(),
-  };
-  adminLatestNews = [newNews, ...adminLatestNews];
-  return newNews;
+  return apiClient("/api/dashboard/admin/news", {
+    method: "POST",
+    body: JSON.stringify({ title }),
+  });
 }
