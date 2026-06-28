@@ -12,7 +12,7 @@ export async function fetchPracticeQuiz(courseId, quizId) {
 
 export async function submitPracticeQuiz(courseId, submitData) {
   return apiClient(`/api/courses/${courseId}/quizzes/practice/submit`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify(submitData),
   });
 }

@@ -218,9 +218,100 @@ export default function CourseQuizzes() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 gap-4">
-                <div className="h-10 w-10 rounded-full border-2 border-border-primary-default-light dark:border-border-primary-default-dark border-t-bg-fill-accent-default-light dark:border-t-bg-fill-accent-default-dark animate-spin" />
-                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading quizzes...</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 py-6">
+            <div className="lg:col-span-2 space-y-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-5">
+                            <div className="h-5 w-5 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                            <div className="h-5 w-36 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                        </div>
+                        <div className="space-y-3">
+                            {[1, 2].map((i) => (
+                                <div key={i} className="rounded-xl border border-gray-200/50 dark:border-gray-700/50 p-5 animate-pulse">
+                                    <div className="flex items-start justify-between gap-3 mb-4">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="h-4 w-4 rounded bg-gray-200 dark:bg-gray-700" />
+                                                <div className="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700" />
+                                            </div>
+                                            <div className="h-3 w-full rounded bg-gray-200 dark:bg-gray-700 ml-6 mt-2" />
+                                        </div>
+                                        <div className="h-6 w-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3">
+                                        <div className="col-span-2 sm:col-span-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
+                                            <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
+                                            <div className="h-4 w-24 rounded bg-gray-300 dark:bg-gray-600" />
+                                        </div>
+                                        <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
+                                            <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
+                                            <div className="h-4 w-16 rounded bg-gray-300 dark:bg-gray-600" />
+                                        </div>
+                                        <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
+                                            <div className="h-3 w-10 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
+                                            <div className="h-4 w-12 rounded bg-gray-300 dark:bg-gray-600 mb-2" />
+                                            <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700" />
+                                        </div>
+                                    </div>
+                                    <div className="h-10 w-full rounded-lg bg-gray-200 dark:bg-gray-700" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="mb-5">
+                            <div className="h-5 w-32 rounded bg-gray-200 dark:bg-gray-700 animate-pulse mb-1" />
+                            <div className="h-3 w-64 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                        </div>
+                        <div className="space-y-3">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="rounded-xl border border-gray-200/50 dark:border-gray-700/50 p-5 animate-pulse">
+                                    <div className="flex items-start justify-between gap-3 mb-4">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="h-4 w-4 rounded bg-gray-200 dark:bg-gray-700" />
+                                                <div className="h-4 w-56 rounded bg-gray-200 dark:bg-gray-700" />
+                                            </div>
+                                            <div className="h-3 w-3/4 rounded bg-gray-200 dark:bg-gray-700 ml-6 mt-2" />
+                                        </div>
+                                        <div className="h-6 w-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3">
+                                        <div className="col-span-2 sm:col-span-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
+                                            <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
+                                            <div className="h-4 w-24 rounded bg-gray-300 dark:bg-gray-600" />
+                                        </div>
+                                        <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
+                                            <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
+                                            <div className="h-4 w-16 rounded bg-gray-300 dark:bg-gray-600" />
+                                        </div>
+                                        <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
+                                            <div className="h-3 w-10 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
+                                            <div className="h-4 w-12 rounded bg-gray-300 dark:bg-gray-600 mb-2" />
+                                            <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700" />
+                                        </div>
+                                    </div>
+                                    <div className="h-10 w-full rounded-lg bg-gray-200 dark:bg-gray-700" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="hidden lg:block space-y-6">
+                    <div className="rounded-xl border border-gray-200/50 dark:border-gray-700/50 p-5 sm:p-6 animate-pulse">
+                        <div className="h-5 w-24 rounded bg-gray-200 dark:bg-gray-700 mb-4" />
+                        <div className="space-y-3">
+                            {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
+                                    <div className="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+                                    <div className="h-5 w-10 rounded bg-gray-300 dark:bg-gray-600" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -228,6 +319,7 @@ export default function CourseQuizzes() {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
+
                 <Section>
                     <div className="flex items-center justify-between mb-5">
                         <div className="flex items-center gap-2">

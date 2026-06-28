@@ -6,9 +6,8 @@ import PaginationButtons from "../../../../../components/ui/PaginationButtons";
 import QuestionCard from "./QuestionCard";
 import QuizHeader from "./QuizHeader";
 import QuizSummary from "./QuizSummary";
-import QuizStartView from "./QuizStartView";
 import { fetchPracticeQuiz, submitPracticeQuiz } from "../../../services/quizzesApi";
-import { ArrowRightIcon } from "../../../../../components/ui/icons";
+import { Grid2ColIcon, XIcon } from "../../../../../components/ui/icons";
 
 const PAGE_SIZE = 3;
 
@@ -28,7 +27,8 @@ export default function CourseQuizPractice() {
 	const [isSubmitted, setIsSubmitted] = useState(Boolean(reviewMode));
 	const [submissionResult, setSubmissionResult] = useState(null);
 	const [timeLeft, setTimeLeft] = useState(720);
-	const [quizStarted, setQuizStarted] = useState(false);
+	const [quizStarted, setQuizStarted] = useState(true);
+	const [sidebarOpen, setSidebarOpen] = useState(false);
 
 	const loadPracticeQuiz = useCallback(async () => {
 		if (!courseId) return;
@@ -58,6 +58,7 @@ export default function CourseQuizPractice() {
 	const courseName = practiceQuizData?.courseName || course?.title || course?.name;
 	const isBackendSubmitted = Boolean(practiceQuizData?.previousSubmission) || Boolean(reviewMode);
 	const quizSummary = practiceQuizData?.questionsSummary || { total: 0, tf: 0, mcq: 0, written: 0 };
+	const totalDuration = practiceQuizData?.durationSeconds || 720;
 
 	const answeredCount = quizQuestions.filter((q) => {
 		const answer = answers[q.id];
@@ -146,41 +147,123 @@ export default function CourseQuizPractice() {
 
 	if (isQuizLoading) {
 		return (
-			<div className="flex flex-col items-center justify-center py-20 gap-4">
-				<div className="h-10 w-10 rounded-full border-2 border-border-primary-default-light dark:border-border-primary-default-dark border-t-bg-fill-accent-default-light dark:border-t-bg-fill-accent-default-dark animate-spin" />
-				<p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading quiz...</p>
+			<div className="max-w-7xl mx-auto relative">
+				{/* Header skeleton */}
+				<div className="sticky top-0 z-40 mb-6">
+					<div className="rounded-2xl border border-gray-200/50 dark:border-gray-700/50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm overflow-hidden animate-pulse">
+						<div className="px-5 sm:px-6 py-4">
+							<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+								<div className="min-w-0">
+									<div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
+									<div className="h-6 w-64 rounded bg-gray-300 dark:bg-gray-600" />
+								</div>
+								<div className="flex items-center gap-3 shrink-0">
+									<div className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-800">
+										<div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+										<div className="flex flex-col min-w-[4.5rem]">
+											<div className="h-4 w-12 rounded bg-gray-200 dark:bg-gray-700 mb-1" />
+											<div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+										</div>
+									</div>
+									<div className="h-9 w-24 rounded-lg bg-gray-200 dark:bg-gray-700" />
+								</div>
+							</div>
+						</div>
+						<div className="px-5 sm:px-6 pb-4">
+							<div className="flex items-center gap-1">
+								{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+									<div key={i} className="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700" />
+								))}
+							</div>
+							<div className="flex items-center justify-between mt-2">
+								<div className="h-3 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+								<div className="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className="flex gap-6 items-start">
+					{/* Question cards skeleton */}
+					<div className="flex-1 min-w-0 space-y-5">
+						{[1, 2, 3].map((i) => (
+							<div key={i} className="rounded-2xl border border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-900 p-5 animate-pulse">
+								<div className="h-3 w-12 rounded bg-gray-200 dark:bg-gray-700 mb-3" />
+								<div className="h-5 w-3/4 rounded bg-gray-300 dark:bg-gray-600 mb-4" />
+								<div className="h-5 w-1/2 rounded bg-gray-300 dark:bg-gray-600 mb-6" />
+
+								{/* Option rows */}
+								<div className="space-y-3">
+									{[1, 2, 3, 4].map((j) => (
+										<div key={j} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200/50 dark:border-gray-700/50">
+											<div className="h-4 w-4 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
+											<div className="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700" />
+										</div>
+									))}
+								</div>
+							</div>
+						))}
+
+						{/* Pagination skeleton */}
+						<div className="flex items-center justify-center pt-2 pb-6 gap-2">
+							{[1, 2, 3, 4, 5].map((i) => (
+								<div key={i} className="h-9 w-9 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
+							))}
+						</div>
+					</div>
+
+					{/* Sidebar skeleton */}
+					<div className="hidden xl:block w-80 shrink-0">
+						<div className="rounded-2xl border border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-900 p-5 animate-pulse">
+							<div className="h-5 w-28 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
+							<div className="h-5 w-20 rounded bg-gray-300 dark:bg-gray-600 mb-4" />
+
+							<div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 mb-4" />
+
+							<div className="grid grid-cols-5 gap-2 mb-4">
+								{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+									<div key={i} className="h-8 rounded-lg bg-gray-200 dark:bg-gray-700" />
+								))}
+							</div>
+
+							<div className="space-y-2 mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+								{[1, 2, 3].map((i) => (
+									<div key={i} className="flex items-center justify-between">
+										<div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+										<div className="h-3 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+									</div>
+								))}
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		);
 	}
 
-	if (!quizStarted && !reviewMode && !isBackendSubmitted) {
-		return (
-			<QuizStartView
-				quizData={practiceQuizData}
-				courseName={courseName}
-				onStart={() => setQuizStarted(true)}
-			/>
-		);
-	}
-
 	return (
-		<div className="max-w-7xl mx-auto">
+		<div className="max-w-7xl mx-auto relative">
 			<QuizHeader
 				title={quizTitle}
 				courseName={courseName}
 				timeLeft={timeLeft}
 				formatTime={formatTime}
-				progressPercent={progressPercent}
 				answeredCount={answeredCount}
 				totalCount={quizSummary.total}
 				currentQuestion={currentQuestionLabel}
 				onSubmit={handleSubmitQuiz}
 				hideControls={Boolean(reviewMode)}
 				score={backendResult}
+				totalDuration={totalDuration}
+				questions={quizQuestions}
+				answers={answers}
+				currentPage={currentPage}
+				pageSize={pageSize}
 			/>
 
-			<div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-				<div className="xl:col-span-2 space-y-5">
+			<div className="flex gap-6 items-start">
+				{/* Main question area */}
+				<div className="flex-1 min-w-0 space-y-5">
 					{visibleQuestions.map((question, index) => {
 						const questionNumber = (currentPage - 1) * pageSize + index + 1;
 						const result = questionResultsMap[question.id];
@@ -197,11 +280,7 @@ export default function CourseQuizPractice() {
 								feedback={result?.feedback}
 								scoreState={reviewMode && result ? (
 									<div className="flex items-center gap-2">
-										<span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-											result.isCorrect
-												? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-												: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-										}`}>
+										<span className={"inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold " + (result.isCorrect ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300")}>
 											{result.isCorrect ? "Correct" : "Incorrect"}
 										</span>
 										<span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
@@ -217,34 +296,16 @@ export default function CourseQuizPractice() {
 						);
 					})}
 
-					<div className="flex items-center justify-between pt-2">
-						<button
-							onClick={() => handlePageChange(currentPage - 1)}
-							disabled={currentPage <= 1}
-							className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
-						>
-							<ArrowRightIcon size={16} className="rotate-180" />
-							Previous
-						</button>
-
+					{/* Pagination */}
+					<div className="flex items-center justify-center pt-2 pb-6">
 						<PaginationButtons totalPages={totalPages} currentPage={currentPage} setCurrentPage={handlePageChange} />
-
-						<button
-							onClick={() => handlePageChange(currentPage + 1)}
-							disabled={currentPage >= totalPages}
-							className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
-						>
-							Next
-							<ArrowRightIcon size={16} />
-						</button>
 					</div>
 				</div>
 
-				<div>
+				{/* Desktop sidebar - hidden on smaller screens */}
+				<div className="hidden xl:block w-80 shrink-0">
 					<QuizSummary
 						backendResult={backendResult}
-						attemptLimit={practiceQuizData?.maxAttempts || 1}
-						isLocked={Boolean(practiceQuizData?.previousSubmission)}
 						totalCount={quizSummary.total}
 						progressPercent={progressPercent}
 						tfSummary={tfSummary}
@@ -263,6 +324,62 @@ export default function CourseQuizPractice() {
 					/>
 				</div>
 			</div>
+
+			{/* Mobile floating nav toggle button */}
+			<button
+				onClick={() => setSidebarOpen(true)}
+				className="xl:hidden fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
+				aria-label="Open question navigator"
+			>
+				<Grid2ColIcon size={18} />
+				<span className="text-sm font-semibold">{answeredCount}/{quizSummary.total}</span>
+			</button>
+
+			{/* Mobile sidebar overlay */}
+			{sidebarOpen && (
+				<div className="fixed inset-0 z-50 xl:hidden">
+					<div
+						className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+						onClick={() => setSidebarOpen(false)}
+					/>
+					<div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-2xl overflow-y-auto">
+						<div className="flex items-center justify-between p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+							<h2 className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
+								Quiz Navigator
+							</h2>
+							<button
+								onClick={() => setSidebarOpen(false)}
+								className="p-2 rounded-lg hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors text-text-secondary-default-light dark:text-text-secondary-default-dark"
+							>
+								<XIcon size={18} />
+							</button>
+						</div>
+						<div className="p-4">
+							<QuizSummary
+								backendResult={backendResult}
+								totalCount={quizSummary.total}
+								progressPercent={progressPercent}
+								tfSummary={tfSummary}
+								mcqSummary={mcqSummary}
+								writtenSummary={writtenSummary}
+								tfPercent={tfPercent}
+								mcqPercent={mcqPercent}
+								writtenPercent={writtenPercent}
+								questions={quizQuestions}
+								answers={answers}
+								currentPage={currentPage}
+								pageSize={pageSize}
+								onNavigate={(page) => {
+									handlePageChange(page);
+									setSidebarOpen(false);
+								}}
+								reviewMode={reviewMode}
+								questionResultsMap={questionResultsMap}
+							/>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

@@ -33,33 +33,49 @@ export function CourseCardSkeleton() {
 
 export function RegistrationPageSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <SkeletonBar className="h-5 w-48 mb-4" />
-        <div className="space-y-4">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <CourseCardSkeleton key={i} />
-          ))}
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex flex-col rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/50 dark:bg-bg-surface-secondary-default-dark/50">
+            <SkeletonBar className="h-4 w-32 rounded" />
+            <SkeletonBar className="h-3 w-6 rounded" />
+          </div>
+          <div className="flex-1 p-4 space-y-4 min-h-[420px]">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <CourseCardSkeleton key={i} />
+            ))}
+          </div>
+          <div className="px-4 py-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/30 dark:bg-bg-surface-secondary-default-dark/30">
+            <SkeletonBar className="h-10 w-48 rounded-lg mx-auto" />
+          </div>
+        </div>
+        <div className="flex flex-col rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/50 dark:bg-bg-surface-secondary-default-dark/50">
+            <SkeletonBar className="h-4 w-32 rounded" />
+            <SkeletonBar className="h-3 w-6 rounded" />
+          </div>
+          <div className="flex-1 p-4 space-y-4 min-h-[420px]">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <CourseCardSkeleton key={i} />
+            ))}
+          </div>
+          <div className="px-4 py-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/30 dark:bg-bg-surface-secondary-default-dark/30">
+            <SkeletonBar className="h-10 w-48 rounded-lg mx-auto" />
+          </div>
         </div>
       </div>
-      <div>
-        <SkeletonBar className="h-5 w-40 mb-4" />
-        <div className="space-y-4">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <CourseCardSkeleton key={i} />
-          ))}
+      <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          <SkeletonBar className="h-4 w-40 rounded" />
+          <SkeletonBar className="h-4 w-4 rounded" />
         </div>
       </div>
-      <div className="md:col-span-2">
-        <SkeletonBar className="h-5 w-52 mb-4" />
-        <SkeletonBar className="h-48 w-full rounded-xl" />
-      </div>
-      <div className="md:col-span-2 flex flex-col md:flex-row md:justify-between md:items-center gap-4 pt-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-t-2 border-border-primary-default-light dark:border-border-primary-default-dark pt-6">
         <div className="flex gap-3">
           <SkeletonBar className="h-10 w-32 rounded-lg" />
-          <SkeletonBar className="h-10 w-32 rounded-lg" />
+          <SkeletonBar className="h-10 w-40 rounded-lg" />
         </div>
-        <SkeletonBar className="h-4 w-64" />
+        <SkeletonBar className="h-16 w-full md:w-80 rounded-lg" />
       </div>
     </div>
   );

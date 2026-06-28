@@ -3,11 +3,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import useDeviceType from "../../../hooks/useDeviceType";
 
-import Section from "../../../components/ui/Section";
 import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
 import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
 import Dialog from "../../../components/ui/Dialog";
+import { FileLinesIcon, CalendarIcon, AngleDownIcon } from "../../../components/ui/icons";
 
 import CourseCard from "../../../feature/student/courses/courseRegister/CourseCard";
 import CourseRegistrationNote from "../../../feature/student/courses/courseRegister/CourseRegistrationNote";
@@ -106,7 +106,13 @@ export default function CoursesRegistration() {
     const [showResultDialog, setShowResultDialog]   = useState(false);
     const [resultDialogVariant, setResultDialogVariant] = useState("success");
     const [resultDialogMessage, setResultDialogMessage] = useState("");
+    const [scheduleOpen, setScheduleOpen] = useState(false);
     const schedulePreview = Array.isArray(scheduleData) ? scheduleData : [];
+
+    const selectedCredits = selectedCourses.reduce(
+        (sum, c) => sum + (typeof c.creditHours === 'number' ? c.creditHours : 0),
+        0
+    );
 
     /* ── Load sections for selected courses ── */
     useEffect(() => {
@@ -273,16 +279,59 @@ export default function CoursesRegistration() {
             {loading ? (
                 <RegistrationPageSkeleton />
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Section>
-                    <h3 className="text-md font-semibold">Selected Courses ({selectedCourses.length})</h3>
+            <div className="flex flex-col gap-6">
+                {/* Available / Selected columns */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Available Courses — LEFT */}
+                    <div className="flex flex-col rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/50 dark:bg-bg-surface-secondary-default-dark/50">
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark" />
+                                <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">Available Courses</h3>
+                            </div>
+                            <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">{availableCourses.length}</span>
+                        </div>
 
-                    <div className="mt-4">
-                        <div className="space-y-4 mb-4">
-                            {paginatedSelected.length > 0
-                                ? paginatedSelected.map(course => (
+                        <div className="flex-1 p-4 space-y-4 min-h-[420px]">
+                            {paginatedAvailable.length > 0 ? (
+                                paginatedAvailable.map((course, idx) => (
                                     <CourseCard
                                         key={course.courseId}
+                                        index={(availableCoursesPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                                        course={course}
+                                        cardType="available"
+                                        onAction={() => handleRegister(course)}
+                                    />
+                                ))
+                            ) : (
+                                <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                                    <FileLinesIcon className="w-12 h-12 mb-3 opacity-40" />
+                                    <p className="text-sm">No available courses.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="px-4 py-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/30 dark:bg-bg-surface-secondary-default-dark/30">
+                            <PaginationButtons totalPages={availableTotalPages} currentPage={availableCoursesPage} setCurrentPage={setAvailableCoursesPage} />
+                        </div>
+                    </div>
+
+                    {/* Selected Courses — RIGHT */}
+                    <div className="flex flex-col rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-success-default-light/10 dark:bg-bg-surface-success-default-dark/10">
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark" />
+                                <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">Selected Courses</h3>
+                            </div>
+                            <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">{selectedCredits}</span>
+                        </div>
+
+                        <div className="flex-1 p-4 space-y-4 min-h-[420px]">
+                            {paginatedSelected.length > 0 ? (
+                                paginatedSelected.map((course, idx) => (
+                                    <CourseCard
+                                        key={course.courseId}
+                                        index={(selectedCoursesPage - 1) * ITEMS_PER_PAGE + idx + 1}
                                         course={course}
                                         cardType="selected"
                                         onAction={() => handleUnregister(course)}
@@ -297,53 +346,50 @@ export default function CoursesRegistration() {
                                         }
                                     />
                                 ))
-                                : <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">No courses selected yet.</p>
-                            }
+                            ) : (
+                                <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                                    <FileLinesIcon className="w-12 h-12 mb-3 opacity-40" />
+                                    <p className="text-sm">No courses selected yet.</p>
+                                </div>
+                            )}
                         </div>
 
-                        <PaginationButtons totalPages={selectedTotalPages} currentPage={selectedCoursesPage} setCurrentPage={setSelectedCoursesPage} />
-                    </div>
-                </Section>
-
-                <Section>
-                    <h3 className="text-md font-semibold">Available Courses</h3>
-
-                    <div className="mt-4">
-                        <div className="space-y-4 mb-4">
-                            {paginatedAvailable.length > 0
-                                ? paginatedAvailable.map(course => (
-                                    <CourseCard
-                                        key={course.courseId}
-                                        course={course}
-                                        cardType="available"
-                                        onAction={() => handleRegister(course)}
-                                    />
-                                ))
-                                : <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">No available courses.</p>
-                            }
+                        <div className="px-4 py-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/30 dark:bg-bg-surface-secondary-default-dark/30">
+                            <PaginationButtons totalPages={selectedTotalPages} currentPage={selectedCoursesPage} setCurrentPage={setSelectedCoursesPage} />
                         </div>
-
-                        <PaginationButtons totalPages={availableTotalPages} currentPage={availableCoursesPage} setCurrentPage={setAvailableCoursesPage} />
                     </div>
-                </Section>
+                </div>
 
-                <Section className="md:col-span-2">
-                    <div>
-                        <h3 className="text-md font-semibold">Weekly Schedule Preview</h3>
+                {/* Weekly Schedule Preview — Collapsible */}
+                <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+                    <button
+                        type="button"
+                        onClick={() => setScheduleOpen((prev) => !prev)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50 transition-colors"
+                    >
+                        <div className="flex items-center gap-2">
+                            <CalendarIcon className="w-4 h-4 text-text-secondary-active-light dark:text-text-secondary-active-dark" />
+                            <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">Weekly Schedule Preview</h3>
+                        </div>
+                        <AngleDownIcon className={`w-4 h-4 text-text-secondary-active-light dark:text-text-secondary-active-dark transition-transform duration-200 ${scheduleOpen ? 'rotate-180' : ''}`} />
+                    </button>
 
-                        {schedulePreviewLoading ? (
-                            <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl h-48 w-full" />
-                        ) : isMobile ? (
-                            <WeeklyScheduleAgenda days={days} schedule={schedulePreview} variant="default" />
-                        ) : (
-                            <WeeklySchedule schedule={schedulePreview} />
-                        )}
-                    </div>
-                </Section>
+                    {scheduleOpen && (
+                        <div className="px-4 pb-4">
+                            {schedulePreviewLoading ? (
+                                <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl h-48 w-full" />
+                            ) : isMobile ? (
+                                <WeeklyScheduleAgenda days={days} schedule={schedulePreview} variant="default" />
+                            ) : (
+                                <WeeklySchedule schedule={schedulePreview} />
+                            )}
+                        </div>
+                    )}
+                </div>
 
-                <div className="md:col-span-2 flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-t-2 border-border-primary-default-light dark:border-border-primary-default-dark pt-6">
+                {/* Bottom action bar */}
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-t-2 border-border-primary-default-light dark:border-border-primary-default-dark pt-6">
                     <CoursesRegistrationActionButtons onConfirm={handleConfirmRegistration} />
-
                     <CourseRegistrationNote />
                 </div>
             </div>
