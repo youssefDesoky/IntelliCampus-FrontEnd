@@ -6,7 +6,7 @@ import Section from "../../../../../components/ui/Section";
 import BaseComponent from "../../../../../components/ui/BaseComponent";
 import Button from "../../../../../components/ui/Button";
 import PaginationButtons from "../../../../../components/ui/PaginationButtons";
-import { CalendarDaysIcon, ClockIcon, PlayIcon, EyeIcon, ChartBarIcon, StarIcon } from "../../../../../components/ui/icons";
+import { CalendarDaysIcon, ClockIcon, PlayIcon, EyeIcon, ChartBarIcon, StarIcon, BrainIcon, CheckIcon } from "../../../../../components/ui/icons";
 import { fetchCourseQuizzesOverview } from "../../../services/quizzesApi";
 
 
@@ -32,35 +32,46 @@ function formatDuration(minutes) {
 
 function getQuizStatusStyle(status) {
     if (status === "Completed") {
-        return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300";
+        return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800";
     }
 
     if (status === "Missed") {
-        return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300";
+        return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800";
     }
 
-    return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300";
+    return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800";
 }
 
 function QuizCard({ quiz, isUpcoming, onStartQuiz, onViewResults, onReviewResults }) {
     const scoreLabel = quiz.maxScore ? `${quiz.score}/${quiz.maxScore}` : "TBD";
+    const scorePercent = quiz.maxScore ? toPercent(quiz.score, quiz.maxScore) : 0;
+    const isHighScore = scorePercent >= 80;
+    const isMidScore = scorePercent >= 50 && scorePercent < 80;
 
     return (
-        <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg transition-shadow duration-200">
+        <div className="group bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg hover:border-bg-fill-accent-default-light/30 dark:hover:border-bg-fill-accent-default-dark/30 transition-all duration-200">
             <div className="flex flex-row items-start justify-between gap-3 mb-4">
-                <div className="flex-1">
-                    <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1">
-                        {quiz.title}
-                    </h3>
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <BrainIcon size={16} className="text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark shrink-0" />
+                        <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                            {quiz.title}
+                        </h3>
+                    </div>
+                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2 ml-7">
                         {isUpcoming
                             ? "Open the quiz window and complete it before the deadline."
                             : quiz.status === "Missed"
                                 ? "This quiz was not completed before the deadline."
-                                : "Review your score and results for this quiz."}
+                                : quiz.status === "Completed" || quiz.status === "Submitted"
+                                    ? scorePercent >= 0
+                                        ? `You scored ${scoreLabel} (${scorePercent}%). ${isHighScore ? "Great work!" : isMidScore ? "Keep practicing!" : "Review the material and try again."}`
+                                        : "Review your score and results for this quiz."
+                                    : "Review your score and results for this quiz."}
                     </p>
                 </div>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 ${getQuizStatusStyle(quiz.status)}`}>
+                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 ${getQuizStatusStyle(quiz.status)}`}>
+                    {quiz.status === "Completed" && <CheckIcon size={11} />}
                     {quiz.status}
                 </span>
             </div>
@@ -92,20 +103,28 @@ function QuizCard({ quiz, isUpcoming, onStartQuiz, onViewResults, onReviewResult
                         Score
                     </div>
 
-                    <div className="flex flex-row justify-between">
+                    <div className="flex flex-row justify-between items-center">
                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
                             {scoreLabel}
                         </p>
-                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1">
-                            {quiz.maxScore ? `${toPercent(quiz.score, quiz.maxScore)}%` : "TBD"}
+                        <p className={`text-xs font-bold ${isHighScore ? "text-green-600 dark:text-green-400" : isMidScore ? "text-amber-600 dark:text-amber-400" : "text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}>
+                            {quiz.maxScore ? `${scorePercent}%` : "TBD"}
                         </p>
                     </div>
+                    {quiz.maxScore > 0 && (
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+                            <div
+                                className={`h-full rounded-full transition-all ${isHighScore ? "bg-green-500" : isMidScore ? "bg-amber-500" : "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark"}`}
+                                style={{ width: `${scorePercent}%` }}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 {isUpcoming ? (
-                    <Button className="w-full sm:flex-1" startIcon={<PlayIcon size={16} />} onClick={() => onStartQuiz && onStartQuiz(quiz)}>
+                    <Button className="w-full sm:flex-1 shadow-sm hover:shadow-md transition-shadow" startIcon={<PlayIcon size={16} />} onClick={() => onStartQuiz && onStartQuiz(quiz)}>
                         Start Quiz
                     </Button>
                 ) : quiz.status === "Completed" ? (
@@ -199,8 +218,9 @@ export default function CourseQuizzes() {
 
     if (isLoading) {
         return (
-            <div className="text-center py-10">
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading quizzes...</p>
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="h-10 w-10 rounded-full border-2 border-border-primary-default-light dark:border-border-primary-default-dark border-t-bg-fill-accent-default-light dark:border-t-bg-fill-accent-default-dark animate-spin" />
+                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading quizzes...</p>
             </div>
         );
     }
@@ -210,9 +230,17 @@ export default function CourseQuizzes() {
             <div className="lg:col-span-2 space-y-6">
                 <Section>
                     <div className="flex items-center justify-between mb-5">
-                        <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
-                            Active Quizzes
-                        </h2>
+                        <div className="flex items-center gap-2">
+                            <BrainIcon size={20} className="text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark" />
+                            <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
+                                Active Quizzes
+                            </h2>
+                        </div>
+                        {activeQuizzes.length > 0 && (
+                            <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-bold">
+                                {activeQuizzes.length}
+                            </span>
+                        )}
                     </div>
 
                     {activeQuizzes.length ? (
@@ -222,8 +250,9 @@ export default function CourseQuizzes() {
                             ))}
                         </div>
                     ) : (
-                        <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-6 text-center">
-                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No quizzes available right now.</p>
+                        <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-8 text-center">
+                            <BrainIcon size={32} className="mx-auto mb-3 text-text-secondary-default-light dark:text-text-secondary-default-dark opacity-40" />
+                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No active quizzes available right now.</p>
                         </div>
                     )}
                 </Section>
@@ -248,18 +277,21 @@ export default function CourseQuizzes() {
                             ))}
                         </div>
                     ) : (
-                        <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-6 text-center">
+                        <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-8 text-center">
+                            <ChartBarIcon size={32} className="mx-auto mb-3 text-text-secondary-default-light dark:text-text-secondary-default-dark opacity-40" />
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No quiz history yet.</p>
                         </div>
                     )}
 
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
-                        <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            showing {pagedQuizzes.length} of {historyQuizzes.length} quizzes
-                        </p>
+                    {historyQuizzes.length > PAGE_SIZE && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
+                            <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                Showing {pagedQuizzes.length} of {historyQuizzes.length} quizzes
+                            </p>
 
-                        <PaginationButtons totalPages={totalPages} currentPage={validCurrentPage} setCurrentPage={setCurrentPage} />
-                    </div>
+                            <PaginationButtons totalPages={totalPages} currentPage={validCurrentPage} setCurrentPage={setCurrentPage} />
+                        </div>
+                    )}
                 </Section>
             </div>
 

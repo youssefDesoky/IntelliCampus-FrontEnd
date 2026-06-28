@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ChartCard } from "../../../../components/charts";
 
 const data = [
   { department: "Computer Science", students: 520 },
@@ -11,8 +12,9 @@ const data = [
 
 export default function DepartmentDistributionChart({ className = "" }) {
   return (
-    <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
-      <h3 className="text-lg font-bold mb-4 text-text-primary-default-light dark:text-text-primary-default-dark">Students per Department</h3>
+    <ChartCard title="Students per Department" className={className}
+      chartType="bar" chartData={data} categoryField="department" series={[{ field: "students", name: "Students" }]}>
+
       <ResponsiveContainer width="100%" height={260}>
         <BarChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }} layout="vertical">
           <CartesianGrid strokeDasharray="3 3" className="stroke-border-primary-default-light dark:stroke-border-primary-default-dark" />
@@ -29,6 +31,6 @@ export default function DepartmentDistributionChart({ className = "" }) {
           <Bar dataKey="students" fill="var(--color-bg-fill-accent-default-light)" radius={[0, 6, 6, 0]} />
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }

@@ -2,8 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
 import AccountControlsCard from "../../../feature/student/profile/AccountControlsCard";
 import AdminIdentityCard from "../../../feature/admin/profile/AdminIdentityCard";
-import AdminInfoCard from "../../../feature/admin/profile/AdminInfoCard";
-import AdminStatsCard from "../../../feature/admin/profile/AdminStatsCard";
 import { fetchAdminProfile } from "../../../feature/admin/services/profileApi";
 
 function mapBackendToUserData(admin) {
@@ -17,7 +15,7 @@ function mapBackendToUserData(admin) {
         adminCode: admin.adminCode || admin.adminId || "",
         adminId: admin.adminId || admin.id || "",
         id: admin.id || admin._id || "",
-        role: admin.adminRole || admin.role || "Administrator",
+        role: admin.adminRole || admin.role || "",
         roles: admin.roles || [],
         department: admin.departmentName || admin.department || "",
         faculty: admin.facultyName || admin.faculty || "",
@@ -37,7 +35,7 @@ function mapAuthToUserData(auth) {
         adminCode: auth.adminCode || auth.adminId || "",
         adminId: auth.adminId || auth.id || "",
         id: auth.id || auth._id || "",
-        role: auth.adminRole || auth.role || "Administrator",
+        role: auth.adminRole || auth.role || "",
         roles: auth.roles || [],
         department: auth.departmentName || auth.department || "",
         faculty: auth.facultyName || auth.faculty || "",
@@ -50,7 +48,7 @@ export default function AdminProfile() {
     const adminId = authUser?.userId;
     const initialData = mapAuthToUserData(authUser);
 
-    const { data: userData, isLoading: profileLoading, refetch } = useQuery({
+    const { data: userData, refetch } = useQuery({
         queryKey: ["adminProfile", adminId],
         queryFn: async () => {
             const admin = await fetchAdminProfile(adminId);
@@ -72,15 +70,9 @@ export default function AdminProfile() {
     return (
         <div className="px-4 lg:px-8 py-6 space-y-6">
             <div className="mx-auto max-w-7xl space-y-6">
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_2fr] items-stretch">
-                    <div className="flex h-full flex-col gap-6 lg:sticky lg:top-6 self-start">
-                        <AdminIdentityCard user={userData} onProfileUpdate={refetch} />
-                        <AccountControlsCard className="shrink-0" />
-                    </div>
-                    <div className="flex h-full flex-col gap-6">
-                        <AdminInfoCard user={userData} loading={profileLoading} />
-                        <AdminStatsCard user={userData} loading={profileLoading} />
-                    </div>
+                <div className="grid grid-cols-1 gap-6 max-w-3xl mx-auto">
+                    <AdminIdentityCard user={userData} onProfileUpdate={refetch} />
+                    <AccountControlsCard />
                 </div>
             </div>
         </div>

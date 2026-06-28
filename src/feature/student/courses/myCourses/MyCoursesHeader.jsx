@@ -2,7 +2,7 @@ import PageHeader from "../../../../components/ui/PageHeader";
 import ToggleViewMode from "../../../../components/ui/ToggleViewMode";
 import Button from "../../../../components/ui/Button";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
-import { Grid2ColIcon, ListIcon, FileLinesIcon } from "../../../../components/ui/icons";
+import { Grid2ColIcon, ListIcon, FileLinesIcon, BookIcon } from "../../../../components/ui/icons";
 
 export default function MyCoursesHeader({
     isMobile,
@@ -19,13 +19,13 @@ export default function MyCoursesHeader({
         <PageHeader title="My Courses" subtitle="Your enrolled courses" headerDir={showTranscript ? "row" : "col"} className={showTranscript ? "items-center" : "sm:flex-row sm:items-center"}>
             {showTranscript ? (
                 <Button
-                    variant="primary"
+                    variant="outline"
                     size="sm"
-                    startIcon={<FileLinesIcon className="w-4 h-4" />}
+                    startIcon={<BookIcon className="w-4 h-4" />}
                     onClick={() => setShowTranscript(false)}
                     className="rounded-full shadow-sm hover:shadow-md transition-shadow"
                 >
-                    Back
+                    My Courses
                 </Button>
             ) : (
                 <div className="flex flex-wrap items-center gap-2 justify-between sm:gap-3 w-full sm:w-auto">

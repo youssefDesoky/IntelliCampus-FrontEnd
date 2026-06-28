@@ -1,27 +1,15 @@
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 import {
-    BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+    LineChart, Line, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { ChartBarIcon, BrainIcon, CheckIcon, UserCheckIcon } from "../../../components/ui/icons";
-import { fetchCourseAnalytics } from "../../../feature/instructor/services/analyticsApi";
-import { useError } from '../../../contexts/ErrorContext.jsx';
-
-function ChartCard({ title, icon, children, className = "" }) {
-    return (
-        <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
-            <div className="flex items-center gap-3 mb-4">
-                {icon && (
-                    <span className="text-icon-primary-default-light dark:text-icon-primary-default-dark shrink-0">{icon}</span>
-                )}
-                <h3 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{title}</h3>
-            </div>
-            {children}
-        </div>
-    );
-}
+import { ChartBarIcon, CheckIcon, UserCheckIcon, DownloadIcon } from "../../../components/ui/icons";
+import Button from "../../../components/ui/Button";
+import { ChartCard } from "../../../components/charts";
+import PerformanceOverTimeChart from "../../../feature/instructor/dashboard/charts/PerformanceOverTimeChart";
+import StudentScoreHeatmap from "../../../feature/instructor/dashboard/charts/StudentScoreHeatmap";
+import { CourseWorkBreakdownChart } from "../../../feature/instructor/dashboard/charts";
+import { downloadBlob } from "../../../api/apiClient";
 
 const tooltipStyle = {
     backgroundColor: "var(--color-bg-surface-primary-default-light)",
@@ -30,71 +18,78 @@ const tooltipStyle = {
     color: "var(--color-text-primary-default-light)",
 };
 
+const MOCK_DATA = {
+    submissionRate: [
+        { name: "Submitted", value: 78, color: "var(--color-bg-fill-success-default-light)" },
+        { name: "Pending", value: 22, color: "var(--color-bg-fill-warning-default-light)" },
+    ],
+    weeklyAttendance: [
+        { week: "W1", present: 38 },
+        { week: "W2", present: 36 },
+        { week: "W3", present: 34 },
+        { week: "W4", present: 37 },
+        { week: "W5", present: 32 },
+        { week: "W6", present: 35 },
+        { week: "W7", present: 39 },
+        { week: "W8", present: 36 },
+    ],
+    performanceOverTime: [
+        { name: "Quiz 1", average: 72, maxScore: 98, minScore: 45 },
+        { name: "Quiz 2", average: 75, maxScore: 100, minScore: 40 },
+        { name: "Midterm", average: 68, maxScore: 95, minScore: 35 },
+        { name: "Quiz 3", average: 78, maxScore: 100, minScore: 50 },
+        { name: "Project", average: 82, maxScore: 100, minScore: 55 },
+        { name: "Final", average: 74, maxScore: 96, minScore: 38 },
+    ],
+    studentScoreHeatmap: [
+        { student: "Alice Johnson", scores: { "Quiz 1": 85, "Quiz 2": 90, "Midterm": 78, "Quiz 3": 92, "Final": 88 } },
+        { student: "Bob Smith", scores: { "Quiz 1": 72, "Quiz 2": 75, "Midterm": 68, "Quiz 3": 80, "Final": 74 } },
+        { student: "Charlie Brown", scores: { "Quiz 1": 65, "Quiz 2": 60, "Midterm": 55, "Quiz 3": 70, "Final": 62 } },
+        { student: "Diana Prince", scores: { "Quiz 1": 95, "Quiz 2": 98, "Midterm": 92, "Quiz 3": 96, "Final": 94 } },
+        { student: "Eve Williams", scores: { "Quiz 1": 70, "Quiz 2": 72, "Midterm": 68, "Quiz 3": 75, "Final": 71 } },
+        { student: "Frank Miller", scores: { "Quiz 1": 55, "Quiz 2": 58, "Midterm": 45, "Quiz 3": 60, "Final": 52 } },
+        { student: "Grace Lee", scores: { "Quiz 1": 88, "Quiz 2": 85, "Midterm": 82, "Quiz 3": 90, "Final": 86 } },
+        { student: "Henry Davis", scores: { "Quiz 1": 68, "Quiz 2": 70, "Midterm": 65, "Quiz 3": 72, "Final": 68 } },
+    ],
+    courseWorkBreakdown: {
+        totalMarks: 40,
+        breakdown: [
+            { type: "Quiz", marks: 10 },
+            { type: "Assignment", marks: 5 },
+            { type: "Midterm", marks: 20 },
+        ],
+        undeclaredMarks: 5,
+    },
+};
+
 export default function InstructorCourseAnalytics() {
     const { courseId } = useOutletContext();
-    const { showError } = useError();
+    const downloadUrl = `/api/analytics/instructor/course/${courseId}/export`;
 
-    const {
-        data: analytics,
-        isLoading: loading,
-        error,
-    } = useQuery({
-        queryKey: ["instructorCourseAnalytics", courseId],
-        queryFn: () => fetchCourseAnalytics(courseId),
-        staleTime: 5 * 60 * 1000,
-        enabled: !!courseId,
-    });
+    const { submissionRate, weeklyAttendance, performanceOverTime, studentScoreHeatmap, courseWorkBreakdown } = MOCK_DATA;
 
-    useEffect(() => {
-        if (error) showError(error.message || "Failed to load analytics");
-    }, [error, showError]);
-
-    if (loading) {
-        return (
-            <div className="space-y-6">
-                <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-[360px]" />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-[300px]" />
-                    <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg h-[300px]" />
-                </div>
-            </div>
-        );
-    }
-
-    if (!analytics) {
-        return (
-            <div className="space-y-4">
-                <div className="rounded-2xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-12 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                        <ChartBarIcon size={24} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No analytics available</h3>
-                    <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        Analytics will appear once there is student activity.
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    const { assessmentPerformance, submissionRate, weeklyAttendance } = analytics;
+    const handleDownloadAll = async () => {
+        const filename = `course-analytics-${courseId}.pdf`;
+        await downloadBlob(downloadUrl, filename);
+    };
 
     return (
         <div className="space-y-6">
-            <ChartCard title="Assessment Performance" icon={<BrainIcon size={20} />}>
-                <ResponsiveContainer width="100%" height={320}>
-                    <BarChart data={assessmentPerformance} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-border-primary-default-light dark:stroke-border-primary-default-dark" />
-                        <XAxis dataKey="name" className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                        <YAxis domain={[0, 100]} className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                        <Tooltip contentStyle={tooltipStyle} />
-                        <Bar dataKey="average" name="Average Score" fill="var(--color-bg-fill-accent-default-light)" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </ChartCard>
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                    Analytics
+                </h2>
+                <Button variant="secondary" size="sm" onClick={handleDownloadAll} startIcon={<DownloadIcon size={16} />}>
+                    <span className="hidden sm:inline">Download All</span>
+                </Button>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 h-full">
+                    <CourseWorkBreakdownChart data={courseWorkBreakdown ?? {}} downloadUrl={downloadUrl} />
+                </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ChartCard title="Submission Rate" icon={<CheckIcon size={20} />}>
+                <ChartCard title="Submission Rate" icon={<CheckIcon size={20} />} downloadUrl={downloadUrl}
+                    chartType="pie" chartData={submissionRate} categoryField="name" series={[{ field: "value", name: "Count" }]}>
                     <ResponsiveContainer width="100%" height={260}>
                         <PieChart>
                             <Pie
@@ -117,8 +112,11 @@ export default function InstructorCourseAnalytics() {
                         </PieChart>
                     </ResponsiveContainer>
                 </ChartCard>
+            </div>
 
-                <ChartCard title="Student Attendance" icon={<UserCheckIcon size={20} />}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ChartCard title="Student Attendance" icon={<UserCheckIcon size={20} />} downloadUrl={downloadUrl}
+                    chartType="line" chartData={weeklyAttendance} categoryField="week" series={[{ field: "present", name: "Students Attended" }]}>
                     <ResponsiveContainer width="100%" height={260}>
                         <LineChart data={weeklyAttendance} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" className="stroke-border-primary-default-light dark:stroke-border-primary-default-dark" />
@@ -129,7 +127,11 @@ export default function InstructorCourseAnalytics() {
                         </LineChart>
                     </ResponsiveContainer>
                 </ChartCard>
+
+                <PerformanceOverTimeChart data={performanceOverTime ?? []} downloadUrl={downloadUrl} />
             </div>
+
+            <StudentScoreHeatmap data={studentScoreHeatmap ?? []} downloadUrl={downloadUrl} />
         </div>
     );
 }

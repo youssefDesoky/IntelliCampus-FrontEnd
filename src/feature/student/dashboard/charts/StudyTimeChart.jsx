@@ -1,4 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { ChartCard } from "../../../../components/charts";
 
 const COLORS = [
   "var(--color-bg-fill-accent-default-light)",
@@ -15,8 +16,9 @@ export default function StudyTimeChart({ className = "", data = [] }) {
   }));
 
   return (
-    <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
-      <h3 className="text-lg font-bold mb-4 text-text-primary-default-light dark:text-text-primary-default-dark">Study Time per Subject</h3>
+    <ChartCard title="Study Time per Subject" className={className}
+      chartType="pie" chartData={chartData} categoryField="subject" series={[{ field: "hours", name: "Hours" }]}>
+
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie data={chartData} dataKey="hours" nameKey="subject" cx="50%" cy="50%" outerRadius={80} innerRadius={45} paddingAngle={4}>
@@ -35,6 +37,6 @@ export default function StudyTimeChart({ className = "", data = [] }) {
           <Legend wrapperStyle={{ fontSize: "11px", color: "var(--color-text-secondary-default-light)" }} />
         </PieChart>
       </ResponsiveContainer>
-    </div>
+    </ChartCard>
   );
 }

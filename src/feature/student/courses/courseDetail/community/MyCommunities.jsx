@@ -4,13 +4,14 @@ import StudyGroupPost from "../../../../../components/ui/StudyGroupPost";
 import TextArea from "../../../../../components/ui/TextArea";
 import {
     CommentsIcon,
-    PaperclipIcon,
     PaperPlaneIcon,
 } from "../../../../../components/ui/icons";
 import {
     fetchCommunityPosts,
     createCommunityPost,
     toggleUpvote,
+    updateCommunityPost,
+    deleteCommunityPost,
 } from "./communityService";
 import { useError } from '../../../../../contexts/ErrorContext.jsx';
 
@@ -18,7 +19,6 @@ export default function MyCommunities() {
     const { course, courseId } = useOutletContext();
     const [posts, setPosts] = useState([]);
     const [postDraft, setPostDraft] = useState("");
-    const [attachments, setAttachments] = useState([]);
     const { showError } = useError();
 
     function mapPost(raw) {
@@ -30,6 +30,9 @@ export default function MyCommunities() {
             content: raw.content,
             createdAt: raw.createdAt,
             likes: raw.upvoteCount || 0,
+            hasUpvoted: raw.isUpvoted || raw.hasUpvoted || false,
+            canEdit: raw.canEdit || false,
+            canDelete: raw.canDelete || false,
             comments: (raw.comments || []).map(c => ({
                 commentId: c.commentId,
                 authorName: c.authorName,
@@ -42,6 +45,14 @@ export default function MyCommunities() {
         };
     }
 
+    function extractPosts(data) {
+        if (Array.isArray(data)) return data;
+        if (data?.data && Array.isArray(data.data)) return data.data;
+        if (data?.questions && Array.isArray(data.questions)) return data.questions;
+        if (data?.content && Array.isArray(data.content)) return data.content;
+        return [];
+    }
+
     useEffect(() => {
         if (!courseId) return;
         let ignore = false;
@@ -49,7 +60,7 @@ export default function MyCommunities() {
         async function loadCommunities() {
             try {
                 const data = await fetchCommunityPosts(courseId);
-                if (!ignore) setPosts(Array.isArray(data) ? data.map(mapPost) : []);
+                if (!ignore) setPosts(extractPosts(data).map(mapPost));
             } catch {
                 if (!ignore) setPosts([]);
             }
@@ -67,7 +78,7 @@ export default function MyCommunities() {
             await createCommunityPost(courseId, postDraft);
             setPostDraft("");
             const data = await fetchCommunityPosts(courseId);
-            setPosts(Array.isArray(data) ? data.map(mapPost) : []);
+            setPosts(extractPosts(data).map(mapPost));
         } catch (err) {
             showError(err.message);
         }
@@ -78,27 +89,24 @@ export default function MyCommunities() {
         try {
             await toggleUpvote(courseId, postId);
             const data = await fetchCommunityPosts(courseId);
-            setPosts(Array.isArray(data) ? data.map(mapPost) : []);
+            setPosts(extractPosts(data).map(mapPost));
         } catch (err) {
             showError(err.message);
         }
     };
 
-    const handleAttachmentChange = (event) => {
-        const files = Array.from(event.target.files || []);
-        const newAttachments = files.map((file) => ({
-            id: crypto.randomUUID(),
-            name: file.name,
-            type: file.type,
-            preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
-            file,
-        }));
-        setAttachments((prev) => [...prev, ...newAttachments].slice(0, 5));
-        event.target.value = "";
+    const handleEdit = async (postId, newContent) => {
+        if (!courseId) return;
+        await updateCommunityPost(courseId, postId, newContent);
+        const data = await fetchCommunityPosts(courseId);
+        setPosts(extractPosts(data).map(mapPost));
     };
 
-    const removeAttachment = (id) => {
-        setAttachments((prev) => prev.filter((a) => a.id !== id));
+    const handleDelete = async (postId) => {
+        if (!courseId) return;
+        await deleteCommunityPost(courseId, postId);
+        const data = await fetchCommunityPosts(courseId);
+        setPosts(extractPosts(data).map(mapPost));
     };
 
     if (!course) {
@@ -127,63 +135,8 @@ export default function MyCommunities() {
                         className="w-full rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors placeholder:text-text-tertiary-default-light focus:border-text-accent-default-light dark:text-text-primary-default-dark dark:placeholder:text-text-tertiary-default-dark dark:focus:border-text-accent-default-dark"
                     />
 
-                    {attachments.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                            <p className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">Attachments ({attachments.length}/5)</p>
-                            <div className="flex flex-wrap gap-2">
-                                {attachments.map((attachment) => (
-                                    <div
-                                        key={attachment.id}
-                                        className="group relative overflow-hidden rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-1.5 transition-colors hover:bg-bg-surface-primary-default-light dark:hover:bg-bg-surface-primary-default-dark"
-                                    >
-                                        {attachment.type.startsWith("image/") ? (
-                                            <div className="relative h-16 w-16 overflow-hidden rounded-md bg-black/5 dark:bg-white/5">
-                                                <img
-                                                    src={attachment.preview}
-                                                    alt={attachment.name}
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="flex h-16 w-16 items-center justify-center rounded-md bg-black/5 dark:bg-white/5">
-                                                <span className="text-xs font-bold text-text-tertiary-default-light dark:text-text-tertiary-default-dark uppercase">
-                                                    {attachment.name.split(".").pop()}
-                                                </span>
-                                            </div>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={() => removeAttachment(attachment.id)}
-                                            className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
-                                        >
-                                            <span className="text-xs font-semibold text-white">Remove</span>
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     <div className="mt-4 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                            <input
-                                id="file-input"
-                                type="file"
-                                multiple
-                                className="hidden"
-                                onChange={handleAttachmentChange}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => document.getElementById("file-input")?.click()}
-                                disabled={attachments.length >= 5}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 text-xs font-medium transition-colors hover:bg-bg-surface-primary-default-light disabled:opacity-50 dark:hover:bg-bg-surface-primary-default-dark"
-                            >
-                                <PaperclipIcon className="h-3.5 w-3.5" />
-                                Attach
-                            </button>
-                            <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{postDraft.length}/500</span>
-                        </div>
+                        <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{postDraft.length}/500</span>
 
                         <button
                             type="button"
@@ -206,6 +159,8 @@ export default function MyCommunities() {
                             postData={post}
                             courseId={courseId}
                             onUpvote={() => handleUpvote(post.id)}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
                         />
                     ))
                 ) : (

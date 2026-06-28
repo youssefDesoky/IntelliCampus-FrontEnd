@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { addDays, isSameDay, startOfDay } from "date-fns";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { addDays, subDays, isSameDay, startOfDay, format } from "date-fns";
 
 import Categories from "../../../feature/student/reminders/Categories";
 import RemindersHeader from "../../../feature/student/reminders/RemindersHeader";
@@ -17,6 +17,48 @@ const categoryOptions = [
     { value: "assignments", label: "Assignments" },
     { value: "personal", label: "Personal" },
 ];
+
+const MobileDateStrip = ({ selectedDate, onDateSelect }) => {
+    const containerRef = useRef(null);
+    const selectedRef = useRef(null);
+    const dates = Array.from({ length: 22 }).map((_, i) => addDays(subDays(selectedDate, 7), i));
+
+    useEffect(() => {
+        if (selectedRef.current && containerRef.current) {
+            const container = containerRef.current;
+            const element = selectedRef.current;
+            const scrollLeft = element.offsetLeft - (container.clientWidth / 2) + (element.offsetWidth / 2);
+            container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+        }
+    }, [selectedDate]);
+
+    return (
+        <div
+            ref={containerRef}
+            className="flex overflow-x-auto gap-3 py-2 mb-4 lg:hidden snap-x scroll-smooth [&::-webkit-scrollbar]:hidden"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+            {dates.map(date => {
+                const isSelected = isSameDay(date, selectedDate);
+                return (
+                    <button
+                        key={date.toISOString()}
+                        ref={isSelected ? selectedRef : null}
+                        onClick={() => onDateSelect(date)}
+                        className={`flex flex-col items-center justify-center min-w-[70px] h-[85px] rounded-2xl border transition-all snap-center ${
+                            isSelected
+                                ? 'bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark border-border-accent-default-light dark:border-border-accent-default-dark shadow-md scale-105'
+                                : 'bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark'
+                        }`}
+                    >
+                        <span className="text-2xl font-semibold leading-none mb-1">{format(date, 'd')}</span>
+                        <span className="text-sm font-medium">{format(date, 'EEE')}</span>
+                    </button>
+                );
+            })}
+        </div>
+    );
+};
 
 export default function InstructorReminders() {
     const { showError } = useError();
@@ -114,9 +156,12 @@ export default function InstructorReminders() {
         <div className="flex flex-col min-h-[calc(100vh-160px)]">
             <RemindersHeader setIsFormOpen={handleSetIsFormOpen} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} reminders={reminders} />
 
+            {/* Mobile Date Ribbon */}
+            <MobileDateStrip selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+
             <div className="grid grid-cols-1 lg:grid-cols-4 grid-rows-1 gap-4 flex-1 min-h-0">
                 <Timeline
-                    className="lg:col-span-3 md:min-h-0 min-h-0"
+                    className="lg:col-span-3 h-full !mb-0"
                     reminders={groupedReminders}
                     selectedCategory={selectedCategory}
                     selectedDate={selectedDate}
@@ -124,10 +169,14 @@ export default function InstructorReminders() {
                     onDeleteReminder={handleDeleteReminder}
                 />
 
-                <div className="flex flex-col gap-6 min-h-0">
-                    <CalenderWidget selectedDate={selectedDate} onDateSelect={setSelectedDate} />
-                    <div className="hidden lg:block">
+                <div className="flex flex-col gap-4 h-full">
+                    {/* Desktop Calendar Widget */}
+                    <div className="hidden lg:flex flex-col flex-1">
+                        <CalenderWidget selectedDate={selectedDate} onDateSelect={setSelectedDate} className="h-full" />
+                    </div>
+                    <div className="hidden lg:flex flex-col flex-1">
                         <Categories
+                            className="h-full !mb-0"
                             reminders={reminders}
                             selectedCategory={selectedCategory}
                             onSelectCategory={setSelectedCategory}

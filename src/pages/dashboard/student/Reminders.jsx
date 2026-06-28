@@ -166,7 +166,7 @@ export default function Reminders() {
 
             <div className="grid grid-cols-1 lg:grid-cols-4 grid-rows-1 gap-4 flex-1 min-h-0">
                 <Timeline
-                    className="lg:col-span-3 md:min-h-0 min-h-0"
+                    className="lg:col-span-3 h-full !mb-0"
                     reminders={groupedReminders}
                     selectedCategory={selectedCategory}
                     selectedDate={selectedDate}
@@ -174,13 +174,14 @@ export default function Reminders() {
                     onDeleteReminder={handleDeleteReminder}
                 />
 
-                <div className="flex flex-col gap-6 min-h-0">
+                <div className="flex flex-col gap-4 h-full">
                     {/* Desktop Calendar Widget */}
-                    <div className="hidden lg:block">
-                        <CalenderWidget selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+                    <div className="hidden lg:flex flex-col flex-1">
+                        <CalenderWidget selectedDate={selectedDate} onDateSelect={setSelectedDate} className="h-full" />
                     </div>
-                    <div className="hidden lg:block">
+                    <div className="hidden lg:flex flex-col flex-1">
                         <Categories
+                            className="h-full !mb-0"
                             reminders={reminders}
                             selectedCategory={selectedCategory}
                             onSelectCategory={setSelectedCategory}
