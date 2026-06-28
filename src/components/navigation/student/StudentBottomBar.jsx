@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { getNavigationLinks } from '../../../data/student/navigationLinks';
 
 import BottomBar from '../base/BottomBar';
-import { BookIcon, ClipboardCheckIcon, FilePenIcon } from '../../ui/icons';
+import { BookIcon, ClipboardCheckIcon, FilePenIcon, ChartBarIcon } from '../../ui/icons';
 
 
 export default function StudentBottomBar({ visible, floatingAction }) {
@@ -14,6 +14,7 @@ export default function StudentBottomBar({ visible, floatingAction }) {
         { to: '/courses', icon: BookIcon, label: t('allCourses') },
         { to: '/courses/registration', icon: FilePenIcon, label: t('courseRegistration') },
         { to: '/courses/prerequisites', icon: ClipboardCheckIcon, label: t('coursePrerequisites') },
+        { to: '/courses/academic-progress', icon: ChartBarIcon, label: t('academicProgress') },
     ];
 
     return (
