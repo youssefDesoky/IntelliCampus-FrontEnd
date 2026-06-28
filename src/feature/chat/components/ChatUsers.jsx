@@ -51,7 +51,9 @@ export default function ChatUsers({ chatPartner, friends = [], groups = [], onli
           <ChatUsersSection type="Students" users={students} onSelectUser={onSelectUser} />
         )}
         {!instructors.length && !students.length && !groupList.length && !showFahim && (
-          <div className="text-xs text-center text-gray-400 py-6">No members match "{searchMembers}"</div>
+          <div className="text-xs text-center text-gray-400 py-6">
+            {searchMembers ? `No members match "${searchMembers}"` : "No members yet"}
+          </div>
         )}
       </div>
     </div>

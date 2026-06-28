@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function DefaultChatPanel({ onAddFriend, onCreateGroup }) {
+export default function DefaultChatPanel({ onAddFriend, onCreateGroup, noMembers = false }) {
   return (
     <div className="h-full w-full flex flex-col items-center justify-center p-8 text-center bg-gray-50/50 dark:bg-gray-900/50 transition-colors duration-200">
       <div className="max-w-md flex flex-col items-center">
@@ -18,7 +18,10 @@ export default function DefaultChatPanel({ onAddFriend, onCreateGroup }) {
           Welcome to IntelliCampus Chat
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm leading-relaxed mb-8">
-          Select an active conversation from the sidebar to start messaging, or create a new connection to collaborate with your peers.
+          {noMembers
+            ? "There are no members yet. Add a friend or create a group to start messaging."
+            : "Select an active conversation from the sidebar to start messaging, or create a new connection to collaborate with your peers."
+          }
         </p>
 
         {/* Dynamic Action Buttons */}

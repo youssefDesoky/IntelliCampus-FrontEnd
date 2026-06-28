@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import ChartCard from "../components/ChartCard";
+import { ChartCard } from "../../../../components/charts";
 import { ClipboardCheckIcon } from "../../../../components/ui/icons";
 import { requestsStatusData } from "../data/dashboardData";
 
@@ -23,11 +23,12 @@ export default function RequestsPieChart({ className = "" }) {
 
  return (
  <ChartCard
- title="Requests Status"
- icon={<ClipboardCheckIcon className="w-5 h-5" />}
- onTitleClick={() => navigate("/admin/courses")}
- className={className}
- >
+  title="Requests Status"
+  icon={<ClipboardCheckIcon className="w-5 h-5" />}
+  onTitleClick={() => navigate("/admin/courses")}
+  className={className}
+  chartType="pie" chartData={requestsStatusData} categoryField="status" series={[{ field: "count", name: "Count" }]}>
+
  <ResponsiveContainer width="100%" height={260}>
  <PieChart>
  <Pie

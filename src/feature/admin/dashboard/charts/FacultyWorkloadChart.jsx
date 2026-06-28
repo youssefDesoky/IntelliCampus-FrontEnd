@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import ChartCard from "../components/ChartCard";
+import { ChartCard } from "../../../../components/charts";
 import { UserTieIcon } from "../../../../components/ui/icons";
 import { facultyWorkloadData } from "../data/dashboardData";
 
@@ -16,11 +16,12 @@ export default function FacultyWorkloadChart({ className = "" }) {
 
  return (
  <ChartCard
- title="Faculty Workload"
- icon={<UserTieIcon className="w-5 h-5" />}
- onTitleClick={() => navigate("/admin/instructors")}
- className={className}
- >
+  title="Faculty Workload"
+  icon={<UserTieIcon className="w-5 h-5" />}
+  onTitleClick={() => navigate("/admin/instructors")}
+  className={className}
+  chartType="bar" chartData={facultyWorkloadData} categoryField="name" series={[{ field: "courses", name: "Courses" }, { field: "students", name: "Students" }]}>
+
  <ResponsiveContainer width="100%" height={260}>
  <BarChart data={facultyWorkloadData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
  <CartesianGrid strokeDasharray="3 3" className="stroke-border-primary-default-light dark:stroke-border-primary-default-dark" />

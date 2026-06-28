@@ -441,23 +441,25 @@ export default function MeetingRoom() {
                             {pastMeetings.map((meeting) => (
                                 <div
                                     key={meeting.meetingId}
-                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-3 opacity-60 hover:opacity-80 transition-opacity"
+                                    className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-3 opacity-60 hover:opacity-80 transition-opacity"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark">
                                             <CheckIcon size={16} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
                                         </div>
                                         <div className="min-w-0">
-                                            <h3 className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark text-sm truncate">
-                                                {meeting.title}
-                                            </h3>
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <h3 className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark text-sm truncate">
+                                                    {meeting.title}
+                                                </h3>
+                                                <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark shrink-0">Ended</span>
+                                            </div>
                                             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark flex items-center gap-1 mt-0.5">
                                                 <ClockIcon size={12} />
                                                 {formatDateTime(meeting.dateTime)}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark self-start sm:self-auto">Ended</span>
                                 </div>
                             ))}
                         </BaseComponent>

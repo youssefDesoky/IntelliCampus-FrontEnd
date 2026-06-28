@@ -1,5 +1,5 @@
 import Button from "../../../../../components/ui/Button";
-import { CheckIcon, ClockIcon, BookIcon } from "../../../../../components/ui/icons";
+import { CheckIcon, ClockIcon, BookIcon, ExclamationIcon } from "../../../../../components/ui/icons";
 
 export default function QuizHeader({
 	title,
@@ -15,9 +15,31 @@ export default function QuizHeader({
 	score,
 }) {
 	const isUrgent = timeLeft < 60 && !hideControls;
+	const isWarning = timeLeft >= 60 && timeLeft < 120 && !hideControls;
+
+	const progressColor =
+		progressPercent >= 100
+			? "bg-green-500"
+			: progressPercent >= 70
+				? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark"
+				: progressPercent >= 30
+					? "bg-amber-500"
+					: "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark";
 
 	return (
 		<div className="sticky top-0 z-40 mb-6 rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light/80 dark:bg-bg-surface-primary-default-dark/80 backdrop-blur-md shadow-sm overflow-hidden">
+			{isUrgent && !hideControls && (
+				<div className="px-5 sm:px-6 py-2 bg-red-50 dark:bg-red-900/20 border-b border-red-100 dark:border-red-900/30 flex items-center gap-2 text-xs font-semibold text-red-700 dark:text-red-300">
+					<ExclamationIcon size={13} />
+					<span>Less than a minute remaining! Submit your quiz soon.</span>
+				</div>
+			)}
+			{isWarning && !hideControls && (
+				<div className="px-5 sm:px-6 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-900/30 flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-300">
+					<ExclamationIcon size={13} />
+					<span>Less than 2 minutes remaining!</span>
+				</div>
+			)}
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 sm:px-6 py-4">
 				<div className="min-w-0">
 					<div className="flex items-center gap-2 text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">
@@ -49,10 +71,12 @@ export default function QuizHeader({
 					) : !hideControls ? (
 						<>
 							<div
-								className={`flex items-center gap-2 px-3 py-2 rounded-xl border bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ${
+								className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors ${
 									isUrgent
-										? "border-red-200 dark:border-red-900 text-red-600 dark:text-red-400"
-										: "border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
+										? "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+										: isWarning
+											? "border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400"
+											: "bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
 									}`}
 							>
 								<ClockIcon
@@ -60,10 +84,12 @@ export default function QuizHeader({
 									className={
 										isUrgent
 											? "text-red-500"
-											: "text-text-secondary-default-light dark:text-text-secondary-default-dark"
+											: isWarning
+												? "text-amber-500"
+												: "text-text-secondary-default-light dark:text-text-secondary-default-dark"
 										}
 								/>
-								<span className="font-mono text-sm font-semibold tabular-nums">
+								<span className={`font-mono text-sm font-semibold tabular-nums ${isUrgent ? "animate-pulse" : ""}`}>
 									{formatTime(timeLeft)}
 								</span>
 							</div>
@@ -98,7 +124,7 @@ export default function QuizHeader({
 				</div>
 				<div className="h-2 w-full rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden">
 					<div
-						className="h-full rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark transition-all duration-700 ease-out"
+						className={`h-full rounded-full transition-all duration-700 ease-out ${progressColor}`}
 						style={{ width: `${progressPercent}%` }}
 					/>
 				</div>

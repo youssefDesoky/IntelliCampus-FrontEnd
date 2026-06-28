@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
     CameraIcon,
+    HashIcon,
     HouseIcon,
     LocationDotIcon,
     MailIconDark,
@@ -99,7 +100,7 @@ export default function AdminIdentityCard({ user = {}, className = "", onProfile
                             <div className="flex items-center gap-1.5 mt-1">
                                 <UserCheckIcon size={12} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
                                 <p className="text-xs font-semibold truncate text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    Administrator
+                                    {user.role}
                                 </p>
                             </div>
                         </div>

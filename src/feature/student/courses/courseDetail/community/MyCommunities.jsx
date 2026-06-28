@@ -4,7 +4,6 @@ import StudyGroupPost from "../../../../../components/ui/StudyGroupPost";
 import TextArea from "../../../../../components/ui/TextArea";
 import {
     CommentsIcon,
-    PaperclipIcon,
     PaperPlaneIcon,
 } from "../../../../../components/ui/icons";
 import {
@@ -20,7 +19,6 @@ export default function MyCommunities() {
     const { course, courseId } = useOutletContext();
     const [posts, setPosts] = useState([]);
     const [postDraft, setPostDraft] = useState("");
-    const [attachments, setAttachments] = useState([]);
     const { showError } = useError();
 
     function mapPost(raw) {
@@ -124,8 +122,11 @@ export default function MyCommunities() {
         event.target.value = "";
     };
 
-    const removeAttachment = (id) => {
-        setAttachments((prev) => prev.filter((a) => a.id !== id));
+    const handleDelete = async (postId) => {
+        if (!courseId) return;
+        await deleteCommunityPost(courseId, postId);
+        const data = await fetchCommunityPosts(courseId);
+        setPosts(extractPosts(data).map(mapPost));
     };
 
     if (!course) {
@@ -154,63 +155,8 @@ export default function MyCommunities() {
                         className="w-full rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors placeholder:text-text-tertiary-default-light focus:border-text-accent-default-light dark:text-text-primary-default-dark dark:placeholder:text-text-tertiary-default-dark dark:focus:border-text-accent-default-dark"
                     />
 
-                    {attachments.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                            <p className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">Attachments ({attachments.length}/5)</p>
-                            <div className="flex flex-wrap gap-2">
-                                {attachments.map((attachment) => (
-                                    <div
-                                        key={attachment.id}
-                                        className="group relative overflow-hidden rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-1.5 transition-colors hover:bg-bg-surface-primary-default-light dark:hover:bg-bg-surface-primary-default-dark"
-                                    >
-                                        {attachment.type.startsWith("image/") ? (
-                                            <div className="relative h-16 w-16 overflow-hidden rounded-md bg-black/5 dark:bg-white/5">
-                                                <img
-                                                    src={attachment.preview}
-                                                    alt={attachment.name}
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="flex h-16 w-16 items-center justify-center rounded-md bg-black/5 dark:bg-white/5">
-                                                <span className="text-xs font-bold text-text-tertiary-default-light dark:text-text-tertiary-default-dark uppercase">
-                                                    {attachment.name.split(".").pop()}
-                                                </span>
-                                            </div>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={() => removeAttachment(attachment.id)}
-                                            className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
-                                        >
-                                            <span className="text-xs font-semibold text-white">Remove</span>
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     <div className="mt-4 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                            <input
-                                id="file-input"
-                                type="file"
-                                multiple
-                                className="hidden"
-                                onChange={handleAttachmentChange}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => document.getElementById("file-input")?.click()}
-                                disabled={attachments.length >= 5}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 text-xs font-medium transition-colors hover:bg-bg-surface-primary-default-light disabled:opacity-50 dark:hover:bg-bg-surface-primary-default-dark"
-                            >
-                                <PaperclipIcon className="h-3.5 w-3.5" />
-                                Attach
-                            </button>
-                            <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{postDraft.length}/500</span>
-                        </div>
+                        <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{postDraft.length}/500</span>
 
                         <button
                             type="button"

@@ -1,10 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "../../../components/ui/PageHeader";
 import Section from "../../../components/ui/Section";
 import Button from "../../../components/ui/Button";
-import Dialog from "../../../components/ui/Dialog";
 import {
     ArrowUpIcon,
     ArrowDownIcon,
@@ -13,6 +12,8 @@ import {
     FloppyDiskIcon,
     CheckIcon,
     OrderedListIcon,
+    SearchIcon,
+    StarIcon,
 } from "../../../components/ui/icons";
 import {
     checkEligibility,
@@ -23,94 +24,195 @@ import {
 } from "../../../feature/student/services/specializationApi";
 import { useError } from "../../../contexts/ErrorContext";
 
-function GripIcon({ size = 16 }) {
+function GripIcon({ size = 14 }) {
     return (
-        <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <circle cx="5" cy="3" r="1.3" />
-            <circle cx="11" cy="3" r="1.3" />
-            <circle cx="5" cy="8" r="1.3" />
-            <circle cx="11" cy="8" r="1.3" />
-            <circle cx="5" cy="13" r="1.3" />
-            <circle cx="11" cy="13" r="1.3" />
-        </svg>
-    );
-}
-
-function SearchIcon({ size = 16 }) {
-    return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-        >
-            <circle cx="11" cy="11" r="7" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        <svg width={size} height={size} viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+            <circle cx="4" cy="2.5" r="1.2" />
+            <circle cx="10" cy="2.5" r="1.2" />
+            <circle cx="4" cy="7" r="1.2" />
+            <circle cx="10" cy="7" r="1.2" />
+            <circle cx="4" cy="11.5" r="1.2" />
+            <circle cx="10" cy="11.5" r="1.2" />
         </svg>
     );
 }
 
 function Skeleton() {
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-pulse">
-            {[1, 2].map((col) => (
-                <div key={col} className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                        <div
-                            key={i}
-                            className="h-16 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl"
-                        />
-                    ))}
-                </div>
-            ))}
+        <div className="space-y-6 animate-pulse">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {[1, 2].map((col) => (
+                    <div key={col} className="space-y-3">
+                        <div className="h-8 w-44 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg" />
+                        <div className="h-10 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl" />
+                        {[1, 2, 3].map((i) => (
+                            <div
+                                key={i}
+                                className="h-16 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl"
+                            />
+                        ))}
+                    </div>
+                ))}
+            </div>
+            <div className="h-16 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl" />
         </div>
     );
 }
 
 function EligibilityCard({ eligibility }) {
+    const [progressWidth, setProgressWidth] = useState(0);
     const progress = Math.min(100, (eligibility.passedHours / eligibility.minRequired) * 100);
     const eligible = eligibility.eligible;
     const remaining = Math.max(0, eligibility.minRequired - eligibility.passedHours);
+    const targetLabel = eligibility.targetType === "Department" ? "departments" : "specializations";
+
+    useEffect(() => {
+        const timer = setTimeout(() => setProgressWidth(progress), 100);
+        return () => clearTimeout(timer);
+    }, [progress]);
 
     return (
-        <Section className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-2xl p-8 max-w-xl mx-auto text-center">
-            <div
-                className={`mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full ${
-                    eligible
-                        ? "bg-bg-fill-success-muted-light dark:bg-bg-fill-success-muted-dark text-icon-success-default-light dark:text-icon-success-default-dark"
-                        : "bg-bg-fill-warning-muted-light dark:bg-bg-fill-warning-muted-dark text-icon-warning-default-light dark:text-icon-warning-default-dark"
-                }`}
-            >
-                {eligible ? <CheckIcon size={28} /> : <OrderedListIcon size={28} />}
-            </div>
-            <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                {eligible ? "You're eligible to submit your preferences" : "Not eligible yet"}
-            </h2>
-            <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm mb-5">
-                {eligible
-                    ? "You've met the credit hour requirement — rank your choices below."
-                    : `You'll need ${remaining} more credit hour${remaining === 1 ? "" : "s"} before you can submit.`}
-            </p>
-            <div className="relative h-3 w-full overflow-hidden rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-                <div
-                    className={`h-full rounded-full transition-all duration-700 ease-out ${
+        <div className="relative mx-auto max-w-lg overflow-hidden rounded-2xl bg-gradient-to-br from-bg-surface-secondary-default-light to-bg-surface-primary-default-light dark:from-bg-surface-secondary-default-dark dark:to-bg-surface-primary-default-dark p-[1px]">
+            <div className={`rounded-2xl p-8 ${
+                eligible
+                    ? "bg-gradient-to-br from-bg-fill-success-muted-light/40 to-bg-surface-primary-default-light dark:from-bg-fill-success-muted-dark/40 dark:to-bg-surface-primary-default-dark"
+                    : "bg-gradient-to-br from-bg-fill-warning-muted-light/40 to-bg-surface-primary-default-light dark:from-bg-fill-warning-muted-dark/40 dark:to-bg-surface-primary-default-dark"
+            }`}>
+                <div className="flex flex-col items-center text-center">
+                    <div className={`mb-5 flex h-16 w-16 items-center justify-center rounded-full shadow-lg ${
                         eligible
-                            ? "bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark"
-                            : "bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark"
-                    }`}
-                    style={{ width: `${progress}%` }}
-                />
+                            ? "bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark text-white"
+                            : "bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark text-white"
+                    }`}>
+                        {eligible ? <CheckIcon size={26} /> : <OrderedListIcon size={26} />}
+                    </div>
+                    <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+                        {eligible ? "You're eligible to submit your preferences" : "Not eligible yet"}
+                    </h2>
+                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm mb-6 max-w-sm">
+                        {eligible
+                            ? `You've met the credit hour requirement — rank your ${targetLabel} below.`
+                            : `You'll need ${remaining} more credit hour${remaining === 1 ? "" : "s"} before you can submit.`}
+                    </p>
+                    <div className="w-full space-y-2">
+                        <div className="relative h-3 w-full overflow-hidden rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+                            <div
+                                className={`h-full rounded-full transition-all duration-1000 ease-out ${
+                                    eligible
+                                        ? "bg-gradient-to-r from-bg-fill-success-default-light to-emerald-400 dark:from-bg-fill-success-default-dark dark:to-emerald-500"
+                                        : "bg-gradient-to-r from-bg-fill-warning-default-light to-amber-400 dark:from-bg-fill-warning-default-dark dark:to-amber-500"
+                                }`}
+                                style={{ width: `${progressWidth}%` }}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                            <span className="font-medium">{eligibility.passedHours} hrs completed</span>
+                            <span className="font-medium">{eligibility.minRequired} hrs required</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div className="mt-2 flex items-center justify-between text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                <span>{eligibility.passedHours} hrs completed</span>
-                <span>{eligibility.minRequired} hrs required</span>
+        </div>
+    );
+}
+
+function SuccessBanner({ show, onDismiss }) {
+    useEffect(() => {
+        if (show) {
+            const timer = setTimeout(onDismiss, 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [show, onDismiss]);
+
+    if (!show) return null;
+
+    return (
+        <div className="animate-fade-in-down">
+            <div className="flex items-center gap-3 rounded-xl border border-border-success-default-light dark:border-border-success-default-dark bg-bg-fill-success-muted-light dark:bg-bg-fill-success-muted-dark px-5 py-4 shadow-lg">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark text-white">
+                    <CheckIcon size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-text-success-default-light dark:text-text-success-default-dark">
+                        Preferences saved successfully!
+                    </p>
+                    <p className="text-xs text-text-success-default-light/70 dark:text-text-success-default-dark/70">
+                        Your ranked preferences have been submitted.
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    onClick={onDismiss}
+                    className="shrink-0 rounded-lg p-1.5 text-text-success-default-light/60 dark:text-text-success-default-dark/60 transition-colors hover:bg-bg-fill-success-default-light/20 dark:hover:bg-bg-fill-success-default-dark/20 hover:text-text-success-default-light dark:hover:text-text-success-default-dark"
+                >
+                    <XIcon size={16} />
+                </button>
             </div>
-        </Section>
+        </div>
+    );
+}
+
+function SectionHeader({ icon, title, count, accent = false, onClearAll }) {
+    return (
+        <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                    accent
+                        ? "bg-bg-fill-accent-muted-light dark:bg-bg-fill-accent-muted-dark text-text-accent-default-light dark:text-text-accent-default-dark"
+                        : "bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark"
+                }`}>
+                    {icon}
+                </div>
+                <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                    {title}
+                </h3>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    accent
+                        ? "bg-bg-fill-accent-muted-light dark:bg-bg-fill-accent-muted-dark text-text-accent-default-light dark:text-text-accent-default-dark"
+                        : "bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark"
+                }`}>
+                    {count}
+                </span>
+            </div>
+            {onClearAll && count > 0 && (
+                <button
+                    type="button"
+                    onClick={onClearAll}
+                    className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark transition-colors hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark"
+                >
+                    Clear all
+                </button>
+            )}
+        </div>
+    );
+}
+
+function SearchInput({ value, onChange, placeholder }) {
+    const inputRef = useRef(null);
+
+    return (
+        <div className="relative mb-4">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-icon-secondary-default-light dark:text-icon-secondary-default-dark">
+                <SearchIcon size={15} />
+            </span>
+            <input
+                ref={inputRef}
+                type="text"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                className="w-full rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark py-2.5 pl-10 pr-10 text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark transition-shadow focus:outline-none focus:ring-2 focus:ring-border-accent-default-light dark:focus:ring-border-accent-default-dark focus:border-transparent"
+            />
+            {value && (
+                <button
+                    type="button"
+                    onClick={() => onChange("")}
+                    className="absolute inset-y-0 right-3 flex items-center text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark"
+                >
+                    <XIcon size={15} />
+                </button>
+            )}
+        </div>
     );
 }
 
@@ -120,9 +222,10 @@ export default function SpecializationPreference() {
     const queryClient = useQueryClient();
 
     const [rankedItems, setRankedItems] = useState([]);
-    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [draggedId, setDraggedId] = useState(null);
+    const [dragOverId, setDragOverId] = useState(null);
 
     const { data: eligibility, isLoading: eligibilityLoading } = useQuery({
         queryKey: ["specializationEligibility"],
@@ -225,7 +328,7 @@ export default function SpecializationPreference() {
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["specializationPreferences"] });
-            setShowSuccessDialog(true);
+            setShowSuccess(true);
         },
         onError: (err) => showError(err.message),
     });
@@ -262,15 +365,17 @@ export default function SpecializationPreference() {
         setRankedItems([]);
     }
 
-    function handleDragStart(e, id) {
+    const handleDragStart = useCallback((e, id) => {
         setDraggedId(id);
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", String(id));
-    }
+        e.currentTarget.classList.add("opacity-50");
+    }, []);
 
-    function handleDragOver(e, overId) {
+    const handleDragOver = useCallback((e, overId) => {
         e.preventDefault();
         if (draggedId === null || draggedId === overId) return;
+        setDragOverId(overId);
         setRankedItems((prev) => {
             const fromIdx = prev.findIndex((i) => i.id === draggedId);
             const toIdx = prev.findIndex((i) => i.id === overId);
@@ -280,229 +385,231 @@ export default function SpecializationPreference() {
             next.splice(toIdx, 0, moved);
             return next;
         });
-    }
+    }, [draggedId]);
 
-    function handleDragEnd() {
+    const handleDragEnd = useCallback(() => {
         setDraggedId(null);
-    }
+        setDragOverId(null);
+    }, []);
+
+    const label = targetType === "Department" ? "Department" : "Specialization";
+    const labelPlural = targetType === "Department" ? "Departments" : "Specializations";
+    const labelLower = targetType === "Department" ? "departments" : "specializations";
 
     if (eligibilityLoading) {
         return (
             <>
-                <PageHeader title={t("specializationPreference")} subtitle="Loading..." />
+                <PageHeader title={t("specializationPreference")} subtitle={`Rank and order your preferred ${labelLower}`} />
                 <Skeleton />
             </>
         );
     }
 
     return (
-        <>
+        <div className="flex flex-col gap-4 lg:gap-6 lg:h-[calc(100vh-7rem)] lg:overflow-hidden">
             <PageHeader
                 title={t("specializationPreference")}
-                subtitle="Rank and order your preferred departments/specializations here."
+                subtitle={`Rank and order your preferred ${labelLower}`}
             />
+
+            <SuccessBanner show={showSuccess} onDismiss={() => setShowSuccess(false)} />
 
             {!eligibility?.eligible ? (
                 <EligibilityCard eligibility={eligibility} />
             ) : isLoading ? (
                 <Skeleton />
             ) : (
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <Section>
-                            <div className="flex h-full flex-col rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-5">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <h3 className="text-md font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                        Available {targetType === "Department" ? "Departments" : "Specializations"}
-                                    </h3>
-                                    <span className="rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark px-2.5 py-0.5 text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                        {availableItems.length}
-                                    </span>
-                                </div>
-
-                                <div className="relative mb-3">
-                                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-icon-secondary-default-light dark:text-icon-secondary-default-dark">
-                                        <SearchIcon size={15} />
-                                    </span>
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder={`Search ${targetType === "Department" ? "departments" : "specializations"}...`}
-                                        className="w-full rounded-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark py-2 pl-9 pr-3 text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark focus:outline-none focus:ring-2 focus:ring-border-accent-default-light dark:focus:ring-border-accent-default-dark"
-                                    />
-                                </div>
-
-                                {filteredAvailableItems.length === 0 ? (
-                                    <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 text-center">
-                                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                            {searchQuery
-                                                ? `No matches for "${searchQuery}"`
-                                                : `All ${targetType === "Department" ? "departments" : "specializations"} have been added to your ranking.`}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="-mr-1 max-h-[440px] space-y-2 overflow-y-auto pr-1">
-                                        {filteredAvailableItems.map((item) => (
-                                            <div
-                                                key={item.id}
-                                                className="flex items-center justify-between gap-2 rounded-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 transition-all hover:ring-1 hover:ring-border-accent-default-light dark:hover:ring-border-accent-default-dark"
-                                            >
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="truncate text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                        {item.name}
-                                                    </p>
-                                                    {(item.nameAr || item.departmentName) && (
-                                                        <p className="truncate text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                            {[item.nameAr, item.departmentName].filter(Boolean).join(" · ")}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => addItem(item)}
-                                                    title="Add to ranking"
-                                                    className="shrink-0 rounded-md p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark"
-                                                >
-                                                    <PlusIcon size={18} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                <>
+                    <div className="flex items-center justify-between gap-2 rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light/90 dark:bg-bg-surface-primary-default-dark/90 backdrop-blur-xl p-3 shadow-sm sm:gap-3 sm:p-5">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <div className={`flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg ${
+                                rankedItems.length > 0
+                                    ? "bg-bg-fill-accent-muted-light dark:bg-bg-fill-accent-muted-dark text-text-accent-default-light dark:text-text-accent-default-dark"
+                                    : "bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark"
+                            }`}>
+                                <OrderedListIcon size={14} />
                             </div>
-                        </Section>
-
-                        <Section>
-                            <div className="flex h-full flex-col rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-5">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-md font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                            Your Ranking
-                                        </h3>
-                                        <span className="rounded-full bg-bg-fill-accent-muted-light dark:bg-bg-fill-accent-muted-dark px-2.5 py-0.5 text-xs font-medium text-text-accent-default-light dark:text-text-accent-default-dark">
-                                            {rankedItems.length}
-                                        </span>
-                                    </div>
-                                    {rankedItems.length > 0 && (
-                                        <button
-                                            type="button"
-                                            onClick={clearAll}
-                                            className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark"
-                                        >
-                                            Clear all
-                                        </button>
-                                    )}
-                                </div>
-
-                                {rankedItems.length === 0 ? (
-                                    <div className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border-accent-default-light dark:border-border-accent-default-dark px-4 py-10 text-center">
-                                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                            Add {targetType === "Department" ? "departments" : "specializations"} from the left to start ranking them.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="-mr-1 max-h-[440px] space-y-2 overflow-y-auto pr-1">
-                                        {rankedItems.map((item, idx) => (
-                                            <div
-                                                key={item.id}
-                                                draggable
-                                                onDragStart={(e) => handleDragStart(e, item.id)}
-                                                onDragOver={(e) => handleDragOver(e, item.id)}
-                                                onDragEnd={handleDragEnd}
-                                                onDrop={(e) => e.preventDefault()}
-                                                className={`flex items-center gap-2 rounded-lg border-l-4 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 transition-opacity ${
-                                                    idx === 0
-                                                        ? "border-border-accent-default-light dark:border-border-accent-default-dark"
-                                                        : "border-transparent"
-                                                } ${draggedId === item.id ? "opacity-50" : ""}`}
-                                            >
-                                                <span className="shrink-0 cursor-grab text-icon-secondary-default-light dark:text-icon-secondary-default-dark active:cursor-grabbing">
-                                                    <GripIcon />
-                                                </span>
-                                                <span
-                                                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                                                        idx === 0
-                                                            ? "bg-bg-fill-accent-muted-light dark:bg-bg-fill-accent-muted-dark text-text-accent-default-light dark:text-text-accent-default-dark"
-                                                            : "bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark"
-                                                    }`}
-                                                >
-                                                    {idx + 1}
-                                                </span>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="truncate text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                        {item.name}
-                                                    </p>
-                                                    {(item.nameAr || item.departmentName) && (
-                                                        <p className="truncate text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                            {[item.nameAr, item.departmentName].filter(Boolean).join(" · ")}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <div className="flex shrink-0 items-center gap-0.5">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => moveItemUp(item.id)}
-                                                        disabled={idx === 0}
-                                                        title="Move up"
-                                                        className="rounded-md p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark disabled:cursor-not-allowed disabled:opacity-30"
-                                                    >
-                                                        <ArrowUpIcon size={16} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => moveItemDown(item.id)}
-                                                        disabled={idx === rankedItems.length - 1}
-                                                        title="Move down"
-                                                        className="rounded-md p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark disabled:cursor-not-allowed disabled:opacity-30"
-                                                    >
-                                                        <ArrowDownIcon size={16} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeItem(item.id)}
-                                                        title="Remove"
-                                                        className="rounded-md p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark hover:text-white"
-                                                    >
-                                                        <XIcon size={16} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                            <div>
+                                <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
+                                    {rankedItems.length === 0
+                                        ? "No preferences yet"
+                                        : `${rankedItems.length} preference${rankedItems.length === 1 ? "" : "s"} ranked`}
+                                </p>
+                                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                    {rankedItems.length === 0
+                                        ? `Add at least one ${labelLower} to save.`
+                                        : `Drag to reorder or use the arrow buttons.`}
+                                </p>
                             </div>
-                        </Section>
-                    </div>
-
-                    <div className="sticky bottom-0 flex flex-col gap-3 rounded-t-2xl border-t-2 border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 shadow-lg sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            {rankedItems.length === 0
-                                ? "Add at least one preference to save."
-                                : `${rankedItems.length} preference${rankedItems.length === 1 ? "" : "s"} ranked.`}
-                        </p>
+                        </div>
                         <Button
                             variant="primary"
-                            size="lg"
+                            size="sm"
                             disabled={!canSave}
                             loading={saveMutation.isPending}
                             onClick={() => saveMutation.mutate()}
-                            startIcon={<FloppyDiskIcon />}
+                            startIcon={<FloppyDiskIcon size={16} />}
+                            className="shrink-0"
                         >
-                            Save Preferences
+                            <span className="hidden sm:inline">Save Preferences</span>
                         </Button>
                     </div>
-                </div>
-            )}
 
-            <Dialog
-                isOpen={showSuccessDialog}
-                variant="success"
-                title="Preferences Saved"
-                onClose={() => setShowSuccessDialog(false)}
-            >
-                Your {targetType.toLowerCase()} preferences have been saved successfully.
-            </Dialog>
-        </>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
+                        <Section className="flex flex-col min-h-0">
+                            <div className="flex h-full flex-col rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-4 lg:p-5 shadow-sm">
+                                <SectionHeader
+                                    icon={<SearchIcon size={16} />}
+                                    title={`Available ${labelPlural}`}
+                                    count={availableItems.length}
+                                />
+
+                                <SearchInput
+                                    value={searchQuery}
+                                    onChange={setSearchQuery}
+                                    placeholder={`Search ${labelLower}...`}
+                                />
+
+                                {filteredAvailableItems.length === 0 ? (
+                                    <div className="flex flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark px-4 py-8 lg:px-6 lg:py-12 text-center">
+                                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-icon-secondary-default-light dark:text-icon-secondary-default-dark">
+                                            <SearchIcon size={22} />
+                                        </div>
+                                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1">
+                                            {searchQuery
+                                                ? `No matches for "${searchQuery}"`
+                                                : `All ${labelLower} have been added to your ranking`}
+                                        </p>
+                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                            {searchQuery ? "Try a different search term." : "Add more items from the left panel."}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="-mr-1.5 -ml-1.5 flex-1 min-h-0 space-y-2 overflow-y-auto px-1.5 py-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border-primary-default-light/40 dark:[&::-webkit-scrollbar-thumb]:bg-border-primary-default-dark/40">
+                                        {filteredAvailableItems.map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className="group flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border-primary-default-light/50 dark:border-border-primary-default-dark/50 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 lg:p-3.5 transition-all hover:border-border-accent-default-light/40 dark:hover:border-border-accent-default-dark/40 hover:shadow-md"
+                                                onClick={() => addItem(item)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); addItem(item); } }}
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                        {item.name}
+                                                    </p>
+                                                    {(item.nameAr || item.departmentName) && (
+                                                        <p className="mt-0.5 truncate text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                                            {[item.nameAr, item.departmentName].filter(Boolean).join(" · ")}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-all lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:bg-bg-fill-accent-muted-light dark:lg:group-hover:bg-bg-fill-accent-muted-dark lg:group-hover:text-text-accent-default-light lg:dark:group-hover:text-text-accent-default-dark lg:group-focus-visible:opacity-100">
+                                                    <PlusIcon size={16} />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </Section>
+
+                        <Section className="flex flex-col min-h-0">
+                            <div className="flex h-full flex-col rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-4 lg:p-5 shadow-sm">
+                                <SectionHeader
+                                    icon={<StarIcon size={15} />}
+                                    title="Your Ranking"
+                                    count={rankedItems.length}
+                                    accent
+                                    onClearAll={clearAll}
+                                />
+
+                                {rankedItems.length === 0 ? (
+                                    <div className="flex flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border-accent-default-light/50 dark:border-border-accent-default-dark/50 px-4 py-8 lg:px-6 lg:py-12 text-center">
+                                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-bg-fill-accent-muted-light dark:bg-bg-fill-accent-muted-dark text-text-accent-default-light dark:text-text-accent-default-dark">
+                                            <OrderedListIcon size={22} />
+                                        </div>
+                                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1">
+                                            No preferences ranked yet
+                                        </p>
+                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                            Add {labelLower} from the left panel to start ranking.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="-mr-1.5 -ml-1.5 flex-1 min-h-0 space-y-2 overflow-y-auto px-1.5 py-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border-primary-default-light/40 dark:[&::-webkit-scrollbar-thumb]:bg-border-primary-default-dark/40">
+                                        {rankedItems.map((item, idx) => {
+                                            const isDragging = draggedId === item.id;
+                                            const isDragOver = dragOverId === item.id && draggedId !== item.id;
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    draggable
+                                                    onDragStart={(e) => handleDragStart(e, item.id)}
+                                                    onDragOver={(e) => handleDragOver(e, item.id)}
+                                                    onDragEnd={handleDragEnd}
+                                                    onDrop={(e) => e.preventDefault()}
+                                                    className={`flex items-center gap-3 rounded-xl border bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 lg:p-3.5 transition-all border-border-primary-default-light/50 dark:border-border-primary-default-dark/50 ${
+                                                        isDragging ? "opacity-50 shadow-none" : "shadow-sm hover:shadow-md"
+                                                    } ${
+                                                        isDragOver ? "ring-2 ring-border-accent-default-light dark:ring-border-accent-default-dark" : ""
+                                                    }`}
+                                                >
+                                                    <span className="shrink-0 cursor-grab text-icon-secondary-default-light dark:text-icon-secondary-default-dark active:cursor-grabbing hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark">
+                                                        <GripIcon />
+                                                    </span>
+                                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                                        {idx + 1}
+                                                    </span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
+                                                            {item.name}
+                                                        </p>
+                                                        {(item.nameAr || item.departmentName) && (
+                                                            <p className="mt-0.5 truncate text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                                                {[item.nameAr, item.departmentName].filter(Boolean).join(" · ")}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex shrink-0 items-center gap-1 lg:opacity-0 lg:transition-opacity lg:group-hover:opacity-100">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveItemUp(item.id)}
+                                                            disabled={idx === 0}
+                                                            title="Move up"
+                                                            className="rounded-lg p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-surface-primary-default-light dark:hover:bg-bg-surface-primary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark disabled:cursor-not-allowed disabled:opacity-20"
+                                                        >
+                                                            <ArrowUpIcon size={15} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveItemDown(item.id)}
+                                                            disabled={idx === rankedItems.length - 1}
+                                                            title="Move down"
+                                                            className="rounded-lg p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-surface-primary-default-light dark:hover:bg-bg-surface-primary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark disabled:cursor-not-allowed disabled:opacity-20"
+                                                        >
+                                                            <ArrowDownIcon size={15} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeItem(item.id)}
+                                                            title="Remove"
+                                                            className="rounded-lg p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-surface-danger-default-light/10 dark:hover:bg-bg-surface-danger-default-dark/20 hover:text-icon-danger-default-light dark:hover:text-icon-danger-default-dark"
+                                                        >
+                                                            <XIcon size={15} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </Section>
+                    </div>
+                </>
+            )}
+        </div>
     );
 }

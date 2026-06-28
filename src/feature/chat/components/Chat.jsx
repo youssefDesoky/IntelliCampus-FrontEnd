@@ -508,20 +508,28 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
             </div>
             <div className={`flex-1 min-h-0 p-4 ${isPhone ? '' : 'grid grid-cols-3 gap-4'}`}>
               {(!isPhone || activePanel === "default") && (
-                <ChatUsers
-                  chatPartner={chatPartner}
-                  friends={friends}
-                  groups={groups}
-                  onlineUsers={onlineUsers}
-                  unreadCounts={unreadCounts}
-                  onAddFriend={() => setActivePanel("addFriend")}
-                  onCreateGroup={() => setActivePanel("createGroup")}
-                  onSelectUser={handleSelectUser}
-                  onSelectGroup={handleSelectGroup}
-                  searchMembers={searchMembers}
-                  onSearchMembersChange={setSearchMembers}
-                  currentUser={currentUser}
-                />
+                isPhone && !friends.length && !groups.length ? (
+                  <DefaultChatPanel
+                    onAddFriend={() => setActivePanel("addFriend")}
+                    onCreateGroup={() => setActivePanel("createGroup")}
+                    noMembers
+                  />
+                ) : (
+                  <ChatUsers
+                    chatPartner={chatPartner}
+                    friends={friends}
+                    groups={groups}
+                    onlineUsers={onlineUsers}
+                    unreadCounts={unreadCounts}
+                    onAddFriend={() => setActivePanel("addFriend")}
+                    onCreateGroup={() => setActivePanel("createGroup")}
+                    onSelectUser={handleSelectUser}
+                    onSelectGroup={handleSelectGroup}
+                    searchMembers={searchMembers}
+                    onSearchMembersChange={setSearchMembers}
+                    currentUser={currentUser}
+                  />
+                )
               )}
             {(!isPhone || activePanel !== "default") && (
               <div className={`${isPhone ? 'h-full' : 'col-span-2 h-full'} flex flex-col min-h-0 gap-0`}>
@@ -529,6 +537,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
                     <DefaultChatPanel
                       onAddFriend={() => setActivePanel("addFriend")}
                       onCreateGroup={() => setActivePanel("createGroup")}
+                      noMembers={!friends.length && !groups.length}
                     />
                   ) : activePanel === "createGroup" ? (
                     <CreateGroupPanel

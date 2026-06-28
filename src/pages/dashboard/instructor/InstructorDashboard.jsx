@@ -13,6 +13,7 @@ import { AttendanceTrendChart } from "../../../feature/student/dashboard/charts"
 import { DashboardSkeleton } from "../../../feature/student/dashboard/SkeletonLoader";
 import { fetchInstructorDashboard } from "../../../api/dashboard";
 import { fetchRemindersByDay } from "../../../feature/instructor/reminders/remindersApi";
+import { CompetencyRadarChart } from "../../../feature/instructor/dashboard/charts";
 
 const statIcons = {
   activeCourses: <BookIcon className="w-6 h-6 text-blue-600" />,
@@ -85,7 +86,7 @@ export default function InstructorDashboard() {
 
   return (
     <>
-      <Section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+      <Section className="hidden sm:grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {statsData.map((stat) => (
           <BoxData
             key={stat.id}
@@ -178,8 +179,9 @@ export default function InstructorDashboard() {
           <h2 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">Analytics</h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <AttendanceTrendChart data={dashboard.attendanceTrend ?? []} />
+          <CompetencyRadarChart data={dashboard.radarData ?? []} />
         </div>
       </Section>
     </>

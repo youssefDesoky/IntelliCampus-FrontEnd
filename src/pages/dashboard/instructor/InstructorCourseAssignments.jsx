@@ -30,6 +30,14 @@ function formatDueDate(value) {
         year: "numeric",
         month: "short",
         day: "2-digit",
+    }).format(date);
+}
+
+function formatDueTime(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    
+    return new Intl.DateTimeFormat("en-US", {
         hour: "2-digit",
         minute: "2-digit",
     }).format(date);
@@ -365,38 +373,45 @@ export default function InstructorCourseAssignments() {
                 key={assignment.id}
                 className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg transition-shadow duration-200"
                 >
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                    <div className="flex items-center gap-2 justify-between">
+                        <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
                         {assignment.title}
-                    </h3>
+                        </h3>
+                        {assignment.totalPoints && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap shrink-0">
+                            <ChartBarIcon size={14} />
+                            {assignment.totalPoints} pts
+                        </span>
+                        )}
+                    </div>
                     {assignment.description && (
                         <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">
                         {assignment.description}
                         </p>
                     )}
                     </div>
-                    {assignment.totalPoints && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap shrink-0 self-start">
-                        <ChartBarIcon size={14} />
-                        {assignment.totalPoints} pts
-                    </span>
-                    )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 mt-3 text-sm">
+                <div className="flex flex-col gap-1 mt-3 text-sm">
                     <div className="flex items-center gap-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">
                     <CalendarDaysIcon size={16} />
-                    <span>Due {formatDueDate(assignment.dueDate)}</span>
+                    <span>{formatDueDate(assignment.dueDate)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                    <ClockIcon size={16} />
+                    <span>{formatDueTime(assignment.dueDate)}</span>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
+                <div className="flex flex-row items-center gap-2 mt-4 pt-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
                     <Button
                     type="button"
                     variant="secondary"
                     size="sm"
                     startIcon={<EyeIcon size={16} />}
+                    className="flex-1 sm:flex-none sm:w-auto justify-center"
                     onClick={() => openSubmissions(assignment)}
                     >
                     <span className="hidden sm:inline">Submissions</span>
@@ -406,6 +421,7 @@ export default function InstructorCourseAssignments() {
                     variant="secondary"
                     size="sm"
                     startIcon={<FilePenIcon size={16} />}
+                    className="flex-1 sm:flex-none sm:w-auto justify-center"
                     onClick={() => {
                         setEditingAssignmentId(assignment.id);
                         setTitle(assignment.title || "");
@@ -430,7 +446,7 @@ export default function InstructorCourseAssignments() {
                     variant="secondary"
                     size="sm"
                     startIcon={<TrashIcon size={16} />}
-                    className="text-text-danger-default-light dark:text-text-danger-default-dark"
+                    className="flex-1 sm:flex-none sm:w-auto justify-center text-text-danger-default-light dark:text-text-danger-default-dark"
                     onClick={() => handleDeleteAssignment(assignment.id)}
                     >
                     <span className="hidden sm:inline">Delete</span>

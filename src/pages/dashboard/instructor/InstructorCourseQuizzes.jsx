@@ -8,7 +8,7 @@ import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import DateTimeInput from "../../../components/form/DateTimeInput";
 import NumberInput from "../../../components/form/NumberInput";
 import Dialog from "../../../components/ui/Dialog";
-import { PlusIcon, TrashIcon, EyeIcon, FilePenIcon, ClockIcon, ChartBarIcon, CalendarDaysIcon, XIcon, PenSquareIcon, ListIcon } from "../../../components/ui/icons";
+import { PlusIcon, TrashIcon, EyeIcon, FilePenIcon, ClockIcon, SandClockIcon, ChartBarIcon, CalendarDaysIcon, XIcon, PenSquareIcon, ListIcon } from "../../../components/ui/icons";
 
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import { createQuiz, fetchQuizzesByCourse, updateQuiz, deleteQuiz, fetchQuizSubmissions, gradeQuizSubmission } from "../../../feature/instructor/components/quiz/instructorQuizApi";
@@ -23,6 +23,13 @@ function formatDate(value) {
         year: "numeric",
         month: "short",
         day: "2-digit",
+    }).format(date);
+}
+
+function formatTime(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat("en-US", {
         hour: "2-digit",
         minute: "2-digit",
     }).format(date);
@@ -252,44 +259,49 @@ export default function InstructorCourseQuizzes() {
                 <div className="space-y-4">
                     {quizzes.map((quiz) => (
                         <div key={quiz.id} className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg transition-shadow duration-200">
-                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                            <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{quiz.title}</h3>
+                                    <div className="flex items-center gap-2 justify-between">
+                                        <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">{quiz.title}</h3>
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap shrink-0">
+                                            <ChartBarIcon size={14} />
+                                            {quiz.maxScore} pts
+                                        </span>
+                                    </div>
                                     {quiz.description && (
                                         <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">{quiz.description}</p>
                                     )}
                                 </div>
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap shrink-0 self-start">
-                                    <ChartBarIcon size={14} />
-                                    {quiz.maxScore} pts
-                                </span>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                            <div className="flex flex-col gap-1 mt-3 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 <div className="flex items-center gap-1.5">
                                     <CalendarDaysIcon size={16} />
-                                    <span>Starts {formatDate(quiz.startDate)}</span>
+                                    <span>{formatDate(quiz.startDate)}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <ClockIcon size={16} />
+                                    <span>{formatTime(quiz.startDate)}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <SandClockIcon size={16} />
                                     <span>{quiz.durationMinutes} min</span>
                                 </div>
-                                <span className="text-xs capitalize">{quiz.status}</span>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
+                            <div className="flex flex-row items-center gap-2 mt-4 pt-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
                                 {isQuizPast(quiz) && (
-                                    <Button type="button" variant="secondary" size="sm" startIcon={<EyeIcon size={16} />} onClick={() => openSubmissions(quiz)}>
+                                    <Button type="button" variant="secondary" size="sm" startIcon={<EyeIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => openSubmissions(quiz)}>
                                         <span className="hidden sm:inline">Submissions</span>
                                     </Button>
                                 )}
-                                <Button type="button" variant="secondary" size="sm" startIcon={<ListIcon size={16} />} onClick={() => setManageQuiz(quiz)}>
+                                <Button type="button" variant="secondary" size="sm" startIcon={<ListIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => setManageQuiz(quiz)}>
                                     <span className="hidden sm:inline">Manage Questions</span>
                                 </Button>
-                                <Button type="button" variant="secondary" size="sm" startIcon={<FilePenIcon size={16} />} onClick={() => handleEdit(quiz)}>
+                                <Button type="button" variant="secondary" size="sm" startIcon={<FilePenIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => handleEdit(quiz)}>
                                     <span className="hidden sm:inline">Edit</span>
                                 </Button>
-                                <Button type="button" variant="secondary" size="sm" startIcon={<TrashIcon size={16} />} className="text-text-danger-default-light dark:text-text-danger-default-dark" onClick={() => setDeletingQuiz(quiz)}>
+                                <Button type="button" variant="secondary" size="sm" startIcon={<TrashIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center text-text-danger-default-light dark:text-text-danger-default-dark" onClick={() => setDeletingQuiz(quiz)}>
                                     <span className="hidden sm:inline">Delete</span>
                                 </Button>
                             </div>

@@ -6,6 +6,7 @@ import PaginationButtons from "../../../../../components/ui/PaginationButtons";
 import QuestionCard from "./QuestionCard";
 import QuizHeader from "./QuizHeader";
 import QuizSummary from "./QuizSummary";
+import QuizStartView from "./QuizStartView";
 import { fetchPracticeQuiz, submitPracticeQuiz } from "../../../services/quizzesApi";
 import { ArrowRightIcon } from "../../../../../components/ui/icons";
 
@@ -27,6 +28,7 @@ export default function CourseQuizPractice() {
 	const [isSubmitted, setIsSubmitted] = useState(Boolean(reviewMode));
 	const [submissionResult, setSubmissionResult] = useState(null);
 	const [timeLeft, setTimeLeft] = useState(720);
+	const [quizStarted, setQuizStarted] = useState(false);
 
 	const loadPracticeQuiz = useCallback(async () => {
 		if (!courseId) return;
@@ -117,7 +119,7 @@ export default function CourseQuizPractice() {
 	}, [answers, courseId, practiceQuizData?.quizId]);
 
 	useEffect(() => {
-		if (isSubmitted || isBackendSubmitted || reviewMode) return;
+		if (isSubmitted || isBackendSubmitted || reviewMode || !quizStarted) return;
 		const timerId = setInterval(() => {
 			setTimeLeft((remaining) => {
 				if (remaining <= 1) {
@@ -130,7 +132,7 @@ export default function CourseQuizPractice() {
 		}, 1000);
 
 		return () => clearInterval(timerId);
-	}, [handleSubmitQuiz, isBackendSubmitted, isSubmitted, reviewMode]);
+	}, [handleSubmitQuiz, isBackendSubmitted, isSubmitted, quizStarted, reviewMode]);
 
 	function formatTime(seconds) {
 		const minutes = Math.floor(seconds / 60);
@@ -148,6 +150,16 @@ export default function CourseQuizPractice() {
 				<div className="h-10 w-10 rounded-full border-2 border-border-primary-default-light dark:border-border-primary-default-dark border-t-bg-fill-accent-default-light dark:border-t-bg-fill-accent-default-dark animate-spin" />
 				<p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading quiz...</p>
 			</div>
+		);
+	}
+
+	if (!quizStarted && !reviewMode && !isBackendSubmitted) {
+		return (
+			<QuizStartView
+				quizData={practiceQuizData}
+				courseName={courseName}
+				onStart={() => setQuizStarted(true)}
+			/>
 		);
 	}
 
