@@ -122,13 +122,6 @@ export default function MyCommunities() {
         event.target.value = "";
     };
 
-    const handleDelete = async (postId) => {
-        if (!courseId) return;
-        await deleteCommunityPost(courseId, postId);
-        const data = await fetchCommunityPosts(courseId);
-        setPosts(extractPosts(data).map(mapPost));
-    };
-
     if (!course) {
         return (
             <div className="py-10 text-center">
