@@ -91,9 +91,6 @@ export default function InstructorCourseGrades() {
     const assessmentHeaders = assessments.map(a => a.title.length > 12 ? a.title.slice(0, 12) + "\u2026" : a.title);
     const columnClassNames = ["", ...assessments.map(() => "hidden lg:table-cell"), ""];
 
-    const assessmentHeaders = assessments.map(a => a.title.length > 12 ? a.title.slice(0, 12) + "\u2026" : a.title);
-    const columnClassNames = ["", ...assessments.map(() => "hidden lg:table-cell"), ""];
-
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">

@@ -102,13 +102,6 @@ export default function MyCommunities() {
         setPosts(extractPosts(data).map(mapPost));
     };
 
-    const handleDelete = async (postId) => {
-        if (!courseId) return;
-        await deleteCommunityPost(courseId, postId);
-        const data = await fetchCommunityPosts(courseId);
-        setPosts(extractPosts(data).map(mapPost));
-    };
-
     const handleAttachmentChange = (event) => {
         const files = Array.from(event.target.files || []);
         const newAttachments = files.map((file) => ({
