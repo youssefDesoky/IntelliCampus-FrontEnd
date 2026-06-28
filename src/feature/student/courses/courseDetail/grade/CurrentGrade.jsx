@@ -1,7 +1,7 @@
 import CircularProgress from "../../../../../components/ui/CircularProgress";
 import GradeComplaint from "./GradeComplaint";
 
-export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", items = [] }) {
+export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", items = [], courseId }) {
     // Determine the theme variant based on the grade percentage (tiers: 85, 75, 65, 50)
     const getTheme = (pct) => {
         if (pct >= 85) return {
@@ -105,8 +105,8 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", it
 				</div>
 			</div>
 
-			<div className="mt-4">
-				<GradeComplaint items={items} compact />
+		<div className="mt-4 block sm:hidden">
+				<GradeComplaint items={items} compact courseId={courseId} />
 			</div>
         </div>
     );

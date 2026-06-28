@@ -60,3 +60,14 @@ export async function recordManualAttendance(payload) {
 export async function generateStudentAttendanceQr() {
   return apiClient('/api/attendance/qr');
 }
+
+export async function fetchExcuses(courseId) {
+  return apiClient(`/api/courses/${courseId}/attendance/excuses`);
+}
+
+export async function updateExcuseStatus(excuseId, status) {
+  return apiClient(`/api/attendance/excuses/${excuseId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}

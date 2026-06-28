@@ -11,6 +11,7 @@ export default function InputItem({
     children, 
     value, 
     isDisabled = false, 
+    onChange,
     ...props 
 }) {
     const [showPassword, setShowPassword] = useState(false);
@@ -18,6 +19,11 @@ export default function InputItem({
     const [hasValue, setHasValue] = useState(false);
 
     const inputType = type === "password" && showPassword ? "text" : type;
+
+    const handleChange = (e) => {
+        setHasValue(e.target.value.length > 0);
+        onChange?.(e);
+    };
 
     return (
         <div className={`input-item ${className}`}>
@@ -38,7 +44,7 @@ export default function InputItem({
                     placeholder={placeholder}
                     onFocus={() => setIsInputFocused(true)}
                     onBlur={() => setIsInputFocused(false)}
-                    onChange={(e) => setHasValue(e.target.value.length > 0)}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 outline-none text-text-primary-active-light dark:text-text-primary-active-dark placeholder:text-text-tertiary-default-light dark:placeholder:text-text-tertiary-default-dark"
                     {...props}
                 />

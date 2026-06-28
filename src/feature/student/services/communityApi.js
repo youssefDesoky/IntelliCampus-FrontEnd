@@ -11,6 +11,13 @@ export async function createCommunityPost(courseId, content) {
   });
 }
 
+export async function updateCommunityPost(courseId, postId, content) {
+  return apiClient(`/api/courses/${courseId}/community/questions/${postId}`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
+}
+
 export async function deleteCommunityPost(courseId, postId) {
   await apiClient(`/api/courses/${courseId}/community/questions/${postId}`, {
     method: "DELETE",

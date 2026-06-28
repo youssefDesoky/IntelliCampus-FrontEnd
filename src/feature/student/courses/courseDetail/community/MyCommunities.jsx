@@ -109,6 +109,26 @@ export default function MyCommunities() {
         setPosts(extractPosts(data).map(mapPost));
     };
 
+    const handleAttachmentChange = (event) => {
+        const files = Array.from(event.target.files || []);
+        const newAttachments = files.map((file) => ({
+            id: crypto.randomUUID(),
+            name: file.name,
+            type: file.type,
+            preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
+            file,
+        }));
+        setAttachments((prev) => [...prev, ...newAttachments].slice(0, 5));
+        event.target.value = "";
+    };
+
+    const handleDelete = async (postId) => {
+        if (!courseId) return;
+        await deleteCommunityPost(courseId, postId);
+        const data = await fetchCommunityPosts(courseId);
+        setPosts(extractPosts(data).map(mapPost));
+    };
+
     if (!course) {
         return (
             <div className="py-10 text-center">

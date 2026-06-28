@@ -8,7 +8,7 @@ import './i18n'
 import { ErrorProvider } from './contexts/ErrorContext.jsx'
 import { ToastProvider } from './contexts/ToastContext.jsx'
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,

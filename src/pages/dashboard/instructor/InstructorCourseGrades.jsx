@@ -91,6 +91,9 @@ export default function InstructorCourseGrades() {
     const assessmentHeaders = assessments.map(a => a.title.length > 12 ? a.title.slice(0, 12) + "\u2026" : a.title);
     const columnClassNames = ["", ...assessments.map(() => "hidden lg:table-cell"), ""];
 
+    const assessmentHeaders = assessments.map(a => a.title.length > 12 ? a.title.slice(0, 12) + "\u2026" : a.title);
+    const columnClassNames = ["", ...assessments.map(() => "hidden lg:table-cell"), ""];
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -105,6 +108,18 @@ export default function InstructorCourseGrades() {
                 >
                     <ExclamationIcon size={16} />
                     <span className="hidden sm:inline">View Complaints</span>
+                </Button>
+            </div>
+
+            <div className="flex items-center justify-end">
+                <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={() => navigate("complaints")}
+                    className="inline-flex items-center gap-2"
+                >
+                    <ExclamationIcon size={16} />
+                    View Complaints
                 </Button>
             </div>
 

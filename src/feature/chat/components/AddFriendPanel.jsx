@@ -1,4 +1,4 @@
-import React from "react";
+import BasePanel from "./BasePanel";
 
 export default function AddFriendPanel({
   friendId,
@@ -9,38 +9,24 @@ export default function AddFriendPanel({
   onAcceptRequest,
   onDeclineRequest,
 }) {
-  return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-[0_1px_3px_-1px_rgba(0,0,0,0.04)] dark:shadow-none">
-        <button
-          onClick={onBack}
-          className="flex items-center justify-center w-8 h-8 rounded-xl text-gray-500 hover:text-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-100 transition-all active:scale-90"
-          aria-label="Back to chat"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 12L6 8l4-4" />
-          </svg>
-        </button>
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-900/40">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-400">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M19 8v6M16 11h6" />
-            </svg>
-          </div>
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-tight">
-            Add Friend
-          </h2>
-        </div>
-      </div>
+  const pendingCount = friendRequests.length;
 
+  return (
+    <BasePanel
+      icon={
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-400">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M19 8v6M16 11h6" />
+        </svg>
+      }
+      title="Add Friend"
+      onBack={onBack}
+    >
       <div className="flex flex-col gap-5 px-5 py-5 overflow-y-auto flex-1">
-        {/* Search / Invite Section */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-            Invite by ID
+            Send Invitation
           </p>
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -53,7 +39,7 @@ export default function AddFriendPanel({
               <input
                 type="text"
                 className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all"
-                placeholder="Enter friend ID…"
+                placeholder="Enter user ID or email..."
                 value={friendId}
                 onChange={(e) => setFriendId(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && onInvite()}
@@ -72,61 +58,83 @@ export default function AddFriendPanel({
           </div>
         </div>
 
-        {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
-          <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Requests</span>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Pending Requests</span>
+          {pendingCount > 0 && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
+              {pendingCount}
+            </span>
+          )}
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
         </div>
 
-        {/* Friend Requests Section */}
-        <div className="flex flex-col gap-1.5">
-          {friendRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]">
-                <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
-                  <circle cx="8" cy="5" r="3" />
-                  <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+        {pendingCount === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-14 text-center">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center ring-1 ring-gray-200 dark:ring-gray-700">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
               </div>
-              <p className="text-sm text-gray-400 dark:text-gray-500">No pending requests</p>
+              <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-500 dark:text-gray-400">
+                  <path d="M4 4l8 8M12 4l-8 8" />
+                </svg>
+              </div>
             </div>
-          ) : (
-            friendRequests.map((req) => (
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                No pending requests
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Invite someone by their ID to get started
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            {friendRequests.map((req) => (
               <div
                 key={req.id}
-                className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-white dark:hover:bg-gray-800/60 hover:shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:hover:shadow-none hover:ring-1 hover:ring-gray-100 dark:hover:ring-gray-700/50 transition-all group"
+                className="group flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-white dark:bg-gray-800/40 hover:bg-white dark:hover:bg-gray-800/80 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_2px_6px_rgba(0,0,0,0.06)] dark:hover:shadow-none ring-1 ring-gray-100 dark:ring-gray-700/30 hover:ring-gray-200 dark:hover:ring-gray-600/50 transition-all"
               >
-                {/* Avatar */}
                 <div className="flex items-center gap-3 min-w-0">
                   {req.avatar ? (
                     <img
-                      className="w-9 h-9 rounded-xl object-cover shrink-0 ring-1 ring-gray-100 dark:ring-gray-700/50"
+                      className="w-10 h-10 rounded-xl object-cover shrink-0 ring-1 ring-gray-100 dark:ring-gray-700/50"
                       src={req.avatar}
                       alt={req.name}
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center shrink-0 ring-1 ring-gray-100 dark:ring-gray-700/50">
-                      <svg className="w-4 h-4 text-gray-500 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center shrink-0 ring-1 ring-gray-100 dark:ring-gray-700/50">
+                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                        {req.name?.[0]?.toUpperCase() ?? "?"}
+                      </span>
                     </div>
                   )}
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate leading-tight">
                       {req.name}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate leading-tight">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate leading-tight flex items-center gap-1">
+                      <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 dark:text-gray-600">
+                        <rect x="1" y="4" width="14" height="10" rx="2" />
+                        <path d="M1 8h14" />
+                        <path d="M5 4V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
                       ID: {req.id}
                     </p>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1.5 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => onAcceptRequest(req.id)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 hover:shadow-[0_1px_2px_rgba(34,197,94,0.2)] active:scale-95 transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 hover:shadow-[0_1px_2px_rgba(34,197,94,0.2)] active:scale-95 transition-all"
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M3 8l4 4 6-7" />
@@ -144,10 +152,10 @@ export default function AddFriendPanel({
                   </button>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+    </BasePanel>
   );
 }

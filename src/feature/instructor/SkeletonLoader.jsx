@@ -180,28 +180,53 @@ export function CourseMaterialsSkeleton() {
 export function CourseGradesSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <SkeletonBar className="h-7 w-24" />
+      <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 sm:p-4">
+            <div className="flex items-center justify-between mb-2">
+              <SkeletonBar className="h-3 w-24" />
+              <SkeletonBar className="w-5 h-5 rounded" />
+            </div>
+            <SkeletonBar className="h-7 w-16" />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-end">
         <SkeletonBar className="h-9 w-40 rounded-lg" />
       </div>
       <div>
         <SkeletonBar className="h-5 w-48 mb-4" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <SkeletonBar className="w-9 h-9 rounded-lg shrink-0" />
-                  <SkeletonBar className="h-3 w-16" />
+            <div key={i} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 sm:p-4">
+              <div className="sm:flex sm:flex-row sm:items-center sm:gap-3">
+                <SkeletonBar className="hidden sm:block w-10 h-10 rounded-lg shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <SkeletonBar className="sm:hidden w-10 h-10 rounded-lg shrink-0" />
+                      <div className="min-w-0 space-y-1">
+                        <SkeletonBar className="h-4 w-40" />
+                        <SkeletonBar className="h-3 w-24" />
+                      </div>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-4">
+                      <div className="text-center space-y-1">
+                        <SkeletonBar className="h-5 w-12" />
+                        <SkeletonBar className="h-3 w-14" />
+                      </div>
+                      <div className="text-center space-y-1">
+                        <SkeletonBar className="h-5 w-8" />
+                        <SkeletonBar className="h-3 w-14" />
+                      </div>
+                    </div>
+                    <SkeletonBar className="sm:hidden h-5 w-14 rounded-full" />
+                  </div>
+                  <div className="mt-2 sm:mt-3 flex items-center gap-3">
+                    <SkeletonBar className="flex-1 h-2 rounded-full" />
+                  </div>
                 </div>
-                <SkeletonBar className="h-5 w-14 rounded-full" />
               </div>
-              <SkeletonBar className="h-4 w-3/4 mb-3" />
-              <div className="flex items-center justify-between mb-2.5">
-                <SkeletonBar className="h-3 w-12" />
-                <SkeletonBar className="h-3 w-20" />
-              </div>
-              <SkeletonBar className="h-1.5 w-full rounded-full" />
             </div>
           ))}
         </div>
