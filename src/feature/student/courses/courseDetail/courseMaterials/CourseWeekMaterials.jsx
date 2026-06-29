@@ -19,7 +19,7 @@ function downloadAllMaterials(materials) {
     });
 }
 
-export default function CourseWeekMaterials({ folder, highlighted = false }) {
+export default function CourseWeekMaterials({ folder, highlighted = false, highlightedMaterialId }) {
     const materials = folder.materials || [];
 
     return (
@@ -83,6 +83,7 @@ export default function CourseWeekMaterials({ folder, highlighted = false }) {
                                 key={material.materialId || index} 
                                 material={material}
                                 isFirst={index === 0}
+                                highlighted={material.materialId === highlightedMaterialId}
                             />
                         ))}
                     </ul>

@@ -8,18 +8,23 @@ import CourseWeekMaterials from "../../../feature/student/courses/courseDetail/c
 export default function CourseMaterials() {
     const { course } = useOutletContext();
     const location = useLocation();
-    const folderId = new URLSearchParams(location.search).get("folderId");
+    const searchParams = new URLSearchParams(location.search);
+    const folderId = searchParams.get("folderId");
+    const materialId = searchParams.get("materialId");
 
     useEffect(() => {
-        if (!folderId) return;
+        const id = materialId || folderId;
+        if (!id) return;
 
         const timer = window.setTimeout(() => {
-            const target = document.getElementById(`material-folder-${folderId}`);
-            target?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
+            const target = document.getElementById(materialId ? `material-${materialId}` : `material-folder-${folderId}`);
+            target?.scrollIntoView({ behavior: "smooth", block: "center" });
+            target?.classList.add("animate-pulse");
+            setTimeout(() => target?.classList.remove("animate-pulse"), 2000);
+        }, 300);
 
         return () => window.clearTimeout(timer);
-    }, [folderId]);
+    }, [folderId, materialId]);
 
     if (!course?.folders || course.folders.length === 0) {
         return (
@@ -41,6 +46,7 @@ export default function CourseMaterials() {
                     key={folder.materialFolderId}
                     folder={folder}
                     highlighted={String(folder.materialFolderId) === String(folderId)}
+                    highlightedMaterialId={materialId ? Number(materialId) : undefined}
                 />
             ))}
         </div>

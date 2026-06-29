@@ -108,18 +108,6 @@ export default function InstructorCourseGrades() {
                 </Button>
             </div>
 
-            <div className="flex items-center justify-end">
-                <Button
-                    variant="secondary"
-                    type="button"
-                    onClick={() => navigate("complaints")}
-                    className="inline-flex items-center gap-2"
-                >
-                    <ExclamationIcon size={16} />
-                    View Complaints
-                </Button>
-            </div>
-
             <div>
                 <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">Assessment Performance</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
