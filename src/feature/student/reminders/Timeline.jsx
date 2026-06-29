@@ -192,6 +192,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                 const meridiemLabel = format(dueDate, "a");
                                 const itemKey = item.id || item.title;
                                 const isPersonal = item.category === "personal";
+                                const completed = item.submissionState === "completed";
                                 return (
                                     <div
                                         key={itemKey}
@@ -207,15 +208,23 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                         </div>
 
                                         <div
-                                            className={`flex items-center justify-between gap-2 md:gap-3 p-3 md:p-4 rounded-xl border w-full ${visual.cardBorder} ${visual.cardBg} transition-shadow md:hover:shadow-sm`}
+                                            className={`flex items-center justify-between gap-2 md:gap-3 p-3 md:p-4 rounded-xl border w-full transition-shadow md:hover:shadow-sm ${
+                                                completed
+                                                    ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40"
+                                                    : `${visual.cardBorder} ${visual.cardBg}`
+                                            }`}
                                         >
                                         {/* Left: icon + info */}
                                         <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                                            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center shrink-0 ${visual.iconBg}`}>
+                                            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                                                completed
+                                                    ? "bg-green-100 text-green-500 dark:bg-green-900/50 dark:text-green-300"
+                                                    : visual.iconBg
+                                            }`}>
                                                 <Icon size={14} />
                                             </div>
                                             <div className="min-w-0">
-                                                <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100 truncate">
+                                                <h3 className={`font-semibold text-sm truncate ${completed ? "text-green-700 dark:text-green-300 line-through opacity-70" : "text-gray-800 dark:text-gray-100"}`}>
                                                     {item.title}
                                                 </h3>
                                                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -228,9 +237,15 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
 
                                         {/* Right: badge + menu */}
                                         <div className="flex items-center gap-1 md:gap-2 shrink-0">
-                                            <span className={`px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold rounded-md ${visual.badgeColor}`}>
-                                                {visual.badge}
-                                            </span>
+                                            {completed ? (
+                                                <span className="px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold rounded-md bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">
+                                                    Completed
+                                                </span>
+                                            ) : (
+                                                <span className={`px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold rounded-md ${visual.badgeColor}`}>
+                                                    {visual.badge}
+                                                </span>
+                                            )}
                                             {isPersonal && (
                                                 <div className="relative z-20" data-personal-actions-menu>
                                                     <button
