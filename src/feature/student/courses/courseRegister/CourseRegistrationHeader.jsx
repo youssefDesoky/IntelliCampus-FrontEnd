@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import SearchBar from "../../../../components/ui/SearchBar";
 import SelectBox from "../../../../components/ui/SelectBox";
 import PageHeader from "../../../../components/ui/PageHeader";
@@ -19,7 +19,6 @@ const filterOptions = [
     { value: "all", label: "All Courses", icon: FilterIcon },
     { value: "required", label: "Required Courses", icon: StarIcon },
     { value: "elective", label: "Elective Courses", icon: BookIcon },
-    { value: "available", label: "Available Slots", icon: ClockIcon },
 ];
 
 function StatCard({ icon, value, label, colorClass, delay = 0 }) {
@@ -47,9 +46,11 @@ function StatCard({ icon, value, label, colorClass, delay = 0 }) {
 export default function CourseRegistrationHeader({
     deviceType,
     selectedCourses = [],
+    activeFilter = "all",
+    onFilterChange,
+    searchValue = "",
+    onSearchChange,
 }) {
-    const [activeFilter, setActiveFilter] = useState("all");
-    const [searchValue, setSearchValue] = useState("");
 
     const selectedCredits = selectedCourses.reduce(
         (sum, c) => sum + (typeof c.creditHours === "number" ? c.creditHours : 0),
@@ -144,7 +145,7 @@ export default function CourseRegistrationHeader({
                                 return (
                                     <button
                                         key={option.value}
-                                        onClick={() => setActiveFilter(option.value)}
+                                        onClick={() => onFilterChange(option.value)}
                                         className={`relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                                             isActive
                                                 ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark shadow-sm"
@@ -168,6 +169,7 @@ export default function CourseRegistrationHeader({
                                 label: filterOptions.find((o) => o.value === activeFilter)
                                     ?.label,
                             }}
+                            onChange={(option) => onFilterChange(option.value)}
                             yPadding="py-2.5"
                         />
                     )}
@@ -175,7 +177,7 @@ export default function CourseRegistrationHeader({
                     <SearchBar
                         placeholder="Search course by name or code..."
                         value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
+                        onChange={(e) => onSearchChange(e.target.value)}
                         className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark w-full md:max-w-md rounded-xl border-border-primary-default-light dark:border-border-primary-default-dark focus-within:ring-2 focus-within:ring-border-primary-focus-light dark:focus-within:ring-border-primary-focus-dark transition-shadow"
                     />
                 </div>
