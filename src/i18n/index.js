@@ -14,6 +14,9 @@ import arInstructorAside from '../locales/ar/instractor/aside.json';
 import enCommonAside from '../locales/en/common/aside.json';
 import arCommonAside from '../locales/ar/common/aside.json';
 
+import enInstructorAside from '../locales/en/instructor/aside.json';
+import arInstructorAside from '../locales/ar/instructor/aside.json';
+
 // Initialize i18n
 i18n.use(initReactI18next).init({
   resources: {
