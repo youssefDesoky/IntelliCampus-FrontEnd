@@ -12,10 +12,8 @@ import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const categoryOptions = [
     { value: "all", label: "All Categories" },
-    { value: "classes", label: "Classes" },
-    { value: "exams", label: "Exams" },
-    { value: "assignments", label: "Assignments" },
-    { value: "personal", label: "Personal" },
+    { value: "classes", label: "Classes", dotColor: "bg-blue-500", rowBg: "bg-blue-50" },
+    { value: "personal", label: "Personal", dotColor: "bg-purple-500", rowBg: "bg-purple-50" },
 ];
 
 const MobileDateStrip = ({ selectedDate, onDateSelect }) => {
@@ -72,7 +70,9 @@ export default function InstructorReminders() {
     const loadReminders = useCallback(async () => {
         try {
             const data = await fetchRemindersByDay(selectedDate);
-            setReminders(Array.isArray(data) ? data : []);
+            const filtered = (Array.isArray(data) ? data : [])
+                .filter((r) => r.category !== "exams" && r.category !== "assignments");
+            setReminders(filtered);
         } catch (err) {
             setReminders([]);
         } finally {
@@ -154,7 +154,7 @@ export default function InstructorReminders() {
 
     return (
         <div className="flex flex-col min-h-[calc(100vh-160px)]">
-            <RemindersHeader setIsFormOpen={handleSetIsFormOpen} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} reminders={reminders} />
+            <RemindersHeader setIsFormOpen={handleSetIsFormOpen} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} reminders={reminders} categories={categoryOptions} />
 
             {/* Mobile Date Ribbon */}
             <MobileDateStrip selectedDate={selectedDate} onDateSelect={setSelectedDate} />
@@ -180,6 +180,7 @@ export default function InstructorReminders() {
                             reminders={reminders}
                             selectedCategory={selectedCategory}
                             onSelectCategory={setSelectedCategory}
+                            categories={categoryOptions.filter((c) => c.value !== "all")}
                         />
                     </div>
                 </div>

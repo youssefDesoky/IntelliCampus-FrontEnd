@@ -10,7 +10,7 @@ export default function TodayReminders({ className }) {
     const { data: reminders = [], isLoading, error } = useQuery({
         queryKey: ["todayReminders"],
         queryFn: () => fetchRemindersByDay(new Date()),
-        staleTime: 60 * 1000,
+        staleTime: 0,
     });
 
     return (

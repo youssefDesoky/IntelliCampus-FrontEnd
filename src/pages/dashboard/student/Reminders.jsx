@@ -77,7 +77,7 @@ export default function Reminders() {
     } = useQuery({
         queryKey: ["reminders", dateStr],
         queryFn: () => fetchRemindersByDay(selectedDate),
-        staleTime: 60 * 1000,
+        staleTime: 0,
     });
 
     const createMutation = useMutation({
