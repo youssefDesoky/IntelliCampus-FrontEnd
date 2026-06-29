@@ -9,5 +9,6 @@ export { default as InstructorReminders } from "./InstructorReminders";
 export { default as InstructorSchedule } from "./InstructorSchedule";
 export { default as InstructorCourseGrades } from "./InstructorCourseGrades";
 export { default as InstructorCourseComplaints } from "./InstructorCourseComplaints";
+export { default as InstructorCourseExcuses } from "./InstructorCourseExcuses";
 export { default as InstructorCourseAnalytics } from "./InstructorCourseAnalytics";
 export { default as InstructorDashboard } from "./InstructorDashboard";

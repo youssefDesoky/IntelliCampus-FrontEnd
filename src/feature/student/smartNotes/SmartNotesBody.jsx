@@ -35,7 +35,7 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
 
 
     return (
-        <>
+        <div className="flex flex-col flex-1">
             <Section className="p-4 lg:p-6 mb-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="w-full lg:w-fit flex items-center justify-between gap-4">
@@ -101,8 +101,9 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
 
             <div className={`grid ${isPhone ? "grid-cols-1" : isTablet ? (viewMode === 'list' ? "grid-cols-1" : "grid-cols-2") : (viewMode === 'grid-3' ? "grid-cols-3" : "grid-cols-2")} gap-6 mb-4`}>
                 {notes.length === 0 ? (
-                    <div className="col-span-full flex items-center justify-center py-12">
-                        <p className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark">No notes yet. Create one to get started!</p>
+                    <div className="col-span-full flex flex-col items-center justify-center min-h-[60vh] text-center">
+                        <p className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No notes yet</p>
+                        <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Create one to get started!</p>
                     </div>
                 ) : (
                     notes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((note) => (
@@ -124,6 +125,6 @@ export default function SmartNotesBody({ notes=[], isPhone, isTablet, viewMode, 
             {totalPages > 1 && notes.length > 0 && (
                 <PaginationButtons buttonsNumber={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />
             )}
-        </>
+        </div>
     );
 }

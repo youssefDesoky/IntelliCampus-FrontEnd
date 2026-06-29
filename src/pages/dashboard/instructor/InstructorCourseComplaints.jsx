@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { fetchCourseComplaints, updateComplaintStatus } from "../../../feature/instructor/services/gradesApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
-import { ExclamationIcon, CheckIcon, XIcon, BrainIcon, FilePenIcon, ChartBarIcon, ClockIcon } from "../../../components/ui/icons";
+import { ExclamationIcon, CheckIcon, XIcon, BrainIcon, FilePenIcon, ChartBarIcon, ClockIcon, ArrowLeftIcon } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import TextArea from "../../../components/ui/TextArea";
@@ -44,6 +44,7 @@ export default function InstructorCourseComplaints() {
     const { showError } = useError();
     const { showToast } = useToast();
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     const [selectedComplaint, setSelectedComplaint] = useState(null);
     const [responseText, setResponseText] = useState("");
@@ -116,11 +117,18 @@ export default function InstructorCourseComplaints() {
     const pendingCount = complaints.filter((c) => c.status === "pending").length;
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
+        <div className="flex flex-col flex-1">
+            <div className="flex items-center gap-3 mb-4">
+                <button
+                    type="button"
+                    onClick={() => navigate("../grades")}
+                    className="shrink-0 p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+                >
+                    <ArrowLeftIcon size={20} />
+                </button>
+                <div className="flex-1 flex items-center justify-between min-w-0">
                     <h2 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Grade Complaints</h2>
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mt-0.5">
+                    <p className="shrink-0 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         {complaints.length} complaint{complaints.length !== 1 ? "s" : ""}
                         {pendingCount > 0 ? ` (${pendingCount} pending)` : ""}
                     </p>
@@ -128,10 +136,7 @@ export default function InstructorCourseComplaints() {
             </div>
 
             {complaints.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-12 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                        <ExclamationIcon size={24} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                    </div>
+                <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
                     <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No complaints</h3>
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         No grade complaints have been filed for this course yet.

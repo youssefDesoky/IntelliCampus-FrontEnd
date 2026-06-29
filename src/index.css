@@ -90,7 +90,7 @@
 
   --color-bg-fill-primary-active-light: rgb(74 144 226);
   --color-bg-fill-primary-active-dark: rgb(74 144 226);
-  --color-bg-fill-secondary-active-light: rgb(245 247 250);
+  --color-bg-fill-secondary-active-light: rgb(229 231 235);
   --color-bg-fill-secondary-active-dark: rgb(15 23 42);
   --color-bg-fill-tertiary-active-light: rgb(229 231 235);
   --color-bg-fill-tertiary-active-dark: rgb(55 65 81);
@@ -102,10 +102,12 @@
   --color-bg-fill-tertiary-disabled-light: rgb(249 250 251);
   --color-bg-fill-tertiary-disabled-dark: rgb(17 24 39);
 
-  --color-bg-fill-primary-hover-light: rgb(236 238 241);
+  --color-bg-fill-primary-hover-light: rgb(229 231 235);
   --color-bg-fill-primary-hover-dark: rgb(31 41 55);
-  --color-bg-fill-secondary-hover-light: rgb(236 238 241);
+  --color-bg-fill-secondary-hover-light: rgb(229 231 235);
   --color-bg-fill-secondary-hover-dark: rgb(26 34 48);
+  --color-bg-fill-accent-hover-light: rgb(37 99 235);
+  --color-bg-fill-accent-hover-dark: rgb(96 165 250);
   --color-bg-fill-tertiary-hover-light: rgb(249 250 251);
   --color-bg-fill-tertiary-hover-dark: rgb(55 65 81);
 
@@ -344,6 +346,10 @@
    Used where instant visual changes are required (e.g., table row hover). */
 .no-transitions, .no-transitions * {
   transition: none !important;
+}
+
+svg:focus, svg *:focus {
+  outline: none;
 }
 
 html, body, #root {

@@ -98,7 +98,7 @@ export default function PerformanceCard({ user = {}, loading = false }) {
                     </p>
                 </div>
                 <button
-                    onClick={() => navigate("/courses", { state: { showTranscript: true } })}
+                    onClick={() => navigate("/courses/transcript")}
                     className="flex items-center gap-1 text-[11px] font-semibold text-text-accent-active-light dark:text-text-accent-active-dark hover:underline"
                 >
                     Full transcript

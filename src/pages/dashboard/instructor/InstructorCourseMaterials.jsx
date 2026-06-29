@@ -94,7 +94,7 @@ export default function InstructorCourseMaterials() {
     const displayFolders = course.folders || [];
 
     return (
-        <>
+        <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                     Materials
@@ -170,17 +170,13 @@ export default function InstructorCourseMaterials() {
 
             {/* Folder List */}
             {displayFolders.length === 0 ? (
-                <div className="mt-10 flex flex-col items-center justify-center py-16 text-center">
+                <div className="flex flex-1 flex-col items-center justify-center min-h-[60vh] text-center">
                     <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                         No folders added yet
                     </h3>
-                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md mb-6">
+                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
                         Start building your course by adding a folder and uploading materials.
                     </p>
-                    <Button variant="primary" onClick={() => setShowAddFolder(true)}>
-                        <PlusIcon size={18} /                    >
-                        <span className="hidden sm:inline">Add First Folder</span>
-                    </Button>
                 </div>
             ) : (
                 displayFolders.map((folder) => (
@@ -194,6 +190,6 @@ export default function InstructorCourseMaterials() {
                     />
                 ))
             )}
-        </>
+        </div>
     );
 }

@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOutletContext, useRouteLoaderData } from "react-router-dom";
+
 import { fetchCourseAnnouncements } from "../../../../course/components/announcements";
 import CourseAnnouncementCard from "../../../../course/components/announcements/CourseAnnouncementCard";
-
-
+import { CourseAnnouncementsSkeleton } from "./SkeletonLoader";
 
 export default function CourseAnnouncements() {
     const user = useRouteLoaderData("root");
@@ -29,12 +29,12 @@ export default function CourseAnnouncements() {
     });
 
     if (loading) {
-        return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading announcements...</p>;
+        return <CourseAnnouncementsSkeleton />;
     }
 
     if (announcements.length === 0) {
         return (
-            <div className="rounded-2xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-6 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
+            <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
                 <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No announcements yet</h3>
                 <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                     There are no announcements for this course right now.

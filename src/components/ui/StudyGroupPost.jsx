@@ -7,6 +7,7 @@ import PenSquareIcon from "./icons/PenSquareIcon";
 import TrashIcon from "./icons/TrashIcon";
 import { fetchSinglePost, addComment } from "../../feature/student/courses/courseDetail/community/communityService";
 import { useError } from '../../contexts/ErrorContext.jsx';
+import Dialog from './Dialog';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
@@ -153,7 +154,6 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
     };
 
     const handleDeleteConfirm = async () => {
-        setShowDeleteConfirm(false);
         try {
             await onDelete?.(postData.id);
         } catch (err) {
@@ -284,30 +284,17 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
             </div>
 
             {showDeleteConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowDeleteConfirm(false)}>
-                    <div className="rounded-2xl p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark shadow-xl max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                            Delete post
-                        </h3>
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mb-5">
-                            Are you sure you want to delete this post? This action cannot be undone.
-                        </p>
-                        <div className="flex items-center justify-end gap-2">
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                className="px-4 py-2 rounded-lg text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDeleteConfirm}
-                                className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <Dialog
+                    isOpen={showDeleteConfirm}
+                    variant="warning"
+                    title="Delete Post"
+                    onClose={() => setShowDeleteConfirm(false)}
+                    onConfirm={handleDeleteConfirm}
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                >
+                    Are you sure you want to delete this post? This action cannot be undone.
+                </Dialog>
             )}
 
             <div

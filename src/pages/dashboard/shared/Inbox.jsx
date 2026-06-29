@@ -6,7 +6,7 @@ import { useDeviceType } from '../../../hooks';
 import * as signalR from "@microsoft/signalr";
 import { InboxMessageListSkeleton } from "./SkeletonLoader";
 import { fetchInboxMessages, fetchSentMessages, deleteMessage, sendMessage } from "../../../api/messages";
-import { EnvelopIcon, PaperPlaneIcon, TrashIcon, ImportIcon, XIcon, PenSquareIcon } from "../../../components/ui/icons";
+import { EnvelopIcon, PaperPlaneIcon, TrashIcon, MessageSlashIcon, XIcon, PenSquareIcon } from "../../../components/ui/icons";
 import InputItem from "../../../components/form/InputItem";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import Button from "../../../components/ui/Button";
@@ -434,45 +434,47 @@ export default function Inbox() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-14rem)] md:h-[calc(100vh-10rem)]">
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3">
-          <EnvelopIcon className="w-6 h-6 text-text-blue-default-light dark:text-text-blue-default-dark" />
-          <h1 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
-            Messages
-          </h1>
-          {unreadCount > 0 && (
-            <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-              ({unreadCount} unread)
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => { setRecipientEmail(""); setSubject(""); setBody(""); setShowCompose(true); }}
-            className={`flex items-center justify-center gap-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark hover:opacity-90 transition-opacity ${isPhone ? "p-2" : "px-4 py-2"}`}
-          >
-            <PenSquareIcon className="w-4 h-4" />
-            {!isPhone && "Send Email"}
-          </button>
-
-          <div className={`relative ${isPhone ? "w-40" : "sm:w-64"}`}>
-            <input
-              type="text"
-              placeholder="Search messages..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-2 pr-8 text-sm rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark outline-none focus:border-text-blue-default-light dark:focus:border-text-blue-default-dark"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-                aria-label="Clear search"
-              >
-                <XIcon className="w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
-              </button>
+      <div className="flex flex-col gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <EnvelopIcon className="w-6 h-6 text-text-blue-default-light dark:text-text-blue-default-dark" />
+            <h1 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
+              Messages
+            </h1>
+            {unreadCount > 0 && (
+              <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                ({unreadCount} unread)
+              </span>
             )}
+          </div>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => { setRecipientEmail(""); setSubject(""); setBody(""); setShowCompose(true); }}
+              className={`flex items-center justify-center gap-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark hover:opacity-90 transition-opacity ${isPhone ? "p-2" : "px-4 py-2"}`}
+            >
+              <PenSquareIcon className="w-4 h-4" />
+              {!isPhone && "Send Email"}
+            </button>
+
+            <div className="relative flex-1 sm:flex-none sm:w-64">
+              <input
+                type="text"
+                placeholder="Search messages..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-2 pr-8 text-sm rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark outline-none focus:border-text-blue-default-light dark:focus:border-text-blue-default-dark"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  aria-label="Clear search"
+                >
+                  <XIcon className="w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -487,20 +489,20 @@ export default function Inbox() {
               onClick={() => setActiveFilter(key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors shrink-0 ${
                 isActive
-                  ? "bg-text-blue-default-light dark:bg-text-blue-default-dark text-white"
-                  : "text-text-secondary-active-light dark:text-text-secondary-active-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark"
+                    ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white"
+                    : "text-text-secondary-active-light dark:text-text-secondary-active-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark"
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
               {label}
               {count > 0 && (
-                <span
-                  className={`text-xs px-1.5 rounded-full ${
-                    isActive
-                      ? "bg-white/20"
-                      : "bg-text-blue-default-light dark:bg-text-blue-default-dark text-white"
-                  }`}
-                >
+                  <span
+                    className={`text-xs px-1.5 rounded-full ${
+                      isActive
+                        ? "bg-white/20"
+                        : "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white"
+                    }`}
+                  >
                   {count}
                 </span>
               )}
@@ -514,7 +516,7 @@ export default function Inbox() {
           <InboxMessageListSkeleton />
         ) : filteredThreads.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-text-secondary-default-light dark:text-text-secondary-default-dark gap-2">
-            <ImportIcon className="w-12 h-12 opacity-40" />
+            <MessageSlashIcon className="w-12 h-12 opacity-40" />
             <p className="text-sm">{getEmptyStateMessage(activeFilter, searchQuery)}</p>
           </div>
         ) : (

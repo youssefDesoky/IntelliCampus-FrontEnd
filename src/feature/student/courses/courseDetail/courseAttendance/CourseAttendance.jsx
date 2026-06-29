@@ -12,6 +12,7 @@ import AttendanceBreakdown from "./AttendanceBreakdown";
 import AttendanceExcuseCard from "./AttendanceExcuseCard";
 import { useError } from "../../../../../contexts/ErrorContext.jsx";
 import { fetchMyAttendance, submitExcuse } from "../../../services/profileApi";
+import { CourseAttendanceSkeleton } from "./SkeletonLoader";
 
 export default function CourseAttendance() {
     const fileInputRef = useRef(null);
@@ -93,16 +94,12 @@ export default function CourseAttendance() {
     };
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading attendance...</p>
-            </div>
-        );
+        return <CourseAttendanceSkeleton />;
     }
 
     if (!attendanceData) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
                 <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                     No attendance data available
                 </h3>

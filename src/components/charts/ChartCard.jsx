@@ -22,7 +22,7 @@ export default function ChartCard({
   const showDownload = (downloadUrl) || (chartData?.length && chartType && categoryField && series?.length);
 
   return (
-    <div className={`p-6 h-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
+    <div className={`p-6 h-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg outline-none ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           {icon && (
@@ -45,7 +45,7 @@ export default function ChartCard({
         {showDownload && (
           <button
             onClick={handleDownload}
-            className="p-1.5 rounded-lg text-text-tertiary-default-light dark:text-text-tertiary-default-dark hover:text-text-accent-default-light dark:hover:text-text-accent-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+            className="p-1.5 rounded-lg text-text-tertiary-default-light dark:text-text-tertiary-default-dark hover:text-text-accent-default-light dark:hover:text-text-accent-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark focus:outline-none transition-colors"
             title="Download chart"
           >
             <DownloadIcon size={18} />

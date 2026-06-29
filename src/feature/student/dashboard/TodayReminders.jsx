@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 
 import TodayReminderItem from "./upcomingDeadlines/TodayReminderItem";
 
-import { BellIconDark, ArrowRightIcon } from "../../../components/ui/icons";
+import { BellIconDark, BellSlashIcon, ArrowRightIcon } from "../../../components/ui/icons";
 import { fetchRemindersByDay } from "../remindersApi";
 
 export default function TodayReminders({ className }) {
@@ -14,7 +14,7 @@ export default function TodayReminders({ className }) {
     });
 
     return (
-        <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg ${className}`}>
+        <div className={`flex flex-col p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg h-full ${className}`}>
             <div id="today-reminders-header" className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold">Today's Reminders</h2>
                 <BellIconDark className="w-6 h-6" />
@@ -27,9 +27,9 @@ export default function TodayReminders({ className }) {
                         <p className="text-center">Loading reminders...</p>
                     </div>
                 ) : reminders.length === 0 ? (
-                    <div className="mb-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
+                    <div className="flex-1 mb-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
                         <div className="flex flex-col items-center justify-center h-full p-6 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                            <BellIconDark className="w-12 h-12 mb-4" />
+                            <BellSlashIcon className="w-12 h-12 mb-4" />
                             <p className="text-center">No reminders for today</p>
                         </div>
                     </div>

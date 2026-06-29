@@ -6,7 +6,7 @@ import Button from "../../../../components/ui/Button";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import { TranscriptSkeleton } from "./SkeletonLoader";
 import { fetchTranscript, exportTranscriptPdf } from "../gradeApi";
-import { DownloadIcon } from "../../../../components/ui/icons";
+import { DownloadIcon, FileLinesIcon } from "../../../../components/ui/icons";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 export default function TranscriptView() {
@@ -63,12 +63,13 @@ export default function TranscriptView() {
 
     if (transcript.length === 0) {
         return (
-            <Section className="p-6">
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+            <Section className="p-6 flex flex-col flex-1">
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                    <FileLinesIcon className="w-12 h-12 mb-4 opacity-40" />
+                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                         No transcript data available
                     </h3>
-                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
+                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
                         You have not completed any courses yet.
                     </p>
                 </div>
@@ -87,10 +88,11 @@ export default function TranscriptView() {
                         Total Credits: {totalCredits}
                     </p>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-nowrap items-center gap-2 w-full">
                     {levelOptions.length > 0 && (
                         <FilterDropdown
                             label="Level"
+                            className="flex-1"
                             options={levelOptions}
                             selectedValues={filterLevel}
                             onChange={setFilterLevel}
@@ -99,6 +101,7 @@ export default function TranscriptView() {
                     {semesterOptions.length > 0 && (
                         <FilterDropdown
                             label="Semester"
+                            className="flex-1"
                             options={semesterOptions}
                             selectedValues={filterSemester}
                             onChange={setFilterSemester}
@@ -107,12 +110,14 @@ export default function TranscriptView() {
                     <Button
                         variant="primary"
                         size="sm"
+                        width="w-full"
+                        className="flex-1 shrink"
                         onClick={handleExport}
                         loading={exporting}
                         loadingText="Exporting"
                         startIcon={<DownloadIcon className="w-4 h-4" />}
                     >
-                        Export PDF
+                        <span className="hidden sm:inline">Export PDF</span>
                     </Button>
                 </div>
             </div>

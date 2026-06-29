@@ -6,7 +6,7 @@ import BoxData from "../../../components/ui/BoxData";
 import Section from "../../../components/ui/Section";
 import {
   BookIcon, ClipboardCheckIcon, UsersIcon,
-  BullHornIcon, ChartBarIcon, BellIconDark, ArrowRightIcon,
+  BullHornIcon, ChartBarIcon, BellIconDark, ArrowRightIcon, NewspaperSlashIcon,
 } from "../../../components/ui/icons";
 
 import { AttendanceTrendChart } from "../../../feature/student/dashboard/charts";
@@ -120,8 +120,9 @@ export default function InstructorDashboard() {
                 </li>
               ))
             ) : (
-              <li className="p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                No news available
+              <li className="p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark flex flex-col items-center justify-center gap-2">
+                <NewspaperSlashIcon className="w-12 h-12 opacity-40" />
+                <p className="text-sm">No news available</p>
               </li>
             )}
           </menu>

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
 import { API_URL } from "../../../config/api";
+import { InstructorProfileSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import AccountControlsCard from "../../../feature/student/profile/AccountControlsCard";
 import InstructorIdentityCard from "../../../feature/instructor/profile/InstructorIdentityCard";
 import ProfessionalInfoCard from "../../../feature/instructor/profile/ProfessionalInfoCard";
@@ -45,6 +46,10 @@ export default function InstructorProfile() {
         staleTime: 10 * 60 * 1000,
     });
 
+    if (profileLoading) {
+        return <InstructorProfileSkeleton />;
+    }
+
     if (!userData && !authUser) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -56,8 +61,16 @@ export default function InstructorProfile() {
     return (
         <div className="px-4 lg:px-8 py-6 space-y-6">
             <div className="mx-auto max-w-7xl space-y-6">
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_2fr] items-stretch">
-                    <div className="flex h-full flex-col gap-6 lg:sticky lg:top-6 self-start">
+                {/* Mobile layout: personal → professional → office hours → account controls */}
+                <div className="flex flex-col gap-6 lg:hidden">
+                    <InstructorIdentityCard user={userData} onProfileUpdate={refetch} />
+                    <ProfessionalInfoCard user={userData} loading={profileLoading} />
+                    <OfficeHoursCard user={userData} />
+                    <AccountControlsCard className="shrink-0" />
+                </div>
+                {/* Large layout: left col (identity + account), right col (professional + office hours) */}
+                <div className="hidden lg:grid grid-cols-[1fr_2fr] gap-6 items-stretch">
+                    <div className="flex h-full flex-col gap-6 sticky top-6 self-start">
                         <InstructorIdentityCard user={userData} onProfileUpdate={refetch} />
                         <AccountControlsCard className="shrink-0" />
                     </div>

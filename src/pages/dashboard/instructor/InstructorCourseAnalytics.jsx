@@ -10,6 +10,7 @@ import PerformanceOverTimeChart from "../../../feature/instructor/dashboard/char
 import StudentScoreHeatmap from "../../../feature/instructor/dashboard/charts/StudentScoreHeatmap";
 import { CourseWorkBreakdownChart } from "../../../feature/instructor/dashboard/charts";
 import { downloadBlob } from "../../../api/apiClient";
+import { CourseAnalyticsSkeleton } from "../../../feature/instructor/SkeletonLoader";
 
 const tooltipStyle = {
     backgroundColor: "var(--color-bg-surface-primary-default-light)",
@@ -72,6 +73,10 @@ export default function InstructorCourseAnalytics() {
         const filename = `course-analytics-${courseId}.pdf`;
         await downloadBlob(downloadUrl, filename);
     };
+
+    if (!MOCK_DATA) {
+        return <CourseAnalyticsSkeleton />;
+    }
 
     return (
         <div className="space-y-6">

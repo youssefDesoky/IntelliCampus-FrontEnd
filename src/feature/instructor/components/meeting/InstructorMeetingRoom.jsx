@@ -317,8 +317,8 @@ export default function MeetingRoom() {
 
     return (
         <Section>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[80vh]">
+                <div className="lg:col-span-2 flex flex-col gap-6">
                     {isInstructor && (
                         <BaseComponent title="Schedule a New Meeting" contentClassName="space-y-4">
                             <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] items-end">
@@ -378,12 +378,13 @@ export default function MeetingRoom() {
 
                     <BaseComponent
                         title={isInstructor ? "Upcoming Meetings" : "Scheduled Meetings"}
-                        contentClassName="space-y-3"
+                        contentClassName={meetings.length === 0 || (upcomingMeetings.length === 0 && activeMeetingsList.length === 0) ? "space-y-3 flex-1 flex flex-col" : "space-y-3"}
+                        className={meetings.length === 0 || (upcomingMeetings.length === 0 && activeMeetingsList.length === 0) ? "flex-1 flex flex-col" : ""}
                     >
                         {loading ? (
                             <MeetingListSkeleton />
                         ) : meetings.length === 0 ? (
-                            <div className="text-center py-10 border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl">
+                            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-6 text-center">
                                 <VideoSlashIcon size={48} className="mx-auto text-text-tertiary-default-light dark:text-text-tertiary-default-dark mb-3" />
                                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark font-medium">
                                     No meetings scheduled yet
@@ -395,7 +396,7 @@ export default function MeetingRoom() {
                                 )}
                             </div>
                         ) : upcomingMeetings.length === 0 && activeMeetingsList.length === 0 ? (
-                            <div className="text-center py-10 border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl">
+                            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-6 text-center">
                                 <CalendarCheckIcon size={48} className="mx-auto text-text-tertiary-default-light dark:text-text-tertiary-default-dark mb-3" />
                                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark font-medium">
                                     No upcoming meetings

@@ -6,6 +6,7 @@ import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
+import Dialog from "../../../components/ui/Dialog";
 import MaterialPreview from "../../../components/ui/MaterialPreview";
 import DateTimeInput from "../../../components/form/DateTimeInput";
 import NumberInput from "../../../components/form/NumberInput";
@@ -67,6 +68,7 @@ export default function InstructorCourseAssignments() {
     const [selectedAssignmentTotalPoints, setSelectedAssignmentTotalPoints] = useState(null);
     const [gradeModal, setGradeModal] = useState(null);
     const [gradeScore, setGradeScore] = useState("");
+    const [deletingAssignment, setDeletingAssignment] = useState(null);
     const [gradeFeedback, setGradeFeedback] = useState("");
     const [isGrading, setIsGrading] = useState(false);
     
@@ -274,15 +276,19 @@ export default function InstructorCourseAssignments() {
         }
     };
     
-    const handleDeleteAssignment = async (assignmentId) => {
-        const confirmed = window.confirm("Delete this assignment?");
-        if (!confirmed) return;
-        
+    const handleDeleteClick = (assignment) => {
+        setDeletingAssignment(assignment);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deletingAssignment) return;
         try {
-            await deleteInstructorAssignment(assignmentId);
-            queryClient.setQueryData(["instructorCourseAssignments", courseId], (prev = []) => prev.filter((a) => String(a.id) !== String(assignmentId)));
+            await deleteInstructorAssignment(deletingAssignment.id);
+            queryClient.setQueryData(["instructorCourseAssignments", courseId], (prev = []) => prev.filter((a) => String(a.id) !== String(deletingAssignment.id)));
         } catch (err) {
             showError(err.message || "Failed to delete assignment.");
+        } finally {
+            setDeletingAssignment(null);
         }
     };
     
@@ -291,8 +297,8 @@ export default function InstructorCourseAssignments() {
     }
     
     return (
-        <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col flex-1">
+        <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                 Assignments
             </h2>
@@ -357,14 +363,11 @@ export default function InstructorCourseAssignments() {
         </BaseFormComponent>
         
         {sortedAssignments.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-12 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                <FilePenIcon size={24} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-            </div>
-            <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No assignments yet</h3>
-            <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-            Create your first assignment for this course.
-            </p>
+            <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
+                <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No assignments yet</h3>
+                <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                    Create your first assignment for this course.
+                </p>
             </div>
         ) : (
             <div className="space-y-4">
@@ -447,7 +450,7 @@ export default function InstructorCourseAssignments() {
                     size="sm"
                     startIcon={<TrashIcon size={16} />}
                     className="flex-1 sm:flex-none sm:w-auto justify-center text-text-danger-default-light dark:text-text-danger-default-dark"
-                    onClick={() => handleDeleteAssignment(assignment.id)}
+                    onClick={() => handleDeleteClick(assignment)}
                     >
                     <span className="hidden sm:inline">Delete</span>
                     </Button>
@@ -686,6 +689,17 @@ export default function InstructorCourseAssignments() {
             </div>
             </ModelOverlay>
         )}
+            <Dialog
+                isOpen={deletingAssignment !== null}
+                variant="warning"
+                title="Delete Assignment"
+                onClose={() => setDeletingAssignment(null)}
+                onConfirm={handleDeleteConfirm}
+                confirmText="Delete"
+                cancelText="Cancel"
+            >
+                Are you sure you want to delete &ldquo;{deletingAssignment?.title}&rdquo;? This action cannot be undone.
+            </Dialog>
         </div>
     );
 }

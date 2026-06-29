@@ -23,6 +23,7 @@ import {
     savePreferences,
 } from "../../../feature/student/services/specializationApi";
 import { useError } from "../../../contexts/ErrorContext";
+import { SpecializationPreferenceSkeleton } from "../../../feature/student/specializationPreference/SkeletonLoader";
 
 function GripIcon({ size = 14 }) {
     return (
@@ -34,28 +35,6 @@ function GripIcon({ size = 14 }) {
             <circle cx="4" cy="11.5" r="1.2" />
             <circle cx="10" cy="11.5" r="1.2" />
         </svg>
-    );
-}
-
-function Skeleton() {
-    return (
-        <div className="space-y-6 animate-pulse">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {[1, 2].map((col) => (
-                    <div key={col} className="space-y-3">
-                        <div className="h-8 w-44 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg" />
-                        <div className="h-10 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl" />
-                        {[1, 2, 3].map((i) => (
-                            <div
-                                key={i}
-                                className="h-16 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl"
-                            />
-                        ))}
-                    </div>
-                ))}
-            </div>
-            <div className="h-16 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl" />
-        </div>
     );
 }
 
@@ -72,43 +51,39 @@ function EligibilityCard({ eligibility }) {
     }, [progress]);
 
     return (
-        <div className="relative mx-auto max-w-lg overflow-hidden rounded-2xl bg-gradient-to-br from-bg-surface-secondary-default-light to-bg-surface-primary-default-light dark:from-bg-surface-secondary-default-dark dark:to-bg-surface-primary-default-dark p-[1px]">
-            <div className={`rounded-2xl p-8 ${
-                eligible
-                    ? "bg-gradient-to-br from-bg-fill-success-muted-light/40 to-bg-surface-primary-default-light dark:from-bg-fill-success-muted-dark/40 dark:to-bg-surface-primary-default-dark"
-                    : "bg-gradient-to-br from-bg-fill-warning-muted-light/40 to-bg-surface-primary-default-light dark:from-bg-fill-warning-muted-dark/40 dark:to-bg-surface-primary-default-dark"
-            }`}>
-                <div className="flex flex-col items-center text-center">
-                    <div className={`mb-5 flex h-16 w-16 items-center justify-center rounded-full shadow-lg ${
-                        eligible
-                            ? "bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark text-white"
-                            : "bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark text-white"
-                    }`}>
-                        {eligible ? <CheckIcon size={26} /> : <OrderedListIcon size={26} />}
+        <div className="flex flex-1 items-center justify-center w-full h-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-8">
+            <div className="flex flex-col items-center text-center max-w-lg w-full">
+                <div className={`mb-6 flex h-20 w-20 items-center justify-center rounded-2xl ${
+                    eligible
+                        ? "bg-bg-fill-success-muted-light text-text-success-default-light dark:bg-bg-fill-success-muted-dark dark:text-text-success-default-dark"
+                        : "bg-bg-fill-warning-muted-light text-text-warning-default-light dark:bg-bg-fill-warning-muted-dark dark:text-text-warning-default-dark"
+                }`}>
+                    {eligible ? <CheckIcon size={32} /> : <OrderedListIcon size={32} />}
+                </div>
+
+                <h2 className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+                    {eligible ? "You're eligible to submit your preferences" : "Not eligible yet"}
+                </h2>
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm mb-8 max-w-sm">
+                    {eligible
+                        ? `You've met the credit hour requirement — rank your ${targetLabel} below.`
+                        : `You'll need ${remaining} more credit hour${remaining === 1 ? "" : "s"} before you can submit.`}
+                </p>
+
+                <div className="w-full space-y-3">
+                    <div className="relative h-4 w-full overflow-hidden rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                        <div
+                            className={`h-full rounded-full transition-all duration-1000 ease-out ${
+                                eligible
+                                    ? "bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark"
+                                    : "bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark"
+                            }`}
+                            style={{ width: `${progressWidth}%` }}
+                        />
                     </div>
-                    <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                        {eligible ? "You're eligible to submit your preferences" : "Not eligible yet"}
-                    </h2>
-                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm mb-6 max-w-sm">
-                        {eligible
-                            ? `You've met the credit hour requirement — rank your ${targetLabel} below.`
-                            : `You'll need ${remaining} more credit hour${remaining === 1 ? "" : "s"} before you can submit.`}
-                    </p>
-                    <div className="w-full space-y-2">
-                        <div className="relative h-3 w-full overflow-hidden rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-                            <div
-                                className={`h-full rounded-full transition-all duration-1000 ease-out ${
-                                    eligible
-                                        ? "bg-gradient-to-r from-bg-fill-success-default-light to-emerald-400 dark:from-bg-fill-success-default-dark dark:to-emerald-500"
-                                        : "bg-gradient-to-r from-bg-fill-warning-default-light to-amber-400 dark:from-bg-fill-warning-default-dark dark:to-amber-500"
-                                }`}
-                                style={{ width: `${progressWidth}%` }}
-                            />
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            <span className="font-medium">{eligibility.passedHours} hrs completed</span>
-                            <span className="font-medium">{eligibility.minRequired} hrs required</span>
-                        </div>
+                    <div className="flex items-center justify-between text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                        <span className="font-medium">{eligibility.passedHours} hrs completed</span>
+                        <span className="font-medium">{eligibility.minRequired} hrs required</span>
                     </div>
                 </div>
             </div>
@@ -400,7 +375,7 @@ export default function SpecializationPreference() {
         return (
             <>
                 <PageHeader title={t("specializationPreference")} subtitle={`Rank and order your preferred ${labelLower}`} />
-                <Skeleton />
+                <SpecializationPreferenceSkeleton />
             </>
         );
     }
@@ -417,7 +392,7 @@ export default function SpecializationPreference() {
             {!eligibility?.eligible ? (
                 <EligibilityCard eligibility={eligibility} />
             ) : isLoading ? (
-                <Skeleton />
+                <SpecializationPreferenceSkeleton />
             ) : (
                 <>
                     <div className="flex items-center justify-between gap-2 rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light/90 dark:bg-bg-surface-primary-default-dark/90 backdrop-blur-xl p-3 shadow-sm sm:gap-3 sm:p-5">

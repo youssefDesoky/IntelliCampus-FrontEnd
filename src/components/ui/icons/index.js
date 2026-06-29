@@ -20,6 +20,7 @@ export { default as BellSlashIcon } from './BellSlashIcon.jsx';
 export { default as CalendarCheckIcon } from './CalendarCheckIcon.jsx';
 export { default as CalendarDaysIcon  } from './CalendarDaysIcon.jsx';
 export { default as CalendarIcon } from './CalendarIcon.jsx';
+export { default as CalendarSlashIcon } from './CalendarSlashIcon.jsx';
 export { default as CameraIcon } from './CameraIcon.jsx';
 export { default as ChartLineIcon } from './ChartLineIcon.jsx';
 export { default as ChartBarIcon } from './ChartBarIcon.jsx';
@@ -77,11 +78,15 @@ export { default as LinkIcon } from './LinkIcon.jsx';
 export { default as LargeSmallIcon } from './LargeSmallIcon.jsx';
 
 export { default as MessageBoarderIcon } from './MessageBoarderIcon.jsx';
+export { default as MessageSlashIcon } from './MessageSlashIcon.jsx';
 export { default as MoonIcon } from './MoonIcon.jsx';
 export { default as MailIconDark } from './MailIconDark.jsx';
 export { default as MailIconLight } from './MailIconLight.jsx';
 export { default as MicIcon } from './MicIcon.jsx';
 export { default as MicSlashIcon } from './MicSlashIcon.jsx';
+
+export { default as NewspaperIcon } from './NewspaperIcon.jsx';
+export { default as NewspaperSlashIcon } from './NewspaperSlashIcon.jsx';
 
 export { default as OrderedListIcon } from './OrderedListIcon.jsx';
 export { default as OpenInNewTabIcon } from './OpenInNewTabIcon.jsx';

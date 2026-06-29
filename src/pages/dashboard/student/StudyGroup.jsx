@@ -5,7 +5,6 @@ import StudyGroupPost from "../../../components/ui/StudyGroupPost";
 import TextArea from "../../../components/ui/TextArea";
 
 import {
-    CommentsIcon,
     PaperPlaneIcon,
 } from "../../../components/ui/icons";
 import { fetchCommunityPosts, createCommunityPost, toggleUpvote, updateCommunityPost, deleteCommunityPost } from "../../../feature/student/courses/courseDetail/community/communityService";
@@ -102,9 +101,13 @@ export default function StudyGroup() {
 
     const handleDelete = async (postId) => {
         if (!courseId) return;
-        await deleteCommunityPost(courseId, postId);
-        const data = await fetchCommunityPosts(courseId);
-        setPosts(extractPosts(data).map(mapPost));
+        try {
+            await deleteCommunityPost(courseId, postId);
+            const data = await fetchCommunityPosts(courseId);
+            setPosts(extractPosts(data).map(mapPost));
+        } catch (err) {
+            showError(err.message);
+        }
     };
 
     if (!course) {
@@ -158,10 +161,7 @@ export default function StudyGroup() {
                             />
                         ))
                     ) : (
-                        <div className="rounded-2xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-16 text-center">
-                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                                <CommentsIcon className="h-6 w-6 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                            </div>
+                        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
                             <p className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No posts yet</p>
                             <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Be the first to start a discussion.</p>
                         </div>
