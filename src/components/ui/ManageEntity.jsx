@@ -92,8 +92,11 @@ export default function ManageEntity({
 
   const { data: fetchResult, isLoading, isFetching, error, refetch } = useQuery({
     queryKey,
-    queryFn: () => fetchItems(),
+    queryFn,
   });
+
+  const rawItems = fetchResult?.data ?? fetchResult ?? [];
+  const serverTotalCount = fetchResult?.totalCount ?? null;
 
   useEffect(() => {
     if (error) showError(error.message);
