@@ -58,6 +58,15 @@ function toDisplay(d) {
     });
 }
 
+/** Get today's date as YYYY-MM-DD. */
+function getTodayISO() {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DateInput({
@@ -69,7 +78,7 @@ export default function DateInput({
     isDisabled = false,
     value = "",
     onChange,
-    minDate,   // YYYY-MM-DD string
+    minDate = getTodayISO(),   // YYYY-MM-DD string – defaults to today so past dates are disabled
     maxDate,   // YYYY-MM-DD string
 }) {
     const [isOpen, setIsOpen]       = useState(false);
@@ -115,21 +124,34 @@ export default function DateInput({
 
     // ── Position dropdown ─────────────────────────────────────────────────────
     const updatePosition = () => {
-        if (triggerRef.current) {
-            const rect = triggerRef.current.getBoundingClientRect();
-            setCoords({
-                top: rect.bottom,
-                left: rect.left,
-            });
+        if (!triggerRef.current) return;
+        const rect = triggerRef.current.getBoundingClientRect();
+        let top = rect.bottom;
+        let left = rect.left;
+
+        if (dropdownRef.current) {
+            const ddRect = dropdownRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            if (spaceBelow < ddRect.height && spaceAbove > ddRect.height) {
+                top = rect.top - ddRect.height;
+            }
+            if (left + ddRect.width > window.innerWidth) {
+                left = Math.max(8, window.innerWidth - ddRect.width - 8);
+            }
+            if (left < 8) left = 8;
         }
+
+        setCoords({ top, left });
     };
 
     useEffect(() => {
         if (!isOpen) return;
-        updatePosition();
+        const id = requestAnimationFrame(updatePosition);
         window.addEventListener("scroll", updatePosition, true);
         window.addEventListener("resize", updatePosition);
         return () => {
+            cancelAnimationFrame(id);
             window.removeEventListener("scroll", updatePosition, true);
             window.removeEventListener("resize", updatePosition);
         };
@@ -287,6 +309,7 @@ export default function DateInput({
                         "rounded-xl border shadow-xl p-4",
                         "bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark",
                         "border-border-primary-default-light dark:border-border-primary-default-dark",
+                        "max-h-[calc(100vh-2rem)] overflow-y-auto",
                     ].join(" ")}
                     style={{
                         position: 'fixed',

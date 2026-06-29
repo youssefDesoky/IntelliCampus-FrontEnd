@@ -12,20 +12,15 @@ import {
 
 export default function CourseCard({
     course,
+    index,
     cardType = "disabled",
     onAction,
     sectionOptions = [],
     selectedSection,
     onSectionChange,
-    isPendingRemoval = false,
 }) {
     return(
-        <div className={`min-w-90 h-55 course-card relative flex flex-col justify-between gap-4 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-sm shadow-shadow-light hover:shadow-md dark:shadow-shadow-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark ${isPendingRemoval ? "opacity-60" : ""}`}>
-            {isPendingRemoval && (
-                <span className="absolute top-2 left-2 text-xs px-2 py-1 rounded-full bg-bg-surface-danger-hover-light dark:bg-bg-surface-danger-hover-dark text-text-danger-active-light dark:text-text-danger-active-dark">
-                    Pending removal
-                </span>
-            )}
+        <div className="min-w-90 h-55 course-card relative flex flex-col justify-between gap-4 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-sm shadow-shadow-light hover:shadow-md dark:shadow-shadow-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
             <button onClick={onAction} className={`absolute top-0 left-full transform -translate-x-full p-4 font-extrabold text-text-accent-active-light dark:text-text-accent-active-dark`}>
                 { cardType === "disabled" ? 
                     <LockIconDark className="w-8 h-8 rounded-full p-1.5 bg-bg-fill-primary-active-light dark:bg-bg-fill-primary-active-dark"/> :
@@ -35,8 +30,12 @@ export default function CourseCard({
             </button>
 
             <div className="flex-1 flex flex-col justify-center space-y-2">
-                <div className="flex flex-row gap-4">
-                    <SpanRounded>{course.id}</SpanRounded>
+                <div className="flex flex-row items-center gap-3">
+                    {typeof index === 'number' && (
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-bg-fill-primary-active-light dark:bg-bg-fill-primary-active-dark text-white text-xs font-semibold">
+                            {index}
+                        </span>
+                    )}
                     <SpanRounded>{course.creditHours} Credits</SpanRounded>
                 </div>
 

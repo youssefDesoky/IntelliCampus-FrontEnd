@@ -88,7 +88,11 @@ export default function TimeInput({
 }) {
     const initFromValue = (v) => {
         const parsed = parseTime(v);
-        if (!parsed) return { hour: 12, minute: 0, period: "AM", hasValue: false };
+        if (!parsed) {
+            const now = new Date();
+            const { h, period } = to12h(now.getHours());
+            return { hour: h, minute: now.getMinutes(), period, hasValue: true };
+        }
         const { h, period } = to12h(parsed.h);
         return { hour: h, minute: parsed.m, period, hasValue: true };
     };
@@ -111,17 +115,31 @@ export default function TimeInput({
 
         const updatePosition = () => {
             const rect = triggerRef.current.getBoundingClientRect();
-            setCoords({
-                top: rect.bottom + window.scrollY,
-                left: rect.left + window.scrollX,
-            });
+            let top = rect.bottom + window.scrollY;
+            let left = rect.left + window.scrollX;
+
+            if (dropdownRef.current) {
+                const ddRect = dropdownRef.current.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const spaceAbove = rect.top;
+                if (spaceBelow < ddRect.height && spaceAbove > ddRect.height) {
+                    top = rect.top - ddRect.height + window.scrollY;
+                }
+                if (rect.left + ddRect.width > window.innerWidth) {
+                    left = Math.max(8, window.innerWidth - ddRect.width - 8) + window.scrollX;
+                }
+                if (rect.left < 8) left = 8 + window.scrollX;
+            }
+
+            setCoords({ top, left });
         };
 
-        updatePosition();
+        const id = requestAnimationFrame(updatePosition);
         window.addEventListener("scroll", updatePosition, true);
         window.addEventListener("resize", updatePosition);
 
         return () => {
+            cancelAnimationFrame(id);
             window.removeEventListener("scroll", updatePosition, true);
             window.removeEventListener("resize", updatePosition);
         };
@@ -241,6 +259,7 @@ export default function TimeInput({
                         "rounded-xl border shadow-2xl p-4 animate-in fade-in-50 slide-in-from-top-2 duration-150",
                         "bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark",
                         "border-border-primary-default-light dark:border-border-primary-default-dark",
+                        "max-h-[calc(100vh-2rem)] overflow-y-auto",
                     ].join(" ")}
                 >
                     {/* Heading */}

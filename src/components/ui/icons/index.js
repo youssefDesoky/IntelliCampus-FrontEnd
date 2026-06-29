@@ -1,5 +1,6 @@
 export { default as AngleDownIcon } from './AngleDownIcon.jsx';
 export { default as ArrowDownIcon } from './ArrowDownIcon.jsx';
+export { default as ArrowLeftIcon } from './ArrowLeftIcon.jsx';
 export { default as ArrowRightIcon } from './ArrowRightIcon.jsx';
 export { default as ArrowUpIcon } from './ArrowUpIcon.jsx';
 export { default as AlignCenterIcon } from './AlignCenterIcon.jsx';
@@ -22,6 +23,7 @@ export { default as CalendarIcon } from './CalendarIcon.jsx';
 export { default as CameraIcon } from './CameraIcon.jsx';
 export { default as ChartLineIcon } from './ChartLineIcon.jsx';
 export { default as ChartBarIcon } from './ChartBarIcon.jsx';
+export { default as CheckCircleIcon } from './CheckCircleIcon.jsx';
 export { default as CheckIcon } from './CheckIcon.jsx';
 export { default as ClipboardCheckIcon } from './ClipboardCheckIcon.jsx';
 export { default as ClockIcon } from './ClockIcon.jsx';
