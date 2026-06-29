@@ -1,7 +1,8 @@
 import apiClient from "./apiClient";
 
 export async function fetchInboxMessages() {
-  return apiClient('/api/messages/inbox');
+  const result = await apiClient('/api/messages/inbox');
+  return result?.data ?? result ?? [];
 }
 
 export async function fetchSentMessages() {

@@ -22,14 +22,14 @@ function getTypeLabel(type) {
     return type === 0 ? "Document" : type === 1 ? "Video" : type === 2 ? "Audio" : type === 3 ? "Image" : "Other";
 }
 
-export default function CourseWeekMaterialContent({ material, isFirst }) {
+export default function CourseWeekMaterialContent({ material, isFirst, highlighted = false }) {
     const [showViewer, setShowViewer] = useState(false);
     const type = getMaterialType(material);
     const downloadUrl = material.materialId ? getMaterialDownloadUrl(material.materialId) : "#";
     const viewUrl = material.fileUrl || downloadUrl;
     return (
         <>
-        <li className={`flex flex-col md:flex-row md:items-center justify-between p-4 ${!isFirst ? 'border-t' : ''} border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-all duration-200 group`}>
+        <li id={`material-${material.materialId}`} className={`flex flex-col md:flex-row md:items-center justify-between p-4 ${!isFirst ? 'border-t' : ''} border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-all duration-200 group ${highlighted ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-bg-light dark:ring-offset-bg-dark bg-indigo-50/50 dark:bg-indigo-900/20' : ''}`}>
             <div className="flex items-start md:items-center gap-3 w-full md:w-auto">
                 <div className={`p-3 rounded-lg shrink-0 ${
                     type === 0 ? 

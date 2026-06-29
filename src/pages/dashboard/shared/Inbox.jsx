@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useDeviceType } from '../../../hooks';
 import * as signalR from "@microsoft/signalr";
 import { InboxMessageListSkeleton } from "./SkeletonLoader";
-import { fetchInboxMessages, fetchSentMessages, markMessageAsRead, deleteMessage, sendMessage } from "../../../api/messages";
-import { EnvelopIcon, PaperPlaneIcon, TrashIcon, ImportIcon, XIcon, PenSquareIcon, ArrowRightIcon } from "../../../components/ui/icons";
+import { fetchInboxMessages, fetchSentMessages, deleteMessage, sendMessage } from "../../../api/messages";
+import { EnvelopIcon, PaperPlaneIcon, TrashIcon, ImportIcon, XIcon, PenSquareIcon } from "../../../components/ui/icons";
 import InputItem from "../../../components/form/InputItem";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import Button from "../../../components/ui/Button";
@@ -84,40 +84,8 @@ function decorateThread(thread, currentUserId) {
   };
 }
 
-function ReplyBubble({ reply, onDelete }) {
-  const initials = getInitials(reply.senderName);
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <div className="shrink-0 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-semibold bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark">
-        <span className="text-text-blue-default-light dark:text-text-blue-default-dark">{initials}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">
-            {reply.senderName}
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-text-secondary-default-light dark:text-text-secondary-default-dark">
-              {reply.sentAt || ""}
-            </span>
-            <button
-              onClick={(e) => onDelete(e, reply)}
-              className="p-0.5 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-red-500"
-              aria-label="Delete reply"
-            >
-              <TrashIcon className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-        <p className="text-sm text-text-primary-active-light dark:text-text-primary-active-dark mt-0.5">
-          {reply.body || "No content"}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function MessageRow({ thread, isExpanded, currentUserId, onToggle, onDelete, onStartReply }) {
+function MessageRow({ thread, currentUserId, onDelete }) {
+  const navigate = useNavigate();
   const isSent = thread.direction === "sent";
   const personName = isSent
     ? thread.recipientName || "Unknown recipient"
@@ -128,11 +96,7 @@ function MessageRow({ thread, isExpanded, currentUserId, onToggle, onDelete, onS
   const hasUnreadReplies = (thread.replies || []).some(
     (r) => r.recipientId === currentUserId && !r.isRead
   );
-  const hasReceivedReplies = (thread.replies || []).some(
-    (r) => r.recipientId === currentUserId
-  );
   const isUnread = (thread.recipientId === currentUserId && !thread.isRead) || hasUnreadReplies;
-  const canReply = !isSent || hasReceivedReplies;
 
   return (
     <div
@@ -149,11 +113,11 @@ function MessageRow({ thread, isExpanded, currentUserId, onToggle, onDelete, onS
       <div
         role="button"
         tabIndex={0}
-        onClick={onToggle}
+        onClick={() => navigate(`/inbox/${thread.messageId}`, { state: { thread } })}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            onToggle();
+            navigate(`/inbox/${thread.messageId}`, { state: { thread } });
           }
         }}
         className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors"
@@ -178,16 +142,7 @@ function MessageRow({ thread, isExpanded, currentUserId, onToggle, onDelete, onS
                     : "font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark"
                 }`}
               >
-                {personName}
-              </span>
-              <span
-                className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  isSent
-                    ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark"
-                    : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark"
-                }`}
-              >
-                {isSent ? "Sent" : "Received"}
+                {personName} <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isSent ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark" : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark"}`}>{isSent ? "Sent" : "Received"}</span>
               </span>
               {replyCount > 0 && (
                 <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark">
@@ -210,71 +165,28 @@ function MessageRow({ thread, isExpanded, currentUserId, onToggle, onDelete, onS
             {thread.subject || "(No subject)"}
           </p>
 
-          {!isExpanded && (
-            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate mt-0.5">
-              {thread.preview || thread.body || ""}
-            </p>
-          )}
+          <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate mt-0.5">
+            {thread.preview || thread.body || ""}
+          </p>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
           <button
-            onClick={(e) => onDelete(e, thread)}
+            onClick={(e) => { e.stopPropagation(); onDelete(e, thread); }}
             className="p-1 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-red-500"
             aria-label="Delete message"
           >
             <TrashIcon className="w-3.5 h-3.5" />
           </button>
-          <ChevronIcon
-            className={`text-text-secondary-default-light dark:text-text-secondary-default-dark transition-transform ${
-              isExpanded ? "rotate-180" : ""
-            }`}
-          />
+          <ChevronIcon className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
         </div>
       </div>
-
-      {isExpanded && (
-        <div className="px-4 pb-4 pt-2 text-sm leading-relaxed border-t border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span
-              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                isSent
-                  ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark"
-                  : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark"
-              }`}
-            >
-              {isSent ? "Sent" : "Received"}
-            </span>
-            {canReply && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onStartReply(thread); }}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark hover:opacity-85 transition-opacity"
-              >
-                <ArrowRightIcon className="w-3 h-3 rotate-180" />
-                Reply
-              </button>
-            )}
-          </div>
-          <p className="mb-3">{thread.body || thread.preview || "No content"}</p>
-
-          {thread.replies?.length > 0 && (
-            <div className="border-t border-border-primary-default-light dark:border-border-primary-default-dark pt-2 mt-2">
-              {thread.replies.map((reply) => (
-                <ReplyBubble
-                  key={reply.messageId}
-                  reply={reply}
-                  onDelete={onDelete}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
 export default function Inbox() {
+  const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
   const user = outletContext.user;
   const currentUserId = user?.userId ?? null;
@@ -284,9 +196,7 @@ export default function Inbox() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
-  const [expandedKey, setExpandedKey] = useState(null);
   const [showCompose, setShowCompose] = useState(false);
-  const [replyingTo, setReplyingTo] = useState(null);
   const [recipientEmail, setRecipientEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -322,7 +232,6 @@ export default function Inbox() {
     setSubject("");
     setBody("");
     setSending(false);
-    setReplyingTo(null);
     setShowCompose(false);
   };
 
@@ -358,35 +267,10 @@ export default function Inbox() {
       recipientEmail: recipientEmail.trim(),
       subject: subject.trim(),
       body: body.trim(),
-      parentMessageId: replyingTo?.messageId ?? undefined,
+      parentMessageId: undefined,
     }, {
       onSettled: () => setSending(false),
     });
-  };
-
-  const handleReply = (thread) => {
-    let replyEmail = "";
-    if (thread.recipientId === currentUserId && thread.senderEmail) {
-      replyEmail = thread.senderEmail;
-    } else {
-      const receivedReplies = (thread.replies || [])
-        .filter((r) => r.recipientId === currentUserId && r.senderEmail)
-        .sort((a, b) => parseDate(b.sentAt).getTime() - parseDate(a.sentAt).getTime());
-      if (receivedReplies.length > 0) {
-        replyEmail = receivedReplies[0].senderEmail;
-      }
-    }
-
-    if (!replyEmail) {
-      showError("Cannot reply: sender email is unavailable.");
-      return;
-    }
-    const replySubject = thread.subject ? `Re: ${thread.subject}` : "";
-    setRecipientEmail(replyEmail);
-    setSubject(replySubject);
-    setBody("");
-    setReplyingTo(thread);
-    setShowCompose(true);
   };
 
   const mergeThreads = useCallback((inboxThreads, sentThreads) => {
@@ -486,49 +370,6 @@ export default function Inbox() {
     };
   }, [currentUserId, inboxQueryKey, queryClient]);
 
-  const markReadMutation = useMutation({
-    mutationFn: (ids) => Promise.all(ids.map((id) => markMessageAsRead(id))),
-    onSuccess: (_data, unreadIds) => {
-      queryClient.setQueryData(inboxQueryKey, (prev = []) =>
-        prev.map((t) => {
-          if (!unreadIds.includes(t.messageId) && !(t.replies || []).some((r) => unreadIds.includes(r.messageId))) {
-            return t;
-          }
-          return {
-            ...t,
-            isRead: unreadIds.includes(t.messageId) ? true : t.isRead,
-            replies: (t.replies || []).map((r) =>
-              unreadIds.includes(r.messageId) ? { ...r, isRead: true } : r
-            ),
-          };
-        })
-      );
-    },
-    onError: (err) => showError(err.message),
-  });
-
-  const handleToggleExpand = async (thread) => {
-    const key = `thread-${thread.messageId}`;
-    const willExpand = expandedKey !== key;
-    setExpandedKey(willExpand ? key : null);
-
-    if (!willExpand || !currentUserId) return;
-
-    const unreadIds = [];
-    if (thread.recipientId === currentUserId && !thread.isRead) {
-      unreadIds.push(thread.messageId);
-    }
-    for (const r of thread.replies || []) {
-      if (r.recipientId === currentUserId && !r.isRead) {
-        unreadIds.push(r.messageId);
-      }
-    }
-
-    if (unreadIds.length === 0) return;
-
-    markReadMutation.mutate(unreadIds);
-  };
-
   const deleteMutation = useMutation({
     mutationFn: deleteMessage,
     onSuccess: (_data, messageId) => {
@@ -608,7 +449,7 @@ export default function Inbox() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => { setReplyingTo(null); setRecipientEmail(""); setSubject(""); setBody(""); setShowCompose(true); }}
+            onClick={() => { setRecipientEmail(""); setSubject(""); setBody(""); setShowCompose(true); }}
             className={`flex items-center justify-center gap-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark hover:opacity-90 transition-opacity ${isPhone ? "p-2" : "px-4 py-2"}`}
           >
             <PenSquareIcon className="w-4 h-4" />
@@ -683,10 +524,7 @@ export default function Inbox() {
                 key={`thread-${thread.messageId}`}
                 thread={thread}
                 currentUserId={currentUserId}
-                isExpanded={expandedKey === `thread-${thread.messageId}`}
-                onToggle={() => handleToggleExpand(thread)}
                 onDelete={handleDelete}
-                onStartReply={handleReply}
               />
             ))}
           </div>
@@ -697,7 +535,7 @@ export default function Inbox() {
         <div className="fixed inset-0 z-50 flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
             <h3 className="text-lg font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-              {replyingTo ? "Reply" : "New Message"}
+              New Message
             </h3>
             <button
               type="button"
@@ -709,16 +547,14 @@ export default function Inbox() {
             </button>
           </div>
           <form onSubmit={handleSend} className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
-            {!replyingTo && (
-              <InputItem
-                label="Recipient Email"
-                type="email"
-                name="recipientEmail"
-                placeholder="Enter recipient email"
-                value={recipientEmail}
-                onChange={(e) => setRecipientEmail(e.target.value)}
-              />
-            )}
+            <InputItem
+              label="Recipient Email"
+              type="email"
+              name="recipientEmail"
+              placeholder="Enter recipient email"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+            />
             <InputItem
               label="Subject"
               type="text"
@@ -759,7 +595,7 @@ export default function Inbox() {
       ) : (
         <BaseFormComponent
           isOpen={showCompose}
-          title={replyingTo ? "Reply" : "New Message"}
+          title="New Message"
           onClose={resetCompose}
           onSubmit={handleSend}
           submitText={sending ? "Sending..." : "Send"}
@@ -768,16 +604,14 @@ export default function Inbox() {
           maxWidth="max-w-xl"
         >
           <div className="flex flex-col gap-4">
-            {!replyingTo && (
-              <InputItem
-                label="Recipient Email"
-                type="email"
-                name="recipientEmail"
-                placeholder="Enter recipient email"
-                value={recipientEmail}
-                onChange={(e) => setRecipientEmail(e.target.value)}
-              />
-            )}
+            <InputItem
+              label="Recipient Email"
+              type="email"
+              name="recipientEmail"
+              placeholder="Enter recipient email"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+            />
 
             <InputItem
               label="Subject"

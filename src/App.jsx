@@ -20,7 +20,7 @@ import { LoginPage, ForgetPassword, ResetPassword, GetCredentials, FirstTimeSetu
 import Profile from "./pages/dashboard/Profile";
 
 // Shared Pages (all authenticated users)
-import { Inbox, ComposeMessage } from "./pages/dashboard/shared";
+import { Inbox, ComposeMessage, MessageDetail } from "./pages/dashboard/shared";
 
 // Student Pages
 import { 
@@ -87,6 +87,7 @@ export default function App() {
             { path: "profile", element: <Profile /> },
             { path: "inbox", element: <Inbox /> },
             { path: "inbox/compose", element: <ComposeMessage /> },
+            { path: "inbox/:messageId", element: <MessageDetail /> },
 
             // ================= STUDENT =================
             {

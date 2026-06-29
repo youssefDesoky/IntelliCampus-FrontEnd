@@ -19,6 +19,7 @@ import {
 import ExcuseList from "../../../feature/instructor/components/attendance/ExcuseList";
 import { CourseAttendanceSkeleton, CourseAttendanceDetailSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 function formatTime(value) {
     if (!value) return null;
@@ -78,6 +79,7 @@ export default function InstructorCourseAttendance() {
     const [isLoadingSessions, setIsLoadingSessions] = useState(false);
     const [isLoadingReport, setIsLoadingReport] = useState(false);
     const { showError } = useError();
+    const { showToast } = useToast();
     const sessionInUrl = params.sessionId ? Number(params.sessionId) : null;
 
     const [isExcuseModalOpen, setIsExcuseModalOpen] = useState(false);
@@ -305,7 +307,7 @@ export default function InstructorCourseAttendance() {
             setManualId('');
             const data = await fetchSessionAttendance(selectedSessionId);
             setReport(data);
-            showError('Attendance recorded for ' + (result?.studentName || manualId.trim()));
+            showToast({ title: 'Success', message: 'Attendance recorded for ' + (result?.studentName || manualId.trim()), type: 'success' });
         } catch (err) {
             showError(err.message || 'Failed to record attendance.');
         }

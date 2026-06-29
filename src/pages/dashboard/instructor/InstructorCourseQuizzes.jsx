@@ -116,14 +116,14 @@ export default function InstructorCourseQuizzes() {
         try {
             const data = await fetchQuizSubmissions(courseId, quiz.id);
             const normalized = (Array.isArray(data) ? data : []).map((s) => ({
-                id: s.id,
-                status: s.status,
+                id: s.studentId ?? s.id,
+                status: s.status ?? 'submitted',
                 submittedAt: s.submittedAt || null,
                 note: s.note || null,
                 student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (s.student.fullName || s.student.name) : s.student) || null,
                 score: s.score,
-                totalScore: s.totalScore || quiz.maxScore,
-                answers: Array.isArray(s.answers) ? s.answers : [],
+                totalScore: s.maxScore ?? s.totalScore ?? quiz.maxScore,
+                answers: Array.isArray(s.answers) ? s.answers : (typeof s.answers === 'object' && s.answers !== null ? Object.values(s.answers) : []),
             }));
             setSubmissions(normalized);
         } catch (err) {
