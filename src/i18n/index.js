@@ -11,6 +11,9 @@ import arStudentAside from '../locales/ar/student/aside.json';
 import enCommonAside from '../locales/en/common/aside.json';
 import arCommonAside from '../locales/ar/common/aside.json';
 
+import enInstructorAside from '../locales/en/instructor/aside.json';
+import arInstructorAside from '../locales/ar/instructor/aside.json';
+
 // Initialize i18n
 i18n.use(initReactI18next).init({
   resources: {
@@ -18,11 +21,13 @@ i18n.use(initReactI18next).init({
       'admin/aside': enAdminAside,
       'common/aside': enCommonAside,
       'student/aside': enStudentAside,
+      'instructor/aside': enInstructorAside,
     },
     ar: {
       'admin/aside': arAdminAside,
       'common/aside': arCommonAside,
       'student/aside': arStudentAside,
+      'instructor/aside': arInstructorAside,
     },
   },
   lng: localStorage.getItem("lang") || "en",
