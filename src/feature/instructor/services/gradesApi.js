@@ -15,3 +15,14 @@ export async function updateComplaintStatus(complaintId, data) {
     body: JSON.stringify(data),
   });
 }
+
+export async function getCourseWorkWeight(courseId) {
+  return apiClient(`/api/grades/course/${courseId}/coursework-weight`);
+}
+
+export async function setCourseWorkWeight(courseId, data) {
+  return apiClient(`/api/grades/course/${courseId}/coursework-weight`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
