@@ -1,14 +1,22 @@
 import apiClient from "../../../api/apiClient";
+import { API_URL } from "../../../config/api";
 
 export async function fetchAdminProfile(adminId) {
   return apiClient(`/api/admins/${adminId}`);
 }
 
-export async function updateProfileImage(dataUrl) {
-  return apiClient('/api/auth/profile/image', {
+export async function updateProfileImage(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/api/auth/profile/image`, {
     method: "PUT",
-    body: JSON.stringify(dataUrl),
+    credentials: "include",
+    body: formData,
   });
+  if (!res.ok) {
+    throw new Error(`Upload failed (${res.status})`);
+  }
+  return res.json();
 }
 
 export async function updateProfile(data) {
