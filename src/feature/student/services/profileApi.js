@@ -41,8 +41,11 @@ export async function fetchCommunities() {
   return apiClient('/api/communities');
 }
 
-export async function fetchCoursePrerequisites() {
-  return apiClient('/api/courses/prerequisites?PageSize=500');
+export async function fetchCoursePrerequisites(params = {}) {
+  const query = new URLSearchParams();
+  query.set('PageSize', params.PageSize ?? 500);
+  if (params.searchQuery) query.set('search', params.searchQuery);
+  return apiClient(`/api/courses/prerequisites?${query.toString()}`);
 }
 
 export async function fetchMyAttendance(courseId) {
