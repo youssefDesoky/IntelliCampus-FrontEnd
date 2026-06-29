@@ -24,7 +24,6 @@ export default function KanbanLayout({
   setAvailableCoursesPage,
   selectedTotalPages,
   availableTotalPages,
-  pendingRemovalCourseIds,
   sectionOptionsByCourseId,
   selectedSectionByCourseId,
   schedulePreview,
@@ -145,9 +144,6 @@ export default function KanbanLayout({
                     course={course}
                     cardType="selected"
                     onAction={() => handleUnregister(course)}
-                    isPendingRemoval={pendingRemovalCourseIds.includes(
-                      course.courseId
-                    )}
                     sectionOptions={
                       sectionOptionsByCourseId[course.courseId] || []
                     }

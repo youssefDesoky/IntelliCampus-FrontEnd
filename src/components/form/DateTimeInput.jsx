@@ -52,6 +52,15 @@ function h12to24(h12, period) {
     return h12 === 12 ? 12 : h12 + 12;
 }
 
+/** Get today's date as YYYY-MM-DD. */
+function getTodayISO() {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
 // ─── Parse "YYYY-MM-DDTHH:mm" (datetime-local format) ────────────────────────
 
 function parseDTValue(v) {
@@ -131,19 +140,30 @@ export default function DateTimeInput({
     isDisabled = false,
     value = "",
     onChange,
-    minDate,
+    minDate = getTodayISO(),
     maxDate,
 }) {
     // ── Derive state from a datetime-local value string ──────────────────────
     const initState = (v) => {
         const { date, time } = parseDTValue(v);
-        const t = time ? h24to12(time.h) : { h: 12, period: "AM" };
+        if (!time) {
+            const now = new Date();
+            const t = h24to12(now.getHours());
+            return {
+                date,
+                hour:    t.h,
+                minute:  now.getMinutes(),
+                period:  t.period,
+                hasTime: true,
+            };
+        }
+        const t = h24to12(time.h);
         return {
             date,
             hour:    t.h,
-            minute:  time?.m ?? 0,
+            minute:  time.m,
             period:  t.period,
-            hasTime: !!time,
+            hasTime: true,
         };
     };
 
@@ -191,21 +211,34 @@ export default function DateTimeInput({
 
     // ── Position dropdown ─────────────────────────────────────────────────────
     const updatePosition = () => {
-        if (triggerRef.current) {
-            const rect = triggerRef.current.getBoundingClientRect();
-            setCoords({
-                top: rect.bottom,
-                left: rect.left,
-            });
+        if (!triggerRef.current) return;
+        const rect = triggerRef.current.getBoundingClientRect();
+        let top = rect.bottom;
+        let left = rect.left;
+
+        if (dropdownRef.current) {
+            const ddRect = dropdownRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            if (spaceBelow < ddRect.height && spaceAbove > ddRect.height) {
+                top = rect.top - ddRect.height;
+            }
+            if (left + ddRect.width > window.innerWidth) {
+                left = Math.max(8, window.innerWidth - ddRect.width - 8);
+            }
+            if (left < 8) left = 8;
         }
+
+        setCoords({ top, left });
     };
 
     useEffect(() => {
         if (!activePanel) return;
-        updatePosition();
+        const id = requestAnimationFrame(updatePosition);
         window.addEventListener("scroll", updatePosition, true);
         window.addEventListener("resize", updatePosition);
         return () => {
+            cancelAnimationFrame(id);
             window.removeEventListener("scroll", updatePosition, true);
             window.removeEventListener("resize", updatePosition);
         };
@@ -300,6 +333,7 @@ export default function DateTimeInput({
         "rounded-xl border shadow-xl p-4",
         "bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark",
         "border-border-primary-default-light dark:border-border-primary-default-dark",
+        "max-h-[calc(100vh-2rem)] overflow-y-auto",
     ].join(" ");
 
     const footerCls = "mt-3 pt-3 flex items-center justify-between border-t border-border-primary-default-light dark:border-border-primary-default-dark";

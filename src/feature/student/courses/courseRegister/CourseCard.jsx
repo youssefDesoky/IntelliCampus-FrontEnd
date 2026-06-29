@@ -18,15 +18,9 @@ export default function CourseCard({
     sectionOptions = [],
     selectedSection,
     onSectionChange,
-    isPendingRemoval = false,
 }) {
     return(
-        <div className={`min-w-90 h-55 course-card relative flex flex-col justify-between gap-4 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-sm shadow-shadow-light hover:shadow-md dark:shadow-shadow-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ${isPendingRemoval ? "opacity-60" : ""}`}>
-            {isPendingRemoval && (
-                <span className="absolute top-2 left-2 text-xs px-2 py-1 rounded-full bg-bg-surface-danger-hover-light dark:bg-bg-surface-danger-hover-dark text-text-danger-active-light dark:text-text-danger-active-dark">
-                    Pending removal
-                </span>
-            )}
+        <div className="min-w-90 h-55 course-card relative flex flex-col justify-between gap-4 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-sm shadow-shadow-light hover:shadow-md dark:shadow-shadow-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
             <button onClick={onAction} className={`absolute top-0 left-full transform -translate-x-full p-4 font-extrabold text-text-accent-active-light dark:text-text-accent-active-dark`}>
                 { cardType === "disabled" ? 
                     <LockIconDark className="w-8 h-8 rounded-full p-1.5 bg-bg-fill-primary-active-light dark:bg-bg-fill-primary-active-dark"/> :

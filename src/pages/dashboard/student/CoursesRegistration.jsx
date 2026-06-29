@@ -65,14 +65,15 @@ export default function CoursesRegistration() {
     const [locallyAddedCourses, setLocallyAddedCourses] = useState([]);
     const [sectionOptionsByCourseId, setSectionOptionsByCourseId] = useState({});
     const [selectedSectionByCourseId, setSelectedSectionByCourseId] = useState({});
-    const [pendingRemovalCourseIds, setPendingRemovalCourseIds] = useState([]);
     const { showError } = useError();
     const queryClient = useQueryClient();
 
     const { data: registrationData, isLoading: loading } = useQuery({
         queryKey: ["coursesRegistration"],
         queryFn: async () => {
-            const [registrations, courses] = await Promise.all([getMyRegistrations(), fetchActiveCourses()]);
+            const [registrationsResult, coursesResult] = await Promise.all([getMyRegistrations(), fetchActiveCourses()]);
+            const registrations = registrationsResult?.data ?? (Array.isArray(registrationsResult) ? registrationsResult : []);
+            const courses = coursesResult?.data ?? (Array.isArray(coursesResult) ? coursesResult : []);
             return { registrations, courses };
         },
         staleTime: 2 * 60 * 1000,
@@ -204,25 +205,23 @@ export default function CoursesRegistration() {
         });
     };
 
-    const handleUnregister = (course) => {
+    const handleUnregister = async (course) => {
         if (!course.isRegistered) {
             setLocallyAddedCourses((prev) => prev.filter((c) => c.courseId !== course.courseId));
             return;
         }
 
-        setPendingRemovalCourseIds((prev) =>
-            prev.includes(course.courseId)
-                ? prev.filter((id) => id !== course.courseId)
-                : [...prev, course.courseId]
-        );
+        try {
+            await unregisterFromCourse(course.courseId);
+            await queryClient.invalidateQueries({ queryKey: ["coursesRegistration"] });
+        } catch (err) {
+            showError(err.message || "Failed to unregister from course");
+        }
     };
 
     const handleConfirmRegistration = async () => {
         const pending = selectedCourses.filter((c) => !c.isRegistered);
-        const pendingRemovals = selectedCourses.filter(
-            (c) => c.isRegistered && pendingRemovalCourseIds.includes(c.courseId)
-        );
-        if (pending.length === 0 && pendingRemovals.length === 0) return;
+        if (pending.length === 0) return;
 
         for (const course of pending) {
             const section = selectedSectionByCourseId[course.courseId];
@@ -235,14 +234,6 @@ export default function CoursesRegistration() {
         const successMsgs = [];
         const failureMsgs = [];
 
-        for (const course of pendingRemovals) {
-            try {
-                await unregisterFromCourse(course.courseId);
-                successMsgs.push(`Removed ${course.title}`);
-            } catch {
-                failureMsgs.push(`Failed to remove ${course.title}`);
-            }
-        }
         for (const course of pending) {
             const section = selectedSectionByCourseId[course.courseId];
             try {
@@ -253,7 +244,6 @@ export default function CoursesRegistration() {
             }
         }
 
-        setPendingRemovalCourseIds([]);
         setLocallyAddedCourses([]);
         await queryClient.invalidateQueries({ queryKey: ["coursesRegistration"] });
 
@@ -335,7 +325,6 @@ export default function CoursesRegistration() {
                                         course={course}
                                         cardType="selected"
                                         onAction={() => handleUnregister(course)}
-                                        isPendingRemoval={pendingRemovalCourseIds.includes(course.courseId)}
                                         sectionOptions={sectionOptionsByCourseId[course.courseId] || []}
                                         selectedSection={selectedSectionByCourseId[course.courseId]}
                                         onSectionChange={(opt) =>
