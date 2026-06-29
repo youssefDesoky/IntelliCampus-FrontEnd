@@ -1,14 +1,56 @@
+import { useState } from "react";
 import Button from "../../../../../components/ui/Button";
+import ModelOverlay from "../../../../../components/ui/ModelOverlay";
+import MaterialPreview from "../../../../../components/ui/MaterialPreview";
+import { useError } from "../../../../../contexts/ErrorContext.jsx";
 import { 
     ClockIcon, 
     FileIcon, 
     DownloadIcon, 
     CheckIcon, 
     EyeIcon, 
-    ChartBarIcon 
+    ChartBarIcon,
+    XIcon
 } from "../../../../../components/ui/icons";
 
 const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, score, totalPoints, attachments, onSubmitAssignment, onViewInstructions, onViewSubmission, onViewGrade }) => {
+    const { showError } = useError();
+    const [previewAttachment, setPreviewAttachment] = useState(null);
+    const downloadAttachment = async (attachment) => {
+        try {
+            const res = await fetch(`/api/assignments/attachments/${attachment.id}/download`);
+            if (!res.ok) throw new Error("Download failed");
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = attachment.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch {
+            showError("Failed to download attachment.");
+        }
+    };
+
+    const getFileType = (name) => {
+        const ext = name?.split(".").pop()?.toLowerCase();
+        if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"].includes(ext)) return 3;
+        if (["mp4", "webm", "mov", "avi", "mkv"].includes(ext)) return 1;
+        if (["mp3", "wav", "ogg", "m4a"].includes(ext)) return 2;
+        return 0;
+    };
+
+    const getRelativeUrl = (url) => {
+        try {
+            const u = new URL(url);
+            return u.pathname + u.search;
+        } catch {
+            return url;
+        }
+    };
+
     const isUrgent = daysLeft <= 2;
     const statusColors = {
         pending: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300",
@@ -48,9 +90,9 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                         <span className="font-medium">{totalPoints} points</span>
                     </div>
                 )}
-                {score && (
+                {score !== undefined && score !== null && totalPoints && (
                     <div className="flex items-center gap-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        <span className="font-semibold text-green-600 dark:text-green-400">{score}%</span>
+                        <span className="font-semibold text-green-600 dark:text-green-400">{score}/{totalPoints} pts</span>
                     </div>
                 )}
             </div>
@@ -78,7 +120,20 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                                         </span>
                                     )}
                                 </div>
-                                <button className="ml-2 p-1 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark rounded transition-colors shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewAttachment(attachment)}
+                                    className="ml-2 p-1 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark rounded transition-colors shrink-0"
+                                    title="View file"
+                                >
+                                    <EyeIcon size={14} className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => downloadAttachment(attachment)}
+                                    className="ml-1 p-1 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark rounded transition-colors shrink-0"
+                                    title="Download file"
+                                >
                                     <DownloadIcon size={14} className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                                 </button>
                             </div>
@@ -133,9 +188,9 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                         <Button
                             className="w-full sm:flex-1"
                             startIcon={<ChartBarIcon size={16} />}
-                            onClick={() => onViewGrade && onViewGrade({ title, description, dueDate, daysLeft, status, score, attachments })}
+                            onClick={() => onViewGrade && onViewGrade({ title, description, dueDate, daysLeft, status, score, totalPoints, attachments })}
                         >
-                            View Grade ({score}%)
+                            View Grade ({score}/{totalPoints} pts)
                         </Button>
                         <Button
                             className="w-full sm:flex-1"
@@ -148,6 +203,48 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                     </>
                 )}
             </div>
+
+            {previewAttachment && (
+                <ModelOverlay onClose={() => setPreviewAttachment(null)} maxWidth="max-w-4xl">
+                    <div className="w-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark shadow-xl">
+                        <div className="flex items-center justify-between p-5 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                                    <EyeIcon size={20} className="text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">{previewAttachment.name}</h2>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Preview</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => downloadAttachment(previewAttachment)}
+                                    className="p-2 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-primary-default-light dark:text-text-primary-default-dark transition-colors"
+                                    title="Download"
+                                >
+                                    <DownloadIcon size={20} />
+                                </button>
+                                <button
+                                    onClick={() => setPreviewAttachment(null)}
+                                    className="p-2 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors text-text-secondary-default-light dark:text-text-secondary-default-dark"
+                                >
+                                    <XIcon size={20} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-0">
+                            <MaterialPreview
+                                type={getFileType(previewAttachment.name)}
+                                title={previewAttachment.name}
+                                viewUrl={getRelativeUrl(previewAttachment.url)}
+                                downloadUrl={getRelativeUrl(previewAttachment.url)}
+                            />
+                        </div>
+                    </div>
+                </ModelOverlay>
+            )}
         </div>
     );
 };

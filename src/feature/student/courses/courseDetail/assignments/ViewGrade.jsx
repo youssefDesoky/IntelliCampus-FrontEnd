@@ -4,8 +4,8 @@ import { XIcon, ChartBarIcon, StarIcon, UserIcon, ClockIcon } from "../../../../
 
 export default function ViewGrade({ assignment, onClose }) {
     const totalPoints = assignment.totalPoints || 100;
-    const pointsEarned = Math.round((assignment.score / 100) * totalPoints);
-    const pct = assignment.score || 0;
+    const pointsEarned = assignment.score || 0;
+    const pct = totalPoints ? Math.round((pointsEarned / totalPoints) * 100) : 0;
 
     return (
         <ModelOverlay onClose={onClose} maxWidth="max-w-lg">
