@@ -107,7 +107,7 @@ export default function InstructorDashboard() {
 
           <menu className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 no-scrollbar">
             {dashboard.latestNews?.length > 0 ? (
-              dashboard.latestNews.map((item) => (
+              dashboard.latestNews.slice(0, 5).map((item) => (
                 <li
                   key={item.id}
                   className="p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
