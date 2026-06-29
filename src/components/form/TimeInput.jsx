@@ -89,9 +89,7 @@ export default function TimeInput({
     const initFromValue = (v) => {
         const parsed = parseTime(v);
         if (!parsed) {
-            const now = new Date();
-            const { h, period } = to12h(now.getHours());
-            return { hour: h, minute: now.getMinutes(), period, hasValue: true };
+            return { hour: 12, minute: 0, period: "PM", hasValue: false };
         }
         const { h, period } = to12h(parsed.h);
         return { hour: h, minute: parsed.m, period, hasValue: true };
