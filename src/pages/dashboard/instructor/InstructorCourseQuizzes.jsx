@@ -128,7 +128,7 @@ export default function InstructorCourseQuizzes() {
                 student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (getLocalizedField(s.student, 'fullName', i18n.language) || s.student.name) : s.student) || null,
                 score: s.score,
                 totalScore: s.maxScore ?? s.totalScore ?? quiz.maxScore,
-                answers: Array.isArray(s.answers) ? s.answers : (typeof s.answers === 'object' && s.answers !== null ? Object.values(s.answers) : []),
+                answers: s.answerDetails || [],
             }));
             setSubmissions(normalized);
         } catch (err) {
