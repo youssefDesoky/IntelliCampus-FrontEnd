@@ -46,8 +46,12 @@ export async function fetchQuizSubmissions(courseId, quizId) {
 }
 
 export async function gradeQuizSubmission(courseId, quizId, submissionId, payload) {
+  const questionScores = {};
+  (payload.answers || []).forEach(a => {
+    questionScores[a.questionId] = a.score;
+  });
   return apiClient(`/api/courses/${courseId}/quizzes/${quizId}/submissions/${submissionId}/grade`, {
-    method: "POST",
-    body: JSON.stringify(payload),
+    method: "PUT",
+    body: JSON.stringify({ questionScores }),
   });
 }
