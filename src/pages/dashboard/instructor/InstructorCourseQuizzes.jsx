@@ -290,11 +290,9 @@ export default function InstructorCourseQuizzes() {
                             </div>
 
                             <div className="flex flex-row items-center gap-2 mt-4 pt-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
-                                {isQuizPast(quiz) && (
-                                    <Button type="button" variant="secondary" size="sm" startIcon={<EyeIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => openSubmissions(quiz)}>
-                                        <span className="hidden sm:inline">Submissions</span>
-                                    </Button>
-                                )}
+                                <Button type="button" variant="secondary" size="sm" startIcon={<EyeIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => openSubmissions(quiz)}>
+                                    <span className="hidden sm:inline">Submissions</span>
+                                </Button>
                                 <Button type="button" variant="secondary" size="sm" startIcon={<ListIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => setManageQuiz(quiz)}>
                                     <span className="hidden sm:inline">Manage Questions</span>
                                 </Button>
