@@ -6,10 +6,12 @@ import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
+import Dialog from "../../../components/ui/Dialog";
 import MaterialPreview from "../../../components/ui/MaterialPreview";
 import DateTimeInput from "../../../components/form/DateTimeInput";
 import NumberInput from "../../../components/form/NumberInput";
-import { PlusIcon, TrashIcon, EyeIcon, DownloadIcon, XIcon, FilePenIcon, CalendarDaysIcon, ChartBarIcon, UsersIcon, ClockIcon, ClipboardCheckIcon } from "../../../components/ui/icons";
+import { PlusIcon, TrashIcon, EyeIcon, DownloadIcon, XIcon, FilePenIcon, CalendarDaysIcon, ChartBarIcon, UsersIcon, ClockIcon, ClipboardCheckIcon, PaperclipIcon } from "../../../components/ui/icons";
+import FileUploadArea from "../../../components/ui/FileUploadArea";
 
 import {
     fetchInstructorAssignmentsByCourse,
@@ -56,6 +58,8 @@ export default function InstructorCourseAssignments() {
     const [instructions, setInstructions] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [totalPoints, setTotalPoints] = useState(100);
+    const [assignmentFiles, setAssignmentFiles] = useState([]);
+    const [existingAttachments, setExistingAttachments] = useState([]);
     const [editingAssignmentId, setEditingAssignmentId] = useState(null);
     
     const [isSubmissionsOpen, setIsSubmissionsOpen] = useState(false);
@@ -69,6 +73,7 @@ export default function InstructorCourseAssignments() {
     const [gradeScore, setGradeScore] = useState("");
     const [gradeFeedback, setGradeFeedback] = useState("");
     const [isGrading, setIsGrading] = useState(false);
+    const [gradeResult, setGradeResult] = useState(null);
     
     const {
         data: assignments = [],
@@ -105,6 +110,8 @@ export default function InstructorCourseAssignments() {
         setInstructions("");
         setDueDate("");
         setTotalPoints(100);
+        setAssignmentFiles([]);
+        setExistingAttachments([]);
         setEditingAssignmentId(null);
     };
     
@@ -122,6 +129,16 @@ export default function InstructorCourseAssignments() {
         setIsSubmitting(true);
         
         try {
+            const attachments = [];
+            for (const file of assignmentFiles) {
+                const form = new FormData();
+                form.append("file", file);
+                const res = await fetch("/api/assignments/upload-attachment", { method: "POST", body: form });
+                if (!res.ok) throw new Error("Failed to upload file.");
+                const uploaded = await res.json();
+                attachments.push(uploaded);
+            }
+
             const payload = {
                 title: title.trim(),
                 description: description.trim() || null,
@@ -129,7 +146,7 @@ export default function InstructorCourseAssignments() {
                 dueDate: new Date(dueDate).toISOString(),
                 totalPoints: Number(totalPoints),
                 courseId: Number(courseId),
-                attachments: [],
+                attachments,
             };
             
             const created = await createInstructorAssignment(payload);
@@ -171,6 +188,16 @@ export default function InstructorCourseAssignments() {
         setIsSubmitting(true);
         
         try {
+            const attachments = [...existingAttachments];
+            for (const file of assignmentFiles) {
+                const form = new FormData();
+                form.append("file", file);
+                const res = await fetch("/api/assignments/upload-attachment", { method: "POST", body: form });
+                if (!res.ok) throw new Error("Failed to upload file.");
+                const uploaded = await res.json();
+                attachments.push(uploaded);
+            }
+
             const payload = {
                 title: title.trim(),
                 description: description.trim() || null,
@@ -178,7 +205,7 @@ export default function InstructorCourseAssignments() {
                 dueDate: new Date(dueDate).toISOString(),
                 totalPoints: Number(totalPoints),
                 courseId: Number(courseId),
-                attachments: [],
+                attachments,
             };
             
             const updated = await updateInstructorAssignment(editingAssignmentId, payload);
@@ -210,7 +237,7 @@ export default function InstructorCourseAssignments() {
         setSelectedAssignmentTotalPoints(assignment.totalPoints || 100);
         try {
             const data = await fetchAssignmentSubmissions(assignment.id);
-            const normalized = (Array.isArray(data) ? data : []).map((s) => ({
+                const normalized = (Array.isArray(data) ? data : []).map((s) => ({
                 id: s.id,
                 status: s.status,
                 submittedAt: s.submittedAt || s.SubmittedAt || s.SubmittedDate || null,
@@ -219,6 +246,7 @@ export default function InstructorCourseAssignments() {
                 student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (s.student.fullName || s.student.name) : s.student) || null,
                 score: s.score ?? s.Score ?? null,
                 feedback: s.feedback ?? s.Feedback ?? null,
+                grade: s.grade ?? null,
             }));
             setSubmissions(normalized);
         } catch (err) {
@@ -228,6 +256,25 @@ export default function InstructorCourseAssignments() {
         }
     };
     
+    const refreshSubmissions = async () => {
+        if (!selectedAssignmentId) return;
+        try {
+            const data = await fetchAssignmentSubmissions(selectedAssignmentId);
+            const normalized = (Array.isArray(data) ? data : []).map((s) => ({
+                id: s.id,
+                status: s.status,
+                submittedAt: s.submittedAt || s.SubmittedAt || s.SubmittedDate || null,
+                note: s.note || s.Note || null,
+                files: s.files || s.Files || [],
+                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (s.student.fullName || s.student.name) : s.student) || null,
+                score: s.score ?? s.Score ?? null,
+                feedback: s.feedback ?? s.Feedback ?? null,
+                grade: s.grade ?? null,
+            }));
+            setSubmissions(normalized);
+        } catch { /* ignore */ }
+    };
+
     const closeSubmissions = () => {
         setIsSubmissionsOpen(false);
         setSubmissions([]);
@@ -247,6 +294,24 @@ export default function InstructorCourseAssignments() {
         setSelectedSubmission(null);
     };
 
+    const downloadFile = async (url, name, fileId) => {
+        try {
+            const res = await fetch(`/api/assignments/submissions/${fileId}/download`);
+            if (!res.ok) throw new Error("Download failed");
+            const blob = await res.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = blobUrl;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch {
+            showError("Failed to download file.");
+        }
+    };
+
     const handleGradeSubmit = async () => {
         if (!gradeModal || !selectedAssignmentId) return;
 
@@ -259,15 +324,18 @@ export default function InstructorCourseAssignments() {
         setIsGrading(true);
         try {
             await gradeAssignmentSubmission(selectedAssignmentId, {
-                submissionId: gradeModal.id,
+                studentAssignmentId: Number(gradeModal.id),
                 score,
                 feedback: gradeFeedback.trim() || null,
             });
+            setGradeResult("success");
             queryClient.invalidateQueries({ queryKey: ["instructorCourseAssignments", courseId] });
+            refreshSubmissions();
             setGradeModal(null);
             setGradeScore("");
             setGradeFeedback("");
         } catch (err) {
+            setGradeResult("error");
             showError(err.message || "Failed to grade submission.");
         } finally {
             setIsGrading(false);
@@ -354,6 +422,28 @@ export default function InstructorCourseAssignments() {
         
         <NumberInput label="Total Points" min={1} value={totalPoints} onChange={(event) => setTotalPoints(event.target.value)} />
         </div>
+
+        <div className="space-y-2">
+        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Attachments</label>
+        {(existingAttachments.length > 0 || assignmentFiles.length > 0) && (
+            <div className="flex flex-wrap gap-2 mb-2">
+            {existingAttachments.map((att, i) => (
+                <span key={att.id ?? i} className="group inline-flex items-center gap-1.5 pl-3 pr-1 py-1.5 rounded-full text-xs font-medium bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-colors">
+                <PaperclipIcon size={13} />
+                <span className="truncate max-w-[160px]" title={att.name}>{att.name}</span>
+                <button
+                    type="button"
+                    onClick={() => setExistingAttachments(existingAttachments.filter((_, idx) => idx !== i))}
+                    className="p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/20 text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                >
+                    <XIcon size={12} />
+                </button>
+                </span>
+            ))}
+            </div>
+        )}
+        <FileUploadArea files={assignmentFiles} onFilesChange={setAssignmentFiles} />
+        </div>
         </BaseFormComponent>
         
         {sortedAssignments.length === 0 ? (
@@ -436,6 +526,7 @@ export default function InstructorCourseAssignments() {
                             setDueDate(assignment.dueDate || "");
                         }
                         setTotalPoints(assignment.totalPoints || 100);
+                        setExistingAttachments(assignment.attachments || []);
                         setIsFormOpen(true);
                     }}
                     >
@@ -496,9 +587,20 @@ export default function InstructorCourseAssignments() {
                     return (
                         <div key={s.id} className="p-3 border rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark">
                         <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
                         <div>
                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{typeof s.student === 'string' ? s.student : `Student ${s.id}`}</p>
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{s.submittedAt}</p>
+                        </div>
+                        {s.grade ? (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-bg-fill-success-default-light/20 dark:bg-bg-fill-success-default-dark/20 text-bg-fill-success-default-light dark:text-bg-fill-success-default-dark border border-bg-fill-success-default-light/30 dark:border-bg-fill-success-default-dark/30">
+                                {s.grade.score}/{s.grade.totalPoints}
+                            </span>
+                        ) : (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-bg-fill-warning-default-light/20 dark:bg-bg-fill-warning-default-dark/20 text-bg-fill-warning-default-light dark:text-bg-fill-warning-default-dark border border-bg-fill-warning-default-light/30 dark:border-bg-fill-warning-default-dark/30">
+                                Pending
+                            </span>
+                        )}
                         </div>
                         <div className="flex items-center gap-2">
                         <button
@@ -511,14 +613,13 @@ export default function InstructorCourseAssignments() {
                         <EyeIcon size={16} />
                         </button>
                         {hasFile ? (
-                            <a
-                            href={primaryFile.url}
-                            download={primaryFile.name}
+                            <button
+                            onClick={() => downloadFile(primaryFile.url, primaryFile.name, primaryFile.id)}
                             className="p-2 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-primary-default-light dark:text-text-primary-default-dark transition-colors"
                             title="Download submission"
                             >
                             <DownloadIcon size={16} />
-                            </a>
+                            </button>
                         ) : (
                             <span
                             className="p-2 rounded-lg opacity-40 text-text-secondary-default-light dark:text-text-secondary-default-dark"
@@ -531,9 +632,9 @@ export default function InstructorCourseAssignments() {
                         type="button"
                         className="p-2 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-green-600 dark:text-green-400 transition-colors"
                         onClick={() => {
-                            setGradeScore(s.score ?? "");
-                            setGradeFeedback(s.feedback ?? "");
-                            setGradeModal(s);
+            setGradeScore(s.grade?.score?.toString() ?? s.score ?? "");
+            setGradeFeedback(s.grade?.feedback ?? s.feedback ?? "");
+            setGradeModal(s);
                         }}
                         title="Grade submission"
                         >
@@ -663,9 +764,9 @@ export default function InstructorCourseAssignments() {
             >
             <ClipboardCheckIcon size={20} />
             </button>
-            <a href={previewFile.url} download={previewFile.name} className="p-2 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg">
+            <button onClick={() => downloadFile(previewFile.url, previewFile.name, previewFile.id)} className="p-2 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg">
             <DownloadIcon size={20} />
-            </a>
+            </button>
             <button onClick={closeFilePreview} className="p-2 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg">
             <XIcon size={20} />
             </button>
@@ -686,6 +787,24 @@ export default function InstructorCourseAssignments() {
             </div>
             </ModelOverlay>
         )}
+
+        <Dialog
+            isOpen={gradeResult === "success"}
+            variant="success"
+            title="Graded Successfully"
+            onClose={() => setGradeResult(null)}
+            autoCloseDuration={2000}
+        >
+            The submission has been graded.
+        </Dialog>
+        <Dialog
+            isOpen={gradeResult === "error"}
+            variant="error"
+            title="Grading Failed"
+            onClose={() => setGradeResult(null)}
+        >
+            Failed to grade the submission.
+        </Dialog>
         </div>
     );
 }
