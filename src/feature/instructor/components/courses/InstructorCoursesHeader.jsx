@@ -2,11 +2,11 @@ import PageHeader from "../../../../components/ui/PageHeader";
 import ToggleViewMode from "../../../../components/ui/ToggleViewMode";
 import { Grid2ColIcon, ListIcon } from "../../../../components/ui/icons";
 
-export default function InstructorCoursesHeader({isMobile, viewMode, setViewMode}) {
+export default function InstructorCoursesHeader({isMobile, viewMode, setViewMode, hasCourses}) {
     return (
         <PageHeader title="My Courses" subtitle="Spring 2025 Semester">
-            {!isMobile && 
-                <ToggleViewMode 
+            {!isMobile && hasCourses &&
+                <ToggleViewMode
                     isVertical={false}
                     isFirstMode={viewMode === "grid"}
                     onFirstModeSelect={() => setViewMode("grid")}

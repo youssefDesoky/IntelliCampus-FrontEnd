@@ -237,8 +237,8 @@ export default function InstructorCourseQuizzes() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="flex flex-col flex-1">
+            <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Quizzes</h2>
                 <Button type="button" variant="primary" onClick={openCreate} startIcon={<PlusIcon size={18} />}><span className="hidden sm:inline">Create Quiz</span></Button>
             </div>
@@ -246,10 +246,7 @@ export default function InstructorCourseQuizzes() {
             {loading ? (
                 <CourseQuizzesSkeleton />
             ) : quizzes.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-12 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                        <ClockIcon size={24} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                    </div>
+                <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
                     <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No quizzes yet</h3>
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         Create your first quiz for this course.

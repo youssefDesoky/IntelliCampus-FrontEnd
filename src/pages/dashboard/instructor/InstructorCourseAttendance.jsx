@@ -16,7 +16,6 @@ import {
     recordManualAttendance,
     scanAttendanceQr,
 } from "../../../feature/instructor/components/attendance/instructorAttendanceApi";
-import ExcuseList from "../../../feature/instructor/components/attendance/ExcuseList";
 import { CourseAttendanceSkeleton, CourseAttendanceDetailSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
@@ -82,7 +81,6 @@ export default function InstructorCourseAttendance() {
     const { showToast } = useToast();
     const sessionInUrl = params.sessionId ? Number(params.sessionId) : null;
 
-    const [isExcuseModalOpen, setIsExcuseModalOpen] = useState(false);
     const [creatingSession, setCreatingSession] = useState(false);
     const [isCreateSessionOpen, setIsCreateSessionOpen] = useState(false);
     const [newSession, setNewSession] = useState({ topic: "", description: "" });
@@ -672,8 +670,8 @@ export default function InstructorCourseAttendance() {
 
     // ─── SESSION LIST VIEW ───
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="flex flex-col flex-1">
+            <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                     Attendance
                 </h2>
@@ -681,35 +679,12 @@ export default function InstructorCourseAttendance() {
                     <Button type="button" variant="primary" onClick={() => setIsCreateSessionOpen(true)} startIcon={<PlusIcon size={18} />}>
                         <span className="hidden sm:inline">Create Session</span>
                     </Button>
-                    <Button type="button" variant="secondary" onClick={() => setIsExcuseModalOpen(true)} startIcon={<WarningIcon size={18} />}>
+                    <Button type="button" variant="secondary" onClick={() => navigate("excuses")} startIcon={<WarningIcon size={18} />}>
                         <span className="hidden sm:inline">Excuse Requests</span>
                     </Button>
                 </div>
             </div>
 
-            {/* Excuse Requests Modal */}
-            {isExcuseModalOpen && (
-                <ModelOverlay onClose={() => setIsExcuseModalOpen(false)} maxWidth="max-w-2xl">
-                    <div className="relative w-full overflow-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
-                        <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-5 dark:border-border-primary-default-dark">
-                            <h3 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Excuse Requests</h3>
-                            <button
-                                type="button"
-                                onClick={() => setIsExcuseModalOpen(false)}
-                                className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2.5 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
-                                aria-label="Close"
-                            >
-                                <XIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-                        <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
-                            <ExcuseList courseId={courseId} />
-                        </div>
-                    </div>
-                </ModelOverlay>
-            )}
-
-            
             {/* Class selector */}
             {classes.length > 1 && (
                 <div className="flex flex-wrap items-center gap-3">
@@ -748,20 +723,14 @@ export default function InstructorCourseAttendance() {
             )}
 
             {classes.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-8 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light text-text-accent-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-accent-default-dark">
-                        <UsersIcon className="h-7 w-7" />
-                    </div>
+                <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
                     <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No classes assigned</h2>
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Contact an administrator to get assigned to a class before creating sessions.</p>
                 </div>
             ) : isLoadingSessions ? (
                 <CourseAttendanceSkeleton />
             ) : sessions.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-border-primary-default-light bg-bg-surface-secondary-default-light p-8 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-primary-default-light text-text-primary-default-light dark:bg-bg-surface-primary-default-dark dark:text-text-primary-default-dark">
-                        <CalendarIcon className="h-7 w-7" />
-                    </div>
+                <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
                     <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No sessions yet</h2>
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Click "Create Session" to start a new attendance session.</p>
                 </div>

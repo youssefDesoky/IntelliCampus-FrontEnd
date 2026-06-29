@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import BoxData from "../../../components/ui/BoxData";
 import Section from "../../../components/ui/Section";
-import { BookIcon, ClipboardCheckIcon, ChartLineIcon, BullHornIcon, ChartBarIcon } from "../../../components/ui/icons";
+import { BookIcon, ClipboardCheckIcon, ChartLineIcon, NewspaperIcon, NewspaperSlashIcon, ChartBarIcon } from "../../../components/ui/icons";
 
 import StudyTimer from "../../../feature/student/dashboard/StudyTimer";
 import TodayReminders from "../../../feature/student/dashboard/TodayReminders";
@@ -88,7 +88,7 @@ export default function Dashboard() {
         <div className="lg:col-span-8 p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold">Latest News</h2>
-            <BullHornIcon className="w-6 h-6" />
+            <NewspaperIcon className="w-6 h-6" />
           </div>
 
           <menu className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 no-scrollbar">
@@ -106,8 +106,9 @@ export default function Dashboard() {
                 </li>
               ))
             ) : (
-              <li className="p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                No news available
+              <li className="p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark h-full flex flex-col items-center justify-center gap-2">
+                <NewspaperSlashIcon className="w-12 h-12 opacity-40" />
+                <p className="text-sm">No news available</p>
               </li>
             )}
           </menu>
@@ -120,7 +121,7 @@ export default function Dashboard() {
         </div>
       </Section>
 
-      <Section className="hidden sm:block">
+      <Section className="block">
         <div className="flex items-center gap-3 mb-6">
           <ChartBarIcon className="w-7 h-7 text-text-accent-default-light dark:text-text-accent-default-dark" />
           <h2 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">Analytics</h2>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { FileSlashIcon } from "../../../../components/ui/icons";
 import Section from "../../../../components/ui/Section";
 import CoursePrerequisitesCard from "./CoursePrerequisitesCard";
 import { PrereqPageSkeleton } from "./SkeletonLoader";
@@ -42,18 +43,17 @@ export default function CoursePrerequisitesBody({ search = "" }) {
     }
 
     return (
-        <Section>
+        <Section className="flex flex-col h-full">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {courseData.map((course) => (
                     <CoursePrerequisitesCard key={course.id} course={course} />
                 ))}
             </div>
 
-            {courseData.length === 0 && (
-                <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-10 text-center">
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        {search.trim() ? "No courses match your search." : "No prerequisite data available."}
-                    </p>
+            {filtered.length === 0 && (
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                    <FileSlashIcon className="w-12 h-12 mb-4 opacity-40" />
+                    <p className="text-sm">{search.trim() ? "No courses match your search." : "No prerequisite data available."}</p>
                 </div>
             )}
         </Section>

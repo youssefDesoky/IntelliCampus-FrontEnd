@@ -48,7 +48,7 @@ function ActionButtons({ onEnterClassroom, onViewMaterials, layout }) {
     >
       <button
         onClick={onEnterClassroom}
-        className={`px-4 py-2 text-sm font-semibold rounded-lg bg-bg-dark text-white whitespace-nowrap transition-opacity hover:opacity-90 ${isHorizontal ? "flex-1" : ""}`}
+        className={`px-4 py-2 text-sm font-semibold rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap transition-opacity hover:opacity-90 ${isHorizontal ? "flex-1" : ""}`}
       >
         Enter Classroom
       </button>
@@ -115,7 +115,7 @@ export default function MyCourse({
         {/* Main content */}
         <div className="flex-1 min-w-0">
           {/* Header row */}
-          <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-xs font-semibold">
                 {code}
@@ -128,7 +128,7 @@ export default function MyCourse({
               </span>
             </div>
             {/* Mobile status */}
-            <div className="sm:hidden">
+            <div className="sm:hidden flex items-center">
               <StatusBadge label={statusLabel} className={statusClass} />
             </div>
           </div>

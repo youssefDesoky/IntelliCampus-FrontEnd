@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
+import { BookIcon } from "../../../components/ui/icons";
 import Section from "../../../components/ui/Section";
 import DataBanner from "../../../components/ui/DataBanner";
 import useDeviceType from "../../../hooks/useDeviceType";
@@ -69,27 +70,31 @@ export default function InstructorCourses() {
 
     return (
         <>
-            <InstructorCoursesHeader 
+            <InstructorCoursesHeader
                 isMobile={isMobile}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
+                hasCourses={courses.length > 0}
             />
 
-            <Section className="hidden md:grid grid-cols-3 gap-6 mb-6">
-                <DataBanner
-                    title="Course Statistics"
-                    data={stats}
-                />
-            </Section>
+            {courses.length > 0 && (
+                <Section className="hidden md:grid grid-cols-3 gap-6 mb-6">
+                    <DataBanner
+                        title="Course Statistics"
+                        data={stats}
+                    />
+                </Section>
+            )}
 
             {loading && <InstructorCoursesSkeleton viewMode={viewMode} />}
 
             {!loading && courses.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+                    <BookIcon className="w-12 h-12 mb-4 opacity-40 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
+                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                         No courses assigned
                     </h3>
-                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
+                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
                         You are not currently assigned to any courses.
                     </p>
                 </div>

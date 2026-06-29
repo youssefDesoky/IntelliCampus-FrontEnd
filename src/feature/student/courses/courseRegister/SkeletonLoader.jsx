@@ -8,24 +8,33 @@ function SkeletonBar({ className = "" }) {
 
 export function CourseCardSkeleton() {
   return (
-    <div className="relative flex flex-col justify-between gap-4 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
-      <SkeletonBar className="absolute top-4 right-4 w-8 h-8 rounded-full" />
-      <div className="flex-1 flex flex-col justify-center space-y-3">
-        <div className="flex gap-4">
-          <SkeletonBar className="h-6 w-24 rounded-full" />
-          <SkeletonBar className="h-6 w-20 rounded-full" />
-        </div>
-        <div className="space-y-2">
-          <SkeletonBar className="h-5 w-3/4" />
-          <SkeletonBar className="h-4 w-1/2" />
-          <div className="flex gap-6">
-            <SkeletonBar className="h-4 w-32" />
-            <SkeletonBar className="h-4 w-24" />
+    <div className="relative flex flex-col gap-3 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
+      {/* Top row: avatar + course info + credits */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <SkeletonBar className="w-10 h-10 rounded-full shrink-0" />
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <div className="flex gap-2">
+              <SkeletonBar className="h-4 w-16 rounded" />
+              <SkeletonBar className="h-4 w-4 rounded-full" />
+            </div>
+            <SkeletonBar className="h-5 w-40 rounded" />
           </div>
         </div>
+        <SkeletonBar className="h-4 w-8 rounded shrink-0" />
       </div>
-      <div className="pt-3 border-t border-t-border-primary-default-light dark:border-t-border-primary-default-dark">
-        <SkeletonBar className="h-9 w-full rounded-lg" />
+
+      {/* Middle info: professor, schedule, room */}
+      <div className="flex flex-col gap-1 pl-[52px]">
+        <SkeletonBar className="h-4 w-3/4 rounded" />
+        <SkeletonBar className="h-4 w-1/2 rounded" />
+        <SkeletonBar className="h-4 w-1/3 rounded" />
+      </div>
+
+      {/* Bottom row: dropdown + action button */}
+      <div className="pt-3 flex items-center gap-3 border-t border-t-border-primary-default-light dark:border-t-border-primary-default-dark">
+        <SkeletonBar className="h-9 flex-1 rounded-lg" />
+        <SkeletonBar className="h-8 w-8 rounded-md shrink-0" />
       </div>
     </div>
   );

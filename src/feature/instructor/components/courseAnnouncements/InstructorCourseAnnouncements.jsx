@@ -8,6 +8,7 @@ import TextArea from "../../../../components/ui/TextArea";
 import { PlusIcon, XIcon } from "../../../../components/ui/icons";
 import BaseFormComponent from "../../../../components/ui/BaseFormComponent";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
+import { CourseAnnouncementsSkeleton } from "../../SkeletonLoader";
 
 export default function InstructorCourseAnnouncements() {
     const user = useRouteLoaderData("root");
@@ -111,12 +112,12 @@ export default function InstructorCourseAnnouncements() {
     });
 
     if (loading) {
-        return <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading announcements...</p>;
+        return <CourseAnnouncementsSkeleton />;
     }
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
+        <div className="flex flex-col flex-1">
+            <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                     Announcements
                 </h2>
@@ -198,7 +199,7 @@ export default function InstructorCourseAnnouncements() {
 
             {/* Announcements List */}
             {announcements.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border-primary-default-light bg-bg-surface-primary-default-light p-6 text-center dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark">
+                <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
                     <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No announcements yet</h3>
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         Create your first announcement to get started.

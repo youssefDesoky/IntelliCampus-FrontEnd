@@ -1,37 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import Section from "../../../components/ui/Section";
 import PageHeader from "../../../components/ui/PageHeader";
+import { ChartBarIcon, ClipboardCheckIcon } from "../../../components/ui/icons";
 import { fetchAcademicProgress } from "../../../feature/student/services/gradeApi";
-
-function ProgressSkeleton() {
-  function Bar({ className = "" }) {
-    return (
-      <div className={`animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded ${className}`} />
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Section key={i} className="p-6">
-          <Bar className="h-5 w-48 mb-3" />
-          <Bar className="h-3 w-32 mb-4" />
-          <Bar className="h-3 w-full mb-6" />
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, j) => (
-              <div key={j} className="flex items-center gap-3">
-                <Bar className="h-5 w-5 rounded-full" />
-                <Bar className="h-4 w-24" />
-                <Bar className="h-4 flex-1" />
-                <Bar className="h-4 w-8" />
-              </div>
-            ))}
-          </div>
-        </Section>
-      ))}
-    </div>
-  );
-}
+import { AcademicProgressSkeleton } from "../../../feature/student/courses/academicProgress/SkeletonLoader";
 
 function BucketCourseRow({ course }) {
   return (
@@ -80,7 +52,7 @@ export default function AcademicProgress() {
         subtitle="Track your degree completion by requirement category"
       />
 
-      {isLoading && <ProgressSkeleton />}
+      {isLoading && <AcademicProgressSkeleton />}
 
       {!isLoading && data && (
         <>
@@ -149,9 +121,16 @@ export default function AcademicProgress() {
                     </div>
 
                     <div className="border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
-                      {bucket.courses?.map((course) => (
-                        <BucketCourseRow key={course.courseId} course={course} />
-                      ))}
+                      {bucket.courses?.length > 0 ? (
+                        bucket.courses.map((course) => (
+                          <BucketCourseRow key={course.courseId} course={course} />
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-8 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                          <ClipboardCheckIcon className="w-10 h-10 mb-3 opacity-40" />
+                          <p className="text-sm">No courses in this category yet</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Section>
@@ -164,10 +143,11 @@ export default function AcademicProgress() {
       {!isLoading && !data && (
         <Section className="p-6">
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+            <ChartBarIcon className="w-12 h-12 mb-4 opacity-40 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
+            <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
               No progress data available
             </h3>
-            <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
+            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
               Your academic progress information could not be loaded.
             </p>
           </div>

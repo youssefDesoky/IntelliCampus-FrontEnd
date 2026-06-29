@@ -9,6 +9,7 @@ import GradeHistory from "./GradeHistory";
 import { fetchCourseGrade } from "../../gradeApi";
 
 import { useDeviceType } from '../../../../../hooks';
+import { CourseGradeSkeleton } from "./SkeletonLoader";
 
 const PAGE_SIZE = 3;
 
@@ -25,20 +26,14 @@ export default function CourseGrade() {
 	});
 
 	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center min-h-screen">
-				<p className="text-gray-600">Loading grade data...</p>
-			</div>
-		);
+		return <CourseGradeSkeleton />;
 	}
 
 	if (!gradeData) {
 		return (
-			<div className="flex items-center justify-center min-h-screen">
-				<div className="text-center">
-					<p className="text-gray-600 mb-4">No grades yet for this course</p>
-					<p className="text-sm text-gray-500 mb-4">Grades will appear here once your instructor has graded your work.</p>
-				</div>
+			<div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
+				<h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No grades yet for this course</h3>
+				<p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Grades will appear here once your instructor has graded your work.</p>
 			</div>
 		);
 	}

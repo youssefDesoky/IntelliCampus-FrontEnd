@@ -1,5 +1,5 @@
 import Section from "../../../components/ui/Section";
-import { BookIcon, ClockIcon, LocationDotIcon } from "../../../components/ui/icons";
+import { CalendarSlashIcon, ClockIcon, LocationDotIcon } from "../../../components/ui/icons";
 
 const examTypeStyles = {
     Midterm: "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark text-text-blue-default-light dark:text-text-blue-default-dark border-border-blue-default-light dark:border-border-blue-default-dark",
@@ -22,16 +22,15 @@ export default function ExamSchedule({ exams = [] }) {
     return (
         <Section className="exam-schedule space-y-6">
             {/* Exam Cards */}
-            <div className="space-y-4">
+            <div className="flex flex-col space-y-4">
                 {sortedExams.length > 0 ? (
                     sortedExams.map((exam) => (
                         <ExamCard key={exam.examScheduleId} exam={exam} daysRemaining={getDaysRemaining(exam.date)} />
                     ))
                 ) : (
-                    <div className="rounded-2xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-center py-12 text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                        <BookIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg font-medium">No exams found</p>
-                        <p className="text-sm">Try adjusting your search or filter</p>
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                        <CalendarSlashIcon className="w-12 h-12 mb-4 opacity-40" />
+                        <p className="text-sm">No exams scheduled</p>
                     </div>
                 )}
             </div>

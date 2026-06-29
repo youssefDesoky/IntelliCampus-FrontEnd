@@ -8,7 +8,7 @@ function SkeletonBar({ className = "" }) {
 
 export function StatsBannerSkeleton() {
   return (
-    <div className="rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark p-4 sm:p-5">
+    <div className="rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark p-4 sm:p-5 col-span-full">
       <SkeletonBar className="h-4 w-32 mb-4 sm:mb-5" />
       <div className="flex flex-col sm:flex-row sm:divide-x divide-y sm:divide-y-0 divide-border-primary-default-light dark:divide-border-primary-default-dark">
         {Array.from({ length: 4 }).map((_, i) => (

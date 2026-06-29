@@ -47,8 +47,11 @@ export function InstructorCoursesSkeleton({ viewMode }) {
   const isGrid = viewMode === "grid";
   return (
     <>
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <SkeletonBar className="h-10 w-44 rounded-lg" />
+      <div className="flex flex-row items-center justify-between gap-4 mb-4">
+        <div className="space-y-1 min-w-0">
+          <SkeletonBar className="h-7 w-40 md:h-8 md:w-44" />
+          <SkeletonBar className="h-3 w-32 md:h-4 md:w-36" />
+        </div>
         <div className="flex items-center gap-3">
           <SkeletonBar className="h-9 w-9 rounded-lg" />
           <SkeletonBar className="h-9 w-9 rounded-lg" />
@@ -180,59 +183,37 @@ export function CourseMaterialsSkeleton() {
 export function CourseGradesSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 sm:p-4">
-            <div className="flex items-center justify-between mb-2">
-              <SkeletonBar className="h-3 w-24" />
-              <SkeletonBar className="w-5 h-5 rounded" />
-            </div>
-            <SkeletonBar className="h-7 w-16" />
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center justify-end">
-        <SkeletonBar className="h-9 w-40 rounded-lg" />
+      <div className="flex items-center justify-between">
+        <SkeletonBar className="h-7 w-20" />
+        <SkeletonBar className="h-9 w-36 rounded-lg" />
       </div>
       <div>
-        <SkeletonBar className="h-5 w-48 mb-4" />
-        <div className="space-y-3">
+        <SkeletonBar className="h-5 w-44 mb-4" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 sm:p-4">
-              <div className="sm:flex sm:flex-row sm:items-center sm:gap-3">
-                <SkeletonBar className="hidden sm:block w-10 h-10 rounded-lg shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <SkeletonBar className="sm:hidden w-10 h-10 rounded-lg shrink-0" />
-                      <div className="min-w-0 space-y-1">
-                        <SkeletonBar className="h-4 w-40" />
-                        <SkeletonBar className="h-3 w-24" />
-                      </div>
-                    </div>
-                    <div className="hidden sm:flex items-center gap-4">
-                      <div className="text-center space-y-1">
-                        <SkeletonBar className="h-5 w-12" />
-                        <SkeletonBar className="h-3 w-14" />
-                      </div>
-                      <div className="text-center space-y-1">
-                        <SkeletonBar className="h-5 w-8" />
-                        <SkeletonBar className="h-3 w-14" />
-                      </div>
-                    </div>
-                    <SkeletonBar className="sm:hidden h-5 w-14 rounded-full" />
-                  </div>
-                  <div className="mt-2 sm:mt-3 flex items-center gap-3">
-                    <SkeletonBar className="flex-1 h-2 rounded-full" />
-                  </div>
+            <div key={i} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <SkeletonBar className="w-9 h-9 rounded-lg shrink-0" />
+                  <SkeletonBar className="h-3 w-16" />
                 </div>
+                <SkeletonBar className="h-5 w-14 rounded-full" />
               </div>
+              <SkeletonBar className="h-4 w-3/4 mb-3" />
+              <div className="flex items-center justify-between mb-2.5">
+                <SkeletonBar className="h-3 w-14" />
+                <SkeletonBar className="h-3 w-20" />
+              </div>
+              <SkeletonBar className="h-1.5 w-full rounded-full" />
             </div>
           ))}
         </div>
       </div>
       <div className="hidden sm:block">
-        <SkeletonBar className="h-5 w-24 mb-4" />
+        <div className="flex items-center justify-between mb-4">
+          <SkeletonBar className="h-5 w-24" />
+          <SkeletonBar className="h-3 w-20" />
+        </div>
         <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark">
           <div className="p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
             <div className="flex gap-4">
@@ -419,6 +400,137 @@ export function CourseAnalyticsSkeleton() {
         <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg p-6">
           <SkeletonBar className="h-6 w-44 mb-4" />
           <SkeletonBar className="h-[260px] w-full rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// COURSE ANNOUNCEMENTS
+// ============================================================
+function AnnouncementCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
+      <div className="flex items-start gap-3">
+        <SkeletonBar className="w-10 h-10 rounded-lg shrink-0" />
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <SkeletonBar className="h-4 w-32" />
+            <SkeletonBar className="h-3 w-16" />
+          </div>
+          <SkeletonBar className="h-4 w-full" />
+          <SkeletonBar className="h-4 w-3/4" />
+          <div className="flex items-center gap-2 pt-1">
+            <SkeletonBar className="h-3 w-28" />
+            <SkeletonBar className="h-6 w-14 rounded-lg" />
+            <SkeletonBar className="h-6 w-14 rounded-lg" />
+            <SkeletonBar className="h-6 w-14 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CourseAnnouncementsSkeleton() {
+  return (
+    <div className="flex flex-col flex-1">
+      <div className="flex items-center justify-between mb-4">
+        <SkeletonBar className="h-7 w-32" />
+        <SkeletonBar className="h-9 w-44 rounded-lg" />
+      </div>
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <AnnouncementCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// COURSE EXCUSES
+// ============================================================
+function ExcuseCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+      <div className="p-4 sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex-1 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <SkeletonBar className="w-10 h-10 rounded-xl shrink-0" />
+                <div className="min-w-0 space-y-1">
+                  <SkeletonBar className="h-4 w-36" />
+                  <SkeletonBar className="h-3 w-20" />
+                </div>
+              </div>
+              <SkeletonBar className="h-5 w-20 rounded-full shrink-0" />
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <SkeletonBar className="h-4 w-28" />
+              <SkeletonBar className="h-4 w-20" />
+              <SkeletonBar className="h-4 w-16" />
+            </div>
+            <div className="rounded-xl bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark px-4 py-3 space-y-1">
+              <SkeletonBar className="h-3 w-12" />
+              <SkeletonBar className="h-4 w-full" />
+              <SkeletonBar className="h-4 w-3/4" />
+            </div>
+            <SkeletonBar className="h-9 w-44 rounded-lg" />
+          </div>
+          <div className="flex gap-2 shrink-0 sm:flex-col">
+            <SkeletonBar className="h-9 w-full sm:w-24 rounded-lg" />
+            <SkeletonBar className="h-9 w-full sm:w-24 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CourseExcusesSkeleton() {
+  return (
+    <div className="flex flex-col flex-1">
+      <div className="flex items-center gap-3 mb-4">
+        <SkeletonBar className="w-9 h-9 rounded-lg shrink-0" />
+        <div className="flex-1 flex items-center justify-between min-w-0">
+          <SkeletonBar className="h-6 w-40" />
+          <SkeletonBar className="h-4 w-28 shrink-0" />
+        </div>
+      </div>
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <ExcuseCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// INSTRUCTOR PROFILE
+// ============================================================
+export function InstructorProfileSkeleton() {
+  return (
+    <div className="px-4 lg:px-8 py-6 space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex flex-col gap-6 lg:hidden">
+          <SkeletonBar className="h-64 rounded-3xl" />
+          <SkeletonBar className="h-48 rounded-3xl" />
+          <SkeletonBar className="h-40 rounded-3xl" />
+          <SkeletonBar className="h-32 rounded-3xl" />
+        </div>
+        <div className="hidden lg:grid grid-cols-[1fr_2fr] gap-6 items-stretch">
+          <div className="flex flex-col gap-6">
+            <SkeletonBar className="h-80 rounded-3xl" />
+            <SkeletonBar className="h-32 rounded-3xl" />
+          </div>
+          <div className="flex flex-col gap-6">
+            <SkeletonBar className="h-48 rounded-3xl" />
+            <SkeletonBar className="h-40 rounded-3xl" />
+          </div>
         </div>
       </div>
     </div>

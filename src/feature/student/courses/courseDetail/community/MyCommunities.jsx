@@ -3,7 +3,6 @@ import { useOutletContext } from "react-router-dom";
 import StudyGroupPost from "../../../../../components/ui/StudyGroupPost";
 import TextArea from "../../../../../components/ui/TextArea";
 import {
-    CommentsIcon,
     PaperPlaneIcon,
 } from "../../../../../components/ui/icons";
 import {
@@ -14,6 +13,7 @@ import {
     deleteCommunityPost,
 } from "./communityService";
 import { useError } from '../../../../../contexts/ErrorContext.jsx';
+import { MyCommunitiesSkeleton } from "./SkeletonLoader";
 
 export default function MyCommunities() {
     const { course, courseId } = useOutletContext();
@@ -104,9 +104,13 @@ export default function MyCommunities() {
 
     const handleDelete = async (postId) => {
         if (!courseId) return;
-        await deleteCommunityPost(courseId, postId);
-        const data = await fetchCommunityPosts(courseId);
-        setPosts(extractPosts(data).map(mapPost));
+        try {
+            await deleteCommunityPost(courseId, postId);
+            const data = await fetchCommunityPosts(courseId);
+            setPosts(extractPosts(data).map(mapPost));
+        } catch (err) {
+            showError(err.message);
+        }
     };
 
     const handleAttachmentChange = (event) => {
@@ -123,11 +127,7 @@ export default function MyCommunities() {
     };
 
     if (!course) {
-        return (
-            <div className="py-10 text-center">
-                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading course...</p>
-            </div>
-        );
+        return <MyCommunitiesSkeleton />;
     }
 
     return (
@@ -177,10 +177,7 @@ export default function MyCommunities() {
                         />
                     ))
                 ) : (
-                    <div className="rounded-2xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-16 text-center">
-                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                            <CommentsIcon className="h-6 w-6 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                        </div>
+                    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
                         <p className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No posts yet</p>
                         <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Be the first to start a discussion.</p>
                     </div>

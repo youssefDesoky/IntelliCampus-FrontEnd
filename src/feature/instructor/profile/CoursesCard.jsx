@@ -71,7 +71,10 @@ export default function CoursesCard({ courses = [], loading = false }) {
                             ))}
                         </div>
                     ) : courses.length === 0 ? (
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark text-center py-4">No courses assigned yet.</p>
+                        <div className="flex flex-col items-center justify-center py-8 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                            <BookIcon className="w-12 h-12 mb-4 opacity-40" />
+                            <p className="text-sm">No courses assigned yet.</p>
+                        </div>
                     ) : (
                         <div className="space-y-2">
                             {courses.map((c) => (

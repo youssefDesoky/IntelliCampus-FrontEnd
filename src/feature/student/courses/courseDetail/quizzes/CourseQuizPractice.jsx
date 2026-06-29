@@ -9,6 +9,7 @@ import QuizHeader from "./QuizHeader";
 import QuizSummary from "./QuizSummary";
 import { fetchPracticeQuiz, submitPracticeQuiz } from "../../../services/quizzesApi";
 import { Grid2ColIcon, XIcon } from "../../../../../components/ui/icons";
+import { CourseQuizPracticeSkeleton } from "./SkeletonLoader";
 
 const PAGE_SIZE = 3;
 
@@ -151,99 +152,7 @@ export default function CourseQuizPractice() {
 	}
 
 	if (isQuizLoading) {
-		return (
-			<div className="max-w-7xl mx-auto relative">
-				{/* Header skeleton */}
-				<div className="sticky top-0 z-40 mb-6">
-					<div className="rounded-2xl border border-gray-200/50 dark:border-gray-700/50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm overflow-hidden animate-pulse">
-						<div className="px-5 sm:px-6 py-4">
-							<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-								<div className="min-w-0">
-									<div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
-									<div className="h-6 w-64 rounded bg-gray-300 dark:bg-gray-600" />
-								</div>
-								<div className="flex items-center gap-3 shrink-0">
-									<div className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-gray-200/50 dark:border-gray-700/50 bg-gray-100 dark:bg-gray-800">
-										<div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
-										<div className="flex flex-col min-w-[4.5rem]">
-											<div className="h-4 w-12 rounded bg-gray-200 dark:bg-gray-700 mb-1" />
-											<div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
-										</div>
-									</div>
-									<div className="h-9 w-24 rounded-lg bg-gray-200 dark:bg-gray-700" />
-								</div>
-							</div>
-						</div>
-						<div className="px-5 sm:px-6 pb-4">
-							<div className="flex items-center gap-1">
-								{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-									<div key={i} className="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700" />
-								))}
-							</div>
-							<div className="flex items-center justify-between mt-2">
-								<div className="h-3 w-28 rounded bg-gray-200 dark:bg-gray-700" />
-								<div className="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700" />
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div className="flex gap-6 items-start">
-					{/* Question cards skeleton */}
-					<div className="flex-1 min-w-0 space-y-5">
-						{[1, 2, 3].map((i) => (
-							<div key={i} className="rounded-2xl border border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-900 p-5 animate-pulse">
-								<div className="h-3 w-12 rounded bg-gray-200 dark:bg-gray-700 mb-3" />
-								<div className="h-5 w-3/4 rounded bg-gray-300 dark:bg-gray-600 mb-4" />
-								<div className="h-5 w-1/2 rounded bg-gray-300 dark:bg-gray-600 mb-6" />
-
-								{/* Option rows */}
-								<div className="space-y-3">
-									{[1, 2, 3, 4].map((j) => (
-										<div key={j} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200/50 dark:border-gray-700/50">
-											<div className="h-4 w-4 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
-											<div className="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700" />
-										</div>
-									))}
-								</div>
-							</div>
-						))}
-
-						{/* Pagination skeleton */}
-						<div className="flex items-center justify-center pt-2 pb-6 gap-2">
-							{[1, 2, 3, 4, 5].map((i) => (
-								<div key={i} className="h-9 w-9 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
-							))}
-						</div>
-					</div>
-
-					{/* Sidebar skeleton */}
-					<div className="hidden xl:block w-80 shrink-0">
-						<div className="rounded-2xl border border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-900 p-5 animate-pulse">
-							<div className="h-5 w-28 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
-							<div className="h-5 w-20 rounded bg-gray-300 dark:bg-gray-600 mb-4" />
-
-							<div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 mb-4" />
-
-							<div className="grid grid-cols-5 gap-2 mb-4">
-								{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-									<div key={i} className="h-8 rounded-lg bg-gray-200 dark:bg-gray-700" />
-								))}
-							</div>
-
-							<div className="space-y-2 mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-								{[1, 2, 3].map((i) => (
-									<div key={i} className="flex items-center justify-between">
-										<div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
-										<div className="h-3 w-24 rounded bg-gray-200 dark:bg-gray-700" />
-									</div>
-								))}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		);
+		return <CourseQuizPracticeSkeleton />;
 	}
 
 	return (

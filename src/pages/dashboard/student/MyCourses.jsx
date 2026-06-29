@@ -1,13 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Section from "../../../components/ui/Section";
 
 import MyCourse from "../../../feature/student/courses/myCourses/MyCourse";
-import TranscriptView from "../../../feature/student/courses/myCourses/TranscriptView";
 import { MyCoursesPageSkeleton } from "../../../feature/student/courses/myCourses/SkeletonLoader";
 import useDeviceType from "../../../hooks/useDeviceType";
 
+import { BookIcon } from "../../../components/ui/icons";
 import DataBanner from "../../../components/ui/DataBanner";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
 import MyCoursesHeader from "../../../feature/student/courses/myCourses/MyCoursesHeader";
@@ -60,8 +60,6 @@ function mapCourseToMyCourseProps(course) {
 export default function MyCourses() {
     const { isMobile } = useDeviceType();
     const navigate = useNavigate();
-    const location = useLocation();
-    const [showTranscript, setShowTranscript] = useState(() => location.state?.showTranscript || false);
 
     const PAGE_SIZE = 6;
     const [page, setPage] = useState(1);
@@ -71,6 +69,7 @@ export default function MyCourses() {
     });
     const [filterStatus, setFilterStatus] = useState([]);
     const [filterType, setFilterType] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const backendStatus =
         filterStatus.length === 1
@@ -100,13 +99,21 @@ export default function MyCourses() {
     const filteredCourses = courses.filter(c => {
         if (filterStatus.length > 0 && !filterStatus.includes(c.status)) return false;
         if (filterType.length > 0 && !filterType.includes(c.type)) return false;
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            const match =
+                c.title.toLowerCase().includes(q) ||
+                c.code.toLowerCase().includes(q) ||
+                c.instructor.toLowerCase().includes(q);
+            if (!match) return false;
+        }
         return true;
     });
 
-    // Reset page when filters change
+    // Reset page when filters or search change
     useEffect(() => {
         setPage(1);
-    }, [filterStatus, filterType]);
+    }, [filterStatus, filterType, searchQuery]);
 
     const totalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
     const from = (page - 1) * PAGE_SIZE + 1;
@@ -135,64 +142,64 @@ export default function MyCourses() {
 
     return (
         <div className="flex flex-col min-h-[calc(100vh-160px)]">
-            <MyCoursesHeader 
+            <MyCoursesHeader
                 isMobile={isMobile}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
-                showTranscript={showTranscript}
-                setShowTranscript={setShowTranscript}
                 filterStatus={filterStatus}
                 setFilterStatus={setFilterStatus}
                 filterType={filterType}
                 setFilterType={setFilterType}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                hasCourses={courses.length > 0}
             />
 
-            {!showTranscript ? (
-                <div className="flex flex-col flex-1">
+            <div className="flex flex-col flex-1">
+                {filteredCourses.length > 0 && (
                     <Section className="hidden md:grid grid-cols-4 gap-6 mb-6">
                         <DataBanner
                             title="Course Statistics"
                             data={stats}
                         />
                     </Section>
+                )}
 
-                    {loading && <MyCoursesPageSkeleton viewMode={viewMode} />}
+                {loading && <MyCoursesPageSkeleton viewMode={viewMode} />}
 
-                    {!loading && filteredCourses.length === 0 && (
-                        <div className="flex flex-col items-center justify-center flex-1 text-center">
-                            <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                                {courses.length === 0 ? "No courses enrolled" : "No courses match your filters"}
-                            </h3>
-                            <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
-                                {courses.length === 0
-                                    ? "You are not currently enrolled in any courses."
-                                    : "Try adjusting the status or type filters above."}
-                            </p>
-                        </div>
-                    )}
+                {!loading && filteredCourses.length === 0 && (
+                    <div className="flex flex-col items-center justify-center flex-1 text-center">
+                        <BookIcon className="w-12 h-12 mb-4 opacity-40 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
+                        <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+                            {courses.length === 0 ? "No courses enrolled" : "No courses match your filters"}
+                        </h3>
+                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
+                            {courses.length === 0
+                                ? "You are not currently enrolled in any courses."
+                                : "Try adjusting the status or type filters above."}
+                        </p>
+                    </div>
+                )}
 
-                    {!loading && paginatedCourses.length > 0 && (
-                        <Section className={`flex-1 ${viewMode === "grid" ? "grid grid-cols-2 gap-4 content-start" : "flex flex-col gap-4"}`}>
-                            {paginatedCourses.map((course) => (
-                                <MyCourse key={course.courseId} {...course} onEnterClassroom={() => handleEnterClassroom(course.courseId)} onViewMaterials={() => handleViewMaterials(course.courseId)} />
-                            ))}
-                        </Section>
-                    )}
+                {!loading && paginatedCourses.length > 0 && (
+                    <Section className={`flex-1 ${viewMode === "grid" ? "grid grid-cols-2 gap-4 content-start" : "flex flex-col gap-4"}`}>
+                        {paginatedCourses.map((course) => (
+                            <MyCourse key={course.courseId} {...course} onEnterClassroom={() => handleEnterClassroom(course.courseId)} onViewMaterials={() => handleViewMaterials(course.courseId)} />
+                        ))}
+                    </Section>
+                )}
 
-                    {!loading && totalPages > 1 && (
-                        <Section className="mt-auto mb-6">
-                            <PaginationButtons
-                                totalPages={totalPages}
-                                currentPage={page}
-                                setCurrentPage={setPage}
-                                {...(!isMobile ? { from, to, total: filteredCourses.length, label: "courses" } : {})}
-                            />
-                        </Section>
-                    )}
-                </div>
-            ) : (
-                <TranscriptView />
-            )}
+                {!loading && totalPages > 1 && (
+                    <Section className="mt-auto mb-6">
+                        <PaginationButtons
+                            totalPages={totalPages}
+                            currentPage={page}
+                            setCurrentPage={setPage}
+                            {...(!isMobile ? { from, to, total: filteredCourses.length, label: "courses" } : {})}
+                        />
+                    </Section>
+                )}
+            </div>
         </div>
     );
 }

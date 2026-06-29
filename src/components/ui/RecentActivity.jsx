@@ -63,23 +63,32 @@ export default function RecentActivity() {
             </div>
 
             {open && (
-                <ul className="space-y-3 mt-4">
-                    {activities.map((activity, idx) => (
-                        <li key={activity.id} className="flex items-start gap-3 py-3">
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colorClasses[idx % colorClasses.length]}`}>
-                                {activity.icon}
-                            </div>
-                            <div className="flex-1">
-                                <div className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-                                    {activity.description}
+                activities.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="currentColor" className="w-12 h-12 mb-4 opacity-40">
+                            <path d="M73 39.1c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6-.1 34l528 528c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-87.5-87.5c17.2-2.4 30.5-17.3 30.5-35.2 0-8.1-2.7-15.9-7.8-22.2l-9.8-12.2c-29.9-37.6-46.3-84.3-46.3-132.4V256c0-77.4-55-142-128-156.8V96c0-17.7-14.3-32-32-32s-32 14.3-32 32v3.2c-38.6 7.8-72.2 29.6-95.2 59.7z" />
+                        </svg>
+                        <p className="text-sm">No recent activity to display.</p>
+                    </div>
+                ) : (
+                    <ul className="space-y-3 mt-4">
+                        {activities.map((activity, idx) => (
+                            <li key={activity.id} className="flex items-start gap-3 py-3">
+                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colorClasses[idx % colorClasses.length]}`}>
+                                    {activity.icon}
                                 </div>
-                                <div className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-1">
-                                    {activity.time}
+                                <div className="flex-1">
+                                    <div className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
+                                        {activity.description}
+                                    </div>
+                                    <div className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-1">
+                                        {activity.time}
+                                    </div>
                                 </div>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                            </li>
+                        ))}
+                    </ul>
+                )
             )}
         </Section>
     );

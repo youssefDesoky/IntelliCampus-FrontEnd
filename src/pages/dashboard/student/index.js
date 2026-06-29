@@ -11,3 +11,4 @@ export { default as CoursesRegistration } from "./CoursesRegistration";
 export { default as SpecializationPreference } from "./SpecializationPreference";
 export { default as StudyGroupPostDetail } from "./StudyGroupPostDetail";
 export { default as AcademicProgress } from "./AcademicProgress";
+export { default as Transcript } from "./TranscriptPage";

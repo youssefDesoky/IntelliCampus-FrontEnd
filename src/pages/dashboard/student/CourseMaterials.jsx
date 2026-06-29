@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useLocation, useOutletContext } from "react-router-dom";
-
 import CourseWeekMaterials from "../../../feature/student/courses/courseDetail/courseMaterials/CourseWeekMaterials";
 
 
@@ -28,11 +27,11 @@ export default function CourseMaterials() {
 
     if (!course?.folders || course.folders.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-                <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+            <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
+                <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                     No materials available
                 </h3>
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
+                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
                     Materials for this course will be uploaded soon. Check back later!
                 </p>
             </div>

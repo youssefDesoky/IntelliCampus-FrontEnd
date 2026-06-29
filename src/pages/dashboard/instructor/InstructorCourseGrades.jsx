@@ -85,16 +85,11 @@ export default function InstructorCourseGrades() {
 
     if (!grades) {
         return (
-            <div className="space-y-4">
-                <div className="rounded-2xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-12 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                        <ChartBarIcon size={24} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No grades available</h3>
-                    <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        Grades will appear once assessments are graded.
-                    </p>
-                </div>
+            <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
+                <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No grades available</h3>
+                <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                    Grades will appear once assessments are graded.
+                </p>
             </div>
         );
     }

@@ -11,6 +11,7 @@ import ViewSubmission from "./ViewSubmission";
 import ViewInstructions from "./ViewInstructions";
 import ModelOverlay from "../../../../../components/ui/ModelOverlay";
 import { fetchAssignmentsByCourse, submitAssignment, fetchAssignmentStats } from "../../assignmentsApi";
+import { CourseAssignmentsSkeleton } from "./SkeletonLoader";
 
 
 const PAGE_SIZE = 2;
@@ -18,8 +19,8 @@ const PAGE_SIZE = 2;
 export default function CourseAssignments() {
     const { course } = useOutletContext();
     const [submitModal, setSubmitModal] = useState(null);
-    const [showAllUpcoming, setShowAllUpcoming] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [upcomingPage, setUpcomingPage] = useState(1);
     const [gradeModal, setGradeModal] = useState(null);
     const [submissionModal, setSubmissionModal] = useState(null);
     const [instructionsModal, setInstructionsModal] = useState(null);
@@ -94,24 +95,26 @@ export default function CourseAssignments() {
         const pastAssignments = assignments.filter((a) => a.isSubmitted || (a.dueDate && new Date(a.dueDate) <= new Date())) || [];
 
     if (isLoading) {
-        return (
-            <div className="text-center py-10">
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading assignments...</p>
-            </div>
-        );
+        return <CourseAssignmentsSkeleton />;
     }
 
-    const totalPages = Math.max(1, Math.ceil(pastAssignments.length / PAGE_SIZE));    
+    const totalPages = Math.max(1, Math.ceil(pastAssignments.length / PAGE_SIZE));
     const validCurrentPage = Math.min(currentPage, totalPages);
     const start = (validCurrentPage - 1) * PAGE_SIZE;
     const pagedAssignments = pastAssignments.slice(start, start + PAGE_SIZE);
 
+    const UPCOMING_PAGE_SIZE = 1;
+    const upcomingTotalPages = Math.max(1, Math.ceil(upcomingAssignments.length / UPCOMING_PAGE_SIZE));
+    const validUpcomingPage = Math.min(upcomingPage, upcomingTotalPages);
+    const upcomingStart = (validUpcomingPage - 1) * UPCOMING_PAGE_SIZE;
+    const pagedUpcoming = upcomingAssignments.slice(upcomingStart, upcomingStart + UPCOMING_PAGE_SIZE);
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 flex flex-col min-w-0 gap-4">
                 {/* Upcoming Assignments */}
-                <Section>
-                    <div className="flex items-center justify-between mb-5">
+                <Section className="flex flex-col !mb-0">
+                    <div className="flex items-center justify-between mb-5 shrink-0">
                         <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
                             Upcoming Assignments
                         </h2>
@@ -120,47 +123,49 @@ export default function CourseAssignments() {
                         </span>
                     </div>
 
-                    <div className="space-y-3">
-                        {upcomingAssignments.length > 0 ? (
-                            <>
-                                {(showAllUpcoming ? upcomingAssignments : upcomingAssignments.slice(0, 1)).map((assignment) => (
-                                    <AssignmentCard
-                                        key={assignment.id}
-                                        id={assignment.id}
-                                        title={assignment.title}
-                                        description={assignment.description}
-                                        dueDate={assignment.dueDate}
-                                        daysLeft={assignment.daysLeft}
-                                        status={assignment.status}
-                                        totalPoints={assignment.totalPoints}
-                                        onSubmitAssignment={(data) => setSubmitModal(data)}
-                                        onViewInstructions={(data) => setInstructionsModal(data)}
-                                        attachments={assignment.attachments}
-                                    />
-                                ))}
-                                {upcomingAssignments.length > 1 && (
-                                    <button onClick={() => setShowAllUpcoming(!showAllUpcoming)} className="w-full py-2 text-center text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark rounded-lg transition-colors">
-                                        {showAllUpcoming ? "Show Less" : `View More Upcoming Assignments (${upcomingAssignments.length - 1} more)`}
-                                    </button>
-                                )}
-                            </>
+                    <div className={`w-full min-w-0 space-y-3 ${upcomingAssignments.length === 1 ? "" : "min-h-[180px]"}`}>
+                        {pagedUpcoming.length > 0 ? (
+                            pagedUpcoming.map((assignment) => (
+                                <AssignmentCard
+                                    key={assignment.id}
+                                    id={assignment.id}
+                                    title={assignment.title}
+                                    description={assignment.description}
+                                    dueDate={assignment.dueDate}
+                                    daysLeft={assignment.daysLeft}
+                                    status={assignment.status}
+                                    totalPoints={assignment.totalPoints}
+                                    onSubmitAssignment={(data) => setSubmitModal(data)}
+                                    onViewInstructions={(data) => setInstructionsModal(data)}
+                                    attachments={assignment.attachments}
+                                />
+                            ))
                         ) : (
-                            <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-6 text-center">
+                            <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark py-8 text-center h-full flex items-center justify-center">
                                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No upcoming assignments right now.</p>
                             </div>
                         )}
                     </div>
+
+                    {upcomingAssignments.length > 0 && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 shrink-0">
+                            <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                showing {pagedUpcoming.length} of {upcomingAssignments.length} upcoming
+                            </p>
+                            <PaginationButtons totalPages={upcomingTotalPages} currentPage={validUpcomingPage} setCurrentPage={setUpcomingPage} />
+                        </div>
+                    )}
                 </Section>
 
                 {/* Past Submissions */}
-                <Section>
-                    <div className="mb-5">
-                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark mb-1">Past Submissions</h3>
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">All submitted and graded assignments for this course</p>
+                <Section className="flex flex-col !mb-0">
+                    <div className="mb-5 shrink-0">
+                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">Past Submissions</h3>
                     </div>
 
-                    {pagedAssignments.length ? (
-                        <div className="space-y-3">
+                    <div className={`overflow-y-auto w-full min-w-0 max-h-[400px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${pastAssignments.length === 1 ? "" : "min-h-[320px]"}`}>
+                        {pagedAssignments.length ? (
+                            <div className="space-y-3">
                             {pagedAssignments.map((assignment) => (
                                 <AssignmentCard
                                     key={assignment.id}
@@ -186,23 +191,26 @@ export default function CourseAssignments() {
                             ))}
                         </div>
                     ) : (
-                        <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-6 text-center">
+                        <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark py-8 text-center h-full flex items-center justify-center">
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No past submissions yet.</p>
                         </div>
                     )}
-
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
-                        <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            showing {pagedAssignments.length} of {pastAssignments.length} assignments
-                        </p>
-
-                        <PaginationButtons totalPages={totalPages} currentPage={validCurrentPage} setCurrentPage={setCurrentPage} />
                     </div>
+
+                    {pastAssignments.length > 0 && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 shrink-0">
+                            <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                showing {pagedAssignments.length} of {pastAssignments.length} assignments
+                            </p>
+
+                            <PaginationButtons totalPages={totalPages} currentPage={validCurrentPage} setCurrentPage={setCurrentPage} />
+                        </div>
+                    )}
                 </Section>
             </div>
 
             {/* Sidebar */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:block min-w-0">
                 <BaseComponent
                     title="Assignment Stats"
                     description="Overview of your assignment activity for this course"

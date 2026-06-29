@@ -8,7 +8,7 @@ import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
 import ExamSchedule from "../../../feature/student/schedule/ExamSchedule";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import { fetchMySchedule, exportSchedulePdf } from "../../../feature/student/schedule/scheduleApi";
-import { ScheduleSkeleton } from "../../../feature/student/schedule/SkeletonLoader";
+import { ScheduleSkeleton, ExamScheduleSkeleton } from "../../../feature/student/schedule/SkeletonLoader";
 import { fetchMyExams, exportExamSchedulePdf } from "../../../feature/student/schedule/examScheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
@@ -22,11 +22,14 @@ export default function Schedule() {
     const { isMobile } = useDeviceType();
     const { showError } = useError();
 
+    const isWeekly = currSchedule === "weekly";
+
     const { data: scheduleData = [], isLoading: scheduleLoading } = useQuery({
         queryKey: ["studentSchedule"],
         queryFn: async () => {
             try { return await fetchMySchedule(); } catch { return []; }
         },
+        enabled: isWeekly,
         staleTime: 5 * 60 * 1000,
     });
 
@@ -35,10 +38,9 @@ export default function Schedule() {
         queryFn: async () => {
             try { return await fetchMyExams(); } catch { return []; }
         },
+        enabled: !isWeekly,
         staleTime: 5 * 60 * 1000,
     });
-
-    const isLoading = scheduleLoading || examsLoading;
 
     const getTypeGroup = (eventType) => {
         if (eventType === "lecture") return "lecture";
@@ -62,7 +64,7 @@ export default function Schedule() {
 
     const handleExport = async () => {
         try {
-            if (currSchedule === "weekly") {
+            if (isWeekly) {
                 await exportSchedulePdf(selectedTypes);
             } else {
                 await exportExamSchedulePdf();
@@ -76,8 +78,12 @@ export default function Schedule() {
         ? scheduleData
         : scheduleData.filter((event) => selectedTypes.includes(getTypeGroup(event.type)));
 
-    if (isLoading) {
+    if (scheduleLoading && isWeekly) {
         return <ScheduleSkeleton isMobile={isMobile} />;
+    }
+
+    if (examsLoading && !isWeekly) {
+        return <ExamScheduleSkeleton />;
     }
 
     return (
@@ -92,7 +98,7 @@ export default function Schedule() {
                 onExport={handleExport}
             />
 
-            {currSchedule === "weekly" ? (
+            {isWeekly ? (
                 isMobile ? (
                     <WeeklyScheduleAgenda
                         days={days}

@@ -36,6 +36,7 @@ import {
     CoursesRegistration as StudentCoursesRegistration,
     SpecializationPreference as StudentSpecializationPreference,
     AcademicProgress as StudentAcademicProgress,
+    Transcript as StudentTranscript,
 } from "./pages/dashboard/student";
 
 import CourseAttendance from "./feature/student/courses/courseDetail/courseAttendance/CourseAttendance";
@@ -50,7 +51,7 @@ import { Dashboard as AdminDashboard, ManageInstructors, ManageStudents, Student
 
 // Instructor Pages
 import Attendance from "./feature/instructor/components/attendance/Attendance"
-import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseComplaints, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule, InstructorDashboard } from "./pages/dashboard/instructor"
+import { InstructorCourses, InstructorCourseMaterials, InstructorCourseAssignments, InstructorCourseAttendance, InstructorCourseQuizzes, InstructorCourseGrades, InstructorCourseComplaints, InstructorCourseExcuses, InstructorCourseAnalytics, InstructorReminders, InstructorSchedule, InstructorDashboard } from "./pages/dashboard/instructor"
 import { InstructorCourseAnnouncements } from "./feature/instructor/components/courseAnnouncements"
 import { InstructorMeetingRoom } from "./pages/dashboard/instructor"
 import InstructorCommunity from "./feature/student/courses/courseDetail/community/MyCommunities"
@@ -117,6 +118,7 @@ export default function App() {
 
                     { path: "courses/registration", element: <StudentCoursesRegistration /> },
                     { path: "courses/prerequisites", element: <StudentCoursePrerequisites /> },
+                    { path: "courses/transcript", element: <StudentTranscript /> },
                     { path: "courses/academic-progress", element: <StudentAcademicProgress /> },
                     { path: "reminders", element: <StudentReminders /> },
                     { path: "smart-notes", element: <StudentSmartNotes /> },
@@ -145,6 +147,7 @@ export default function App() {
                             { path: "quizzes", element: <InstructorCourseQuizzes /> },
                             { path: "attendance", element: <InstructorCourseAttendance /> },
                             { path: "attendance/:sessionId", element: <InstructorCourseAttendance /> },
+                            { path: "attendance/excuses", element: <InstructorCourseExcuses /> },
                             { path: "grades", element: <InstructorCourseGrades /> },
                             { path: "grades/complaints", element: <InstructorCourseComplaints /> },
                             { path: "community", element: <InstructorCommunity /> },

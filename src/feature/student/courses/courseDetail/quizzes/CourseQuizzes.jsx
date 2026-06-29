@@ -8,9 +8,10 @@ import Button from "../../../../../components/ui/Button";
 import PaginationButtons from "../../../../../components/ui/PaginationButtons";
 import { CalendarDaysIcon, ClockIcon, PlayIcon, EyeIcon, ChartBarIcon, StarIcon, BrainIcon, CheckIcon } from "../../../../../components/ui/icons";
 import { fetchCourseQuizzesOverview } from "../../../services/quizzesApi";
+import { CourseQuizzesSkeleton } from "./SkeletonLoader";
 
-
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 2;
+const ACTIVE_PAGE_SIZE = 1;
 
 function toPercent(score, maxScore) {
     if (!maxScore) return 0;
@@ -153,6 +154,7 @@ export default function CourseQuizzes() {
     const { course } = useOutletContext();
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
+    const [activePage, setActivePage] = useState(1);
 
     const { data: overview = null, isLoading } = useQuery({
         queryKey: ["courseQuizzes", course?.id],
@@ -216,112 +218,23 @@ export default function CourseQuizzes() {
         return historyQuizzes.slice(start, start + PAGE_SIZE);
     }, [historyQuizzes, validCurrentPage]);
 
+    const activeTotalPages = Math.max(1, Math.ceil(activeQuizzes.length / ACTIVE_PAGE_SIZE));
+    const validActivePage = Math.min(activePage, activeTotalPages);
+    const pagedActive = useMemo(() => {
+        const start = (validActivePage - 1) * ACTIVE_PAGE_SIZE;
+        return activeQuizzes.slice(start, start + ACTIVE_PAGE_SIZE);
+    }, [activeQuizzes, validActivePage]);
+
     if (isLoading) {
-        return (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 py-6">
-            <div className="lg:col-span-2 space-y-6">
-                    <div>
-                        <div className="flex items-center gap-2 mb-5">
-                            <div className="h-5 w-5 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
-                            <div className="h-5 w-36 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
-                        </div>
-                        <div className="space-y-3">
-                            {[1, 2].map((i) => (
-                                <div key={i} className="rounded-xl border border-gray-200/50 dark:border-gray-700/50 p-5 animate-pulse">
-                                    <div className="flex items-start justify-between gap-3 mb-4">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <div className="h-4 w-4 rounded bg-gray-200 dark:bg-gray-700" />
-                                                <div className="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700" />
-                                            </div>
-                                            <div className="h-3 w-full rounded bg-gray-200 dark:bg-gray-700 ml-6 mt-2" />
-                                        </div>
-                                        <div className="h-6 w-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3">
-                                        <div className="col-span-2 sm:col-span-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
-                                            <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
-                                            <div className="h-4 w-24 rounded bg-gray-300 dark:bg-gray-600" />
-                                        </div>
-                                        <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
-                                            <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
-                                            <div className="h-4 w-16 rounded bg-gray-300 dark:bg-gray-600" />
-                                        </div>
-                                        <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
-                                            <div className="h-3 w-10 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
-                                            <div className="h-4 w-12 rounded bg-gray-300 dark:bg-gray-600 mb-2" />
-                                            <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700" />
-                                        </div>
-                                    </div>
-                                    <div className="h-10 w-full rounded-lg bg-gray-200 dark:bg-gray-700" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div>
-                        <div className="mb-5">
-                            <div className="h-5 w-32 rounded bg-gray-200 dark:bg-gray-700 animate-pulse mb-1" />
-                            <div className="h-3 w-64 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
-                        </div>
-                        <div className="space-y-3">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="rounded-xl border border-gray-200/50 dark:border-gray-700/50 p-5 animate-pulse">
-                                    <div className="flex items-start justify-between gap-3 mb-4">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <div className="h-4 w-4 rounded bg-gray-200 dark:bg-gray-700" />
-                                                <div className="h-4 w-56 rounded bg-gray-200 dark:bg-gray-700" />
-                                            </div>
-                                            <div className="h-3 w-3/4 rounded bg-gray-200 dark:bg-gray-700 ml-6 mt-2" />
-                                        </div>
-                                        <div className="h-6 w-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3">
-                                        <div className="col-span-2 sm:col-span-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
-                                            <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
-                                            <div className="h-4 w-24 rounded bg-gray-300 dark:bg-gray-600" />
-                                        </div>
-                                        <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
-                                            <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
-                                            <div className="h-4 w-16 rounded bg-gray-300 dark:bg-gray-600" />
-                                        </div>
-                                        <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
-                                            <div className="h-3 w-10 rounded bg-gray-200 dark:bg-gray-700 mb-2" />
-                                            <div className="h-4 w-12 rounded bg-gray-300 dark:bg-gray-600 mb-2" />
-                                            <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700" />
-                                        </div>
-                                    </div>
-                                    <div className="h-10 w-full rounded-lg bg-gray-200 dark:bg-gray-700" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="hidden lg:block space-y-6">
-                    <div className="rounded-xl border border-gray-200/50 dark:border-gray-700/50 p-5 sm:p-6 animate-pulse">
-                        <div className="h-5 w-24 rounded bg-gray-200 dark:bg-gray-700 mb-4" />
-                        <div className="space-y-3">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
-                                    <div className="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700" />
-                                    <div className="h-5 w-10 rounded bg-gray-300 dark:bg-gray-600" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+        return <CourseQuizzesSkeleton />;
     }
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 flex flex-col min-w-0 gap-4">
 
-                <Section>
-                    <div className="flex items-center justify-between mb-5">
+                <Section className="flex flex-col !mb-0">
+                    <div className="flex items-center justify-between mb-5 shrink-0">
                         <div className="flex items-center gap-2">
                             <BrainIcon size={20} className="text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark" />
                             <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
@@ -335,50 +248,58 @@ export default function CourseQuizzes() {
                         )}
                     </div>
 
-                    {activeQuizzes.length ? (
-                        <div className="space-y-3">
-                            {activeQuizzes.map((quiz) => (
+                    <div className={`w-full min-w-0 space-y-3 ${activeQuizzes.length === 1 ? "" : "min-h-[180px]"}`}>
+                        {pagedActive.length > 0 ? (
+                            pagedActive.map((quiz) => (
                                 <QuizCard key={quiz.id} quiz={quiz} isUpcoming onStartQuiz={() => navigate(`practice?quizId=${quiz.id}`)} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-8 text-center">
-                            <BrainIcon size={32} className="mx-auto mb-3 text-text-secondary-default-light dark:text-text-secondary-default-dark opacity-40" />
-                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No active quizzes available right now.</p>
+                            ))
+                        ) : (
+                            <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark py-8 text-center h-full flex items-center justify-center">
+                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No active quizzes available right now.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {activeQuizzes.length > 0 && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 shrink-0">
+                            <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                showing {pagedActive.length} of {activeQuizzes.length} active
+                            </p>
+                            <PaginationButtons totalPages={activeTotalPages} currentPage={validActivePage} setCurrentPage={setActivePage} />
                         </div>
                     )}
                 </Section>
 
-                <Section>
-                    <div className="mb-5">
-                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark mb-1">Quiz History</h3>
-                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Completed and missed quiz attempts for this course</p>
+                <Section className="flex flex-col !mb-0">
+                    <div className="mb-5 shrink-0">
+                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">Quiz History</h3>
                     </div>
 
-                    {pagedQuizzes.length ? (
-                        <div className="space-y-3">
-                            {pagedQuizzes.map((quiz) => (
-                                <QuizCard
-                                    key={quiz.id}
-                                    quiz={quiz}
-                                    isUpcoming={false}
-                                    onViewResults={() => navigate(`practice?quizId=${quiz.id}&review=graded`)}
-                                    onReviewResults={() => navigate(`practice?quizId=${quiz.id}&review=graded`)}
-                                    onStartQuiz={() => navigate(`practice?quizId=${quiz.id}`)}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-8 text-center">
-                            <ChartBarIcon size={32} className="mx-auto mb-3 text-text-secondary-default-light dark:text-text-secondary-default-dark opacity-40" />
-                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No quiz history yet.</p>
-                        </div>
-                    )}
+                    <div className={`overflow-y-auto w-full min-w-0 max-h-[400px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${historyQuizzes.length === 1 ? "" : "min-h-[320px]"}`}>
+                        {pagedQuizzes.length ? (
+                            <div className="space-y-3">
+                                {pagedQuizzes.map((quiz) => (
+                                    <QuizCard
+                                        key={quiz.id}
+                                        quiz={quiz}
+                                        isUpcoming={false}
+                                        onViewResults={() => navigate(`practice?quizId=${quiz.id}&review=graded`)}
+                                        onReviewResults={() => navigate(`practice?quizId=${quiz.id}&review=graded`)}
+                                        onStartQuiz={() => navigate(`practice?quizId=${quiz.id}`)}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark py-8 text-center h-full flex items-center justify-center">
+                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No quiz history yet.</p>
+                            </div>
+                        )}
+                    </div>
 
-                    {historyQuizzes.length > PAGE_SIZE && (
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
+                    {historyQuizzes.length > 0 && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 shrink-0">
                             <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Showing {pagedQuizzes.length} of {historyQuizzes.length} quizzes
+                                showing {pagedQuizzes.length} of {historyQuizzes.length} quizzes
                             </p>
 
                             <PaginationButtons totalPages={totalPages} currentPage={validCurrentPage} setCurrentPage={setCurrentPage} />

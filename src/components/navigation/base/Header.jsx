@@ -8,7 +8,7 @@ import DropdownMenu from "../../ui/DropdownMenu";
 import ToggleViewMode from "../../ui/ToggleViewMode";
 import ToggleTheme from "../../ui/ToggleTheme";
 
-import { IntelliCampusIcon, BellIconLight, TranslateIcon, SignOutIcon, UserIcon, InboxIcon } from "../../ui/icons";
+import { IntelliCampusIcon, BellIconLight, BellSlashIconLight, TranslateIcon, SignOutIcon, UserIcon, InboxIcon } from "../../ui/icons";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
 
@@ -334,7 +334,8 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                                     </li>
                                                 ))
                                             ) : (
-                                                <li className="p-6 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm">
+                                                <li className="p-6 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm flex flex-col items-center gap-2">
+                                                    <BellSlashIconLight className="w-8 h-8 opacity-40" />
                                                     No notifications
                                                 </li>
                                             );
@@ -423,7 +424,8 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                                 </li>
                                             ))
                                         ) : (
-                                            <li className="p-6 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm">
+                                            <li className="p-6 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm flex flex-col items-center gap-2">
+                                                <BellSlashIconLight className="w-8 h-8 opacity-40" />
                                                 No notifications
                                             </li>
                                         );
