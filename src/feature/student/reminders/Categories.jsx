@@ -1,13 +1,13 @@
 import Section from "../../../components/ui/Section";
 
-const categories = [
+const defaultCategories = [
     { value: "classes", label: "Classes", dotColor: "bg-blue-500", rowBg: "bg-blue-50" },
     { value: "exams", label: "Exams", dotColor: "bg-yellow-500", rowBg: "bg-yellow-50" },
     { value: "assignments", label: "Assignments", dotColor: "bg-red-500", rowBg: "bg-red-50" },
     { value: "personal", label: "Personal", dotColor: "bg-purple-500", rowBg: "bg-purple-50" },
 ];
 
-export default function Categories({ className, reminders = [], selectedCategory, onSelectCategory }) {
+export default function Categories({ className, reminders = [], selectedCategory, onSelectCategory, categories = defaultCategories }) {
     const counts = reminders.reduce((acc, reminder) => {
         const key = reminder.category;
         acc[key] = (acc[key] || 0) + 1;

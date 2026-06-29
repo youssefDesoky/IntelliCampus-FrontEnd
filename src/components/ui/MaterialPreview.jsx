@@ -65,8 +65,13 @@ export default function MaterialPreview({ type, title, viewUrl, downloadUrl }) {
                     <audio src={viewUrl} controls className="w-full max-w-lg" />
                 </div>
             );
-        case "iframe":
+        case "iframe": {
+            const ext = getFileExtension(title);
+            if (ext === "pdf") {
+                return <embed src={viewUrl} type="application/pdf" className="w-full h-[80vh] rounded-b-xl" />;
+            }
             return <iframe src={viewUrl} title={title} className="w-full h-[80vh] border-0 rounded-b-xl" />;
+        }
         case "office": {
             const fullUrl = `${window.location.origin}${viewUrl}`;
             const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fullUrl)}`;

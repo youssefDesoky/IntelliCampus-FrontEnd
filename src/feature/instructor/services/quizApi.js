@@ -18,6 +18,16 @@ export async function addQuestions(courseId, quizId, questions) {
   });
 }
 
+export async function fetchQuestions(courseId, quizId) {
+  return apiClient(`/api/courses/${courseId}/quizzes/${quizId}/questions`);
+}
+
+export async function deleteQuestion(courseId, quizId, questionId) {
+  return apiClient(`/api/courses/${courseId}/quizzes/${quizId}/questions/${questionId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function updateQuiz(courseId, quizId, payload) {
   return apiClient(`/api/courses/${courseId}/quizzes/${quizId}`, {
     method: "PUT",

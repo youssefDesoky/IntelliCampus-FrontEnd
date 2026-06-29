@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useError } from "../../../../../contexts/ErrorContext.jsx";
 
 import PaginationButtons from "../../../../../components/ui/PaginationButtons";
@@ -19,6 +20,7 @@ export default function CourseQuizPractice() {
 	const reviewMode = searchParams.get("review") || null;
 	const selectedQuizId = searchParams.get("quizId");
 	const { showError } = useError();
+	const queryClient = useQueryClient();
 	const [practiceQuizData, setPracticeQuizData] = useState(null);
 	const [isQuizLoading, setIsQuizLoading] = useState(true);
 	const submissionLockRef = useRef(false);
@@ -115,6 +117,9 @@ export default function CourseQuizPractice() {
 				answers,
 			});
 			setSubmissionResult(payload);
+			queryClient.invalidateQueries({ queryKey: ["reminders"] });
+			queryClient.removeQueries({ queryKey: ["todayReminders"], exact: false });
+			queryClient.invalidateQueries({ queryKey: ["courseQuizzes", courseId] });
 		} catch {
 			// submission failed — user will see the error via quizError or a UI notification
 		}

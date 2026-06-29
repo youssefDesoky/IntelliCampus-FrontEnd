@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Button from "../../../../components/ui/Button";
 import TextArea from "../../../../components/ui/TextArea";
 import NumberInput from "../../../../components/form/NumberInput";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import { PlusIcon, TrashIcon, XIcon, EyeIcon, PenSquareIcon } from "../../../../components/ui/icons";
-import { addQuestions } from "./instructorQuizApi";
+import { addQuestions, fetchQuestions, deleteQuestion } from "./instructorQuizApi";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 
 const QUESTION_TYPES = [
@@ -20,16 +20,39 @@ const TYPE_COLORS = {
 };
 
 export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz }) {
+    const [existingQuestions, setExistingQuestions] = useState([]);
     const [newQuestions, setNewQuestions] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
+    const { showError } = useError();
 
     const [type, setType] = useState("TF");
     const [prompt, setPrompt] = useState("");
     const [options, setOptions] = useState(["", ""]);
     const [points, setPoints] = useState("");
     const [correctAnswer, setCorrectAnswer] = useState("");
-    const { showError } = useError();
+
+    const loadQuestions = useCallback(async () => {
+        if (!courseId || !quiz?.id) return;
+        setLoading(true);
+        try {
+            const data = await fetchQuestions(courseId, quiz.id);
+            setExistingQuestions(Array.isArray(data) ? data : []);
+        } catch {
+            setExistingQuestions([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [courseId, quiz?.id]);
+
+    useEffect(() => {
+        if (isOpen) loadQuestions();
+    }, [isOpen, loadQuestions]);
+
+    const existingTotal = existingQuestions.reduce((s, q) => s + q.points, 0);
+    const totalPoints = existingTotal + newQuestions.reduce((s, q) => s + q.points, 0);
 
     const resetForm = () => {
         setType("TF");
@@ -54,27 +77,28 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
             return;
         }
 
-        const newPoints = Number(points);
-        const currentTotal = totalPoints;
-        if (currentTotal + newPoints > quiz.maxScore) {
-            showError(`Question points must equal the quiz max grade of ${quiz.maxScore}. Current total: ${currentTotal}, new total would be: ${currentTotal + newPoints}.`);
+        const newPts = Number(points);
+        if (totalPoints + newPts > quiz.maxScore) {
+            showError(`Points exceed quiz max grade of ${quiz.maxScore}. Current total: ${totalPoints}. Would be: ${totalPoints + newPts}.`);
             return;
         }
 
-        const question = {
+        setNewQuestions(prev => [...prev, {
             type,
             prompt: prompt.trim(),
             options: type === "MCQ" ? options.filter(o => o.trim()) : null,
-            points: newPoints,
+            points: newPts,
             correctAnswer: correctAnswer || null,
-        };
-
-        setNewQuestions(prev => [...prev, question]);
+        }]);
         resetForm();
     };
 
     const handleSave = async () => {
         if (newQuestions.length === 0) { showError("Add at least one question first."); return; }
+        if (totalPoints !== quiz.maxScore) {
+            showError(`Total points (${totalPoints}) must equal quiz max grade (${quiz.maxScore}). Adjust question points or quiz max grade.`);
+            return;
+        }
         setSaving(true);
         try {
             await addQuestions(courseId, quiz.id, newQuestions);
@@ -87,7 +111,19 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
         }
     };
 
-    const removeQuestion = (index) => {
+    const handleDelete = async (q) => {
+        setDeleting(q.id);
+        try {
+            await deleteQuestion(courseId, quiz.id, q.id);
+            setExistingQuestions(prev => prev.filter(x => x.id !== q.id));
+        } catch (err) {
+            showError(err.message || "Failed to delete question.");
+        } finally {
+            setDeleting(null);
+        }
+    };
+
+    const removeNewQuestion = (index) => {
         setNewQuestions(prev => prev.filter((_, i) => i !== index));
     };
 
@@ -120,7 +156,12 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
 
     const inputClass = "w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-3 text-sm text-text-primary-default-light dark:text-text-primary-default-dark outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:focus:border-border-accent-default-dark";
 
-    const totalPoints = newQuestions.reduce((sum, q) => sum + q.points, 0);
+    const allQuestions = [
+        ...existingQuestions.map(q => ({ ...q, _existing: true })),
+        ...newQuestions.map(q => ({ ...q, _existing: false })),
+    ];
+
+    const pointsMatch = totalPoints === quiz?.maxScore;
 
     return (
         <ModelOverlay onClose={onClose}>
@@ -131,16 +172,16 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                         <p className="mt-1 text-sm truncate text-text-secondary-default-light dark:text-text-secondary-default-dark">{quiz?.title}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        {newQuestions.length > 0 && (
+                        {allQuestions.length > 0 && (
                             <button
                                 type="button"
                                 onClick={() => setShowPreview(true)}
                                 className="relative rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-2 text-icon-primary-default-light dark:text-icon-primary-default-dark transition-colors hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark"
-                                title="View added questions"
+                                title="View all questions"
                             >
                                 <EyeIcon size={20} />
                                 <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark">
-                                    {newQuestions.length}
+                                    {allQuestions.length}
                                 </span>
                             </button>
                         )}
@@ -156,23 +197,57 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
 
                 <div className="flex-1 overflow-y-auto no-scrollbar px-6 py-6 space-y-6">
 
+                    {loading && (
+                        <div className="text-center py-4 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading questions...</div>
+                    )}
+
+                    {!loading && existingQuestions.length > 0 && (
+                        <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                Existing Questions ({existingQuestions.length})
+                            </h4>
+                            {existingQuestions.map((q) => (
+                                <div key={q.id} className="flex items-start justify-between gap-3 p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                    <div className="flex-1 min-w-0 space-y-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TYPE_COLORS[q.type]?.bg || TYPE_COLORS.TF.bg} ${TYPE_COLORS[q.type]?.text || TYPE_COLORS.TF.text}`}>{q.type}</span>
+                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{q.points} pts</span>
+                                        </div>
+                                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{q.prompt}</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDelete(q)}
+                                        disabled={deleting === q.id}
+                                        className="shrink-0 p-1.5 rounded-lg text-icon-danger-default-light dark:text-icon-danger-default-dark hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark transition-colors disabled:opacity-50"
+                                        title="Delete question"
+                                    >
+                                        <TrashIcon size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="space-y-5 p-5 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                         <div className="flex items-center gap-2">
                             <PlusIcon size={18} className="text-text-accent-default-light dark:text-text-accent-default-dark" />
                             <h4 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Add Question</h4>
                         </div>
 
-                        {newQuestions.length > 0 && (
-                            <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-bg-surface-accent-default-light/10 dark:bg-bg-surface-accent-default-dark/10 border border-border-accent-default-light/20 dark:border-border-accent-default-dark/20">
-                                <span className="text-sm font-medium text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    {newQuestions.length} question{newQuestions.length > 1 ? "s" : ""} added
-                                </span>
-                                <span className="text-text-accent-default-light/30 dark:text-text-accent-default-dark/30">|</span>
-                                <span className="text-sm font-semibold text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    {totalPoints} total pts
-                                </span>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg" style={{ backgroundColor: pointsMatch ? 'var(--color-success-bg, #e8f5e9)' : 'var(--color-warning-bg, #fff3e0)', border: `1px solid ${pointsMatch ? 'var(--color-success-border, #a5d6a7)' : 'var(--color-warning-border, #ffe0b2)'}` }}>
+                            <span className="text-sm font-medium" style={{ color: pointsMatch ? 'var(--color-success-text, #2e7d32)' : 'var(--color-warning-text, #e65100)' }}>
+                                {allQuestions.length} question{allQuestions.length !== 1 ? "s" : ""} &middot; {totalPoints} / {quiz?.maxScore} pts
+                            </span>
+                            {!pointsMatch && totalPoints > 0 && (
+                                <>
+                                    <span style={{ color: pointsMatch ? 'var(--color-success-text, #2e7d32)' : 'var(--color-warning-text, #e65100)' }}>|</span>
+                                    <span className="text-xs font-semibold" style={{ color: 'var(--color-warning-text, #e65100)' }}>
+                                        Must equal {quiz?.maxScore} pts
+                                    </span>
+                                </>
+                            )}
+                        </div>
 
                         <div>
                             <div className="flex gap-2">
@@ -321,18 +396,26 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                 </div>
 
                 <div className="shrink-0 flex flex-col gap-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    {newQuestions.length > 0 ? (
-                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark text-center sm:text-left">
-                            {newQuestions.length} question{newQuestions.length > 1 ? "s" : ""} &middot; {totalPoints} total pts
-                        </p>
-                    ) : (
-                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark text-center sm:text-left">
-                            No questions added yet
-                        </p>
-                    )}
+                    <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium ${pointsMatch ? 'text-text-success-default-light dark:text-text-success-default-dark' : 'text-text-warning-default-light dark:text-text-warning-default-dark'}`}>
+                            {allQuestions.length} question{allQuestions.length !== 1 ? "s" : ""} &middot; {totalPoints} / {quiz?.maxScore} pts
+                        </span>
+                        {!pointsMatch && totalPoints > 0 && (
+                            <span className="text-xs text-text-warning-default-light dark:text-text-warning-default-dark">
+                                Must match
+                            </span>
+                        )}
+                    </div>
                     <div className="flex gap-3">
                         <Button variant="secondary" type="button" onClick={onClose} width="flex-1 sm:w-auto">Cancel</Button>
-                        <Button variant="primary" type="button" onClick={handleSave} width="flex-1 sm:w-auto" disabled={saving || newQuestions.length === 0} loading={saving}>
+                        <Button
+                            variant="primary"
+                            type="button"
+                            onClick={handleSave}
+                            width="flex-1 sm:w-auto"
+                            disabled={saving || newQuestions.length === 0 || !pointsMatch}
+                            loading={saving}
+                        >
                             Save {newQuestions.length > 0 ? `(${newQuestions.length})` : ""}
                         </Button>
                     </div>
@@ -345,7 +428,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                     <div className="relative w-full max-w-lg max-h-[70vh] overflow-y-auto no-scrollbar rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-xl animate-fade-in p-6" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h4 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Added Questions ({newQuestions.length})
+                                All Questions ({allQuestions.length})
                             </h4>
                             <button
                                 type="button"
@@ -356,14 +439,15 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                             </button>
                         </div>
                         <div className="space-y-3">
-                            {newQuestions.map((q, i) => {
+                            {allQuestions.map((q, i) => {
                                 const colors = TYPE_COLORS[q.type] || TYPE_COLORS.TF;
                                 return (
-                                    <div key={i} className="flex items-start justify-between gap-3 p-4 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                    <div key={q._existing ? `e-${q.id}` : `n-${i}`} className="flex items-start justify-between gap-3 p-4 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                         <div className="flex-1 min-w-0 space-y-2">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${colors.bg} ${colors.text}`}>{q.type}</span>
                                                 <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{q.points} pts</span>
+                                                {q._existing && <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">(saved)</span>}
                                             </div>
                                             <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{q.prompt}</p>
                                             {q.options && q.options.length > 0 && (
@@ -390,29 +474,34 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                             )}
                                         </div>
                                         <div className="flex items-center gap-1">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleEditQuestion(i)}
-                                                className="shrink-0 p-1.5 rounded-lg text-icon-primary-default-light dark:text-icon-primary-default-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark transition-colors"
-                                                title="Edit question"
-                                            >
-                                                <PenSquareIcon size={16} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => { removeQuestion(i); if (newQuestions.length === 1) setShowPreview(false); }}
-                                                className="shrink-0 p-1.5 rounded-lg text-icon-danger-default-light dark:text-icon-danger-default-dark hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark transition-colors"
-                                                title="Remove question"
-                                            >
-                                                <TrashIcon size={16} />
-                                            </button>
+                                            {!q._existing && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleEditQuestion(newQuestions.findIndex(x => x === q))}
+                                                        className="shrink-0 p-1.5 rounded-lg text-icon-primary-default-light dark:text-icon-primary-default-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark transition-colors"
+                                                        title="Edit question"
+                                                    >
+                                                        <PenSquareIcon size={16} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { removeNewQuestion(newQuestions.findIndex(x => x === q)); if (allQuestions.length === 1) setShowPreview(false); }}
+                                                        className="shrink-0 p-1.5 rounded-lg text-icon-danger-default-light dark:text-icon-danger-default-dark hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark transition-colors"
+                                                        title="Remove question"
+                                                    >
+                                                        <TrashIcon size={16} />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
                         <div className="mt-4 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark text-center">
-                            {newQuestions.length} question{newQuestions.length > 1 ? "s" : ""} &middot; {totalPoints} total pts
+                            {allQuestions.length} question{allQuestions.length !== 1 ? "s" : ""} &middot; {totalPoints} / {quiz?.maxScore} pts
+                            {!pointsMatch && totalPoints > 0 && <span className="ml-2 text-text-warning-default-light dark:text-text-warning-default-dark font-semibold">(must match!)</span>}
                         </div>
                     </div>
                 </div>

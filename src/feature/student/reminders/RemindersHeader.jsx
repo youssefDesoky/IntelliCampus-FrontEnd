@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { PlusIcon, FilterIcon } from "../../../components/ui/icons";
 import PageHeader from "../../../components/ui/PageHeader";
 
-const categories = [
+const defaultCategories = [
     { value: "all", label: "All", dotColor: "bg-gray-500" },
     { value: "classes", label: "Classes", dotColor: "bg-blue-500" },
     { value: "exams", label: "Exams", dotColor: "bg-yellow-500" },
@@ -18,7 +18,7 @@ const countsFromReminders = (reminders) => {
     }, {});
 };
 
-export default function RemindersHeader({ setIsFormOpen, selectedCategory, onSelectCategory, reminders }) {
+export default function RemindersHeader({ setIsFormOpen, selectedCategory, onSelectCategory, reminders, categories = defaultCategories }) {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const menuRef = useRef(null);
     const counts = countsFromReminders(reminders);

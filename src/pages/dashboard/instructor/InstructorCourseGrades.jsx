@@ -1,12 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { fetchCourseGrades } from "../../../feature/instructor/services/gradesApi";
+import { fetchCourseGrades, getCourseWorkWeight } from "../../../feature/instructor/services/gradesApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { ChartBarIcon, FilePenIcon, BrainIcon, ExclamationIcon } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
 import { CourseGradesSkeleton } from "../../../feature/instructor/SkeletonLoader";
+import CourseWorkWeightModal from "../../../feature/instructor/components/CourseWorkWeightModal";
 
 function GradeIcon({ type }) {
     const cls = {
@@ -50,14 +51,26 @@ export default function InstructorCourseGrades() {
     const { courseId } = useOutletContext();
     const { showError } = useError();
     const navigate = useNavigate();
+    const [showWeightsModal, setShowWeightsModal] = useState(false);
 
     const {
         data: grades,
         isLoading: loading,
         error,
+        refetch: refetchGrades,
     } = useQuery({
         queryKey: ["instructorCourseGrades", courseId],
         queryFn: () => fetchCourseGrades(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+    });
+
+    const {
+        data: courseWorkWeight,
+        refetch: refetchWeight,
+    } = useQuery({
+        queryKey: ["courseWorkWeight", courseId],
+        queryFn: () => getCourseWorkWeight(courseId),
         staleTime: 5 * 60 * 1000,
         enabled: !!courseId,
     });
@@ -92,15 +105,28 @@ export default function InstructorCourseGrades() {
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                     Grades
                 </h2>
-                <Button
-                    variant="secondary"
-                    type="button"
-                    onClick={() => navigate("complaints")}
-                    className="inline-flex items-center gap-2"
-                >
-                    <ExclamationIcon size={16} />
-                    <span className="hidden sm:inline">View Complaints</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="secondary"
+                        type="button"
+                        onClick={() => setShowWeightsModal(true)}
+                        className="inline-flex items-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                            <path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a6.93 6.93 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58a7.07 7.07 0 0 0-.06.94c0 .32.02.64.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
+                        </svg>
+                        <span className="hidden sm:inline">Weights</span>
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        type="button"
+                        onClick={() => navigate("complaints")}
+                        className="inline-flex items-center gap-2"
+                    >
+                        <ExclamationIcon size={16} />
+                        <span className="hidden sm:inline">View Complaints</span>
+                    </Button>
+                </div>
             </div>
 
             <div>
@@ -190,6 +216,14 @@ export default function InstructorCourseGrades() {
                     showActionsColumn={false}
                 />
             </div>
+
+            <CourseWorkWeightModal
+                isOpen={showWeightsModal}
+                onClose={() => setShowWeightsModal(false)}
+                courseId={courseId}
+                currentWeight={courseWorkWeight}
+                onSaved={() => { refetchWeight(); refetchGrades(); }}
+            />
         </div>
     );
 }

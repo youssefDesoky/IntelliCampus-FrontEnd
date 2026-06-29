@@ -87,13 +87,21 @@ export default function ViewSubmission({ assignment, onClose }) {
                                             variant="secondary"
                                             size="sm"
                                             startIcon={<DownloadIcon size={14} />}
-                                            onClick={() => {
-                                                if (file.url) {
+                                            onClick={async () => {
+                                                if (!file.id) return;
+                                                try {
+                                                    const res = await fetch(`/api/assignments/submissions/${file.id}/download`);
+                                                    if (!res.ok) throw new Error();
+                                                    const blob = await res.blob();
+                                                    const url = window.URL.createObjectURL(blob);
                                                     const a = document.createElement("a");
-                                                    a.href = file.url;
+                                                    a.href = url;
                                                     a.download = file.name;
+                                                    document.body.appendChild(a);
                                                     a.click();
-                                                }
+                                                    document.body.removeChild(a);
+                                                    window.URL.revokeObjectURL(url);
+                                                } catch { /* ignore */ }
                                             }}
                                         />
                                     </div>

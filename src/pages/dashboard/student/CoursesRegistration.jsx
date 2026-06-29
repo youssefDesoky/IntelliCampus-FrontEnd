@@ -55,6 +55,7 @@ function mapActiveCourseToCard(course) {
         preRequisites: course.prerequisites ?? course.preRequisites ?? null,
         courseId:       course.courseId    ?? course.id,
         classId:       course.classId,
+        isElective:    course.isElective ?? false,
         isRegistered: false,
     };
 }
@@ -67,13 +68,25 @@ export default function CoursesRegistration() {
     const [locallyAddedCourses, setLocallyAddedCourses] = useState([]);
     const [sectionOptionsByCourseId, setSectionOptionsByCourseId] = useState({});
     const [selectedSectionByCourseId, setSelectedSectionByCourseId] = useState({});
+    const [activeFilter, setActiveFilter] = useState("all");
+    const [searchValue, setSearchValue] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const { showError } = useError();
     const queryClient = useQueryClient();
 
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchValue), 400);
+        return () => clearTimeout(timer);
+    }, [searchValue]);
+
     const { data: registrationData, isLoading: loading } = useQuery({
-        queryKey: ["coursesRegistration"],
+        queryKey: ["coursesRegistration", debouncedSearch],
         queryFn: async () => {
-            const [registrationsResult, coursesResult] = await Promise.all([getMyRegistrations(), fetchActiveCourses()]);
+            const params = debouncedSearch ? { searchQuery: debouncedSearch } : {};
+            const [registrationsResult, coursesResult] = await Promise.all([
+                getMyRegistrations(),
+                fetchActiveCourses(params),
+            ]);
             const registrations = registrationsResult?.data ?? (Array.isArray(registrationsResult) ? registrationsResult : []);
             const courses = coursesResult?.data ?? (Array.isArray(coursesResult) ? coursesResult : []);
             return { registrations, courses };
@@ -100,8 +113,18 @@ export default function CoursesRegistration() {
                 .map(mapActiveCourseToCard)
             : []);
         const addedIds = new Set(locallyAddedCourses.map(c => c.courseId));
-        return serverAvailable.filter(c => !addedIds.has(c.courseId));
-    }, [registrationData, locallyAddedCourses]);
+        const withoutLocallyAdded = serverAvailable.filter(c => !addedIds.has(c.courseId));
+
+        let filtered = withoutLocallyAdded;
+
+        if (activeFilter === "required") {
+            filtered = filtered.filter(c => !c.isElective);
+        } else if (activeFilter === "elective") {
+            filtered = filtered.filter(c => c.isElective);
+        }
+
+        return filtered;
+    }, [registrationData, locallyAddedCourses, activeFilter]);
 
     const [selectedCoursesPage, setSelectedCoursesPage]   = useState(1);
     const [availableCoursesPage, setAvailableCoursesPage] = useState(1);
@@ -266,7 +289,14 @@ export default function CoursesRegistration() {
 
     return (
         <>
-            <CourseRegistrationHeader deviceType={isDesktop ? "desktop" : "mobile"} selectedCourses={selectedCourses} />
+            <CourseRegistrationHeader
+                deviceType={isDesktop ? "desktop" : "mobile"}
+                selectedCourses={selectedCourses}
+                activeFilter={activeFilter}
+                onFilterChange={setActiveFilter}
+                searchValue={searchValue}
+                onSearchChange={setSearchValue}
+            />
 
             {loading ? (
                 <RegistrationPageSkeleton />

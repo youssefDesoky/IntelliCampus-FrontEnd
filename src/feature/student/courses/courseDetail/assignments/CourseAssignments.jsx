@@ -254,6 +254,9 @@ export default function CourseAssignments() {
                             await submitAssignment(submitModal.id, formData);
                             queryClient.invalidateQueries({ queryKey: ["courseAssignments", course?.id] });
                             queryClient.invalidateQueries({ queryKey: ["assignmentStats", course?.id] });
+                            queryClient.removeQueries({ queryKey: ["reminders"], exact: false });
+                            queryClient.removeQueries({ queryKey: ["todayReminders"], exact: false });
+                            queryClient.removeQueries({ queryKey: ["instructorReminders"], exact: false });
                             setSubmitModal(null);
                         }}
                     />
