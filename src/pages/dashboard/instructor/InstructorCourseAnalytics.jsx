@@ -38,6 +38,7 @@ export default function InstructorCourseAnalytics() {
         return () => { cancelled = true; };
     }, [courseId]);
 
+
     const { submissionRate, weeklyAttendance, assessmentPerformance } = data;
     // backend supplies AssessmentPerformance; PerformanceOverTimeChart expects minScore (optional, defaults to 0)
     const performanceOverTime = (assessmentPerformance ?? []).map((d) => ({
