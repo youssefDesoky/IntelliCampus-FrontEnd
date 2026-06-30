@@ -32,7 +32,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
         const q = search.toLowerCase();
         return (
             (s.fullName || s.name || "").toLowerCase().includes(q) ||
-            (s.studentId || s.id || "").toLowerCase().includes(q) ||
+            (s.studentCode || "").toLowerCase().includes(q) ||
             (s.email || "").toLowerCase().includes(q) ||
             (s.section || "").toLowerCase().includes(q)
         );
@@ -90,7 +90,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-text-secondary-default-light dark:text-text-secondary-default-dark font-mono text-xs">
-                                        {s.studentId || s.id || "—"}
+                                        {s.studentCode || "—"}
                                     </td>
                                     <td className="px-4 py-3 text-text-secondary-default-light dark:text-text-secondary-default-dark hidden sm:table-cell">
                                         {s.email || "—"}
