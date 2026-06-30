@@ -9,6 +9,7 @@ import { addQuestions, fetchQuestions, deleteQuestion } from "./instructorQuizAp
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 import useArabicDigits from '../../../../hooks/useArabicDigits.js';
 import { getLocalizedField } from '../../../../utils/getLocalizedField.js';
+import { useToast } from '../../../../contexts/ToastContext.jsx';
 
 function getQuestionTypes(t) {
     return [
@@ -34,6 +35,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
     const [deleting, setDeleting] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
     const { showError } = useError();
+    const { showToast } = useToast();
     const QUESTION_TYPES = getQuestionTypes(t);
 
     const [type, setType] = useState("TF");
@@ -111,6 +113,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
         try {
             await addQuestions(courseId, quiz.id, newQuestions);
             setNewQuestions([]);
+            showToast({ type: "success", title: "Saved", message: `Questions saved successfully. Total: ${totalPoints} pts.` });
             onClose();
         } catch (err) {
             showError(err.message || t('questions.errorSaveFailed'));
@@ -486,7 +489,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                                 <>
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleEditQuestion(newQuestions.findIndex(x => x === q))}
+                                                        onClick={() => handleEditQuestion(i - existingQuestions.length)}
                                                         className="shrink-0 p-1.5 rounded-lg text-icon-primary-default-light dark:text-icon-primary-default-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark transition-colors"
                                                         title={t('questions.editQuestion')}
                                                     >
@@ -494,7 +497,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => { removeNewQuestion(newQuestions.findIndex(x => x === q)); if (allQuestions.length === 1) setShowPreview(false); }}
+                                                        onClick={() => { removeNewQuestion(i - existingQuestions.length); if (allQuestions.length === 1) setShowPreview(false); }}
                                                         className="shrink-0 p-1.5 rounded-lg text-icon-danger-default-light dark:text-icon-danger-default-dark hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark transition-colors"
                                                         title={t('questions.removeQuestion')}
                                                     >

@@ -11,7 +11,6 @@ import PerformanceOverTimeChart from "../../../feature/instructor/dashboard/char
 import StudentScoreHeatmap from "../../../feature/instructor/dashboard/charts/StudentScoreHeatmap";
 import { CourseWorkBreakdownChart } from "../../../feature/instructor/dashboard/charts";
 import { downloadBlob } from "../../../api/apiClient";
-import { CourseAnalyticsSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { fetchCourseAnalytics } from "../../../feature/instructor/services/analyticsApi";
 
 const tooltipStyle = {
@@ -60,10 +59,6 @@ export default function InstructorCourseAnalytics() {
                 </p>
             </div>
         );
-    }
-
-    if (!MOCK_DATA) {
-        return <CourseAnalyticsSkeleton />;
     }
 
     return (
