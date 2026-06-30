@@ -8,6 +8,9 @@ import arAdminAside from '../locales/ar/admin/aside.json';
 import enStudentAside from '../locales/en/student/aside.json';
 import arStudentAside from '../locales/ar/student/aside.json';
 
+import enInstructorAside from '../locales/en/instractor/aside.json';
+import arInstructorAside from '../locales/ar/instractor/aside.json';
+
 import enCommonAside from '../locales/en/common/aside.json';
 import arCommonAside from '../locales/ar/common/aside.json';
 
@@ -18,11 +21,13 @@ i18n.use(initReactI18next).init({
       'admin/aside': enAdminAside,
       'common/aside': enCommonAside,
       'student/aside': enStudentAside,
+      'instructor/aside': enInstructorAside,
     },
     ar: {
       'admin/aside': arAdminAside,
       'common/aside': arCommonAside,
       'student/aside': arStudentAside,
+      'instructor/aside': arInstructorAside,
     },
   },
   lng: localStorage.getItem("lang") || "en",

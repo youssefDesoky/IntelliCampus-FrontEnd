@@ -1,25 +1,17 @@
 import { DownloadIcon } from "../ui/icons";
 import { downloadBlob } from "../../api/apiClient";
-import downloadChartAsExcel from "../../utils/downloadChartAsExcel";
 
 export default function ChartCard({
   title, subtitle, icon, children, className = "",
   downloadUrl, onTitleClick,
-  chartType, chartData, categoryField, series,
 }) {
   const handleDownload = async () => {
-    if (chartData?.length && chartType && categoryField && series?.length) {
-      try {
-        await downloadChartAsExcel({ title, chartType, data: chartData, categoryField, series });
-      } catch (err) {
-        console.error("Failed to download chart as Excel:", err);
-      }
-    } else if (downloadUrl) {
-      downloadBlob(downloadUrl, title.replace(/\s+/g, "_"));
+    if (downloadUrl) {
+      await downloadBlob(downloadUrl, `${title.replace(/\s+/g, "_")}.pdf`);
     }
   };
 
-  const showDownload = (downloadUrl) || (chartData?.length && chartType && categoryField && series?.length);
+  const showDownload = Boolean(downloadUrl);
 
   return (
     <div className={`p-6 h-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg outline-none ${className}`}>
