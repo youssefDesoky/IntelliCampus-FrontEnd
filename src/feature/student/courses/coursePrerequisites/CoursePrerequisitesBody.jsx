@@ -50,7 +50,7 @@ export default function CoursePrerequisitesBody({ search = "" }) {
                 ))}
             </div>
 
-            {filtered.length === 0 && (
+            {courseData.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                     <FileSlashIcon className="w-12 h-12 mb-4 opacity-40" />
                     <p className="text-sm">{search.trim() ? "No courses match your search." : "No prerequisite data available."}</p>
