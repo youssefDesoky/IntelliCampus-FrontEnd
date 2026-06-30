@@ -15,6 +15,7 @@ import { createQuiz, fetchQuizzesByCourse, updateQuiz, deleteQuiz, fetchQuizSubm
 import ManageQuizQuestions from "../../../feature/instructor/components/quiz/ManageQuizQuestions";
 import { CourseQuizzesSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 function formatDate(value) {
     const date = new Date(value);
@@ -59,6 +60,7 @@ export default function InstructorCourseQuizzes() {
     const [deletingQuiz, setDeletingQuiz] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const { showError } = useError();
+    const { showToast } = useToast();
 
     const queryClient = useQueryClient();
 
@@ -213,8 +215,10 @@ export default function InstructorCourseQuizzes() {
 
             if (editingQuiz) {
                 await updateQuiz(courseId, editingQuiz.id, payload);
+                showToast({ type: "success", title: "Updated", message: "Quiz has been updated." });
             } else {
                 await createQuiz({ ...payload, courseId: Number(courseId) });
+                showToast({ type: "success", title: "Created", message: "Quiz has been created." });
             }
 
             setIsFormOpen(false);
@@ -230,6 +234,7 @@ export default function InstructorCourseQuizzes() {
         try {
             await deleteQuiz(courseId, deletingQuiz.id);
             setDeletingQuiz(null);
+            showToast({ type: "success", title: "Deleted", message: "Quiz has been deleted." });
             queryClient.invalidateQueries({ queryKey: ["instructorCourseQuizzes", courseId] });
         } catch (err) {
             showError(err.message || "Failed to delete quiz.");
