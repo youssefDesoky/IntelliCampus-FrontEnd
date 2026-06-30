@@ -18,17 +18,20 @@ import {
     changeStudentCourseSection,
 } from "../../../feature/admin/services/adminStudentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 const ITEMS_PER_PAGE = 10;
 
-export default function StudentRegisteredTab({ student, studentId, courses, availableCourses, loading, onRefresh }) {
+export default function StudentRegisteredTab({ student, studentId, courses, availableCourses, completedCourses = [], loading, onRefresh }) {
     const { isPhone } = useDeviceType();
     const { showError } = useError();
+    const { showToast } = useToast();
 
     const registeredIds = useMemo(() => new Set(courses.map(c => c.courseId)), [courses]);
+    const completedIds = useMemo(() => new Set(completedCourses.map(c => c.courseId)), [completedCourses]);
     const unregisteredCourses = useMemo(
-        () => availableCourses.filter(c => !registeredIds.has(c.courseId)),
-        [availableCourses, registeredIds]
+        () => availableCourses.filter(c => !registeredIds.has(c.courseId) && !completedIds.has(c.courseId)),
+        [availableCourses, registeredIds, completedIds]
     );
 
     const headers = useMemo(() => {
@@ -110,14 +113,16 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
     };
 
     const handleRegister = async () => {
-        if (!selectedCourseId) return;
+        if (!selectedCourseId || !registerSection) return;
         setRegistering(true);
         try {
-            await registerStudentCourse(studentId, selectedCourseId, registerSection || null);
-            onRefresh?.();
+            await registerStudentCourse(studentId, selectedCourseId, registerSection);
+            await onRefresh?.();
+            showToast({ type: "success", title: "Registered", message: "Course registered successfully." });
             setIsRegisterOpen(false);
             setSelectedCourseId("");
             setRegisterSection("");
+            setPage(1);
         } catch (err) {
             showError(err.message);
         } finally {
@@ -130,8 +135,10 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
         setUnregistering(true);
         try {
             await unregisterStudentCourse(studentId, unregisterTarget.courseId);
-            onRefresh?.();
+            await onRefresh?.();
+            showToast({ type: "success", title: "Unregistered", message: "Course unregistered successfully." });
             setUnregisterTarget(null);
+            setPage(1);
         } catch (err) {
             showError(err.message);
         } finally {
@@ -144,7 +151,8 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
         setChangingSection(true);
         try {
             await changeStudentCourseSection(studentId, sectionChangeTarget.courseId, selectedSection);
-            onRefresh?.();
+            await onRefresh?.();
+            showToast({ type: "success", title: "Section Updated", message: "Course section changed successfully." });
             setSectionChangeTarget(null);
         } catch (err) {
             showError(err.message);
@@ -245,34 +253,42 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                     ))}
                                 </select>
                             </div>
-                            {selectedCourseId && availableCoursesSections[selectedCourseId]?.length > 0 && (
+                            {selectedCourseId && (
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Section</label>
-                                    <select
-                                        value={registerSection}
-                                        onChange={(e) => setRegisterSection(e.target.value)}
-                                        disabled={registering}
-                                        className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50"
-                                    >
-                                        <option value="" disabled>-- Select a section --</option>
-                                        {availableCoursesSections[selectedCourseId]
-                                            .filter(s => s.classType === "Section")
-                                            .map((section) => (
-                                            <option key={section.classId} value={section.classId}>
-                                                {section.groupCode || `Section ${section.classId}`}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                            {loadingSections && (
-                                <div className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                    Loading sections...
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Section <span className="text-red-500">*</span></label>
+                                    {loadingSections ? (
+                                        <div className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-2">
+                                            Loading sections...
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <select
+                                                value={registerSection}
+                                                onChange={(e) => setRegisterSection(e.target.value)}
+                                                disabled={registering}
+                                                className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50"
+                                            >
+                                                <option value="" disabled>-- Select a section --</option>
+                                                {availableCoursesSections[selectedCourseId]
+                                                    ?.filter(s => s.classType === "Section")
+                                                    .map((section) => (
+                                                    <option key={section.classId} value={section.classId}>
+                                                        {section.groupCode || `Section ${section.classId}`}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {availableCoursesSections[selectedCourseId]?.filter(s => s.classType === "Section").length === 0 && (
+                                                <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                                                    No sections available for this course. Create a section first.
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
                             )}
                             <div className="flex justify-end gap-2 pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
                                 <Button variant="outline" size="sm" onClick={() => { setIsRegisterOpen(false); setSelectedCourseId(""); setRegisterSection(""); }}>Cancel</Button>
-                                <Button variant="primary" size="sm" onClick={handleRegister} disabled={registering || !selectedCourseId}>
+                                <Button variant="primary" size="sm" onClick={handleRegister} disabled={registering || !selectedCourseId || loadingSections || !registerSection}>
                                     {registering ? "Registering..." : "Register"}
                                 </Button>
                             </div>
