@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useRouteLoaderData } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useSidebar from "../../../hooks/useSidebar";
 import { useEffect, useState, useRef } from "react";
@@ -15,6 +15,8 @@ export default function StudentAside({height}) {
     const buttonRef = useRef(null);
     const { linkCls, isCompact } = useSidebar();
     const { t, i18n } = useTranslation('student');
+    const user = useRouteLoaderData("root");
+    const userRoles = user?.roles || [];
     const [isCoursesOpen, setIsCoursesOpen] = useState(false);
     
     useEffect(() => {
@@ -36,7 +38,7 @@ export default function StudentAside({height}) {
 
 
     return (
-        <Aside height={height} links={getNavigationLinks(t)}>
+        <Aside height={height} links={getNavigationLinks(t, userRoles)}>
             <div className={`${isCoursesOpen ? `${!isCompact ? "ps-2 border-s-4 border-border-accent-default-light dark:border-border-accent-default-dark" : ""}` : "border-transparent"}`}>
                 <div className="relative">
                     <button

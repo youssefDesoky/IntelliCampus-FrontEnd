@@ -1,8 +1,12 @@
 import { HouseIcon, BellIconDark, CalendarDaysIcon, OrderedListIcon } from '../../components/ui/icons';
 
-export const getNavigationLinks = (t) => [
-    { to: "/", icon: HouseIcon, label: t('dashboard') },
-    { to: "/reminders", icon: BellIconDark, label: t('reminders') },
-    { to: "/schedule", icon: CalendarDaysIcon, label: t('schedule') },
-    { to: "/specialization-preference", icon: OrderedListIcon, label: t('specializationPreference') },
-];
+export const getNavigationLinks = (t, roles = []) => {
+    const isBachelor = roles.some(r => r.toLowerCase() === "student_bachelor");
+
+    return [
+        { to: "/", icon: HouseIcon, label: t('dashboard') },
+        { to: "/reminders", icon: BellIconDark, label: t('reminders') },
+        { to: "/schedule", icon: CalendarDaysIcon, label: t('schedule') },
+        ...(isBachelor ? [{ to: "/specialization-preference", icon: OrderedListIcon, label: t('specializationPreference') }] : []),
+    ];
+};

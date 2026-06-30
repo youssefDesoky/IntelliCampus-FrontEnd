@@ -125,7 +125,13 @@ export default function App() {
                     { path: "reminders", element: <StudentReminders /> },
                     { path: "smart-notes", element: <StudentSmartNotes /> },
                     { path: "schedule", element: <StudentSchedule /> },
-                    { path: "specialization-preference", element: <StudentSpecializationPreference /> },
+                    {
+                        path: "specialization-preference",
+                        element: <RoleGuard allow={["student_bachelor"]} />,
+                        children: [
+                            { index: true, element: <StudentSpecializationPreference /> },
+                        ],
+                    },
                 ],
             },
 
