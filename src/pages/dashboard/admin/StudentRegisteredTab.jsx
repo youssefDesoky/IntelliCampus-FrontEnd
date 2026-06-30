@@ -25,7 +25,7 @@ import { getLocalizedField } from '../../../utils/getLocalizedField';
 const ITEMS_PER_PAGE = 10;
 
 export default function StudentRegisteredTab({ student, studentId, courses, availableCourses, completedCourses = [], loading, onRefresh }) {
-    const { t, i18n } = useTranslation('admin'); (- Localization For Student & Instructor)
+    const { t, i18n } = useTranslation('admin');
     const { isPhone } = useDeviceType();
     const { showError } = useError();
     const { showToast } = useToast();
@@ -282,7 +282,11 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                             </select>
                                             {availableCoursesSections[selectedCourseId]?.filter(s => s.classType === "Section").length === 0 && (
                                                 <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+<<<<<<< HEAD
                                                     {t('studentDetails.noSectionsAvailable') || 'No sections available for this course. Create a section first.'}
+=======
+                                                    No sections available for this course. Create a section first.
+>>>>>>> c2259d7e (Fix Admin > Student > Register Course)
                                                 </p>
                                             )}
                                         </>
