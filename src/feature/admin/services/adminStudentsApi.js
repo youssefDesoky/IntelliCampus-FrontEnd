@@ -27,6 +27,10 @@ export async function deleteStudent(id) {
     await apiClient(`/api/students/${id}`, { method: "DELETE" });
 }
 
+export async function fetchStudentAllCourses(studentId) {
+    return await apiClient(`/api/Courses/student/${studentId}/all`);
+}
+
 export async function fetchStudentRegisteredCourses(studentId) {
     const result = await apiClient(`/api/Courses/student/${studentId}?status=inprogress&PageSize=50`);
     return result?.data ?? result ?? [];

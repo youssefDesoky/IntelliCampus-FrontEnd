@@ -13,8 +13,7 @@ import {
 } from "../../../components/ui/icons";
 import {
     fetchStudentById,
-    fetchStudentRegisteredCourses,
-    fetchStudentCompletedCourses,
+    fetchStudentAllCourses,
     fetchAvailableCoursesForStudent,
     updateStudent,
 } from "../../../feature/admin/services/adminStudentsApi";
@@ -95,18 +94,39 @@ export default function StudentDetails() {
     const loadCourses = useCallback(async () => {
         setCoursesLoading(true);
         try {
-            const [registered, completed, available] = await Promise.all([
-                fetchStudentRegisteredCourses(studentId),
-                fetchStudentCompletedCourses(studentId),
+            const [allCourses, available] = await Promise.all([
+                fetchStudentAllCourses(studentId),
                 fetchAvailableCoursesForStudent(studentId),
             ]);
-            setRegisteredCourses(registered);
+            const inProgress = allCourses.inProgress ?? [];
+            const completed = allCourses.completed ?? [];
+            const inProgressIds = new Set(inProgress.map(c => c.courseId));
+            const completedIds = new Set(completed.map(c => c.courseId));
+            setRegisteredCourses(inProgress);
             setCompletedCourses(completed);
-            setAvailableCourses(available);
+            setAvailableCourses(available.filter(c => !inProgressIds.has(c.courseId) && !completedIds.has(c.courseId)));
         } catch (err) {
             showError(err.message || "Failed to load courses");
         } finally {
             setCoursesLoading(false);
+        }
+    }, [studentId]);
+
+    const loadRegisteredCourses = useCallback(async () => {
+        try {
+            const [allCourses, available] = await Promise.all([
+                fetchStudentAllCourses(studentId),
+                fetchAvailableCoursesForStudent(studentId),
+            ]);
+            const inProgress = allCourses.inProgress ?? [];
+            const completed = allCourses.completed ?? [];
+            const inProgressIds = new Set(inProgress.map(c => c.courseId));
+            const completedIds = new Set(completed.map(c => c.courseId));
+            setRegisteredCourses(inProgress);
+            setCompletedCourses(completed);
+            setAvailableCourses(available.filter(c => !inProgressIds.has(c.courseId) && !completedIds.has(c.courseId)));
+        } catch (err) {
+            showError(err.message || "Failed to load courses");
         }
     }, [studentId]);
 
@@ -272,8 +292,9 @@ export default function StudentDetails() {
                     studentId={studentId}
                     courses={registeredCourses}
                     availableCourses={availableCourses}
+                    completedCourses={completedCourses}
                     loading={coursesLoading}
-                    onRefresh={loadCourses}
+                    onRefresh={loadRegisteredCourses}
                 />
             )}
             {isEditOpen && (

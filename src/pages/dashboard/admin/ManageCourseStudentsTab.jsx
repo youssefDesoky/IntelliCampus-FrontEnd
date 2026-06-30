@@ -27,7 +27,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
         const q = search.toLowerCase();
         return (
             (s.fullName || s.name || "").toLowerCase().includes(q) ||
-            (s.studentId || s.id || "").toLowerCase().includes(q) ||
+            (s.studentCode || "").toLowerCase().includes(q) ||
             (s.email || "").toLowerCase().includes(q) ||
             (s.section || "").toLowerCase().includes(q)
         );
@@ -65,7 +65,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
                         <thead>
                             <tr className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 <th className="text-left px-4 py-3 font-medium">Student</th>
-                                <th className="text-left px-4 py-3 font-medium">ID</th>
+                                <th className="text-left px-4 py-3 font-medium">Student Code</th>
                                 <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Email</th>
                                 <th className="text-center px-4 py-3 font-medium hidden md:table-cell">Section</th>
                                 <th className="text-center px-4 py-3 font-medium hidden md:table-cell">GPA</th>
@@ -79,13 +79,13 @@ export default function ManageCourseStudentsTab({ courseId }) {
                                             <div className="w-8 h-8 rounded-full bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark flex items-center justify-center shrink-0">
                                                 <UserIcon className="w-4 h-4 text-text-accent-active-light dark:text-text-accent-active-dark" />
                                             </div>
-                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate max-w-40">
+                                            <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
                                                 {s.fullName || s.name}
                                             </span>
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-text-secondary-default-light dark:text-text-secondary-default-dark font-mono text-xs">
-                                        {s.studentId || s.id || "—"}
+                                        {s.studentCode || "—"}
                                     </td>
                                     <td className="px-4 py-3 text-text-secondary-default-light dark:text-text-secondary-default-dark hidden sm:table-cell">
                                         {s.email || "—"}
