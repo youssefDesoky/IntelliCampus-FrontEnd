@@ -4,7 +4,7 @@ export async function fetchMySchedule(types = []) {
   let url = '/api/schedule/my-schedule';
 
   if (types && types.length > 0) {
-    const typeParams = types.map((t) => `type=${encodeURIComponent(t)}`).join("&");
+    const typeParams = types.map((t) => `types=${encodeURIComponent(t)}`).join("&");
     url += `?${typeParams}`;
   }
 
@@ -19,7 +19,7 @@ export async function exportSchedulePdf(types = []) {
   let url = '/api/schedule/my-schedule/export';
 
   if (types && types.length > 0) {
-    const typeParams = types.map((t) => `type=${encodeURIComponent(t)}`).join("&");
+    const typeParams = types.map((t) => `types=${encodeURIComponent(t)}`).join("&");
     url += `?${typeParams}`;
   }
 
