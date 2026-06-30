@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useRouteLoaderData } from 'react-router-dom';
 import { getNavigationLinks } from '../../../data/student/navigationLinks';
 
 import BottomBar from '../base/BottomBar';
@@ -7,7 +8,9 @@ import { BookIcon, ClipboardCheckIcon, FilePenIcon, ChartBarIcon, FileLinesIcon 
 
 export default function StudentBottomBar({ visible, floatingAction }) {
     const { t } = useTranslation('student/aside');
-    const allLinks = getNavigationLinks(t);
+    const user = useRouteLoaderData("root");
+    const userRoles = user?.roles || [];
+    const allLinks = getNavigationLinks(t, userRoles);
 
     const links = [
         ...allLinks,
