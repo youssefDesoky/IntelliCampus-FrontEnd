@@ -86,7 +86,7 @@ export default function AccountControlsCard({ className = "" }) {
                                         disabled={loading || updating === id}
                                         onChange={() => togglePreference(id)}
                                     />
-                                    <div className="h-5 w-9 rounded-full bg-bg-fill-secondary-default-light transition-colors peer-checked:bg-bg-fill-accent-default-light peer-focus:outline-none dark:bg-bg-fill-secondary-default-dark dark:peer-checked:bg-bg-fill-accent-default-dark after:absolute after:top-0.5 after:start-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4 rtl:peer-checked:after:-translate-x-4 dark:after:bg-white" />
+                                    <div className={`h-5 w-9 rounded-full bg-bg-fill-secondary-default-light transition-colors peer-checked:bg-bg-fill-accent-default-light peer-focus:outline-none dark:bg-bg-fill-secondary-default-dark dark:peer-checked:bg-bg-fill-accent-default-dark after:absolute after:top-0.5 after:start-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4 rtl:peer-checked:after:-translate-x-4 dark:after:bg-white ${loading ? 'opacity-50' : ''}`} />
                                 </label>
                             </div>
                         ))}
