@@ -91,7 +91,7 @@ export default function CoursesRegistration() {
             const courses = coursesResult?.data ?? (Array.isArray(coursesResult) ? coursesResult : []);
             return { registrations, courses };
         },
-        staleTime: 2 * 60 * 1000,
+        staleTime: 0,
     });
 
     const { data: scheduleData = [], isLoading: schedulePreviewLoading } = useQuery({

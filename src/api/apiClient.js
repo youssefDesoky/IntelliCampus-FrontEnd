@@ -41,7 +41,14 @@ export default async function apiClient(endpoint, options = {}) {
 
   if (!res.ok) {
     const title = body?.title || 'Error';
-    const detail = body?.detail || body?.message || body || `Request failed (${res.status})`;
+    const errors = body?.errors || body?.Errors;
+    let detail;
+    if (errors && typeof errors === 'object') {
+      const all = Object.values(errors).flat().join('; ');
+      detail = all || body?.detail || body?.message || `Request failed (${res.status})`;
+    } else {
+      detail = body?.detail || body?.message || `Request failed (${res.status})`;
+    }
 
     const error = new ApiError(res.status, title, detail, body);
 

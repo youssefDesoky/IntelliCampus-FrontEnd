@@ -180,8 +180,9 @@ export default function InstructorCourseAttendance() {
         } else {
             setSelectedSessionId(null);
             setReport(null);
+            loadSessions(selectedClassId);
         }
-    }, [sessionInUrl, loadAttendanceReport]);
+    }, [sessionInUrl, loadAttendanceReport, loadSessions, selectedClassId]);
 
     const handleCreateSession = async () => {
         if (!newSession.topic.trim()) {
@@ -197,10 +198,13 @@ export default function InstructorCourseAttendance() {
             const topic = newSession.description.trim()
                 ? `${newSession.topic.trim()} - ${newSession.description.trim()}`
                 : newSession.topic.trim();
+            const now = new Date();
+            const timeString = now.toTimeString().slice(0, 8);
             const payload = {
                 classId: Number(selectedClassId),
-                date: new Date().toISOString(),
+                date: now.toISOString(),
                 topic,
+                startTime: timeString,
             };
             const created = await createSession(payload);
             setIsCreateSessionOpen(false);

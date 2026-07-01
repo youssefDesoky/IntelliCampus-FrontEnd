@@ -22,8 +22,9 @@ export default function ChatUsers({ chatPartner, friends = [], groups = [], onli
   const isStudent = currentUser?.roles?.some((r) => r.toLowerCase().startsWith("student"));
   const showFahim = isStudent && (!q || "fahim".includes(q));
 
-  const instructors = friends.filter((f) => f.role === "Instructor").map(mapFriend).filter(filterFn);
-  const students = friends.filter((f) => f.role === "Student").map(mapFriend).filter(filterFn);
+  const instructors = friends.filter((f) => (f.roles || []).some(r => r.toLowerCase() === "instructor")).map(mapFriend).filter(filterFn);
+  const students = friends.filter((f) => (f.roles || []).some(r => r.toLowerCase() === "student")).map(mapFriend).filter(filterFn);
+  const others = friends.filter((f) => !(f.roles || []).some(r => r.toLowerCase() === "instructor" || r.toLowerCase() === "student")).map(mapFriend).filter(filterFn);
   const groupList = groups.map(mapGroup).filter(filterFn);
 
   return (
@@ -50,7 +51,10 @@ export default function ChatUsers({ chatPartner, friends = [], groups = [], onli
         {students.length > 0 && (
           <ChatUsersSection type="Students" users={students} onSelectUser={onSelectUser} />
         )}
-        {!instructors.length && !students.length && !groupList.length && !showFahim && (
+        {others.length > 0 && (
+          <ChatUsersSection type="Others" users={others} onSelectUser={onSelectUser} />
+        )}
+        {!instructors.length && !students.length && !others.length && !groupList.length && !showFahim && (
           <div className="text-xs text-center text-gray-400 py-6">
             {searchMembers ? `No members match "${searchMembers}"` : "No members yet"}
           </div>

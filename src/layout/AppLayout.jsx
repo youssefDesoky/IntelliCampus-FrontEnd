@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { Outlet, useRouteLoaderData } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, useRouteLoaderData, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSidebar, useDeviceType } from '../hooks';
 import usePushNotifications from '../hooks/usePushNotifications';
 import useScrollVisibility from '../hooks/useScrollVisibility';
 import { getAside, getBottomBar, getHeader } from '../utils/layoutHelper';
 import Chat from '../feature/chat/components/Chat';
 import CommentsIcon from '../components/ui/icons/CommentsIcon';
+import { setOpenChatHandler } from '../utils/notificationHandler';
 
 const VIEW_TYPES = ['student', 'instructor', 'admin'];
 
@@ -32,8 +33,12 @@ export default function AppLayout() {
     const { width } = useSidebar();
     const { isMobile, isPhone } = useDeviceType();
     const barVisible = useScrollVisibility();
+    const navigate = useNavigate();
     const user = useRouteLoaderData("root");
+    const [searchParams] = useSearchParams();
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [chatDefaultPanel, setChatDefaultPanel] = useState(null);
+    const [chatDefaultUserId, setChatDefaultUserId] = useState(null);
 
     const availableViews = getAvailableViews(user?.roles);
     const [activeView, setActiveView] = useState(() => {
@@ -48,7 +53,49 @@ export default function AppLayout() {
         localStorage.setItem('activeView', view);
     };
 
+    useEffect(() => {
+      const openChatParam = searchParams.get("openChat");
+      if (openChatParam === "addFriend" || openChatParam === "message") {
+        if (openChatParam === "addFriend") {
+          setChatDefaultPanel("addFriend");
+          setChatDefaultUserId(null);
+          setIsChatOpen(true);
+        } else {
+          const userId = searchParams.get("userId");
+          const userName = searchParams.get("userName");
+          setChatDefaultPanel("messaging");
+          setChatDefaultUserId(userId ? { id: userId, name: userName || "User" } : null);
+          setIsChatOpen(true);
+        }
+
+        const currentPath = window.location.pathname;
+        const isStudentAccessible = availableViews.includes('student');
+        const safePath = (currentPath === '/' && !isStudentAccessible)
+          ? (availableViews.includes('instructor') ? '/instructor'
+            : availableViews.includes('admin') ? '/admin'
+            : currentPath)
+          : currentPath;
+
+        navigate(safePath, { replace: true });
+      }
+    }, [searchParams, navigate, availableViews]);
+
     usePushNotifications(true);
+
+    useEffect(() => {
+        setOpenChatHandler((type, userId, userName) => {
+            if (type === 'addFriend') {
+                setChatDefaultPanel("addFriend");
+                setChatDefaultUserId(null);
+                setIsChatOpen(true);
+            } else if (type === 'message') {
+                setChatDefaultPanel("messaging");
+                setChatDefaultUserId(userId ? { id: userId, name: userName || "User" } : null);
+                setIsChatOpen(true);
+            }
+        });
+        return () => setOpenChatHandler(null);
+    }, []);
 
     return (
         <div className="min-h-screen bg-bg-light dark:bg-bg-dark text-text-primary-active-light dark:text-text-primary-active-dark">
@@ -72,20 +119,30 @@ export default function AppLayout() {
                     </main>
 
                     {/* Chatting interface - outside main to overlay everything */}
-                    <Chat isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} currentUser={user} />
+                    <Chat isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} currentUser={user} defaultPanel={chatDefaultPanel} defaultUser={chatDefaultUserId} />
 
-                    {isMobile && !isChatOpen && getBottomBar(activeView, {
-                        visible: isPhone ? barVisible : true,
-                        floatingAction: (
+                    {!isChatOpen && (
+                        isMobile ? getBottomBar(activeView, {
+                            visible: isPhone ? barVisible : true,
+                            floatingAction: (
+                                <button
+                                    onClick={() => setIsChatOpen(true)}
+                                    className="flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                                    aria-label="Open chat"
+                                >
+                                    <CommentsIcon size={22} />
+                                </button>
+                            )
+                        }) : (
                             <button
                                 onClick={() => setIsChatOpen(true)}
-                                className="flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                                className="fixed bottom-4 right-6 z-50 flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
                                 aria-label="Open chat"
                             >
                                 <CommentsIcon size={22} />
                             </button>
                         )
-                    })}
+                    )}
             </div>
         </div>
     );
