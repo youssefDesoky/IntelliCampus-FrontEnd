@@ -79,6 +79,10 @@ export default function CourseShell() {
         queryClient.invalidateQueries({ queryKey: ["courseById", courseId] });
     }, [queryClient, courseId]);
 
+    const isInactive = courseData?.status === "Inactive";
+    const isEnrollmentComplete = courseData?.studentCourseStatusName === "Completed";
+    const isReadOnly = isInactive || isEnrollmentComplete;
+
     // Build the course object for the header and child routes
     const course = {
         id: courseId,
@@ -90,6 +94,10 @@ export default function CourseShell() {
         folders: materialsData?.folders || [],
         courseCode: getLocalizedField(courseData, 'courseCode', i18n.language) || courseData?.courseCode || `CS ${courseId}`,
         creditHours: courseData?.creditHours,
+        status: courseData?.status,
+        studentCourseStatusName: courseData?.studentCourseStatusName,
+        isInactive,
+        isReadOnly,
     };
 
     const creditHourText = ar(t("courseDetail.creditHour", { count: course.creditHours }));
@@ -149,8 +157,8 @@ export default function CourseShell() {
                                         {course.courseCode}
                                     </span>
                                 </div>
-                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-green-default-light text-text-green-default-light dark:bg-bg-surface-green-default-dark dark:text-text-green-default-dark">
-                                    {t("courseDetail.active")}
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isReadOnly ? "bg-bg-surface-yellow-default-light text-text-yellow-default-light dark:bg-bg-surface-yellow-default-dark dark:text-text-yellow-default-dark" : "bg-bg-surface-green-default-light text-text-green-default-light dark:bg-bg-surface-green-default-dark dark:text-text-green-default-dark"}`}>
+                                    {isReadOnly ? (isInactive ? t("courseDetail.inactive") : t("courseDetail.completed")) : t("courseDetail.active")}
                                 </span>
                             </div>
                             <div className="flex flex-nowrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
@@ -176,6 +184,11 @@ export default function CourseShell() {
                         </div>
                     </div>
 
+                {isReadOnly && (
+                    <div className="mb-4 px-4 py-3 rounded-lg bg-bg-surface-yellow-default-light dark:bg-bg-surface-yellow-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
+                        This course is finalized and read-only. No changes can be made.
+                    </div>
+                )}
                 <CourseNavBar links={visibleLinks} />
                 <Outlet context={{ course, courseId, refreshMaterials }} />
             </Section>

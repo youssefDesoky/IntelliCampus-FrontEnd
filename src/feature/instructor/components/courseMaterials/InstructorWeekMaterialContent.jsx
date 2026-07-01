@@ -24,7 +24,7 @@ function getTypeLabel(type, t) {
     return type === 0 ? t('materials.typeDocument') : type === 1 ? t('materials.typeVideo') : type === 2 ? t('materials.typeAudio') : type === 3 ? t('materials.typeImage') : t('materials.typeOther');
 }
 
-export default function InstructorWeekMaterialContent({ material, isFirst, onDelete }) {
+export default function InstructorWeekMaterialContent({ material, isFirst, onDelete, isInactive }) {
     const { t } = useTranslation('instructor');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showViewer, setShowViewer] = useState(false);
@@ -100,13 +100,15 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                                 <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label={t('materials.download')}>
                                     <DownloadIcon size={18} />
                                 </a>
-                                <button 
-                                    onClick={() => setShowDeleteDialog(true)}
-                                    className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 dark:hover:text-red-400 transition-all duration-200" 
-                                    aria-label={t('materials.delete')}
-                                >
-                                    <TrashIcon size={18} />
-                                </button>
+                                {!isInactive && (
+                                    <button 
+                                        onClick={() => setShowDeleteDialog(true)}
+                                        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 dark:hover:text-red-400 transition-all duration-200" 
+                                        aria-label={t('materials.delete')}
+                                    >
+                                        <TrashIcon size={18} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -132,13 +134,15 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                     <a href={downloadUrl} download className="p-3 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label={t('materials.download')}>
                         <DownloadIcon size={20} />
                     </a>
-                    <button 
-                        onClick={() => setShowDeleteDialog(true)}
-                        className="p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 dark:hover:text-red-400 transition-all duration-200" 
-                        aria-label={t('materials.delete')}
-                    >
-                        <TrashIcon size={20} />
-                    </button>
+                    {!isInactive && (
+                        <button 
+                            onClick={() => setShowDeleteDialog(true)}
+                            className="p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 dark:hover:text-red-400 transition-all duration-200" 
+                            aria-label={t('materials.delete')}
+                        >
+                            <TrashIcon size={20} />
+                        </button>
+                    )}
                 </div>
             </li>
 
