@@ -82,7 +82,7 @@ export default function CoursesRegistration() {
     const { data: registrationData, isLoading: loading } = useQuery({
         queryKey: ["coursesRegistration", debouncedSearch],
         queryFn: async () => {
-            const params = debouncedSearch ? { searchQuery: debouncedSearch } : {};
+            const params = { pageSize: 100, ...(debouncedSearch ? { searchQuery: debouncedSearch } : {}) };
             const [registrationsResult, coursesResult] = await Promise.all([
                 getMyRegistrations(),
                 fetchActiveCourses(params),

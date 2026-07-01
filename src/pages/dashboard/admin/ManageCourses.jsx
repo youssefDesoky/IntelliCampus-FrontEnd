@@ -21,6 +21,7 @@ import {
   deleteCourse,
   activateCourse,
   deactivateCourse,
+  reactivateCourse,
   updateCourseRegistrationSettings,
 } from "../../../feature/admin/services/adminCoursesApi";
 import { importCourses } from "../../../feature/admin/services/adminImportsApi";
@@ -152,7 +153,7 @@ export default function ManageCourses() {
         },
         item.isActive
           ? { label: "Deactivate", onClick: async () => { await deactivateCourse(item.courseId); await loadItems(); setSuccessMessage(`Course "${item.courseName}" has been deactivated successfully.`); }, className: "text-text-warning-default-light dark:text-text-warning-default-dark" }
-          : { label: "Activate", onClick: async () => { await activateCourse(item.courseId); await loadItems(); setSuccessMessage(`Course "${item.courseName}" has been activated successfully!`); }, className: "text-text-success-default-light dark:text-text-success-default-dark" },
+          : { label: "Reactivate", onClick: async () => { await reactivateCourse(item.courseId); await loadItems(); setSuccessMessage(`Course "${item.courseName}" has been reactivated successfully!`); }, className: "text-text-success-default-light dark:text-text-success-default-dark" },
         {
           label: "Delete",
           onClick: async () => {

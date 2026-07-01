@@ -18,6 +18,7 @@ const PAGE_SIZE = 2;
 
 export default function CourseAssignments() {
     const { course } = useOutletContext();
+    const isReadOnly = course?.isReadOnly;
     const [submitModal, setSubmitModal] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [upcomingPage, setUpcomingPage] = useState(1);
@@ -135,7 +136,7 @@ export default function CourseAssignments() {
                                     daysLeft={assignment.daysLeft}
                                     status={assignment.status}
                                     totalPoints={assignment.totalPoints}
-                                    onSubmitAssignment={(data) => setSubmitModal(data)}
+                                    onSubmitAssignment={!isReadOnly ? (data) => setSubmitModal(data) : undefined}
                                     onViewInstructions={(data) => setInstructionsModal(data)}
                                     attachments={assignment.attachments}
                                 />
@@ -178,7 +179,7 @@ export default function CourseAssignments() {
                                     score={assignment.score}
                                     totalPoints={assignment.totalPoints}
                                     attachments={assignment.attachments}
-                                    onSubmitAssignment={(data) => setSubmitModal(data)}
+                                    onSubmitAssignment={!isReadOnly ? (data) => setSubmitModal(data) : undefined}
                                     onViewSubmission={(data) => {
                                         const payload = { ...data, submissions: assignment.submissions, submittedDate: assignment.submittedDate, submissionNote: assignment.submissionNote };
                                         setSubmissionModal(payload);

@@ -73,6 +73,11 @@ export async function deactivateCourse(id) {
     return result ?? true;
 }
 
+export async function reactivateCourse(id) {
+    const result = await apiClient(`/api/courses/${id}/reactivate`, { method: "POST" });
+    return result ?? true;
+}
+
 // ─── Course Classes ─────────────────────────────────────────
 
 export async function fetchCourseClasses(courseId) {
