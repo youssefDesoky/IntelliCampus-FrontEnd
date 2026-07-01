@@ -21,16 +21,40 @@ import {
   fetchFriends,
   createGroup,
   fetchMyGroups,
+  deleteFriend,
 } from "../services/chatService";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { useToast } from '../../../contexts/ToastContext.jsx';
+import { setChatState } from '../../../utils/notificationHandler';
 
-export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
+export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPanel, defaultUser }) {
   const { showError } = useError();
+  const { showToast } = useToast();
   const { isPhone } = useSidebar();
   // "default" | "messaging" | "addFriend" | "createGroup"
-  const [activePanel, setActivePanel] = useState("default");
+  const [activePanel, setActivePanel] = useState(defaultPanel || "default");
+  useEffect(() => {
+    if (defaultPanel) setActivePanel(defaultPanel);
+  }, [defaultPanel]);
+  useEffect(() => {
+    if (defaultUser) {
+      setMessages([]);
+      setPinnedMessage(null);
+      setChatPartner({
+        type: "user",
+        userId: String(defaultUser.id),
+        fullName: defaultUser.name || "User",
+        role: "",
+        avatar: null,
+      });
+      setActivePanel("messaging");
+    }
+  }, [defaultUser]);
+  const isChatOpenRef = useRef(isChatOpen);
+  useEffect(() => { isChatOpenRef.current = isChatOpen; }, [isChatOpen]);
   const [friendId, setFriendId] = useState("");
   const [friendRequests, setFriendRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
   const [friends, setFriends] = useState([]);
   const [groups, setGroups] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -43,6 +67,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
   const [pendingPinMessageId, setPendingPinMessageId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMembers, setSearchMembers] = useState("");
+  const isSendingRef = useRef(false);
   const connectionRef = useRef(null);
   const chatPartnerRef = useRef(null);
   const msgIdsRef = useRef(new Set());
@@ -52,6 +77,11 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
   // Keep refs in sync with state so SignalR handlers always have latest value
   useEffect(() => { chatPartnerRef.current = chatPartner; }, [chatPartner]);
   useEffect(() => { pinnedMessageRef.current = pinnedMessage; }, [pinnedMessage]);
+
+  useEffect(() => {
+    const userId = chatPartner && chatPartner.type !== 'group' ? String(chatPartner.userId) : null;
+    setChatState({ isChatOpen, activeChatUserId: userId });
+  }, [isChatOpen, chatPartner]);
 
   // Fetch friends and pending requests
   useEffect(() => {
@@ -98,35 +128,65 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     loadGroups();
   }, [currentUser]);
 
-  // SignalR connection — always active when chat is open
+  // SignalR connection — alive as long as user is logged in
   useEffect(() => {
-    if (!isChatOpen || !currentUser) return;
+    if (!currentUser) return;
 
     const conn = createHubConnection();
+
+    conn.on("ReceiveFriendRequest", (req) => {
+      setFriendRequests((prev) => [
+        ...prev,
+        {
+          id: req.friendRequestId,
+          senderId: req.senderId,
+          name: req.senderName,
+          avatar: req.senderProfileImage,
+          recipientId: req.recipientId,
+          recipientName: req.recipientName,
+        },
+      ]);
+      showToast({
+        type: "info",
+        title: "Friend Request",
+        message: `${req.senderName} sent you a friend request.`,
+      });
+    });
+
+    conn.on("FriendRequestAccepted", async (req) => {
+      setSentRequests((prev) => prev.filter((r) => r.id !== req.friendRequestId));
+      try {
+        const data = await fetchFriends();
+        setFriends(data);
+      } catch {}
+      showToast({
+        type: "success",
+        title: "Friend Request Accepted",
+        message: `${req.recipientName} accepted your friend request.`,
+      });
+    });
 
     conn.on("ReceivePrivateMessage", (msg) => {
       const senderId = String(msg.senderId);
       const isOwn = senderId === String(currentUser.userId);
       const partner = chatPartnerRef.current;
+      const isActiveChat = isChatOpenRef.current && partner && partner.type !== "group" && senderId === String(partner.userId);
 
-      if (!isOwn) {
-        if (!partner || partner.type === "group" || senderId !== String(partner.userId)) {
-          setUnreadCounts((prev) => ({ ...prev, [senderId]: (prev[senderId] || 0) + 1 }));
-          return;
-        }
+      if (isOwn || isActiveChat) {
+        setPartnerTyping(false);
+        msgIdsRef.current.add(msg.messageId);
+        setMessages((prev) => {
+          const exists = prev.some((m) => m.messageId === msg.messageId);
+          return exists ? prev : [...prev, msg];
+        });
+        return;
       }
 
-      if (!partner || partner.type === "group") return;
-
-      setPartnerTyping(false);
-      msgIdsRef.current.add(msg.messageId);
-      setMessages((prev) => {
-        const exists = prev.some((m) => m.messageId === msg.messageId);
-        return exists ? prev : [...prev, msg];
-      });
+      setUnreadCounts((prev) => ({ ...prev, [senderId]: (prev[senderId] || 0) + 1 }));
     });
 
     conn.on("ReceiveGroupMessage", (msg) => {
+      if (!isChatOpenRef.current) return;
       const partner = chatPartnerRef.current;
       if (!partner || partner.type !== "group" || partner.groupName !== msg.groupName) return;
 
@@ -150,6 +210,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     });
 
     conn.on("ReceiveTypingStatus", (senderId, isTyping) => {
+      if (!isChatOpenRef.current) return;
       const partner = chatPartnerRef.current;
       if (partner && String(senderId) === String(partner.userId)) {
         setPartnerTyping(isTyping);
@@ -187,11 +248,8 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     conn.onreconnected(async () => {
       console.info("[ChatHub] Reconnected.");
       const partner = chatPartnerRef.current;
-      if (partner) {
-        if (partner.type === "group") {
-          await conn.invoke("JoinGroup", partner.groupName);
-        }
-        await loadHistory(conn, partner);
+      if (partner && partner.type === "group") {
+        await conn.invoke("JoinGroup", partner.groupName);
       }
     });
 
@@ -222,7 +280,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
       }
       if (connectionRef.current === conn) connectionRef.current = null;
     };
-  }, [isChatOpen, currentUser]);
+  }, [currentUser]);
 
   // Load history & join group when partner changes
   useEffect(() => {
@@ -288,8 +346,13 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
 
   const sendMessage = useCallback(
     async (content) => {
+      if (isSendingRef.current) return;
+      isSendingRef.current = true;
       const conn = connectionRef.current;
-      if (!conn || !chatPartner) return;
+      if (!conn || !chatPartner) {
+        isSendingRef.current = false;
+        return;
+      }
 
       try {
         if (chatPartner.type === "group") {
@@ -299,6 +362,8 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
         }
       } catch (err) {
         showError(err.message);
+      } finally {
+        isSendingRef.current = false;
       }
     },
     [chatPartner]
@@ -398,13 +463,27 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
   }));
 
   const handleSendInvite = async () => {
-    if (!friendId.trim()) return;
+    const id = friendId.trim();
+    if (!id) return;
     try {
-      await sendFriendRequest(Number(friendId));
+      const result = await sendFriendRequest(id);
       setFriendId("");
-      const data = await fetchPendingRequests();
+      setSentRequests((prev) => [
+        ...prev,
+        {
+          id: result.friendRequestId,
+          recipientId: result.recipientId,
+          name: result.recipientName,
+          avatar: result.recipientProfileImage,
+          status: result.status,
+        },
+      ]);
+      const [reqData, friendData] = await Promise.all([
+        fetchPendingRequests(),
+        fetchFriends(),
+      ]);
       setFriendRequests(
-        data.map((r) => ({
+        reqData.map((r) => ({
           id: r.friendRequestId,
           senderId: r.senderId,
           name: r.senderName,
@@ -413,6 +492,8 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
           recipientName: r.recipientName,
         }))
       );
+      setFriends(friendData);
+      showToast({ type: "success", title: "Sent", message: "Friend request sent." });
     } catch (err) {
       showError(err.message);
     }
@@ -489,6 +570,19 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
     // TODO: wire up file upload / send as message
   };
 
+  const handleDeleteFriend = async (friendId) => {
+    try {
+      await deleteFriend(friendId);
+      setFriends((prev) => prev.filter((f) => f.userId !== friendId));
+      setChatPartner(null);
+      setActivePanel("default");
+      setMessages([]);
+      showToast({ type: "info", title: "Removed", message: "Friend removed successfully." });
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+
   return (
     <>
       {isChatOpen && (
@@ -550,6 +644,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
                       friendId={friendId}
                       setFriendId={setFriendId}
                       friendRequests={friendRequests}
+                      sentRequests={sentRequests}
                       onInvite={handleSendInvite}
                       onBack={() => setActivePanel("default")}
                       onAcceptRequest={handleAcceptRequest}
@@ -573,6 +668,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser }) {
                     isPhone={isPhone}
                     onBack={handleBackToUsers}
                     onAttachFile={handleAttachFile}
+                    onDeleteFriend={handleDeleteFriend}
                   />
                   )}
                 </div>

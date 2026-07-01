@@ -22,7 +22,7 @@ import {
     ClockIcon,
 } from "../../../components/ui/icons";
 import { CourseShellSkeleton } from "./SkeletonLoader";
-import { fetchCourseMaterialsOrganized } from "../services/materialsApi";
+import { fetchCourseMaterialsOrganized, fetchCourseFolders } from "../services/materialsApi";
 import { fetchCourseById } from "../services/coursesApi";
 
 
@@ -67,6 +67,13 @@ export default function CourseShell() {
         enabled: !!courseId,
     });
 
+    const { data: foldersData } = useQuery({
+        queryKey: ["courseFolders", courseId],
+        queryFn: () => fetchCourseFolders(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+    });
+
     const isLoading = materialsLoading || courseLoading;
 
     const refreshMaterials = useCallback(() => {
@@ -85,7 +92,7 @@ export default function CourseShell() {
         semester: courseData?.semester || "",
         professor: courseData?.professorName || courseData?.instructorName || "",
         progress: materialsData?.progress ?? 0,
-        folders: materialsData?.folders || [],
+        folders: foldersData || [],
         courseCode: courseData?.courseCode || `CS ${courseId}`,
         creditHours: courseData?.creditHours,
         status: courseData?.status,
