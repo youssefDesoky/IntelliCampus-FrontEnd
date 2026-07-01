@@ -43,3 +43,14 @@ export async function unregisterPushSubscription(endpoint) {
     body: JSON.stringify({ endpoint }),
   });
 }
+
+export async function fetchNotificationPreferences() {
+  return apiClient('/api/notificationpreferences');
+}
+
+export async function updateNotificationPreferences(preferences) {
+  return apiClient('/api/notificationpreferences', {
+    method: 'PUT',
+    body: JSON.stringify(preferences),
+  });
+}

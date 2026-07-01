@@ -116,7 +116,11 @@ export default function InstructorDashboard() {
                   <p className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{item.title}</p>
                   <p className="text-xs mt-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">{item.course}</p>
                   <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                    {item.date ? `Posted ${formatDistanceToNow(new Date(item.date), { addSuffix: true })}` : "Posted recently"}
+                    {item.date
+                      ? (item.updatedAt && new Date(item.updatedAt).getTime() !== new Date(item.date).getTime()
+                        ? `Edited ${formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}`
+                        : `Posted ${formatDistanceToNow(new Date(item.date), { addSuffix: true })}`)
+                      : "Posted recently"}
                   </p>
                 </li>
               ))

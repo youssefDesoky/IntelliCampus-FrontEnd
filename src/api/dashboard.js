@@ -18,3 +18,16 @@ export async function publishNews(title) {
     body: JSON.stringify({ title }),
   });
 }
+
+export async function updateNews(id, title) {
+  return apiClient(`/api/dashboard/admin/news/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ title }),
+  });
+}
+
+export async function deleteNews(id) {
+  return apiClient(`/api/dashboard/admin/news/${id}`, {
+    method: "DELETE",
+  });
+}
