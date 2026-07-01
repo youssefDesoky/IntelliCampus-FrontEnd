@@ -3,7 +3,6 @@ import { useMutation } from "@tanstack/react-query";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import NumberInput from "../../../components/form/NumberInput";
 import { setCourseWorkWeight } from "../services/gradesApi";
-
 export default function CourseWorkWeightModal({ isOpen, onClose, courseId, currentWeight, onSaved }) {
     const [quizWeight, setQuizWeight] = useState("");
     const [assignmentWeight, setAssignmentWeight] = useState("");
