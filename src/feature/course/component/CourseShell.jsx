@@ -24,7 +24,7 @@ import {
     ClockIcon,
 } from "../../../components/ui/icons";
 import { CourseShellSkeleton } from "./SkeletonLoader";
-import { fetchCourseMaterialsOrganized } from "../services/materialsApi";
+import { fetchCourseMaterialsOrganized, fetchCourseFolders } from "../services/materialsApi";
 import { fetchCourseById } from "../services/coursesApi";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
 
@@ -72,6 +72,13 @@ export default function CourseShell() {
         enabled: !!courseId,
     });
 
+    const { data: foldersData } = useQuery({
+        queryKey: ["courseFolders", courseId],
+        queryFn: () => fetchCourseFolders(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+    });
+
     const isLoading = materialsLoading || courseLoading;
 
     const refreshMaterials = useCallback(() => {
@@ -91,7 +98,7 @@ export default function CourseShell() {
         professor: getLocalizedField(courseData, 'professorName', i18n.language) || getLocalizedField(courseData, 'instructorName', i18n.language) || "",
         room: getLocalizedField(courseData, 'room', i18n.language) || courseData?.roomAr || "",
         progress: materialsData?.progress ?? 0,
-        folders: materialsData?.folders || [],
+        folders: foldersData || [],
         courseCode: getLocalizedField(courseData, 'courseCode', i18n.language) || courseData?.courseCode || `CS ${courseId}`,
         creditHours: courseData?.creditHours,
         status: courseData?.status,

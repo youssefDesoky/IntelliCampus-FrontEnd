@@ -33,7 +33,7 @@ export default function CourseAttendance() {
     const { data: attendanceData = null, isLoading: loading } = useQuery({
         queryKey: ["courseAttendance", courseId],
         queryFn: () => fetchMyAttendance(courseId),
-        staleTime: 5 * 60 * 1000,
+        staleTime: 0,
         enabled: !!courseId,
         select: (raw) => {
             const sessions = raw?.data ?? [];
@@ -75,7 +75,7 @@ export default function CourseAttendance() {
     };
 
     const handleSubmit = async () => {
-        if (!reason.trim() || !selectedFile || !selectedSessionId) return;
+        if (!reason.trim() || !selectedSessionId) return;
 
         setSubmitting(true);
         try {

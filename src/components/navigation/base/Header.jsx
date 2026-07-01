@@ -11,7 +11,33 @@ import ToggleTheme from "../../ui/ToggleTheme";
 import { IntelliCampusIcon, BellIconLight, BellSlashIconLight, TranslateIcon, SignOutIcon, UserIcon, InboxIcon } from "../../ui/icons";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
+import { openChat, subscribeChatState } from '../../../utils/notificationHandler';
 
+
+const viewLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
+
+const StudentPaths = ['/', /^\/courses(\/|$)/];
+
+function isStudentPath(path) {
+    return StudentPaths.some((p) => (p instanceof RegExp ? p.test(path) : p === path));
+}
+
+function getViewFromPath(path) {
+    if (isStudentPath(path)) return 'student';
+    if (path.startsWith('/instructor')) return 'instructor';
+    if (path.startsWith('/admin')) return 'admin';
+    return null;
+}
+
+function parseChatUrl(actionUrl) {
+    if (typeof actionUrl !== 'string' || !actionUrl.includes('openChat=')) return null;
+    const params = new URLSearchParams(actionUrl.split('?')[1] || '');
+    return {
+        type: params.get('openChat'),
+        userId: params.get('userId'),
+        userName: params.get('userName'),
+    };
+}
 
 export default function Header({ avatar, notifications: initialNotifications, isMobile, isPhone, availableViews = [], activeView, onViewChange }) {
     const { t, i18n } = useTranslation('ui');
@@ -26,8 +52,29 @@ export default function Header({ avatar, notifications: initialNotifications, is
     const notificationsRef = useRef(null);
     const profileMenuRef = useRef(null);
     const eventSourceRef = useRef(null);
+    const seenNotificationIds = useRef(new Set());
+    const activeChatStateRef = useRef({ isChatOpen: false, activeChatUserId: null });
+    const canNavigateRef = useRef(null);
     const { showError } = useError();
     const { showToast } = useToast();
+
+    useEffect(() => {
+        return subscribeChatState((state) => {
+            activeChatStateRef.current = state;
+        });
+    }, []);
+
+    const canNavigateTo = (actionUrl) => {
+        if (!actionUrl) return false;
+        if (parseChatUrl(actionUrl)) return false;
+        const targetPath = actionUrl.split('?')[0];
+        const requiredView = getViewFromPath(targetPath);
+        return !requiredView || availableViews.includes(requiredView);
+    };
+
+    useEffect(() => {
+        canNavigateRef.current = canNavigateTo;
+    }, [availableViews]);
 
     useEffect(() => {
         const handleClick = (event) => {
@@ -56,6 +103,14 @@ export default function Header({ avatar, notifications: initialNotifications, is
             eventSource.onmessage = (event) => {
                 try {
                     const notification = JSON.parse(event.data);
+                    if (seenNotificationIds.current.has(notification.userNotificationId)) return;
+                    seenNotificationIds.current.add(notification.userNotificationId);
+
+                    const chatInfo = parseChatUrl(notification.clickUrl);
+                    if (chatInfo && activeChatStateRef.current.isChatOpen && activeChatStateRef.current.activeChatUserId === chatInfo.userId) {
+                        return;
+                    }
+
                     setNotifications(prevNotifications => {
                         const exists = prevNotifications.some(n => n.userNotificationId === notification.userNotificationId);
                         if (exists) return prevNotifications;
@@ -68,7 +123,12 @@ export default function Header({ avatar, notifications: initialNotifications, is
                             onClick: actionUrl
                                 ? () => {
                                     handleMarkAsRead(notification.userNotificationId);
-                                    navigate(actionUrl);
+                                    if (parseChatUrl(actionUrl)) {
+                                        const info = parseChatUrl(actionUrl);
+                                        openChat(info.type, info.userId, info.userName);
+                                    } else if (canNavigateRef.current?.(actionUrl)) {
+                                        navigate(actionUrl);
+                                    }
                                 }
                                 : undefined,
                         });
@@ -137,7 +197,13 @@ export default function Header({ avatar, notifications: initialNotifications, is
                 showError(err.message);
             }
         }
-        navigate(actionUrl);
+
+        const chatInfo = parseChatUrl(actionUrl);
+        if (chatInfo) {
+            openChat(chatInfo.type, chatInfo.userId, chatInfo.userName);
+        } else if (canNavigateTo(actionUrl)) {
+            navigate(actionUrl);
+        }
     };
 
     const handleMarkAllAsRead = async () => {

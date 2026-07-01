@@ -5,8 +5,7 @@ import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 import Section from "../../../../components/ui/Section";
 import Button from "../../../../components/ui/Button";
 import BaseComponent from "../../../../components/ui/BaseComponent";
-import DateTimeInput from "../../../../components/form/DateTimeInput";
-import { createMeeting, fetchCourseMeetings } from "../../../course/services/meetingsApi";
+import { createMeeting, fetchCourseMeetings, fetchMeetingById, endMeeting } from "../../../course/services/meetingsApi";
 import MicIcon from "../../../../components/ui/icons/MicIcon";
 import MicSlashIcon from "../../../../components/ui/icons/MicSlashIcon";
 import VideoIcon from "../../../../components/ui/icons/VideoIcon";
@@ -26,6 +25,7 @@ import useArabicDigits from '../../../../hooks/useArabicDigits.js';
 import { MeetingListSkeleton } from "../../SkeletonLoader";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 import { getLocalizedField } from '../../../../utils/getLocalizedField';
+import { useToast } from '../../../../contexts/ToastContext.jsx';
 
 
 function ControlButton({ active, danger, onClick, label, children }) {
@@ -57,7 +57,6 @@ export default function MeetingRoom() {
     const isInstructor = user?.roles?.some((r) => r === "Instructor");
 
     const [title, setTitle] = useState("");
-    const [dateTime, setDateTime] = useState("");
     const [creating, setCreating] = useState(false);
     const [activeMeeting, setActiveMeeting] = useState(null);
     const [isAudioMuted, setIsAudioMuted] = useState(true);
@@ -68,6 +67,7 @@ export default function MeetingRoom() {
     const [isHandRaised, setIsHandRaised] = useState(false);
 
     const { showError } = useError();
+    const { showToast } = useToast();
     const containerRef = useRef(null);
     const apiRef = useRef(null);
 
@@ -76,9 +76,47 @@ export default function MeetingRoom() {
     const { data: meetings = [], isLoading: loading } = useQuery({
         queryKey: ["courseMeetings", courseId],
         queryFn: () => fetchCourseMeetings(courseId),
-        staleTime: 2 * 60 * 1000,
+        staleTime: 0,
+        refetchInterval: 5000,
         enabled: !!courseId,
     });
+
+    // Fast-poll the specific meeting status when inside the meeting room
+    const { data: currentMeeting } = useQuery({
+        queryKey: ["meeting", activeMeeting?.meetingId],
+        queryFn: () => fetchMeetingById(activeMeeting.meetingId),
+        staleTime: 0,
+        refetchInterval: 1000,
+        enabled: !!activeMeeting?.meetingId,
+        retry: false,
+    });
+
+    const isMeetingActive = currentMeeting?.isActive ?? meetings.find((m) => m.meetingId === activeMeeting?.meetingId)?.isActive;
+
+    // Gracefully hang up if the meeting is ended remotely (e.g., by instructor on the backend)
+    useEffect(() => {
+        if (!activeMeeting || isMeetingActive === undefined || isMeetingActive) return;
+        try {
+            apiRef.current?.executeCommand("hangup");
+        } catch {
+            // ignore if already disposed
+        }
+        setActiveMeeting(null);
+        if (!isInstructor) {
+            showToast({ type: "info", title: "Meeting ended", message: "The instructor has ended the meeting." });
+        }
+    }, [isMeetingActive, activeMeeting, isInstructor]);
+
+    // Auto-end meeting on tab close or navigation away (instructor only)
+    useEffect(() => {
+        if (!isInstructor || !activeMeeting?.meetingId) return;
+        const meetingId = activeMeeting.meetingId;
+        const handleBeforeUnload = () => {
+            navigator.sendBeacon(`/api/meetings/${meetingId}/end`, "");
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [isInstructor, activeMeeting?.meetingId]);
 
     const initializeMeeting = () => {
         if (!activeMeeting) return;
@@ -115,6 +153,10 @@ export default function MeetingRoom() {
             setIsVideoMuted(event.muted);
         });
         apiRef.current.addEventListener("readyToClose", () => {
+            // Auto-end the meeting when the instructor leaves the Jitsi room for any reason
+            if (isInstructor && activeMeeting?.meetingId) {
+                endMeeting(activeMeeting.meetingId).catch(() => {});
+            }
             setActiveMeeting(null);
             setIsRecording(false);
             setIsChatOpen(false);
@@ -147,16 +189,15 @@ export default function MeetingRoom() {
     }, [activeMeeting]);
 
     const handleCreate = async () => {
-        if (!title || !dateTime) return;
+        if (!title) return;
         setCreating(true);
         try {
             const meeting = await createMeeting({
                 title,
-                dateTime: new Date(dateTime).toISOString(),
+                dateTime: new Date().toISOString(),
                 courseId: parseInt(courseId),
             });
             setTitle("");
-            setDateTime("");
             queryClient.invalidateQueries({ queryKey: ["courseMeetings", courseId] });
             setActiveMeeting(meeting);
         } catch (err) {
@@ -170,10 +211,25 @@ export default function MeetingRoom() {
         setActiveMeeting(meeting);
     };
 
-    const handleEnd = () => {
-        if (apiRef.current) {
-            apiRef.current.executeCommand("hangup");
+    const handleEnd = async () => {
+        if (isInstructor && activeMeeting?.meetingId) {
+            try {
+                await endMeeting(activeMeeting.meetingId);
+                queryClient.invalidateQueries({ queryKey: ["courseMeetings", courseId] });
+            } catch (err) {
+                console.error("Failed to end meeting:", err);
+                showError(err?.message || "Failed to end meeting. Please try again.");
+                return; // stay in the meeting so the instructor can retry
+            }
         }
+        if (apiRef.current) {
+            try {
+                apiRef.current.executeCommand("hangup");
+            } catch {
+                // ignore if already disposed
+            }
+        }
+        setActiveMeeting(null);
     };
 
     const handleMute = () => apiRef.current?.executeCommand("toggleAudio");
@@ -292,20 +348,15 @@ export default function MeetingRoom() {
         );
     }
 
-    const now = new Date();
-    const activeMeetingsList = meetings.filter((m) => {
-        const meetingTime = new Date(m.dateTime);
-        const endTime = new Date(meetingTime.getTime() + 2 * 60 * 60 * 1000);
-        return meetingTime <= now && now <= endTime;
-    });
-    const upcomingMeetings = meetings.filter((m) => new Date(m.dateTime) > now);
-    const pastMeetings = meetings.filter((m) => new Date(m.dateTime) <= now && !activeMeetingsList.find(a => a.meetingId === m.meetingId));
+    const activeMeetingsList = meetings.filter((m) => m.isActive);
+    const pastMeetings = meetings.filter((m) => !m.isActive);
 
     const stats = [
         { label: t('meeting.totalMeetings'), value: meetings.length, icon: <CalendarDaysIcon size={20} />, color: "text-text-accent-default-light dark:text-text-accent-default-dark" },
         { label: t('meeting.active'), value: activeMeetingsList.length, icon: <VideoIcon size={20} />, color: "text-green-600 dark:text-green-400" },
         { label: t('meeting.upcoming'), value: upcomingMeetings.length, icon: <ClockIcon size={20} />, color: "text-blue-600 dark:text-blue-400" },
         { label: t('meeting.past'), value: pastMeetings.length, icon: <CheckIcon size={20} />, color: "text-text-tertiary-default-light dark:text-text-tertiary-default-dark" },
+    ];
     ];
 
     const formatDateTime = (dateStr) => {
@@ -338,10 +389,9 @@ export default function MeetingRoom() {
                                         placeholder={t('meeting.meetingTitlePlaceholder')}
                                     />
                                 </div>
-                                <DateTimeInput label={t('meeting.dateTime')} value={dateTime} onChange={(e) => setDateTime(e.target.value)} />
                                 <Button
                                     onClick={handleCreate}
-                                    disabled={!title || !dateTime || creating}
+                                    disabled={!title || creating}
                                     loading={creating}
                                     loadingText={t('meeting.scheduling')}
                                     startIcon={<CalendarCheckIcon size={18} />}
@@ -382,9 +432,9 @@ export default function MeetingRoom() {
                     )}
 
                     <BaseComponent
-                        title={isInstructor ? t('meeting.upcoming') : t('meeting.scheduled')}
-                        contentClassName={meetings.length === 0 || (upcomingMeetings.length === 0 && activeMeetingsList.length === 0) ? "space-y-3 flex-1 flex flex-col" : "space-y-3"}
-                        className={meetings.length === 0 || (upcomingMeetings.length === 0 && activeMeetingsList.length === 0) ? "flex-1 flex flex-col" : ""}
+                        title={t('meeting.past')}
+                        contentClassName={meetings.length === 0 || (pastMeetings.length === 0 && activeMeetingsList.length === 0) ? "space-y-3 flex-1 flex flex-col" : "space-y-3"}
+                        className={meetings.length === 0 || (pastMeetings.length === 0 && activeMeetingsList.length === 0) ? "flex-1 flex flex-col" : ""}
                     >
                         {loading ? (
                             <MeetingListSkeleton />
@@ -400,15 +450,15 @@ export default function MeetingRoom() {
                                     </p>
                                 )}
                             </div>
-                        ) : upcomingMeetings.length === 0 && activeMeetingsList.length === 0 ? (
+                        ) : pastMeetings.length === 0 ? (
                             <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-6 text-center">
                                 <CalendarCheckIcon size={48} className="mx-auto text-text-tertiary-default-light dark:text-text-tertiary-default-dark mb-3" />
                                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark font-medium">
-                                    {t('meeting.noUpcoming')}
+                                    {t('meeting.noPastMeetings')}
                                 </p>
                             </div>
                         ) : (
-                            upcomingMeetings.map((meeting) => (
+                            pastMeetings.map((meeting) => (
                                 <div
                                     key={meeting.meetingId}
                                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-4 hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark transition-colors"
@@ -427,49 +477,14 @@ export default function MeetingRoom() {
                                             </p>
                                         </div>
                                     </div>
-                                    {isInstructor ? (
-                                        <Button variant="primary" onClick={() => handleJoin(meeting)} startIcon={<VideoIcon size={16} />} className="w-full sm:w-fit">
-                                            {t('meeting.start')}
-                                        </Button>
-                                    ) : (
-                                        <span className="hidden sm:inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1.5 rounded-full text-xs font-semibold bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark text-blue-700 dark:text-blue-300">
-                                            <ClockIcon size={12} />
-                                            {t('meeting.scheduledBadge')}
-                                        </span>
-                                    )}
+                                    <span className="hidden sm:inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1.5 rounded-full text-xs font-semibold bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                                        <CheckIcon size={12} />
+                                        {t('meeting.ended')}
+                                    </span>
                                 </div>
                             ))
                         )}
                     </BaseComponent>
-
-                    {isInstructor && pastMeetings.length > 0 && (
-                        <BaseComponent title={t('meeting.past')} contentClassName="space-y-2">
-                            {pastMeetings.map((meeting) => (
-                                <div
-                                    key={meeting.meetingId}
-                                    className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-3 opacity-60 hover:opacity-80 transition-opacity"
-                                >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        <div className="flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark">
-                                            <CheckIcon size={16} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <h3 className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark text-sm truncate">
-                                                    {meeting.title}
-                                                </h3>
-                                                <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark shrink-0">{t('meeting.ended')}</span>
-                                            </div>
-                                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark flex items-center gap-1 mt-0.5">
-                                                <ClockIcon size={12} />
-                                                {formatDateTime(meeting.dateTime)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </BaseComponent>
-                    )}
                 </div>
 
                 <div className="hidden lg:block space-y-6">

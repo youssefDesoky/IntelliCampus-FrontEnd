@@ -7,6 +7,7 @@ const SECTION_ICONS = {
   Instructors: <UserTieIcon size={18} />,
   Students: <UserIcon size={18} />,
   Groups: <UsersIcon size={18} />,
+  Others: <UserIcon size={18} />,
 };
 
 export default function ChatUsersSection({ type, users, onSelectUser }) {

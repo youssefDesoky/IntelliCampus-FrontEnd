@@ -6,6 +6,7 @@ export default function AddFriendPanel({
   friendId,
   setFriendId,
   friendRequests,
+  sentRequests = [],
   onInvite,
   onBack,
   onAcceptRequest,
@@ -14,6 +15,19 @@ export default function AddFriendPanel({
   const { t, i18n } = useTranslation('chat');
   const isRTL = i18n.language === 'ar';
   const pendingCount = friendRequests.length;
+
+  const divider = (label, count) => (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
+      <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{label}</span>
+      {count > 0 && (
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
+          {count}
+        </span>
+      )}
+      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
+    </div>
+  );
 
   return (
     <BasePanel
@@ -62,6 +76,46 @@ export default function AddFriendPanel({
             </button>
           </div>
         </div>
+
+        {sentRequests.length > 0 && (
+          <>
+            {divider("Sent Requests", sentRequests.length)}
+            <div className="flex flex-col gap-1.5">
+              {sentRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-white dark:bg-gray-800/40 ring-1 ring-gray-100 dark:ring-gray-700/30"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {req.avatar ? (
+                      <img className="w-10 h-10 rounded-xl object-cover shrink-0 ring-1 ring-gray-100 dark:ring-gray-700/50" src={req.avatar} alt={req.name} />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center shrink-0 ring-1 ring-gray-100 dark:ring-gray-700/50">
+                        <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                          {req.name?.[0]?.toUpperCase() ?? "?"}
+                        </span>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate leading-tight">{req.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate leading-tight flex items-center gap-1">
+                        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 dark:text-gray-600">
+                          <rect x="1" y="4" width="14" height="10" rx="2" />
+                          <path d="M1 8h14" />
+                          <path d="M5 4V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                        ID: {req.recipientId}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 shrink-0">
+                    Pending
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />

@@ -7,7 +7,7 @@ import { useRef, useEffect } from "react";
 import Message from "./Message";
 import TypingIndicator from "./TypingIndicator";
 
-export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping, chatPartner, deleteMessage, editMessage, pinMessage, unpinMessage, pinnedMessage, showSenderInfo, searchQuery, onSearchChange, isPhone, onBack, onAttachFile }) {
+export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping, chatPartner, deleteMessage, editMessage, pinMessage, unpinMessage, pinnedMessage, showSenderInfo, searchQuery, onSearchChange, isPhone, onBack, onAttachFile, onDeleteFriend }) {
   const { t } = useTranslation('chat');
   const bottomRef = useRef(null);
 
@@ -21,7 +21,7 @@ export default function Messaging({ messages, sendMessage, onInputChange, partne
 
   return (
     <div className={`${isPhone ? '' : 'col-span-2'} flex flex-col h-full min-h-0 gap-0`}>
-      <ChatPartnerHeader chatPartner={chatPartner} partnerTyping={partnerTyping} searchQuery={searchQuery} onSearchChange={onSearchChange} isPhone={isPhone} onBack={onBack} />
+      <ChatPartnerHeader chatPartner={chatPartner} partnerTyping={partnerTyping} searchQuery={searchQuery} onSearchChange={onSearchChange} isPhone={isPhone} onBack={onBack} onDeleteFriend={onDeleteFriend} />
       {pinnedMessage && <PinnedMessage message={pinnedMessage} />}
 
       {/* Messages area */}

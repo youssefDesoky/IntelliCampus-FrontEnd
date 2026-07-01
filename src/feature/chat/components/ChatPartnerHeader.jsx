@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 
-export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQuery, onSearchChange, isPhone, onBack }) {
+export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQuery, onSearchChange, isPhone, onBack, onDeleteFriend }) {
   const { t, i18n } = useTranslation('chat');
   const isRTL = i18n.language === 'ar';
   const inputRef = useRef(null);
@@ -116,6 +116,22 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
             </button>
           </div>
         ) : (
+          <>
+          {chatPartner?.type !== "group" && onDeleteFriend && (
+            <button
+              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-gray-500 hover:text-red-500"
+              aria-label="Remove friend"
+              onClick={() => {
+                if (window.confirm(`Remove ${chatPartner.fullName} from your friends?`)) {
+                  onDeleteFriend(Number(chatPartner.userId));
+                }
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6h8m1-7l3 3m0 0l3-3m-3 3V9" />
+              </svg>
+            </button>
+          )}
           <button
             className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700/60 rounded-lg transition-colors"
             aria-label={t('searchMessages')}
@@ -125,6 +141,7 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
+          </>
         )}
       </div>
 

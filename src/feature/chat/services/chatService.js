@@ -67,6 +67,10 @@ export async function fetchMyGroups() {
   return apiClient("/api/groups");
 }
 
+export async function deleteFriend(friendId) {
+  return apiClient(`/api/friends/${friendId}`, { method: "DELETE" });
+}
+
 export function formatTime(timestamp) {
   const d = new Date(timestamp);
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
