@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useParams, useLocation, useOutletContext } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from 'react-i18next';
 import { useError } from '../../../contexts/ErrorContext.jsx';
-import { fetchInboxMessages, fetchSentMessages, deleteMessage, sendMessage } from "../../../api/messages";
+import { fetchInboxMessages, fetchSentMessages, deleteMessage, sendMessage, markMessageAsRead } from "../../../api/messages";
 import { ArrowRightIcon, TrashIcon, PaperPlaneIcon, EnvelopIcon, XIcon } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
@@ -33,7 +33,7 @@ export default function MessageDetail() {
 
   const threadFromState = useMemo(() => location.state?.thread, [location.state?.thread]);
 
-  const { data: threads = [] } = useQuery({
+  const { data: threads = [], isLoading } = useQuery({
     queryKey: ["inbox", currentUserId],
     queryFn: async () => {
       const [inboxData, sentData] = await Promise.all([
@@ -67,6 +67,36 @@ export default function MessageDetail() {
   }, [threadFromState, threads, messageId]);
 
   const isSent = thread?.senderId === currentUserId;
+
+  const hasUnreadForMe = useMemo(
+    () =>
+      !!thread &&
+      ((thread.recipientId === currentUserId && !thread.isRead) ||
+        (thread.replies || []).some((r) => r.recipientId === currentUserId && !r.isRead)),
+    [thread, currentUserId],
+  );
+
+  useEffect(() => {
+    if (hasUnreadForMe) {
+      markMessageAsRead(thread.messageId).then(() => {
+        queryClient.setQueryData(["inbox", currentUserId], (old) => {
+          if (!old) return old;
+          return old.map((t) => {
+            if (t.messageId === thread.messageId) {
+              return { ...t, isRead: true };
+            }
+            return {
+              ...t,
+              replies: (t.replies || []).map((r) =>
+                r.messageId === thread.messageId ? { ...r, isRead: true } : r
+              ),
+            };
+          });
+        });
+        queryClient.invalidateQueries({ queryKey: ["inbox", currentUserId] });
+      }).catch(() => {});
+    }
+  }, [hasUnreadForMe]);
   const personName = isSent
     ? thread?.recipientName || t('message.unknown')
     : thread?.senderName || t('message.unknown');
@@ -110,6 +140,31 @@ export default function MessageDetail() {
   };
 
   if (!thread) {
+    if (isLoading) {
+      return (
+        <div className="max-w-3xl mx-auto space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-4 h-4 animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded" />
+            <div className="h-4 w-24 animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded" />
+          </div>
+          <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark" />
+              <div className="space-y-2 flex-1">
+                <div className="h-5 w-48 animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded" />
+                <div className="h-4 w-32 animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded" />
+              </div>
+            </div>
+            <div className="border-t border-border-primary-default-light dark:border-border-primary-default-dark pt-4 space-y-2">
+              <div className="h-4 w-full animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded" />
+              <div className="h-4 w-3/4 animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded" />
+              <div className="h-4 w-1/2 animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-text-secondary-default-light dark:text-text-secondary-default-dark gap-3">
         <EnvelopIcon className="w-12 h-12 opacity-40" />

@@ -389,8 +389,6 @@ export default function Inbox() {
         }
         return prev.filter((t) => t.messageId !== messageId);
       });
-      const key = `thread-${messageId}`;
-      if (expandedKey === key) setExpandedKey(null);
     },
     onError: (err) => showError(err.message),
   });

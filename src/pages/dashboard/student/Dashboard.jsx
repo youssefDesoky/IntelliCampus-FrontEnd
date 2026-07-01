@@ -104,7 +104,11 @@ export default function Dashboard() {
                   <p className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{item.title}</p>
                   <p className="text-xs mt-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">{item.course}</p>
                   <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                    {item.date ? t('dashboard.postedTime', { time: formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) }) : t('dashboard.postedRecently')}
+                    {item.date
+                      ? (item.updatedAt && new Date(item.updatedAt).getTime() !== new Date(item.date).getTime()
+                        ? t('dashboard.editedTime', { time: formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) })
+                        : t('dashboard.postedTime', { time: formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) }))
+                      : t('dashboard.postedRecently')}
                   </p>
                 </li>
               ))

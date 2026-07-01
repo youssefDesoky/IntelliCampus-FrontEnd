@@ -23,6 +23,7 @@ import BoxData from "../../../components/ui/BoxData";
 import Section from "../../../components/ui/Section";
 import TextArea from "../../../components/ui/TextArea";
 import Button from "../../../components/ui/Button";
+import Dialog from "../../../components/ui/Dialog";
 import { ChartCard } from "../../../components/charts";
 import {
   UsersIcon,
@@ -35,7 +36,7 @@ import {
   BullHornIcon,
   PaperPlaneIcon,
 } from "../../../components/ui/icons";
-import { fetchAdminDashboard, publishNews } from "../../../api/dashboard";
+import { fetchAdminDashboard, publishNews, updateNews, deleteNews } from "../../../api/dashboard";
 
 // ─── Stat card config ────────────────────────────────────────────────────────
 
@@ -451,6 +452,9 @@ export default function Dashboard() {
   const { t, i18n } = useTranslation('admin');
   const queryClient = useQueryClient();
   const [newsInput, setNewsInput] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const statLabels = {
     totalStudents: t('dashboard.totalStudents'),
@@ -467,11 +471,33 @@ export default function Dashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const invalidateAllDashboards = () => {
+    queryClient.invalidateQueries({ queryKey: ["adminDashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["studentDashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["instructorDashboard"] });
+  };
+
   const publishMutation = useMutation({
     mutationFn: publishNews,
     onSuccess: () => {
       setNewsInput("");
-      queryClient.invalidateQueries({ queryKey: ["adminDashboard"] });
+      invalidateAllDashboards();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, title }) => updateNews(id, title),
+    onSuccess: () => {
+      setEditingId(null);
+      setEditText("");
+      invalidateAllDashboards();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteNews,
+    onSuccess: () => {
+      invalidateAllDashboards();
     },
   });
 
@@ -480,6 +506,37 @@ export default function Dashboard() {
     const trimmed = newsInput.trim();
     if (!trimmed) return;
     publishMutation.mutate(trimmed);
+  };
+
+  const handleStartEdit = (item) => {
+    setEditingId(`${item.kind ?? "Broadcast"}-${item.id}`);
+    setEditText(item.title);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const handleSaveEdit = (id) => {
+    const trimmed = editText.trim();
+    if (!trimmed) return;
+    updateMutation.mutate({ id, title: trimmed });
+  };
+
+  const handleDelete = (id) => {
+    setDeleteConfirmId(id);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirmId !== null) {
+      deleteMutation.mutate(deleteConfirmId);
+    }
+    setDeleteConfirmId(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmId(null);
   };
 
   const stats = dashboard?.stats ?? {};
@@ -575,21 +632,86 @@ export default function Dashboard() {
 
           <menu className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 no-scrollbar">
             {dashboard.latestNews?.length > 0 ? (
-              dashboard.latestNews.slice(0, 5).map((item) => (
-                <li
-                  key={`${item.kind ?? "Broadcast"}-${item.id}`}
-                  className="flex gap-4 p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
-                >
-                  {/* Colored accent bar */}
-                  <div className="w-0.5 flex-shrink-0 rounded-full bg-text-accent-default-light dark:bg-text-accent-default-dark self-stretch" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                      {item.title}
-                    </p>
-                    {item.course && (
-                      <p className="text-xs mt-0.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        {item.course}
-                      </p>
+              dashboard.latestNews.slice(0, 5).map((item) => {
+                const itemKey = `${item.kind ?? "Broadcast"}-${item.id}`;
+                const isEditing = editingId === itemKey;
+                return (
+                  <li
+                    key={itemKey}
+                    className="flex gap-4 p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
+                  >
+                    <div className="w-0.5 flex-shrink-0 rounded-full bg-text-accent-default-light dark:bg-text-accent-default-dark self-stretch" />
+                    <div className="flex-1 min-w-0">
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <textarea
+                            className="w-full px-3 py-2 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light outline-none resize-none text-sm"
+                            rows={3}
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                          />
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              type="button"
+                              onClick={handleCancelEdit}
+                              className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveEdit(item.id)}
+                              disabled={updateMutation.isPending || !editText.trim()}
+                              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-text-accent-default-light dark:bg-text-accent-default-dark text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                            >
+                              {updateMutation.isPending ? "Saving..." : "Save"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                            {item.title}
+                          </p>
+                          {item.course && (
+                            <p className="text-xs mt-0.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                              {item.course}
+                            </p>
+                          )}
+                          <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                            {item.date
+                              ? (item.updatedAt && new Date(item.updatedAt).getTime() !== new Date(item.date).getTime()
+                                ? `Edited ${formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}`
+                                : `Posted ${formatDistanceToNow(new Date(item.date), { addSuffix: true })}`)
+                              : "Posted recently"}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    {!isEditing && (
+                      <div className="flex flex-col gap-1.5 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(item)}
+                          className="p-1.5 rounded-lg hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark text-text-tertiary-default-light dark:text-text-tertiary-default-dark hover:text-text-accent-default-light dark:hover:text-text-accent-default-dark transition-colors"
+                          title="Edit"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                            <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+                            <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item.id)}
+                          className="p-1.5 rounded-lg hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark text-text-tertiary-default-light dark:text-text-tertiary-default-dark hover:text-text-error-default-light dark:hover:text-text-error-default-dark transition-colors"
+                          title="Delete"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                            <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c-.84 0-1.673.025-2.5.075V3.75c0-.69.56-1.25 1.25-1.25h2.5c.69 0 1.25.56 1.25 1.25v.325C11.673 4.025 10.84 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
                     )}
                     <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                       {item.date
@@ -641,6 +763,18 @@ export default function Dashboard() {
           <CourseStatusChart data={deptStatusData} t={t} />
         </div>
       </Section>
+
+      <Dialog
+        isOpen={deleteConfirmId !== null}
+        variant="warning"
+        title="Delete Announcement"
+        onConfirm={handleConfirmDelete}
+        onClose={handleCancelDelete}
+        confirmText="Delete"
+        cancelText="Cancel"
+      >
+        Are you sure you want to delete this announcement? This action cannot be undone.
+      </Dialog>
     </>
   );
 }
