@@ -1,24 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { KeyIcon, EnvelopIcon } from "../../../components/ui/icons";
 import ChangePasswordForm from "./ChangePasswordForm";
 import ChangeRetrievalMailForm from "./ChangeRetrievalMailForm";
+import { fetchNotificationPreferences, updateNotificationPreferences } from "../../../api/notifications";
+
+const FIELD_MAP = {
+    notifications: "inAppNotificationsEnabled",
+    push: "pushNotificationsEnabled",
+};
 
 export default function AccountControlsCard({ className = "" }) {
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
     const [isChangeRetrievalMailOpen, setIsChangeRetrievalMailOpen] = useState(false);
+    const [preferences, setPreferences] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(null);
 
-    const [preferences, setPreferences] = useState({
-        email: true,
-        notifications: false,
-        push: false,
-    });
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const data = await fetchNotificationPreferences();
+                if (!cancelled) setPreferences(data);
+            } catch {
+                if (!cancelled) setPreferences({ inAppNotificationsEnabled: true, pushNotificationsEnabled: false });
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
 
-    const togglePreference = (id) => {
-        setPreferences((prev) => ({ ...prev, [id]: !prev[id] }));
+    const togglePreference = async (id) => {
+        const field = FIELD_MAP[id];
+        if (!field || updating) return;
+
+        const newValue = !preferences[field];
+        const updated = { ...preferences, [field]: newValue };
+
+        setUpdating(id);
+        setPreferences(updated);
+
+        try {
+            await updateNotificationPreferences(updated);
+        } catch {
+            setPreferences(preferences);
+        } finally {
+            setUpdating(null);
+        }
     };
 
     const preferenceOptions = [
-        { id: "email", label: "Email" },
         { id: "notifications", label: "Notifications" },
         { id: "push", label: "Push notifications" },
     ];
@@ -47,10 +79,11 @@ export default function AccountControlsCard({ className = "" }) {
                                         type="checkbox"
                                         id={id}
                                         className="peer sr-only"
-                                        checked={preferences[id]}
+                                        checked={preferences?.[FIELD_MAP[id]] ?? false}
+                                        disabled={loading || updating === id}
                                         onChange={() => togglePreference(id)}
                                     />
-                                    <div className="h-5 w-9 rounded-full bg-bg-fill-secondary-default-light transition-colors peer-checked:bg-bg-fill-accent-default-light peer-focus:outline-none dark:bg-bg-fill-secondary-default-dark dark:peer-checked:bg-bg-fill-accent-default-dark after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:rounded-full after:bg-bg-fill-primary-default-light after:transition-transform after:content-[''] peer-checked:after:translate-x-4 dark:after:bg-bg-fill-primary-default-dark" />
+                                    <div className={`h-5 w-9 rounded-full bg-bg-fill-secondary-default-light transition-colors peer-checked:bg-bg-fill-accent-default-light peer-focus:outline-none dark:bg-bg-fill-secondary-default-dark dark:peer-checked:bg-bg-fill-accent-default-dark after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:rounded-full after:bg-bg-fill-primary-default-light after:transition-transform after:content-[''] peer-checked:after:translate-x-4 dark:after:bg-bg-fill-primary-default-dark ${loading ? 'opacity-50' : ''}`} />
                                 </label>
                             </div>
                         ))}
