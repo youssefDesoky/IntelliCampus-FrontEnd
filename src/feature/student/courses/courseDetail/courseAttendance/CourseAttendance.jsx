@@ -12,6 +12,7 @@ import AttendanceOverall from "./AttendanceOverall";
 import AttendanceBreakdown from "./AttendanceBreakdown";
 import AttendanceExcuseCard from "./AttendanceExcuseCard";
 import { useError } from "../../../../../contexts/ErrorContext.jsx";
+import { useToast } from "../../../../../contexts/ToastContext.jsx";
 import { fetchMyAttendance, submitExcuse } from "../../../services/profileApi";
 import { CourseAttendanceSkeleton } from "./SkeletonLoader";
 import useArabicDigits from "../../../../../hooks/useArabicDigits";
@@ -27,12 +28,36 @@ export default function CourseAttendance() {
     const [submitting, setSubmitting] = useState(false);
     const { course, courseId } = useOutletContext();
     const { showError } = useError();
+    const { showToast } = useToast();
 
     const { data: attendanceData = null, isLoading: loading } = useQuery({
         queryKey: ["courseAttendance", courseId],
         queryFn: () => fetchMyAttendance(courseId),
         staleTime: 5 * 60 * 1000,
         enabled: !!courseId,
+        select: (raw) => {
+            const sessions = raw?.data ?? [];
+            const totalSessions = sessions.length;
+            const presentSessions = sessions.filter((s) => s.presentCount > 0).length;
+            const missedSessions = totalSessions - presentSessions;
+            const percentage = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 0;
+            return {
+                summary: { percentage, attendedSessions: presentSessions, missedSessions },
+                breakdown: {
+                    totalSessions, presentSessions, missedSessions, percentage,
+                    onTimePercentage: percentage,
+                    needsImprovementPercentage: 100 - percentage,
+                },
+                history: sessions.map((s) => ({
+                    sessionId: s.sessionId,
+                    date: s.date ? String(s.date).substring(0, 10) : "",
+                    time: [s.startTime, s.endTime].filter(Boolean).join(" — "),
+                    type: s.sessionType === 0 ? "Lecture" : "Section",
+                    status: s.presentCount > 0 ? "Present" : "Absent",
+                    topic: s.topic || "",
+                })),
+            };
+        },
     });
 
     const openForm = () => setIsFormOpen(true);
@@ -59,6 +84,7 @@ export default function CourseAttendance() {
                 reason,
                 file: selectedFile,
             });
+            showToast({ type: "success", title: "Excuse submitted", message: "Your excuse request has been submitted for review." });
             closeForm();
         } catch (err) {
             showError(err.message);
@@ -188,7 +214,7 @@ export default function CourseAttendance() {
                                 <option value="">{t('attendance.chooseSession')}</option>
                                 {(attendanceData?.history || []).map((session) => (
                                     <option key={session.sessionId || session.id} value={session.sessionId || session.id}>
-                                        {session.date} — {session.time} ({session.type})
+                                        {session.date} — {session.time} ({session.type}){session.topic ? ` — ${session.topic}` : ""}
                                     </option>
                                 ))}
                             </select>

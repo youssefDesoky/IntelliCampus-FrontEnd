@@ -49,7 +49,7 @@ export async function fetchCoursePrerequisites(params = {}) {
 }
 
 export async function fetchMyAttendance(courseId) {
-  return apiClient(`/api/attendance/my-attendance/course/${courseId}`);
+  return apiClient(`/api/attendance/my-attendance/course/${courseId}?PageSize=50`);
 }
 
 export async function submitExcuse(courseId, { sessionId, reason, file }) {
