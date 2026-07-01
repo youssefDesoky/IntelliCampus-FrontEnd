@@ -58,7 +58,6 @@ export default function MeetingRoom() {
     const isInstructor = user?.roles?.some((r) => r === "Instructor");
 
     const [title, setTitle] = useState("");
-    const [dateTime, setDateTime] = useState("");
     const [creating, setCreating] = useState(false);
     const [activeMeeting, setActiveMeeting] = useState(null);
     const [isAudioMuted, setIsAudioMuted] = useState(true);
@@ -355,11 +354,13 @@ export default function MeetingRoom() {
     const upcomingMeetings = meetings.filter((m) => !m.isActive && new Date(m.dateTime) > now);
     const pastMeetings = meetings.filter((m) => !m.isActive && new Date(m.dateTime) <= now);
 
+
     const stats = [
         { label: t('meeting.totalMeetings'), value: meetings.length, icon: <CalendarDaysIcon size={20} />, color: "text-text-accent-default-light dark:text-text-accent-default-dark" },
         { label: t('meeting.active'), value: activeMeetingsList.length, icon: <VideoIcon size={20} />, color: "text-green-600 dark:text-green-400" },
         { label: t('meeting.upcoming'), value: upcomingMeetings.length, icon: <ClockIcon size={20} />, color: "text-blue-600 dark:text-blue-400" },
         { label: t('meeting.past'), value: pastMeetings.length, icon: <CheckIcon size={20} />, color: "text-text-tertiary-default-light dark:text-text-tertiary-default-dark" },
+    ];
     ];
 
     const formatDateTime = (dateStr) => {
@@ -392,7 +393,6 @@ export default function MeetingRoom() {
                                         placeholder={t('meeting.meetingTitlePlaceholder')}
                                     />
                                 </div>
-                                <DateTimeInput label={t('meeting.dateTime')} value={dateTime} onChange={(e) => setDateTime(e.target.value)} />
                                 <Button
                                     onClick={handleCreate}
                                     disabled={!title || creating}
@@ -436,9 +436,9 @@ export default function MeetingRoom() {
                     )}
 
                     <BaseComponent
-                        title={isInstructor ? t('meeting.upcoming') : t('meeting.scheduled')}
-                        contentClassName={meetings.length === 0 || (upcomingMeetings.length === 0 && activeMeetingsList.length === 0) ? "space-y-3 flex-1 flex flex-col" : "space-y-3"}
-                        className={meetings.length === 0 || (upcomingMeetings.length === 0 && activeMeetingsList.length === 0) ? "flex-1 flex flex-col" : ""}
+                        title={t('meeting.past')}
+                        contentClassName={meetings.length === 0 || (pastMeetings.length === 0 && activeMeetingsList.length === 0) ? "space-y-3 flex-1 flex flex-col" : "space-y-3"}
+                        className={meetings.length === 0 || (pastMeetings.length === 0 && activeMeetingsList.length === 0) ? "flex-1 flex flex-col" : ""}
                     >
                         {loading ? (
                             <MeetingListSkeleton />
@@ -458,7 +458,7 @@ export default function MeetingRoom() {
                             <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-6 text-center">
                                 <CalendarCheckIcon size={48} className="mx-auto text-text-tertiary-default-light dark:text-text-tertiary-default-dark mb-3" />
                                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark font-medium">
-                                    {t('meeting.noUpcoming')}
+                                    {t('meeting.noPastMeetings')}
                                 </p>
                             </div>
                         ) : (
@@ -481,49 +481,14 @@ export default function MeetingRoom() {
                                             </p>
                                         </div>
                                     </div>
-                                    {isInstructor ? (
-                                        <Button variant="primary" onClick={() => handleJoin(meeting)} startIcon={<VideoIcon size={16} />} className="w-full sm:w-fit">
-                                            {t('meeting.start')}
-                                        </Button>
-                                    ) : (
-                                        <span className="hidden sm:inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1.5 rounded-full text-xs font-semibold bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark text-blue-700 dark:text-blue-300">
-                                            <ClockIcon size={12} />
-                                            {t('meeting.scheduledBadge')}
-                                        </span>
-                                    )}
+                                    <span className="hidden sm:inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1.5 rounded-full text-xs font-semibold bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                                        <CheckIcon size={12} />
+                                        {t('meeting.ended')}
+                                    </span>
                                 </div>
                             ))
                         )}
                     </BaseComponent>
-
-                    {isInstructor && pastMeetings.length > 0 && (
-                        <BaseComponent title={t('meeting.past')} contentClassName="space-y-2">
-                            {pastMeetings.map((meeting) => (
-                                <div
-                                    key={meeting.meetingId}
-                                    className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-3 opacity-60 hover:opacity-80 transition-opacity"
-                                >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        <div className="flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-bg-fill-tertiary-default-light dark:bg-bg-fill-tertiary-default-dark">
-                                            <CheckIcon size={16} className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <h3 className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark text-sm truncate">
-                                                    {meeting.title}
-                                                </h3>
-                                                <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark shrink-0">{t('meeting.ended')}</span>
-                                            </div>
-                                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark flex items-center gap-1 mt-0.5">
-                                                <ClockIcon size={12} />
-                                                {formatDateTime(meeting.dateTime)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </BaseComponent>
-                    )}
                 </div>
 
                 <div className="hidden lg:block space-y-6">

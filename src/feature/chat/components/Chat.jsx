@@ -28,6 +28,8 @@ import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
 import { setChatState } from '../../../utils/notificationHandler';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { useToast } from '../../../contexts/ToastContext.jsx';
+import { setChatState } from '../../../utils/notificationHandler';
 
 export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPanel, defaultUser }) {
   const { t, i18n } = useTranslation('chat');

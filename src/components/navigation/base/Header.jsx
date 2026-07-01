@@ -36,6 +36,7 @@ function parseChatUrl(actionUrl) {
         userName: params.get('userName'),
     };
 }
+
 export default function Header({ avatar, notifications: initialNotifications, isMobile, isPhone, availableViews = [], activeView, onViewChange }) {
     const { t, i18n } = useTranslation('ui');
     const viewLabels = { student: t('header.student'), instructor: t('header.instructor'), admin: t('header.admin') };
