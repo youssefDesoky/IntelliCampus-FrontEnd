@@ -1,12 +1,14 @@
 import apiClient from "../../../api/apiClient";
 
 export async function fetchMyTeachingCourses(params = {}) {
-  const { search, status, departmentId, isActiveOnly } = params;
+  const { search, status, departmentId, isActiveOnly, pageSize, pageIndex } = params;
   const query = new URLSearchParams();
   if (search) query.set('search', search);
   if (status) query.set('status', status);
   if (departmentId) query.set('departmentId', departmentId);
   if (isActiveOnly) query.set('isActiveOnly', 'true');
+  if (pageSize) query.set('pageSize', pageSize);
+  if (pageIndex) query.set('pageIndex', pageIndex);
   const qs = query.toString();
   return apiClient(`/api/courses/my-teaching${qs ? `?${qs}` : ''}`);
 }
