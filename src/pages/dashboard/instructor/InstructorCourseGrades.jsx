@@ -76,6 +76,17 @@ export default function InstructorCourseGrades() {
         c => c.classTypeName === "Lecture" && c.instructorId === user?.userId
     );
 
+    const { data: classes } = useQuery({
+        queryKey: ["courseClasses", courseId],
+        queryFn: () => fetchClassesByCourse(courseId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!courseId,
+    });
+
+    const isProfessor = classes?.some(
+        c => c.classTypeName === "Lecture" && c.instructorId === user?.userId
+    );
+
     const {
         data: grades,
         isLoading: loading,
