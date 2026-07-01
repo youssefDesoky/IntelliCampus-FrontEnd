@@ -102,13 +102,15 @@ export default function InstructorCourseMaterials() {
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                     {t('materials.title')}
                 </h2>
-                <Button
-                    variant="primary"
-                    onClick={() => setShowAddFolder(true)}
-                    startIcon={<PlusIcon size={18} />}
-                >
-                    <span className="hidden sm:inline">{t('materials.addFolder')}</span>
-                </Button>
+                {!isInactive && (
+                    <Button
+                        variant="primary"
+                        onClick={() => setShowAddFolder(true)}
+                        startIcon={<PlusIcon size={18} />}
+                    >
+                        <span className="hidden sm:inline">{t('materials.addFolder')}</span>
+                    </Button>
+                )}
             </div>
 
             {/* Add Folder Popup */}

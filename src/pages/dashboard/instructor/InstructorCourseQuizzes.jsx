@@ -252,7 +252,7 @@ export default function InstructorCourseQuizzes() {
         <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{t('quizzes.title')}</h2>
-                <Button type="button" variant="primary" onClick={openCreate} startIcon={<PlusIcon size={18} />}><span className="hidden sm:inline">{t('quizzes.create')}</span></Button>
+                {!isInactive && <Button type="button" variant="primary" onClick={openCreate} startIcon={<PlusIcon size={18} />}><span className="hidden sm:inline">{t('quizzes.create')}</span></Button>}
             </div>
 
             {loading ? (
@@ -306,12 +306,16 @@ export default function InstructorCourseQuizzes() {
                                 <Button type="button" variant="secondary" size="sm" startIcon={<ListIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => setManageQuiz(quiz)}>
                                     <span className="hidden sm:inline">{t('quizzes.manageQuestions')}</span>
                                 </Button>
-                                <Button type="button" variant="secondary" size="sm" startIcon={<FilePenIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => handleEdit(quiz)}>
-                                    <span className="hidden sm:inline">{t('quizzes.editBtn')}</span>
-                                </Button>
-                                <Button type="button" variant="secondary" size="sm" startIcon={<TrashIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center text-text-danger-default-light dark:text-text-danger-default-dark" onClick={() => setDeletingQuiz(quiz)}>
-                                    <span className="hidden sm:inline">{t('quizzes.deleteBtn')}</span>
-                                </Button>
+                                {!isInactive && (
+                                    <Button type="button" variant="secondary" size="sm" startIcon={<FilePenIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => handleEdit(quiz)}>
+                                        <span className="hidden sm:inline">{t('quizzes.editBtn')}</span>
+                                    </Button>
+                                )}
+                                {!isInactive && (
+                                    <Button type="button" variant="secondary" size="sm" startIcon={<TrashIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center text-text-danger-default-light dark:text-text-danger-default-dark" onClick={() => setDeletingQuiz(quiz)}>
+                                        <span className="hidden sm:inline">{t('quizzes.deleteBtn')}</span>
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     ))}

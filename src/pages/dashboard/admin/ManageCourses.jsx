@@ -156,7 +156,7 @@ export default function ManageCourses() {
         },
         item.isActive
           ? { label: t('manageCourses.deactivate'), onClick: async () => { await deactivateCourse(item.courseId); await loadItems(); setSuccessMessage(t('manageCourses.deactivateSuccess', { name: getLocalizedField(item, 'courseName', i18n.language) })); }, className: "text-text-warning-default-light dark:text-text-warning-default-dark" }
-          : { label: t('manageCourses.activate'), onClick: async () => { await activateCourse(item.courseId); await loadItems(); setSuccessMessage(t('manageCourses.activateSuccess', { name: getLocalizedField(item, 'courseName', i18n.language) })); }, className: "text-text-success-default-light dark:text-text-success-default-dark" },
+          : { label: t('manageCourses.reactivate'), onClick: async () => { await reactivateCourse(item.courseId); await loadItems(); setSuccessMessage(t('manageCourses.reactivateSuccess', { name: getLocalizedField(item, 'courseName', i18n.language) })); }, className: "text-text-success-default-light dark:text-text-success-default-dark" },
         {
           label: t('manageCourses.delete'),
           onClick: async () => {
