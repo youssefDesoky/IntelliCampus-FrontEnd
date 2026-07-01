@@ -7,11 +7,11 @@ import { Grid2ColIcon, ListIcon } from "../../../../components/ui/icons";
 export default function InstructorCoursesHeader({isMobile, viewMode, setViewMode, searchQuery, setSearchQuery, hasCourses}) {
     const { t } = useTranslation('instructor');
     return (
-        <PageHeader title={t('courses.title')} subtitle={t('courses.subtitle')}>
+        <PageHeader title={t('courses.title')} subtitle={t('courses.subtitle')} headerDir="col" className="sm:flex-row sm:items-center">
             {hasCourses && (
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <SearchBar
-                    placeholder={t('courses.searchPlaceholder')}
+                    placeholder={t('courses.search')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full sm:w-44 md:w-52"

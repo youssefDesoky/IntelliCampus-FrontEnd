@@ -52,6 +52,16 @@ export default function InstructorCourses() {
         };
     };
 
+    const PAGE_SIZE = 6;
+    const [page, setPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
     const { data: courses = [], isLoading: loading, error } = useQuery({
         queryKey: ["instructorCourses", debouncedSearch],
         queryFn: async () => {
@@ -123,7 +133,7 @@ export default function InstructorCourses() {
                 {loading && <InstructorCoursesSkeleton viewMode={viewMode} />}
 
                 {!loading && courses.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="flex flex-col items-center justify-center flex-1 text-center">
                         <BookIcon className="w-12 h-12 mb-4 opacity-40 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
                         <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
                             {t('courses.empty')}
