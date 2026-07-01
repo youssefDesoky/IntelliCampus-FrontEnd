@@ -152,6 +152,7 @@ function QuizCard({ quiz, isUpcoming, onStartQuiz, onViewResults, onReviewResult
 
 export default function CourseQuizzes() {
     const { course } = useOutletContext();
+    const isReadOnly = course?.isReadOnly;
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
     const [activePage, setActivePage] = useState(1);
@@ -251,7 +252,7 @@ export default function CourseQuizzes() {
                     <div className={`w-full min-w-0 space-y-3 ${activeQuizzes.length === 1 ? "" : "min-h-[180px]"}`}>
                         {pagedActive.length > 0 ? (
                             pagedActive.map((quiz) => (
-                                <QuizCard key={quiz.id} quiz={quiz} isUpcoming onStartQuiz={() => navigate(`practice?quizId=${quiz.id}`)} />
+                                <QuizCard key={quiz.id} quiz={quiz} isUpcoming onStartQuiz={!isReadOnly ? () => navigate(`practice?quizId=${quiz.id}`) : undefined} />
                             ))
                         ) : (
                             <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark py-8 text-center h-full flex items-center justify-center">
@@ -285,7 +286,7 @@ export default function CourseQuizzes() {
                                         isUpcoming={false}
                                         onViewResults={() => navigate(`practice?quizId=${quiz.id}&review=graded`)}
                                         onReviewResults={() => navigate(`practice?quizId=${quiz.id}&review=graded`)}
-                                        onStartQuiz={() => navigate(`practice?quizId=${quiz.id}`)}
+                                        onStartQuiz={!isReadOnly ? () => navigate(`practice?quizId=${quiz.id}`) : undefined}
                                     />
                                 ))}
                             </div>

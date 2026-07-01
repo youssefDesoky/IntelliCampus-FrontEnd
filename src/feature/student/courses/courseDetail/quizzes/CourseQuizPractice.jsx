@@ -16,6 +16,7 @@ const PAGE_SIZE = 3;
 export default function CourseQuizPractice() {
 	const { course } = useOutletContext();
 	const courseId = course?.id;
+	const isReadOnly = course?.isReadOnly;
 	const [searchParams] = useSearchParams();
 	const reviewMode = searchParams.get("review") || null;
 	const selectedQuizId = searchParams.get("quizId");
@@ -107,6 +108,10 @@ export default function CourseQuizPractice() {
 
 	const handleSubmitQuiz = useCallback(async () => {
 		if (submissionLockRef.current) return;
+		if (isReadOnly) {
+			showError("This course is inactive. Quiz submission is not available.");
+			return;
+		}
 		submissionLockRef.current = true;
 		setIsSubmitted(true);
 

@@ -22,7 +22,7 @@ import { getMaterialDownloadUrl } from "../../../course/services/materialsApi";
         });
     }
 
-export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMaterial, onDeleteFolder, onEditFolder }) {
+export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMaterial, onDeleteFolder, onEditFolder, isInactive }) {
     const [isDragOver, setIsDragOver] = useState(false);
     const [isUploading, setIsUploading] = useState(false); // eslint-disable-line no-unused-vars
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -101,7 +101,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                             {folder.name}
                         </h3>
                         <div className="flex shrink-0 items-center gap-2">
-                            {onEditFolder && (
+                            {!isInactive && onEditFolder && (
                                 <button
                                     onClick={openEditModal}
                                     className="p-2.5 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark hover:bg-bg-surface-accent-default-light/10 dark:hover:bg-bg-surface-accent-default-dark/10 transition-all duration-200 active:scale-95"
@@ -111,7 +111,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                                     <FilePenIcon size={18} />
                                 </button>
                             )}
-                            {onDeleteFolder && (
+                            {!isInactive && onDeleteFolder && (
                                 <button
                                     onClick={() => setShowDeleteDialog(true)}
                                     className="p-2.5 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark hover:text-red-500 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 active:scale-95"
@@ -154,25 +154,27 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                         <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-lg mb-6">
                             Upload lecture notes, slides, videos, or any resources for this week.
                         </p>
-                        <div
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => fileInputRef.current?.click()}
-                            className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-all duration-200 w-full
-                                ${isDragOver
-                                    ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-accent-default-light/10 dark:bg-bg-surface-accent-default-dark/10"
-                                    : "border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:border-border-primary-focus-light dark:hover:border-border-primary-focus-dark hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50"
-                                }`}
-                        >
-                            <CloudUploadIcon size={28} className={`mb-2 ${isDragOver ? "text-text-accent-default-light dark:text-text-accent-default-dark" : "text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark"}`} />
-                            <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {isDragOver ? "Drop files here" : "Drag & drop files here"}
-                            </p>
-                            <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-1">
-                                or click to browse — PDF, PPTX, MP4, MP3, and more
-                            </p>
-                        </div>
+                        {!isInactive && (
+                            <div
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                onClick={() => fileInputRef.current?.click()}
+                                className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-all duration-200 w-full
+                                    ${isDragOver
+                                        ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-accent-default-light/10 dark:bg-bg-surface-accent-default-dark/10"
+                                        : "border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:border-border-primary-focus-light dark:hover:border-border-primary-focus-dark hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50"
+                                    }`}
+                            >
+                                <CloudUploadIcon size={28} className={`mb-2 ${isDragOver ? "text-text-accent-default-light dark:text-text-accent-default-dark" : "text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark"}`} />
+                                <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                    {isDragOver ? "Drop files here" : "Drag & drop files here"}
+                                </p>
+                                <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-1">
+                                    or click to browse — PDF, PPTX, MP4, MP3, and more
+                                </p>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <ul className="flex flex-col divide-y divide-border-tertiary-default-light dark:divide-border-tertiary-default-dark">
@@ -182,6 +184,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                                 material={material}
                                 isFirst={index === 0}
                                 onDelete={(materialId) => onDeleteMaterial?.(materialId)}
+                                isInactive={isInactive}
                             />
                         ))}
                     </ul>
@@ -189,7 +192,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
             </div>
 
             {/* Upload Zone for folders with existing materials */}
-            {materials.length > 0 && (
+            {!isInactive && materials.length > 0 && (
                 <div className="px-4 md:px-6 pb-4">
                     <div
                         onDragOver={handleDragOver}

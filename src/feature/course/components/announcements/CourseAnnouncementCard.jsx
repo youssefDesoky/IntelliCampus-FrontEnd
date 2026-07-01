@@ -367,13 +367,28 @@ export default function CourseAnnouncementCard({
                 {/* Attachments */}
                 {announcement.attachments?.length ? (
                     <div className="flex flex-wrap gap-2">
-                        {announcement.attachments.map((attachment) => (
-                            <CourseAnnouncementAttachment
-                                key={attachment.id}
-                                attachment={attachment}
-                                onPreview={() => setPreviewAttachment(attachment)}
-                            />
-                        ))}
+                        {announcement.attachments.map((attachment) =>
+                            attachment.fileType === "image" ? (
+                                <button
+                                    key={attachment.id}
+                                    type="button"
+                                    onClick={() => setPreviewAttachment(attachment)}
+                                    className="w-full max-w-md rounded-lg overflow-hidden border border-border-primary-default-light dark:border-border-primary-default-dark hover:opacity-90 transition-opacity"
+                                >
+                                    <img
+                                        src={attachment.url}
+                                        alt={attachment.name}
+                                        className="w-full h-48 object-cover"
+                                    />
+                                </button>
+                            ) : (
+                                <CourseAnnouncementAttachment
+                                    key={attachment.id}
+                                    attachment={attachment}
+                                    onPreview={() => setPreviewAttachment(attachment)}
+                                />
+                            )
+                        )}
                     </div>
                 ) : null}
             </div>
@@ -453,7 +468,12 @@ export default function CourseAnnouncementCard({
                             </div>
                         </div>
                         <div className="flex-1 overflow-auto">
-                            <MaterialPreview attachment={previewAttachment} />
+                            <MaterialPreview
+                                type={previewAttachment.fileType === "image" ? 3 : previewAttachment.fileType === "video" ? 1 : previewAttachment.fileType === "audio" ? 2 : 0}
+                                title={previewAttachment.name}
+                                viewUrl={previewAttachment.url}
+                                downloadUrl={previewAttachment.url}
+                            />
                         </div>
                     </div>
                 </ModelOverlay>

@@ -10,6 +10,7 @@ import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function InstructorCourseMaterials() {
     const { course, courseId, refreshMaterials } = useOutletContext();
+    const isInactive = course?.isInactive;
     const [showAddFolder, setShowAddFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
     const [newFolderDescription, setNewFolderDescription] = useState("");
@@ -99,13 +100,15 @@ export default function InstructorCourseMaterials() {
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                     Materials
                 </h2>
-                <Button
-                    variant="primary"
-                    onClick={() => setShowAddFolder(true)}
-                    startIcon={<PlusIcon size={18} />}
-                >
-                    <span className="hidden sm:inline">Add New Folder</span>
-                </Button>
+                {!isInactive && (
+                    <Button
+                        variant="primary"
+                        onClick={() => setShowAddFolder(true)}
+                        startIcon={<PlusIcon size={18} />}
+                    >
+                        <span className="hidden sm:inline">Add New Folder</span>
+                    </Button>
+                )}
             </div>
 
             {/* Add Folder Popup */}
@@ -187,6 +190,7 @@ export default function InstructorCourseMaterials() {
                         onDeleteMaterial={handleDeleteMaterial}
                         onDeleteFolder={handleDeleteFolder}
                         onEditFolder={handleEditFolder}
+                        isInactive={isInactive}
                     />
                 ))
             )}

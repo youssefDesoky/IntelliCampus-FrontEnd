@@ -46,7 +46,9 @@ function formatDueTime(value) {
 }
 
 export default function InstructorCourseAssignments() {
-    const { courseId } = useOutletContext();
+    const outlet = useOutletContext();
+    const courseId = outlet.courseId || outlet.course?.id;
+    const isInactive = outlet.course?.isInactive;
     
     const { showError } = useError();
     const queryClient = useQueryClient();
@@ -369,14 +371,16 @@ export default function InstructorCourseAssignments() {
             <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                 Assignments
             </h2>
-            <Button
-                type="button"
-                variant="primary"
-                onClick={() => setIsFormOpen(true)}
-                startIcon={<PlusIcon size={18} />}
-            >
-                <span className="hidden sm:inline">Create Assignment</span>
-            </Button>
+            {!isInactive && (
+                <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => setIsFormOpen(true)}
+                    startIcon={<PlusIcon size={18} />}
+                >
+                    <span className="hidden sm:inline">Create Assignment</span>
+                </Button>
+            )}
         </div>
 
         <BaseFormComponent
@@ -508,42 +512,46 @@ export default function InstructorCourseAssignments() {
                     >
                     <span className="hidden sm:inline">Submissions</span>
                     </Button>
-                    <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    startIcon={<FilePenIcon size={16} />}
-                    className="flex-1 sm:flex-none sm:w-auto justify-center"
-                    onClick={() => {
-                        setEditingAssignmentId(assignment.id);
-                        setTitle(assignment.title || "");
-                        setDescription(assignment.description || "");
-                        setInstructions(assignment.fullInstructions || "");
-                        try {
-                            const dt = new Date(assignment.dueDate);
-                            const tzOffset = dt.getTimezoneOffset() * 60000;
-                            const localISO = new Date(dt - tzOffset).toISOString().slice(0, 16);
-                            setDueDate(localISO);
-                        } catch {
-                            setDueDate(assignment.dueDate || "");
-                        }
-                        setTotalPoints(assignment.totalPoints || 100);
-                        setExistingAttachments(assignment.attachments || []);
-                        setIsFormOpen(true);
-                    }}
-                    >
-                    <span className="hidden sm:inline">Edit</span>
-                    </Button>
-                    <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    startIcon={<TrashIcon size={16} />}
-                    className="flex-1 sm:flex-none sm:w-auto justify-center text-text-danger-default-light dark:text-text-danger-default-dark"
-                    onClick={() => handleDeleteClick(assignment)}
-                    >
-                    <span className="hidden sm:inline">Delete</span>
-                    </Button>
+                    {!isInactive && (
+                        <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        startIcon={<FilePenIcon size={16} />}
+                        className="flex-1 sm:flex-none sm:w-auto justify-center"
+                        onClick={() => {
+                            setEditingAssignmentId(assignment.id);
+                            setTitle(assignment.title || "");
+                            setDescription(assignment.description || "");
+                            setInstructions(assignment.fullInstructions || "");
+                            try {
+                                const dt = new Date(assignment.dueDate);
+                                const tzOffset = dt.getTimezoneOffset() * 60000;
+                                const localISO = new Date(dt - tzOffset).toISOString().slice(0, 16);
+                                setDueDate(localISO);
+                            } catch {
+                                setDueDate(assignment.dueDate || "");
+                            }
+                            setTotalPoints(assignment.totalPoints || 100);
+                            setExistingAttachments(assignment.attachments || []);
+                            setIsFormOpen(true);
+                        }}
+                        >
+                        <span className="hidden sm:inline">Edit</span>
+                        </Button>
+                    )}
+                    {!isInactive && (
+                        <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        startIcon={<TrashIcon size={16} />}
+                        className="flex-1 sm:flex-none sm:w-auto justify-center text-text-danger-default-light dark:text-text-danger-default-dark"
+                        onClick={() => handleDeleteClick(assignment)}
+                        >
+                        <span className="hidden sm:inline">Delete</span>
+                        </Button>
+                    )}
                 </div>
                 </div>
             ))}
