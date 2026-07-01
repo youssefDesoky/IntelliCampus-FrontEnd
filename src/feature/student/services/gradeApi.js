@@ -2,8 +2,10 @@ import apiClient, { downloadBlob } from "../../../api/apiClient";
 
 export const fetchCourseGrade = async (courseId) => {
   try {
-    const data = await apiClient(`/api/grades/course/${courseId}`);
-    return data ?? null;
+    const res = await apiClient(`/api/grades/course/${courseId}`);
+    if (!res) return null;
+    const courseGrade = Array.isArray(res.data) ? res.data[0] : res;
+    return courseGrade ?? null;
   } catch (err) {
     if (err.status === 404) return null;
     throw new Error(err.detail || `Failed to fetch course grade (${err.status})`);
