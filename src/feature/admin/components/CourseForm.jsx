@@ -29,7 +29,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             .catch(console.error);
     }, [initialData.departmentId, initialData.departmentName]);
 
-    const [formData, setFormData] = useState({ title: "", titleArabic: "", id: "", courseCodeAr: "", description: "", descriptionAr: "" });
+    const [formData, setFormData] = useState({ title: "", titleArabic: "", id: "", courseCodeAr: "", creditHours: "", description: "", descriptionAr: "" });
 
     useEffect(() => {
         setFormData({
@@ -37,10 +37,11 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             titleArabic: initialData.courseNameAr || initialData.titleArabic || "",
             id: initialData.courseCode || initialData.id || "",
             courseCodeAr: initialData.courseCodeAr || "",
+            creditHours: initialData.creditHours?.toString() || "",
             description: initialData.description || "",
             descriptionAr: initialData.descriptionAr || "",
         });
-    }, [initialData.courseName, initialData.title, initialData.courseNameAr, initialData.titleArabic, initialData.courseCode, initialData.id, initialData.courseCodeAr, initialData.description, initialData.descriptionAr]);
+    }, [initialData.courseName, initialData.title, initialData.courseNameAr, initialData.titleArabic, initialData.courseCode, initialData.id, initialData.courseCodeAr, initialData.creditHours, initialData.description, initialData.descriptionAr]);
 
     const handleChange = (field) => (e) => {
         setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -55,6 +56,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             courseCodeAr: formData.courseCodeAr || undefined,
             courseId: formData.id,
             departmentName: selectedDepartment?.label,
+            creditHours: parseInt(formData.creditHours, 10) || 0,
             description: formData.description,
             descriptionAr: formData.descriptionAr || undefined,
         };
@@ -129,6 +131,19 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                     selectedOption={selectedDepartment}
                     onChange={setSelectedDepartment}
                 />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputItem
+                        label="Credit Hours"
+                        type="number"
+                        name="creditHours"
+                        placeholder="e.g. 3"
+                        value={formData.creditHours}
+                        onChange={handleChange("creditHours")}
+                        required
+                        min="1"
+                    />
+                </div>
 
                 <div>
                     <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1">

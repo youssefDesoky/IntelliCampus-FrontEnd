@@ -154,22 +154,11 @@ export default function ManageCourses() {
         item.isActive
           ? { label: "Deactivate", onClick: async () => { await deactivateCourse(item.courseId); await loadItems(); setSuccessMessage(`Course "${item.courseName}" has been deactivated successfully.`); }, className: "text-text-warning-default-light dark:text-text-warning-default-dark" }
           : { label: "Reactivate", onClick: async () => { await reactivateCourse(item.courseId); await loadItems(); setSuccessMessage(`Course "${item.courseName}" has been reactivated successfully!`); }, className: "text-text-success-default-light dark:text-text-success-default-dark" },
-        {
+        ...(item.isActive ? [{
           label: "Delete",
-          onClick: async () => {
-            if (item.isActive) {
-              try {
-                await deactivateCourse(item.courseId);
-                await loadItems();
-              } catch (err) {
-                showError(err.message);
-                return;
-              }
-            }
-            onDelete(item);
-          },
+          onClick: () => onDelete(item),
           className: "text-text-danger-default-light dark:text-text-danger-default-dark",
-        },
+        }] : []),
       ]}
       renderBeforeTable={({ selectedRowIds, rawItems, loadItems }) => {
         if (selectedRowIds.length === 0) return null;
