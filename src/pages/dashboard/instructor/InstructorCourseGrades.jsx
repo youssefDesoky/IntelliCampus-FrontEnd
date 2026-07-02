@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useOutletContext, useNavigate, useRouteLoaderData } from "react-router-dom";
-import { fetchCourseGrades, getCourseWorkWeight } from "../../../feature/instructor/services/gradesApi";
+import { fetchCourseGrades, getCourseWorkWeight, uploadCourseGrades } from "../../../feature/instructor/services/gradesApi";
 import { fetchClassesByCourse } from "../../../feature/instructor/services/attendanceApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
-import { ChartBarIcon, FilePenIcon, BrainIcon, ExclamationIcon } from "../../../components/ui/icons";
+import { ChartBarIcon, FilePenIcon, BrainIcon, ExclamationIcon, ImportIcon } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
 import { CourseGradesSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import CourseWorkWeightModal from "../../../feature/instructor/components/CourseWorkWeightModal";
+import ImportDialog from "../../../components/ui/ImportDialog";
+import Dialog from "../../../components/ui/Dialog";
 
 function GradeIcon({ type }) {
     const cls = {
@@ -54,6 +56,10 @@ export default function InstructorCourseGrades() {
     const navigate = useNavigate();
     const user = useRouteLoaderData("root");
     const [showWeightsModal, setShowWeightsModal] = useState(false);
+    const [isUploadOpen, setIsUploadOpen] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadResult, setUploadResult] = useState(null);
+    const [uploadError, setUploadError] = useState(null);
 
     const { data: classes } = useQuery({
         queryKey: ["courseClasses", courseId],
@@ -92,6 +98,32 @@ export default function InstructorCourseGrades() {
         if (error) showError(error.message || "Failed to load grades");
     }, [error, showError]);
 
+    const handleUpload = async (file) => {
+        setUploading(true);
+        setUploadError(null);
+        try {
+            const result = await uploadCourseGrades(courseId, file);
+            const errors = result?.errors || result?.Errors || [];
+            const failCount = result?.failCount || result?.FailCount || 0;
+            const successCount = result?.successCount || result?.SuccessCount || 0;
+
+            let msg = `${successCount} uploaded, ${failCount} failed.`;
+            if (errors.length > 0) {
+                msg += "\n\n" + errors.slice(0, 5).join("\n");
+                if (errors.length > 5) msg += `\n...and ${errors.length - 5} more.`;
+            }
+
+            setUploadResult(msg);
+            setIsUploadOpen(false);
+            refetchGrades();
+        } catch (err) {
+            const detail = err.detail || err.message || "An unexpected error occurred.";
+            setUploadError(detail);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     if (loading) {
         return <CourseGradesSkeleton />;
     }
@@ -120,17 +152,29 @@ export default function InstructorCourseGrades() {
                 </h2>
                 <div className="flex items-center gap-2">
                     {isProfessor && (
-                        <Button
-                            variant="secondary"
-                            type="button"
-                            onClick={() => setShowWeightsModal(true)}
-                            className="inline-flex items-center gap-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-                                <path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a6.93 6.93 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58a7.07 7.07 0 0 0-.06.94c0 .32.02.64.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
-                            </svg>
-                            <span className="hidden sm:inline">Weights</span>
-                        </Button>
+                        <>
+                            <Button
+                                variant="secondary"
+                                type="button"
+                                onClick={() => setShowWeightsModal(true)}
+                                className="inline-flex items-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                                    <path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a6.93 6.93 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58a7.07 7.07 0 0 0-.06.94c0 .32.02.64.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
+                                </svg>
+                                <span className="hidden sm:inline">Weights</span>
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                type="button"
+                                onClick={() => setIsUploadOpen(true)}
+                                disabled={uploading}
+                                className="inline-flex items-center gap-2"
+                            >
+                                <ImportIcon size={16} />
+                                <span className="hidden sm:inline">{uploading ? "Uploading..." : "Upload Midterm Grade"}</span>
+                            </Button>
+                        </>
                     )}
                     <Button
                         variant="secondary"
@@ -198,26 +242,33 @@ export default function InstructorCourseGrades() {
                     headers={["Student", ...assessmentHeaders, "Overall"]}
                     data={students.map(s => {
                         const row = {
-                            student: <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{s.name}</span>,
+                            student: (
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{s.fullName}</span>
+                                    <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{s.studentCode}</span>
+                                </div>
+                            ),
                         };
                         assessments.forEach((a, idx) => {
                             const match = s.assessments.find(sa => sa.assessmentId === a.id);
-                            const score = match?.score;
+                            const pct = match?.percent;
                             row[`col_${idx}`] = (
-                                <span className={`text-sm font-semibold ${getGradeTextColor(score)}`}>
-                                    {score != null ? `${score}%` : "\u2014"}
+                                <span className={`text-sm font-semibold ${getGradeTextColor(pct)}`}>
+                                    {pct != null ? `${pct}%` : "\u2014"}
                                 </span>
                             );
                         });
+                        const overall = s.overallPercent;
+                        const letter = s.letter;
                         row["Overall"] = (
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                s.overall >= 85 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" :
-                                s.overall >= 75 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" :
-                                s.overall >= 65 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" :
-                                s.overall >= 50 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" :
+                                overall >= 85 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" :
+                                overall >= 75 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" :
+                                overall >= 65 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" :
+                                overall >= 50 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" :
                                 "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
                             }`}>
-                                {s.grade}
+                                {letter || "\u2014"}
                             </span>
                         );
                         return row;
@@ -231,6 +282,41 @@ export default function InstructorCourseGrades() {
                     showActionsColumn={false}
                 />
             </div>
+
+            {isUploadOpen && (
+                <ImportDialog
+                    title="Upload Midterm Grade"
+                    subtitle="Upload a CSV or Excel file (.csv, .xlsx, .xls) with the midterm grade."
+                    onClose={() => setIsUploadOpen(false)}
+                    onImport={handleUpload}
+                >
+                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark bg-bg-surface-accent-default-light/30 dark:bg-bg-surface-accent-default-dark/20 rounded-lg px-4 py-2.5 border border-border-accent-default-light dark:border-border-accent-default-dark">
+                        If a grade already exists for this student, uploading again will <strong>update</strong> it with the new data.
+                    </p>
+                </ImportDialog>
+            )}
+
+            <Dialog
+                isOpen={uploadResult !== null}
+                variant="success"
+                title="Grades Uploaded"
+                onClose={() => setUploadResult(null)}
+                confirmText="OK"
+                showCloseButton={true}
+            >
+                <pre className="whitespace-pre-wrap text-sm font-sans">{uploadResult}</pre>
+            </Dialog>
+
+            <Dialog
+                isOpen={uploadError !== null}
+                variant="danger"
+                title="Upload Failed"
+                onClose={() => setUploadError(null)}
+                confirmText="OK"
+                showCloseButton={true}
+            >
+                <pre className="whitespace-pre-wrap text-sm font-sans">{uploadError}</pre>
+            </Dialog>
 
             <CourseWorkWeightModal
                 isOpen={showWeightsModal}
