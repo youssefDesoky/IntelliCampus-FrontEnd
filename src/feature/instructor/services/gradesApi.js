@@ -26,3 +26,12 @@ export async function setCourseWorkWeight(courseId, data) {
     body: JSON.stringify(data),
   });
 }
+
+export async function uploadCourseGrades(courseId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiClient(`/api/courses/${courseId}/grades/upload`, {
+    method: "POST",
+    body: formData,
+  });
+}
