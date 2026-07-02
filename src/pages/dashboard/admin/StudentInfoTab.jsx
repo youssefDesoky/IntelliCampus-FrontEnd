@@ -27,7 +27,7 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
         <div className="space-y-6">
             <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                    { label: t('studentDetails.gpa'), value: ar(student.gpa ?? "—"), color: "text-emerald-500", icon: ChartLineIcon, probation: isOnProbation }, (- Localization For Student & Instructor)
+                    { label: t('studentDetails.gpa'), value: ar(student.gpa ?? "—"), color: "text-emerald-500", icon: ChartLineIcon, probation: isOnProbation },
                     ...(isBachelor
                         ? [{ label: t('studentDetails.level'), value: ar(student.level ?? "—"), color: "text-blue-500", icon: BookIcon }]
                         : [{ label: t('studentDetails.type'), value: student.studentType ?? "—", color: "text-blue-500", icon: BookIcon }]
@@ -88,7 +88,7 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                                             Probation
                                         </span>
                                     )}
-                                </div> (- Localization For Student & Instructor)
+                                </div>
                             </div>
                             <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
                                 <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{isBachelor ? t('studentDetails.program') : t('studentDetails.specialization')}</span>

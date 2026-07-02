@@ -37,19 +37,22 @@ export default function CoursesRegistration() {
     const { isDesktop, isMobile } = useDeviceType();
     const { convert: ar } = useArabicDigits();
 
-    const mapRegistrationToCard = (reg) => ({
-        id:          getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? reg.courseId ?? "",
-        title:       getLocalizedField(reg, 'courseName', i18n.language)  ?? "",
-        code:        getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? "",
-        creditHours: reg.creditHours ?? "",
-        professor:   getLocalizedField(reg, 'professorName', i18n.language) ?? getLocalizedField(reg, 'instructorName', i18n.language) ?? reg.professorName ?? reg.professor ?? "",
-        avatar:      reg.professorAvatar ?? reg.instructorAvatar ?? reg.avatar ?? null,
-        schedule:    getLocalizedField(reg, 'schedule', i18n.language) ?? reg.schedule ?? "",
-        room:        getLocalizedField(reg, 'room', i18n.language) ?? reg.roomAr ?? reg.room ?? "",
-        courseId:     reg.courseId,
-        classId:      reg.classId,
-        isRegistered: true,
-    });
+    const mapRegistrationToCard = (reg) => {
+        const scheduleParts = [reg.day, reg.startTime && reg.endTime ? `${reg.startTime} - ${reg.endTime}` : ""].filter(Boolean);
+        return {
+            id:          getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? reg.courseId ?? "",
+            title:       getLocalizedField(reg, 'courseName', i18n.language)  ?? "",
+            code:        getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? "",
+            creditHours: reg.creditHours ?? "",
+            professor:   getLocalizedField(reg, 'professorName', i18n.language) ?? getLocalizedField(reg, 'instructorName', i18n.language) ?? reg.professorName ?? reg.professor ?? "",
+            avatar:      reg.professorAvatar ?? reg.instructorAvatar ?? reg.avatar ?? null,
+            schedule:    getLocalizedField(reg, 'schedule', i18n.language) ?? reg.schedule ?? scheduleParts.join(" ") ?? "",
+            room:        getLocalizedField(reg, 'room', i18n.language) ?? reg.roomAr ?? reg.room ?? "",
+            courseId:     reg.courseId,
+            classId:      reg.classId,
+            isRegistered: true,
+        };
+    };
 
     const mapActiveCourseToCard = (course) => ({
         id:            getLocalizedField(course, 'courseCode', i18n.language) ?? course.courseCode  ?? course.code ?? course.courseId ?? course.id ?? "",
@@ -374,8 +377,25 @@ export default function CoursesRegistration() {
             try {
                 await registerForCourse(course.courseId, section.value);
                 successMsgs.push(t('registration.registerSuccess', { title: course.title }));
-            } catch {
-                failureMsgs.push(t('registration.registerError', { title: course.title }));
+            } catch (err) {
+                const msg = err?.message || err?.toString() || "Unknown error";
+                failureMsgs.push(t('registration.registerError', { title: course.title }) + `: ${msg}`);
+            }
+        }
+
+        const registeredCourses = selectedCourses.filter((c) => c.isRegistered);
+        for (const course of registeredCourses) {
+            const newSection = selectedSectionByCourseId[course.courseId];
+            if (newSection && newSection.value !== course.classId) {
+                try {
+                    await changeCourseSection(course.courseId, newSection.value);
+                    successMsgs.push(`Changed section for ${course.title}`);
+                } catch (err) {
+                    const msg = err?.message || err?.toString() || "Unknown error";
+                    failureMsgs.push(`Failed to change section for ${course.title}: ${msg}`);
+                }
+            }
+        }
             }
         }
 

@@ -107,7 +107,7 @@ export default function PerformanceCard({ user = {}, loading = false }) {
                         </h3>
                         {isOnProbation && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark text-text-warning-default-light dark:text-text-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
-                                Probation
+                                {t("profile.probation")}
                             </span>
                         )}
                     </div>
