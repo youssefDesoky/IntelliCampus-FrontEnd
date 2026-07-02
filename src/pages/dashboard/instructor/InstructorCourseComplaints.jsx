@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { fetchCourseComplaints, updateComplaintStatus } from "../../../feature/instructor/services/gradesApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
+import useArabicDigits from '../../../hooks/useArabicDigits.js';
 import { ExclamationIcon, CheckIcon, XIcon, BrainIcon, FilePenIcon, ChartBarIcon, ClockIcon, ArrowLeftIcon } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
@@ -40,6 +42,8 @@ function getStatusBadgeCls(status) {
 }
 
 export default function InstructorCourseComplaints() {
+    const { t } = useTranslation('instructor');
+    const { convert: ar } = useArabicDigits();
     const { courseId } = useOutletContext();
     const { showError } = useError();
     const { showToast } = useToast();
@@ -61,14 +65,14 @@ export default function InstructorCourseComplaints() {
     });
 
     useEffect(() => {
-        if (error) showError(error.message || "Failed to load complaints");
+        if (error) showError(error.message || t('complaints.loadFailed'));
     }, [error, showError]);
 
     const respondMutation = useMutation({
         mutationFn: ({ complaintId, data }) => updateComplaintStatus(complaintId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["instructorCourseComplaints", courseId] });
-            showToast({ type: "success", title: "Updated", message: "Complaint status has been updated." });
+            showToast({ type: "success", title: t('complaints.updated'), message: t('complaints.updatedMessage') });
             setSelectedComplaint(null);
             setResponseText("");
         },
@@ -124,22 +128,22 @@ export default function InstructorCourseComplaints() {
                     onClick={() => navigate("../grades")}
                     className="shrink-0 p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                 >
-                    <ArrowLeftIcon size={20} />
+                    <ArrowLeftIcon size={20} className="rtl:scale-x-[-1]" />
                 </button>
                 <div className="flex-1 flex items-center justify-between min-w-0">
-                    <h2 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Grade Complaints</h2>
+                    <h2 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{t('complaints.title')}</h2>
                     <p className="shrink-0 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        {complaints.length} complaint{complaints.length !== 1 ? "s" : ""}
-                        {pendingCount > 0 ? ` (${pendingCount} pending)` : ""}
+                        {ar(t('complaints.count', { count: complaints.length }))}
+                        {pendingCount > 0 ? ` (${ar(t('complaints.pendingCount', { count: pendingCount }))})` : ""}
                     </p>
                 </div>
             </div>
 
             {complaints.length === 0 ? (
                 <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
-                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No complaints</h3>
+                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('complaints.noComplaints')}</h3>
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        No grade complaints have been filed for this course yet.
+                        {t('complaints.noComplaintsDesc')}
                     </p>
                 </div>
             ) : (
@@ -149,7 +153,7 @@ export default function InstructorCourseComplaints() {
                             key={complaint.id}
                             type="button"
                             onClick={() => openDetail(complaint)}
-                            className="w-full text-left rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+                            className="w-full text-start rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 hover:shadow-lg transition-shadow duration-200 cursor-pointer"
                         >
                             <div className="flex items-start gap-3">
                                 <div className={`p-2 rounded-lg shrink-0 ${COMPLAINT_TYPE_CLS[complaint.complaintType] || "bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark"}`}>
@@ -159,7 +163,7 @@ export default function InstructorCourseComplaints() {
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="min-w-0">
                                             <h4 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                                                {complaint.studentName || "Unknown Student"}
+                                                {complaint.studentName || t('complaints.unknownStudent')}
                                             </h4>
                                             <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-0.5">
                                                 {complaint.complaintType}{complaint.assessmentTitle ? ` \u00b7 ${complaint.assessmentTitle}` : ""}
@@ -169,7 +173,7 @@ export default function InstructorCourseComplaints() {
                                             {complaint.status === "pending" && <ClockIcon size={12} />}
                                             {complaint.status === "resolved" && <CheckIcon size={12} />}
                                             {complaint.status === "rejected" && <XIcon size={12} />}
-                                            {complaint.status}
+                                            {t(`complaints.${complaint.status}`)}
                                         </span>
                                     </div>
                                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">
@@ -191,7 +195,7 @@ export default function InstructorCourseComplaints() {
                         <div className="shrink-0 flex items-center justify-between gap-4 border-b border-border-primary-default-light px-3 sm:px-6 py-4 dark:border-border-primary-default-dark">
                             <div className="min-w-0 truncate">
                                 <h3 className="text-xl font-semibold truncate text-text-primary-default-light dark:text-text-primary-default-dark">
-                                    Complaint Detail
+                                    {t('complaints.complaintDetail')}
                                 </h3>
                             </div>
                             <button
@@ -210,13 +214,13 @@ export default function InstructorCourseComplaints() {
                                 </div>
                                 <div>
                                     <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                        {selectedComplaint.studentName || "Unknown Student"}
+                                        {selectedComplaint.studentName || t('complaints.unknownStudent')}
                                     </p>
                                     <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                         {selectedComplaint.complaintType}{selectedComplaint.assessmentTitle ? ` \u00b7 ${selectedComplaint.assessmentTitle}` : ""}
                                     </p>
                                 </div>
-                                <span className={`ml-auto shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${getStatusBadgeCls(selectedComplaint.status)}`}>
+                                <span className={`ms-auto shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${getStatusBadgeCls(selectedComplaint.status)}`}>
                                     {selectedComplaint.status === "pending" && <ClockIcon size={12} />}
                                     {selectedComplaint.status === "resolved" && <CheckIcon size={12} />}
                                     {selectedComplaint.status === "rejected" && <XIcon size={12} />}
@@ -226,7 +230,7 @@ export default function InstructorCourseComplaints() {
 
                             <div>
                                 <label className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wide">
-                                    Reason
+                                    {t('complaints.reason')}
                                 </label>
                                 <p className="mt-1.5 text-sm text-text-primary-default-light dark:text-text-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl p-4">
                                     {selectedComplaint.reason}
@@ -236,7 +240,7 @@ export default function InstructorCourseComplaints() {
                             {selectedComplaint.createdAt && (
                                 <div>
                                     <label className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wide">
-                                        Submitted
+                                        {t('complaints.submitted')}
                                     </label>
                                     <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                         {new Date(selectedComplaint.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -246,12 +250,12 @@ export default function InstructorCourseComplaints() {
 
                             <div>
                                 <label className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wide">
-                                    Your Response
+                                    {t('complaints.yourResponse')}
                                 </label>
                                 <TextArea
                                     value={responseText}
                                     onChange={(event) => setResponseText(event.target.value)}
-                                    placeholder={selectedComplaint.status === "pending" ? "Write a response to the student..." : "Update your response..."}
+                                    placeholder={selectedComplaint.status === "pending" ? t('complaints.responsePlaceholder') : t('complaints.updateResponsePlaceholder')}
                                     className="mt-1.5 w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors placeholder:text-text-secondary-default-light focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-default-dark"
                                 />
                             </div>
@@ -259,7 +263,7 @@ export default function InstructorCourseComplaints() {
 
                         <div className="shrink-0 flex gap-3 border-t border-border-primary-default-light px-3 sm:px-6 py-4 sm:justify-end dark:border-border-primary-default-dark">
                             <Button variant="secondary" type="button" onClick={closeDetail} width="flex-1 sm:w-auto">
-                                Cancel
+                                {t('complaints.cancel')}
                             </Button>
                             {selectedComplaint.status === "pending" && (
                                 <>
@@ -271,7 +275,7 @@ export default function InstructorCourseComplaints() {
                                         loading={respondMutation.isPending}
                                         disabled={respondMutation.isPending}
                                     >
-                                        Reject
+                                        {t('complaints.reject')}
                                     </Button>
                                     <Button
                                         variant="success"
@@ -281,7 +285,7 @@ export default function InstructorCourseComplaints() {
                                         loading={respondMutation.isPending}
                                         disabled={respondMutation.isPending}
                                     >
-                                        Resolve
+                                        {t('complaints.resolve')}
                                     </Button>
                                 </>
                             )}
@@ -294,7 +298,7 @@ export default function InstructorCourseComplaints() {
                                     loading={respondMutation.isPending}
                                     disabled={respondMutation.isPending}
                                 >
-                                    Update Response
+                                    {t('complaints.updateResponse')}
                                 </Button>
                             )}
                         </div>

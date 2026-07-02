@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import useArabicDigits from '../../../../hooks/useArabicDigits';
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -8,8 +10,11 @@ import { TranscriptSkeleton } from "./SkeletonLoader";
 import { fetchTranscript, exportTranscriptPdf } from "../gradeApi";
 import { DownloadIcon, FileLinesIcon } from "../../../../components/ui/icons";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../../utils/getLocalizedField';
 
 export default function TranscriptView() {
+    const { t, i18n } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
     const { data: transcript = [], isLoading: loading } = useQuery({
         queryKey: ["transcript"],
         queryFn: fetchTranscript,
@@ -33,13 +38,19 @@ export default function TranscriptView() {
 
     const levelOptions = useMemo(() => {
         const levels = new Set(transcript.map(c => c.level).filter(l => l != null));
-        return [...levels].sort((a, b) => a - b).map(l => ({ value: String(l), label: `Level ${l}` }));
-    }, [transcript]);
+        return [...levels].sort((a, b) => a - b).map(l => ({ value: String(l), label: `${t('transcript.level')} ${ar(l)}` }));
+    }, [transcript, ar, t]);
 
     const semesterOptions = useMemo(() => {
-        const semesters = new Set(transcript.map(c => c.semester).filter(s => s));
-        return [...semesters].sort().map(s => ({ value: s, label: s }));
-    }, [transcript]);
+        const seen = new Set();
+        return transcript
+            .filter(c => c.semester && !seen.has(c.semester) && seen.add(c.semester))
+            .sort((a, b) => (a.semester || '').localeCompare(b.semester || ''))
+            .map(c => ({
+                value: c.semester,
+                label: ar(getLocalizedField(c, 'semester', i18n.language) ?? c.semester),
+            }));
+    }, [transcript, i18n.language]);
 
     const filteredTranscript = useMemo(() => {
         return transcript.filter(c => {
@@ -67,10 +78,10 @@ export default function TranscriptView() {
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                     <FileLinesIcon className="w-12 h-12 mb-4 opacity-40" />
                     <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                        No transcript data available
+                        {t('transcript.noData')}
                     </h3>
                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
-                        You have not completed any courses yet.
+                        {t('transcript.noDataDesc')}
                     </p>
                 </div>
             </Section>
@@ -82,16 +93,16 @@ export default function TranscriptView() {
             <div className="p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 className="text-lg font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
-                        Academic Transcript
+                        {t('transcript.title')}
                     </h2>
                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        Total Credits: {totalCredits}
+                        {ar(t('transcript.totalCredits', { count: totalCredits }))}
                     </p>
                 </div>
                 <div className="flex flex-nowrap items-center gap-2 w-full">
                     {levelOptions.length > 0 && (
                         <FilterDropdown
-                            label="Level"
+                            label={t('transcript.level')}
                             className="flex-1"
                             options={levelOptions}
                             selectedValues={filterLevel}
@@ -100,7 +111,7 @@ export default function TranscriptView() {
                     )}
                     {semesterOptions.length > 0 && (
                         <FilterDropdown
-                            label="Semester"
+                            label={t('transcript.semester')}
                             className="flex-1"
                             options={semesterOptions}
                             selectedValues={filterSemester}
@@ -114,10 +125,10 @@ export default function TranscriptView() {
                         className="flex-1 shrink"
                         onClick={handleExport}
                         loading={exporting}
-                        loadingText="Exporting"
+                        loadingText={t('transcript.exporting')}
                         startIcon={<DownloadIcon className="w-4 h-4" />}
                     >
-                        <span className="hidden sm:inline">Export PDF</span>
+                        <span className="hidden sm:inline">{t('transcript.exportPdf')}</span>
                     </Button>
                 </div>
             </div>
@@ -126,14 +137,14 @@ export default function TranscriptView() {
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark">
-                            <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">Code</th>
-                            <th className="text-left px-4 py-3 font-semibold">Course Name</th>
-                            <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">Credit Hrs</th>
-                            <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">Level</th>
-                            <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">Semester</th>
-                            <th className="text-center px-4 py-3 font-semibold">Coursework</th>
-                            <th className="text-center px-4 py-3 font-semibold">Total</th>
-                            <th className="text-center px-4 py-3 font-semibold">Grade</th>
+                            <th className="text-start px-4 py-3 font-semibold hidden sm:table-cell">{t('transcript.code')}</th>
+                            <th className="text-start px-4 py-3 font-semibold">{t('transcript.courseName')}</th>
+                            <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">{t('transcript.creditHours')}</th>
+                            <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">{t('transcript.level')}</th>
+                            <th className="text-center px-4 py-3 font-semibold hidden sm:table-cell">{t('transcript.semester')}</th>
+                            <th className="text-center px-4 py-3 font-semibold">{t('transcript.coursework')}</th>
+                            <th className="text-center px-4 py-3 font-semibold">{t('transcript.total')}</th>
+                            <th className="text-center px-4 py-3 font-semibold">{t('transcript.grade')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -147,25 +158,25 @@ export default function TranscriptView() {
                                 }`}
                             >
                                 <td className="px-4 py-3 text-text-secondary-active-light dark:text-text-secondary-active-dark font-mono text-xs hidden sm:table-cell">
-                                    {course.courseCode}
+                                    {getLocalizedField(course, 'courseCode', i18n.language) || course.courseCode}
                                 </td>
                                 <td className="px-4 py-3 text-text-primary-active-light dark:text-text-primary-active-dark font-medium">
-                                    {course.courseName}
+                                    {getLocalizedField(course, 'courseName', i18n.language)}
                                 </td>
                                 <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark hidden sm:table-cell">
-                                    {course.creditHours}
+                                    {ar(course.creditHours)}
                                 </td>
                                 <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark hidden sm:table-cell">
-                                    {course.level ?? "—"}
+                                    {ar(course.level ?? "—")}
                                 </td>
                                 <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark hidden sm:table-cell">
-                                    {course.semester ?? "—"}
+                                    {ar(getLocalizedField(course, 'semester', i18n.language) ?? course.semester ?? "—")}
                                 </td>
                                 <td className="px-4 py-3 text-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                                    {course.coursework}
+                                    {ar(course.coursework)}
                                 </td>
                                 <td className="px-4 py-3 text-center font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-                                    {course.totalGrade}
+                                    {ar(course.totalGrade)}
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                     <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${

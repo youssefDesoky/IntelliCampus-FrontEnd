@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import TextArea from "../../../../../components/ui/TextArea";
 import { ClipboardCheckIcon, CheckIcon, XIcon } from "../../../../../components/ui/icons";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 export function TypeBadge({ type }) {
 	const normalizedType = type === "Written" ? "Written" : type;
@@ -18,7 +20,7 @@ export function TypeBadge({ type }) {
 }
 
 function OptionButton({ label, text, selected, correct, showCorrect, disabled, onClick }) {
-	let containerClasses = "group relative flex items-center gap-4 w-full rounded-xl border p-4 text-left transition-all duration-200 ";
+	let containerClasses = "group relative flex items-center gap-4 w-full rounded-xl border p-4 text-start transition-all duration-200 ";
 	let circleClasses = "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors ";
 	let textClasses = "font-medium ";
 
@@ -52,14 +54,16 @@ function OptionButton({ label, text, selected, correct, showCorrect, disabled, o
 		<button type="button" disabled={disabled} onClick={onClick} className={containerClasses}>
 			<span className={circleClasses}>{label}</span>
 			<span className={textClasses}>{text}</span>
-			{showCorrect && correct && <CheckIcon size={18} className="ml-auto text-green-500 shrink-0" />}
-			{showCorrect && selected && !correct && <XIcon size={18} className="ml-auto text-red-500 shrink-0" />}
-			{!showCorrect && selected && <CheckIcon size={18} className="ml-auto text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark shrink-0" />}
+			{showCorrect && correct && <CheckIcon size={18} className="ms-auto text-green-500 shrink-0" />}
+			{showCorrect && selected && !correct && <XIcon size={18} className="ms-auto text-red-500 shrink-0" />}
+			{!showCorrect && selected && <CheckIcon size={18} className="ms-auto text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark shrink-0" />}
 		</button>
 	);
 }
 
 function QuestionControls({ question, questionType, answer, onAnswerChange, writtenWordCount, showCorrectAnswer, correctAnswer, feedback }) {
+	const { t } = useTranslation('student');
+	const { convert: ar } = useArabicDigits();
 	const type = questionType || question.type;
 	const disabled = !onAnswerChange;
 
@@ -68,8 +72,8 @@ function QuestionControls({ question, questionType, answer, onAnswerChange, writ
 		return (
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 				<OptionButton
-					label="T"
-					text="True"
+					label={t('quizzes.trueAbbr')}
+					text={t('quizzes.trueOption')}
 					selected={answer === true}
 					correct={showCorrectAnswer && correctIsTrue}
 					showCorrect={showCorrectAnswer}
@@ -77,8 +81,8 @@ function QuestionControls({ question, questionType, answer, onAnswerChange, writ
 					onClick={() => onAnswerChange(true)}
 				/>
 				<OptionButton
-					label="F"
-					text="False"
+					label={t('quizzes.falseAbbr')}
+					text={t('quizzes.falseOption')}
 					selected={answer === false}
 					correct={showCorrectAnswer && !correctIsTrue}
 					showCorrect={showCorrectAnswer}
@@ -114,13 +118,13 @@ function QuestionControls({ question, questionType, answer, onAnswerChange, writ
 				<TextArea
 					value={answer || ""}
 					onChange={(e) => onAnswerChange && onAnswerChange(e.target.value)}
-					placeholder="Write your answer here..."
+					placeholder={t('quizzes.writeAnswerPlaceholder')}
 					readOnly={disabled}
 					className={`w-full rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark px-4 py-3 focus:ring-2 focus:ring-bg-fill-accent-default-light/20 dark:focus:ring-bg-fill-accent-default-dark/30 ${disabled ? "opacity-70" : ""}`}
 				/>
 				<div className="flex items-center justify-between text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-					<span>Write a detailed response for full credit.</span>
-					<span className="font-medium">{writtenWordCount} words</span>
+					<span>{t('quizzes.writeAnswerHint')}</span>
+					<span className="font-medium">{ar(writtenWordCount)} {t('quizzes.words')}</span>
 				</div>
 				{feedback && (
 					<div className={`rounded-lg border px-4 py-3 text-sm ${showCorrectAnswer ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900 dark:bg-green-900/20 dark:text-green-200" : "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-900/20 dark:text-red-200"}`}>
@@ -135,6 +139,7 @@ function QuestionControls({ question, questionType, answer, onAnswerChange, writ
 }
 
 export default function QuestionCard({ question, questionType, answer, onAnswerChange, writtenWordCount, children, scoreState, showCorrectAnswer, correctAnswer, feedback }) {
+	const { convert: ar } = useArabicDigits();
 	return (
 		<div className="rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5 sm:p-6 shadow-sm transition-all hover:shadow-md">
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5">
@@ -143,7 +148,7 @@ export default function QuestionCard({ question, questionType, answer, onAnswerC
 						<TypeBadge type={question.type} />
 						<div className="inline-flex items-center gap-1.5 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
 							<ClipboardCheckIcon size={13} />
-							<span>{question.points} points</span>
+							<span>{ar(question.points)} {t('quizzes.points')}</span>
 						</div>
 					</div>
 					<h3 className="text-base sm:text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark leading-relaxed">

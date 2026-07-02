@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
 
 export default function CustomCursor() {
+    const { t } = useTranslation('common');
     const cursorRef = useRef(null);
     const imgRef = useRef(null);
     const defaultSrc = "/cursors/FahimFinger.cur";
@@ -101,7 +103,7 @@ export default function CustomCursor() {
             <img
                 ref={imgRef}
                 src={defaultSrc}
-                alt="Custom Cursor"
+                alt={t('labels.customCursor', 'Custom Cursor')}
                 className="w-full h-full object-cover transform transition-transform duration-0 ease-linear rotate-y-180"
             />
         </div>

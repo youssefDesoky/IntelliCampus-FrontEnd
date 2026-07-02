@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from 'react-i18next';
 
 const ContextMenuContext = createContext(null);
 
@@ -12,6 +13,7 @@ export function useContextMenu() {
 const INPUT_TAGS = new Set(["INPUT", "TEXTAREA"]);
 
 export function ContextMenuProvider({ children, blockNative = true, textSelectionMenu = false, disableDoubleClickSelect = true }) {
+    const { t } = useTranslation('common');
     const [menu, setMenu] = useState(null);
     const menuRef = useRef(null);
 
@@ -84,7 +86,7 @@ export function ContextMenuProvider({ children, blockNative = true, textSelectio
                     y: e.clientY,
                     items: [
                         {
-                            label: "Copy",
+                            label: t('labels.copy', 'Copy'),
                             onClick: () => {
                                 navigator.clipboard.writeText(text).catch(() => {});
                             },
@@ -169,7 +171,7 @@ export function ContextMenuProvider({ children, blockNative = true, textSelectio
                                     closeMenu();
                                 }}
                                 disabled={item.disabled}
-                                className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 ${
+                                className={`w-full text-start px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 ${
                                     item.danger
                                         ? "text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark"
                                         : "text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-primary-active-light dark:hover:bg-bg-surface-primary-active-dark"

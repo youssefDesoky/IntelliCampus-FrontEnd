@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
@@ -19,10 +20,12 @@ import {
 } from "../../../feature/admin/services/adminStudentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function StudentRegisteredTab({ student, studentId, courses, availableCourses, completedCourses = [], loading, onRefresh }) {
+    const { t, i18n } = useTranslation('admin'); (- Localization For Student & Instructor)
     const { isPhone } = useDeviceType();
     const { showError } = useError();
     const { showToast } = useToast();
@@ -35,31 +38,31 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
     );
 
     const headers = useMemo(() => {
-        if (isPhone) return ["Course", "Section", "Actions"];
-        return ["Code", "Course", "Section", "Actions"];
-    }, [isPhone]);
+        if (isPhone) return [t('studentDetails.course'), t('studentDetails.section'), t('studentDetails.actions')];
+        return [t('studentDetails.code'), t('studentDetails.course'), t('studentDetails.section'), t('studentDetails.actions')];
+    }, [isPhone, t]);
 
     const buildRow = useMemo(() => (c, onSectionChange, onUnregister) => {
         const row = {};
         if (!isPhone) {
             row.code = c.courseCode || c.code || "-";
         }
-        row.course = <span className="font-medium text-sm">{c.courseName || c.title || c.name}</span>;
-        row.section = c.className || c.groupCode || `Section ${c.classId}` || "-";
+        row.course = <span className="font-medium text-sm">{getLocalizedField(c, 'courseName', i18n.language) || c.title || c.name}</span>;
+        row.section = c.className || c.groupCode || t('studentDetails.sectionLabel', { id: c.classId }) || "-";
         row.actions = (
             <div className="flex items-center justify-center gap-1 sm:gap-3">
                 <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); onSectionChange(c); }}>
                     <FilePenIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline"> Change Section</span>
+                    <span className="hidden sm:inline">{t('studentDetails.changeSection')}</span>
                 </Button>
                 <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); onUnregister(c); }}>
                     <TrashIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline"> Unregister</span>
+                    <span className="hidden sm:inline">{t('studentDetails.unregister')}</span>
                 </Button>
             </div>
         );
         return row;
-    }, [isPhone]);
+    }, [isPhone, t]);
 
     const [page, setPage] = useState(1);
 
@@ -165,7 +168,7 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
         return (
             <div className="flex flex-col items-center justify-center py-20 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/50 dark:bg-bg-surface-secondary-default-dark/50">
                 <div className="w-8 h-8 mb-4 border-4 border-t-border-accent-active-light dark:border-t-border-accent-active-dark border-border-primary-default-light dark:border-border-primary-default-dark rounded-full animate-spin"></div>
-                <p className="text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading registered courses...</p>
+                <p className="text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.loadingRegistered')}</p>
             </div>
         );
     }
@@ -174,14 +177,14 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
         <div className="flex flex-col h-full">
             <div className="flex items-start justify-between gap-2 mb-6">
                 <div className="min-w-0">
-                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Registered Courses</h3>
+                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('studentDetails.registeredCourses')}</h3>
                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 truncate">
-                        Showing {courses.length} registered course{courses.length !== 1 ? "s" : ""} for this student.
+                        {t('studentDetails.showingRegistered', { count: courses.length })}
                     </p>
                 </div>
                 <Button variant="primary" onClick={() => setIsRegisterOpen(true)} className="shadow-sm hover:shadow-md transition-shadow shrink-0">
-                    <PlusIcon className="w-5 h-5 sm:mr-2" />
-                    <span className="hidden sm:inline">Register Course</span>
+                    <PlusIcon className="w-5 h-5 sm:me-2" />
+                    <span className="hidden sm:inline">{t('studentDetails.registerCourse')}</span>
                 </Button>
             </div>
 
@@ -191,12 +194,12 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                         <div className="p-4 mb-4 rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-sm ring-1 ring-border-primary-default-light dark:ring-border-primary-default-dark">
                             <PlusIcon className="w-8 h-8 text-text-secondary-default-light dark:text-text-secondary-default-dark opacity-50" />
                         </div>
-                        <h4 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">No Courses Registered</h4>
+                        <h4 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">{t('studentDetails.noCoursesRegistered')}</h4>
                         <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-sm mb-6">
-                            This student is not currently enrolled in any courses. Click the button below to add their first course.
+                            {t('studentDetails.noCoursesRegisteredDesc')}
                         </p>
                         <Button variant="outline" size="sm" onClick={() => setIsRegisterOpen(true)}>
-                            <PlusIcon className="w-4 h-4 mr-2" /> Add Course Now
+                            <PlusIcon className="w-4 h-4 me-2" /> {t('studentDetails.addCourseNow')}
                         </Button>
                     </div>
                 ) : (
@@ -206,7 +209,7 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                 role="course"
                                 headers={headers}
                                 data={paginated.map((c) => buildRow(c, setSectionChangeTarget, setUnregisterTarget))}
-                                columnAlignments={isPhone ? ["text-left", "text-center", "text-center"] : ["text-left", "text-left", "text-center", "text-center"]}
+                                columnAlignments={isPhone ? ["text-start", "text-center", "text-center"] : ["text-start", "text-start", "text-center", "text-center"]}
                                 wrapInSection={false}
                                 showHeaderActions={false}
                                 showPagination={false}
@@ -228,24 +231,24 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                 <ModelOverlay onClose={() => { setIsRegisterOpen(false); setSelectedCourseId(""); }} maxWidth="max-w-lg">
                     <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-4 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark">Register a Course</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark">{t('studentDetails.registerACourse')}</h3>
                             <button onClick={() => { setIsRegisterOpen(false); setSelectedCourseId(""); }} className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors">
                                 <XIcon className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="p-5 space-y-5">
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Search and select a course from the available list below to register this student.
+                                {t('studentDetails.registerACourseDesc')}
                             </p>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Available Courses</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.availableCourses')}</label>
                                 <select
                                     value={selectedCourseId}
                                     onChange={(e) => { setSelectedCourseId(e.target.value); setRegisterSection(""); }}
                                     disabled={registering}
                                     className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50"
                                 >
-                                    <option value="" disabled>-- Select a course to continue --</option>
+                                    <option value="" disabled>{t('studentDetails.selectCourse')}</option>
                                     {unregisteredCourses.map((c) => (
                                         <option key={c.courseId} value={c.courseId}>
                                             {c.courseCode || c.code || ""} - {c.courseName || c.title || c.name}
@@ -255,10 +258,10 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                             </div>
                             {selectedCourseId && (
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Section <span className="text-red-500">*</span></label>
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.section')} <span className="text-red-500">*</span></label>
                                     {loadingSections ? (
                                         <div className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-2">
-                                            Loading sections...
+                                            {t('studentDetails.loadingSections')}
                                         </div>
                                     ) : (
                                         <>
@@ -268,18 +271,18 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                                 disabled={registering}
                                                 className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50"
                                             >
-                                                <option value="" disabled>-- Select a section --</option>
+                                                <option value="" disabled>{t('studentDetails.selectSection')}</option>
                                                 {availableCoursesSections[selectedCourseId]
                                                     ?.filter(s => s.classType === "Section")
                                                     .map((section) => (
                                                     <option key={section.classId} value={section.classId}>
-                                                        {section.groupCode || `Section ${section.classId}`}
+                                                        {section.groupCode || t('studentDetails.sectionLabel', { id: section.classId })}
                                                     </option>
                                                 ))}
                                             </select>
                                             {availableCoursesSections[selectedCourseId]?.filter(s => s.classType === "Section").length === 0 && (
                                                 <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
-                                                    No sections available for this course. Create a section first.
+                                                    {t('studentDetails.noSectionsAvailable') || 'No sections available for this course. Create a section first.'}
                                                 </p>
                                             )}
                                         </>
@@ -287,9 +290,9 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                 </div>
                             )}
                             <div className="flex justify-end gap-2 pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <Button variant="outline" size="sm" onClick={() => { setIsRegisterOpen(false); setSelectedCourseId(""); setRegisterSection(""); }}>Cancel</Button>
+                                <Button variant="outline" size="sm" onClick={() => { setIsRegisterOpen(false); setSelectedCourseId(""); setRegisterSection(""); }}>{t('studentDetails.cancel')}</Button>
                                 <Button variant="primary" size="sm" onClick={handleRegister} disabled={registering || !selectedCourseId || loadingSections || !registerSection}>
-                                    {registering ? "Registering..." : "Register"}
+                                    {registering ? t('studentDetails.registering') : t('studentDetails.register')}
                                 </Button>
                             </div>
                         </div>
@@ -301,11 +304,11 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
             <Dialog
                 isOpen={unregisterTarget !== null}
                 variant="warning"
-                title="Unregister Course"
+                title={t('studentDetails.unregisterCourse')}
                 onClose={() => setUnregisterTarget(null)}
                 onConfirm={handleUnregister}
-                confirmText={unregistering ? "Unregistering..." : "Yes, Unregister"}
-                cancelText="Cancel"
+                confirmText={unregistering ? t('studentDetails.unregistering') : t('studentDetails.yesUnregister')}
+                cancelText={t('studentDetails.cancel')}
                 showCloseButton={true}
                 preventCloseOnOverlayClick={unregistering}
             >
@@ -315,18 +318,20 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                             <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                         </div>
                         <div className="space-y-2">
-                            <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Confirm Unregistration</p>
+                            <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('studentDetails.confirmUnregistration')}</p>
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark leading-relaxed">
-                                Are you sure you want to unregister <strong className="text-text-primary-default-light dark:text-text-primary-default-dark">{unregisterTarget?.courseName || unregisterTarget?.title || unregisterTarget?.name}</strong>{" "}
-                                (<span className="font-mono text-xs">{unregisterTarget?.courseCode || unregisterTarget?.code}</span>)
-                                for <strong className="text-text-primary-default-light dark:text-text-primary-default-dark">{student?.fullName || student?.name}</strong>?
+                                {t('studentDetails.confirmUnregistrationDesc', {
+                                    courseName: getLocalizedField(unregisterTarget, 'courseName', i18n.language) || unregisterTarget?.title || unregisterTarget?.name,
+                                    courseCode: getLocalizedField(unregisterTarget, 'courseCode', i18n.language) || unregisterTarget?.code,
+                                    studentName: getLocalizedField(student, 'fullName', i18n.language) || student?.name
+                                })}
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            This will permanently remove the student from the course roster. This action cannot be undone.
+                            {t('studentDetails.unregistrationWarning')}
                         </p>
                     </div>
                 </div>
@@ -337,18 +342,20 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                 <ModelOverlay onClose={() => setSectionChangeTarget(null)} maxWidth="max-w-lg">
                     <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-4 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark">Change Section</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark">{t('studentDetails.changeSection')}</h3>
                             <button onClick={() => setSectionChangeTarget(null)} className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors">
                                 <XIcon className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="p-5 space-y-5">
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Select a new section for <strong className="text-text-primary-default-light dark:text-text-primary-default-dark">{sectionChangeTarget?.courseName || sectionChangeTarget?.title || sectionChangeTarget?.name}</strong>{" "}
-                                ({sectionChangeTarget?.courseCode || sectionChangeTarget?.code}).
+                                {t('studentDetails.changeSectionDesc', {
+                                    courseName: getLocalizedField(sectionChangeTarget, 'courseName', i18n.language) || sectionChangeTarget?.title || sectionChangeTarget?.name,
+                                    courseCode: getLocalizedField(sectionChangeTarget, 'courseCode', i18n.language) || sectionChangeTarget?.code
+                                })}
                             </p>
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Available Sections</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.availableSections')}</label>
                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                                     {availableSections.filter(s => s.classType === "Section").map((s) => (
                                         <button
@@ -361,15 +368,15 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
                                                     : "border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark hover:border-text-secondary-default-light dark:hover:border-text-secondary-default-dark"
                                             } disabled:opacity-50 `}
                                         >
-                                            {s.groupCode || `Section ${s.classId}`}
+                                            {s.groupCode || t('studentDetails.sectionLabel', { id: s.classId })}
                                         </button>
                                     ))}
                                 </div>
                             </div>
                             <div className="flex justify-end gap-2 pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <Button variant="secondary" size="sm" onClick={() => setSectionChangeTarget(null)}>Cancel</Button>
+                                <Button variant="secondary" size="sm" onClick={() => setSectionChangeTarget(null)}>{t('studentDetails.cancel')}</Button>
                                 <Button variant="primary" size="sm" onClick={handleChangeSection} disabled={changingSection || !selectedSection}>
-                                    {changingSection ? "Saving..." : "Save Changes"}
+                                    {changingSection ? t('studentDetails.saving') : t('studentDetails.saveChanges')}
                                 </Button>
                             </div>
                         </div>

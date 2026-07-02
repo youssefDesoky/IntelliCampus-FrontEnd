@@ -1,8 +1,12 @@
+import { useTranslation } from "react-i18next";
 import ModelOverlay from "../../../../../components/ui/ModelOverlay";
 import Button from "../../../../../components/ui/Button";
 import { XIcon, ChartBarIcon, StarIcon, UserIcon, ClockIcon } from "../../../../../components/ui/icons";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 export default function ViewGrade({ assignment, onClose }) {
+    const { t } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
     const totalPoints = assignment.totalPoints || 100;
     const pointsEarned = assignment.score || 0;
     const pct = totalPoints ? Math.round((pointsEarned / totalPoints) * 100) : 0;
@@ -17,9 +21,10 @@ export default function ViewGrade({ assignment, onClose }) {
                         </div>
                         <div>
                             <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Grade & Feedback
+                                {t('viewGrade.title')}
                             </h2>
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                {/* TODO: i18n - backend returns English only */}
                                 {assignment.title}
                             </p>
                         </div>
@@ -41,14 +46,14 @@ export default function ViewGrade({ assignment, onClose }) {
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-3xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                    {pct}%
+                                    {ar(pct)}%
                                 </span>
                             </div>
                         </div>
                         <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            <span className="font-semibold text-green-600 dark:text-green-400">{pointsEarned}</span>
+                            <span className="font-semibold text-green-600 dark:text-green-400">{ar(pointsEarned)}</span>
                             {" / "}
-                            <span>{totalPoints}</span> points
+                            <span>{ar(totalPoints)}</span> {t('viewGrade.points')}
                         </p>
                     </div>
 
@@ -58,13 +63,13 @@ export default function ViewGrade({ assignment, onClose }) {
                                 <div className="flex flex-row items-center gap-1">
                                     <StarIcon size={16} className="text-amber-500" />
                                     <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                        Instructor Feedback
+                                        {t('viewGrade.instructorFeedback')}
                                     </h3>
                                 </div>
 
                                 <div className="flex items-center gap-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                     <ClockIcon size={14} />
-                                    <span>Graded on {assignment.gradedDate}</span>
+                                    <span>{t('viewGrade.gradedOn', { date: assignment.gradedDate })}</span>
                                 </div>
                             </div>
 
@@ -74,7 +79,7 @@ export default function ViewGrade({ assignment, onClose }) {
                                 </div>
                                 <div>
                                     <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                        Graded by
+                                        {t('viewGrade.gradedBy')}
                                     </p>
                                     <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
                                         {assignment.gradedBy}

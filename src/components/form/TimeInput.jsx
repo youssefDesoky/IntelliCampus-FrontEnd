@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { ClockIcon } from "../ui/icons";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -24,7 +25,8 @@ function to12h(h24) {
 }
 
 // ─── Scroll Column ────────────────────────────────────────────────────────────
-function ScrollColumn({ items, selected, onSelect }) {
+function ScrollColumn({ items, selected, onSelect, formatItem }) {
+    const fmt = formatItem || ((v) => String(v).padStart(2, "0"));
     const ref = useRef(null);
 
     useEffect(() => {
@@ -65,7 +67,7 @@ function ScrollColumn({ items, selected, onSelect }) {
                                   ].join(" "),
                         ].join(" ")}
                     >
-                        {String(item).padStart(2, "0")}
+                        {fmt(item)}
                     </button>
                 );
             })}
@@ -86,6 +88,17 @@ export default function TimeInput({
     value = "",
     onChange,
 }) {
+    const { i18n } = useTranslation();
+    const isRTL = i18n.language === 'ar';
+    const toArabicDigits = (str) => {
+        if (!isRTL) return str;
+        return str.replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+    };
+    const formatItem = (v) => toArabicDigits(String(v).padStart(2, "0"));
+    const timeLabels = isRTL
+        ? { hr: 'س', min: 'د', am: 'ص', pm: 'م', selectTime: 'اختر الوقت', clear: 'مسح', done: 'تم' }
+        : { hr: 'Hr', min: 'Min', am: 'AM', pm: 'PM', selectTime: 'Select Time', clear: 'Clear', done: 'Done' };
+
     const initFromValue = (v) => {
         const parsed = parseTime(v);
         if (!parsed) {
@@ -190,7 +203,7 @@ export default function TimeInput({
     };
 
     const displayValue = hasValue
-        ? `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${period}`
+        ? `${toArabicDigits(String(hour).padStart(2, "0"))}:${toArabicDigits(String(minute).padStart(2, "0"))} ${isRTL ? (period === 'AM' ? timeLabels.am : timeLabels.pm) : period}`
         : "";
 
     return (
@@ -218,7 +231,7 @@ export default function TimeInput({
                 className={[
                     "w-full px-4 py-2.5 flex items-center justify-between gap-3 border rounded-lg",
                     "bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark",
-                    "outline-none transition-all text-left",
+                    "outline-none transition-all text-start",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                     !isDisabled && "cursor-pointer",
                     isOpen
@@ -226,7 +239,7 @@ export default function TimeInput({
                         : "border-border-primary-default-light dark:border-border-primary-default-dark",
                 ].join(" ")}
             >
-                <span className={`text-sm ${
+                <span dir="auto" className={`text-sm ${
                     displayValue
                         ? "text-text-primary-default-light dark:text-text-primary-default-dark font-medium"
                         : "text-text-secondary-default-light dark:text-text-secondary-default-dark"
@@ -262,7 +275,7 @@ export default function TimeInput({
                 >
                     {/* Heading */}
                     <p className="text-[10px] font-bold uppercase tracking-widest text-center text-text-secondary-default-light dark:text-text-secondary-default-dark mb-3">
-                        Select Time
+                        {timeLabels.selectTime}
                     </p>
 
                     {/* Columns */}
@@ -272,7 +285,7 @@ export default function TimeInput({
                         <div 
                             style={{ top: `calc(${PAD_H}px + 14px)` }}
                             className={[
-                                "absolute left-0 right-[72px] h-[36px] pointer-events-none rounded-md border -z-0",
+                                "absolute start-0 end-[72px] h-[36px] pointer-events-none rounded-md border -z-0",
                                 "bg-bg-surface-secondary-light/40 dark:bg-bg-surface-secondary-dark/20",
                                 "border-border-primary-default-light/60 dark:border-border-primary-default-dark/40"
                             ].join(" ")}
@@ -281,7 +294,7 @@ export default function TimeInput({
                         {/* Hour column */}
                         <div className="flex flex-col items-center gap-1 z-10">
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Hr
+                                {timeLabels.hr}
                             </span>
                             <div className="relative">
                                 <div
@@ -290,7 +303,7 @@ export default function TimeInput({
                                 <div
                                     className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[50px] bg-gradient-to-t from-bg-fill-primary-default-light dark:from-bg-fill-primary-default-dark to-transparent"
                                 />
-                                <ScrollColumn items={HOURS} selected={hour} onSelect={handleHour} />
+                                <ScrollColumn items={HOURS} selected={hour} onSelect={handleHour} formatItem={formatItem} />
                             </div>
                         </div>
 
@@ -302,7 +315,7 @@ export default function TimeInput({
                         {/* Minute column */}
                         <div className="flex flex-col items-center gap-1 z-10">
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Min
+                                {timeLabels.min}
                             </span>
                             <div className="relative">
                                 <div
@@ -311,7 +324,7 @@ export default function TimeInput({
                                 <div
                                     className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[50px] bg-gradient-to-t from-bg-fill-primary-default-light dark:from-bg-fill-primary-default-dark to-transparent"
                                 />
-                                <ScrollColumn items={MINUTES} selected={minute} onSelect={handleMinute} />
+                                <ScrollColumn items={MINUTES} selected={minute} onSelect={handleMinute} formatItem={formatItem} />
                             </div>
                         </div>
 
@@ -335,7 +348,7 @@ export default function TimeInput({
                                               ].join(" "),
                                     ].join(" ")}
                                 >
-                                    {p}
+                                    {p === 'AM' ? timeLabels.am : timeLabels.pm}
                                 </button>
                             ))}
                         </div>
@@ -353,7 +366,7 @@ export default function TimeInput({
                                 onClick={handleClear}
                                 className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-danger-default-light dark:hover:text-text-danger-default-dark transition-colors"
                             >
-                                Clear
+                                {timeLabels.clear}
                             </button>
                         )}
                         <button
@@ -361,7 +374,7 @@ export default function TimeInput({
                             onClick={() => setIsOpen(false)}
                             className="text-xs font-bold text-text-accent-default-light dark:text-text-accent-default-dark hover:underline transition-colors"
                         >
-                            Done
+                            {timeLabels.done}
                         </button>
                     </div>
                 </div>,

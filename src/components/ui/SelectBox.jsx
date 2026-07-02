@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { AngleDownIcon } from "../ui/icons"
 
 export default function SelectBox({
@@ -15,6 +16,8 @@ export default function SelectBox({
     showLabel = true,
     disabled = false
 }) {
+    const { t, i18n } = useTranslation('common');
+    const isRTL = i18n.language === 'ar';
     const [isOpen, setIsOpen] = useState(false);
     const [minWidth, setMinWidth] = useState(0);
     const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
@@ -98,7 +101,7 @@ export default function SelectBox({
         : (!compact && minWidth > 0 ? { minWidth: `${Math.min(minWidth, 320)}px` } : {});
 
     return (
-        <div ref={containerRef} className={`relative block text-left max-w-full ${className} ${compact ? 'text-xs' : 'text-xs md:text-sm'}`} data-cursor="clickable">
+        <div ref={containerRef} dir={isRTL ? 'rtl' : 'ltr'} className={`relative block text-start max-w-full ${className} ${compact ? 'text-xs' : 'text-xs md:text-sm'}`} data-cursor="clickable">
             {/* Hidden input so FormData captures the selected value */}
             {name && <input type="hidden" name={name} value={selected?.value ?? ""} />}
             {/* Hidden element to measure longest option */}
@@ -108,7 +111,7 @@ export default function SelectBox({
                         const label = opt?.label || '';
                         return (label && label.length > longest.length) ? label : longest;
                     }, "")}
-                    <AngleDownIcon className="w-5 h-5 ml-2 inline" />
+                    <AngleDownIcon className="w-5 h-5 ms-2 inline" />
                 </div>
             )}
 
@@ -131,14 +134,15 @@ export default function SelectBox({
                     style={buttonStyle}
                     onClick={toggleOpen}
                 >
-                    <span className="truncate">{selected?.label || "Select"}</span>
-                    <AngleDownIcon className={`${compactIconSize} ml-2 -mr-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark ${isOpen ? 'transform rotate-180' : ''} transition-transform duration-200`} />
+                    <span className="truncate">{selected?.label || t('select')}</span>
+                    <AngleDownIcon className={`${compactIconSize} ms-2 -me-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark ${isOpen ? 'transform rotate-180' : ''} transition-transform duration-200`} />
                 </button>
             </div>
 
             {isOpen && createPortal(
                 <div 
                     ref={dropdownRef}
+                    dir={isRTL ? 'rtl' : 'ltr'}
                     className="rounded-md shadow-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark ring-1 ring-black ring-opacity-5 z-[9999] max-h-60 overflow-y-auto overflow-x-hidden no-scrollbar"
                     style={{
                         position: 'fixed',

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { EyeIcon, EyeSlashIcon } from "../ui/icons";
 
 export default function InputItem({ 
@@ -14,6 +15,8 @@ export default function InputItem({
     onChange,
     ...props 
 }) {
+    const { i18n } = useTranslation();
+    const isRTL = i18n.language === 'ar';
     const [showPassword, setShowPassword] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
     const [hasValue, setHasValue] = useState(false);
@@ -40,6 +43,7 @@ export default function InputItem({
                     value={value}
                     type={inputType}
                     autoComplete="off"
+                    dir={type === 'email' ? 'ltr' : (isRTL ? 'rtl' : 'ltr')}
                     disabled={isDisabled}
                     placeholder={placeholder}
                     onFocus={() => setIsInputFocused(true)}

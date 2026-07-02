@@ -1,9 +1,12 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import Tiptap from "../ui/Tiptap"
 import ModelOverlay from "../../../components/ui/ModelOverlay"
 import { BookIcon, LinkIcon, ClockIcon, FileLinesIcon } from "../../../components/ui/icons"
 import { createNote, updateNote, fromBackendLinkedLecture } from "./notesApi"
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import useArabicDigits from '../../../hooks/useArabicDigits';
 
 // Fallback hardcoded options when not in CourseShell
 const defaultWeeklyLectureOptions = [
@@ -60,11 +63,11 @@ function htmlToText(html = "") {
         .trim()
 }
 
-function SaveBadge({ status }) {
+function SaveBadge({ status, t }) {
     const map = {
         idle:   null,
-        saving: { dot: "bg-amber-400 animate-pulse", label: "Saving…" },
-        saved:  { dot: "bg-emerald-400",             label: "Saved"   },
+        saving: { dot: "bg-amber-400 animate-pulse", label: t('smartNotes.saving') },
+        saved:  { dot: "bg-emerald-400",             label: t('smartNotes.saved')   },
     }
     const cfg = map[status]
     if (!cfg) return null
@@ -77,6 +80,22 @@ function SaveBadge({ status }) {
 }
 
 export default function SmartNoteEditor({ note, onClose, courseFolders = [], courseId = null, studentId = null, onSaveNote }) {
+    const { t, i18n } = useTranslation('student');
+    const { isRTL } = useArabicDigits();
+
+    function formatNoteDate(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        const locale = isRTL ? 'ar-SA' : 'en-US';
+        return date.toLocaleString(locale, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
     const normalizedLinkedLecture = fromBackendLinkedLecture(note?.linkedLecture) ?? note?.linkedLecture ?? null
 
     const titleRef = useRef(note?.title ?? "")
@@ -95,10 +114,10 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
     if (courseFolders && courseFolders.length > 0) {
         weeklyLectureOptions = courseFolders.map((folder, idx) => ({
             id: folder.materialFolderId ?? idx + 1,
-            title: folder.name || `Week ${idx + 1}`,
-            shortTitle: folder.name || `Week ${idx + 1}`,
-            weekLabel: `${folder.name || `Week ${idx + 1}`} Lecture`,
-            description: folder.description || "",
+            title: getLocalizedField(folder, 'name', i18n.language) || `Week ${idx + 1}`,
+            shortTitle: getLocalizedField(folder, 'name', i18n.language) || `Week ${idx + 1}`,
+            weekLabel: `${getLocalizedField(folder, 'name', i18n.language) || `Week ${idx + 1}`} Lecture`,
+            description: getLocalizedField(folder, 'description', i18n.language) || "",
             courseId: folder.courseId ?? courseId,
             materialFolderId: folder.materialFolderId ?? idx + 1,
         }))
@@ -192,7 +211,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                         <div className="w-7 h-7 flex items-center justify-center rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark shrink-0">
                             <NoteIcon />
                         </div>
-                        <SaveBadge status={saveStatus} />
+                        <SaveBadge status={saveStatus} t={t} />
                     </div>
 
                     <div className="flex items-center gap-1.5">
@@ -222,7 +241,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                                 className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-500 transition-colors"
                             >
                                 <LinkIcon className="w-3 h-3" />
-                                <span className="hidden sm:inline">Link lecture</span>
+                                <span className="hidden sm:inline">{t('smartNotes.linkLecture')}</span>
                             </button>
                         )}
 
@@ -234,14 +253,14 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                             className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-text-primary-active-light dark:bg-text-primary-active-dark text-bg-surface-primary-default-light dark:text-bg-surface-primary-default-dark hover:opacity-85 active:scale-[0.97] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             <SaveIcon />
-                            <span className="hidden sm:inline">{isSaving ? "Saving…" : "Save"}</span>
+                            <span className="hidden sm:inline">{isSaving ? t('smartNotes.saving') : t('smartNotes.save')}</span>
                         </button>
 
                         {/* Close */}
                         <button
                             type="button"
                             onClick={handleClose}
-                            aria-label="Close (Esc)"
+                            aria-label={t('smartNotes.closeEsc')}
                             className="w-7 h-7 flex items-center justify-center rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark text-icon-secondary-default-light dark:text-icon-primary-default-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark active:scale-90 transition-all"
                         >
                             <CloseIcon />
@@ -261,7 +280,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                                 }}
                                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark"
                             >
-                                <option value="">Select weekly lecture</option>
+                                <option value="">{t('smartNotes.selectLecture')}</option>
                                 {weeklyLectureOptions.map((lecture) => (
                                     <option key={lecture.id} value={lecture.id}>
                                         {lecture.weekLabel} - {lecture.title}
@@ -277,7 +296,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                                 }}
                                 className="px-2 py-1.5 text-xs rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-red-500"
                             >
-                                Clear
+                                {t('smartNotes.clear')}
                             </button>
                         </div>
                     </div>
@@ -291,7 +310,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-[9.5px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-0.5">
-                                Linked week lecture
+                                {t('smartNotes.linkedLecture')}
                             </p>
                             <p className="text-xs font-medium text-text-primary-active-light dark:text-text-primary-active-dark truncate">
                                 {linkedLecture.title}
@@ -319,7 +338,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                         type="text"
                         name="title"
                         autoFocus
-                        placeholder="Untitled note…"
+                        placeholder={t('smartNotes.untitled')}
                         value={titleValue}
                         onChange={handleTitleChange}
                         className="w-full bg-transparent border-none outline-none text-[1.25rem] sm:text-[1.5rem] font-semibold leading-snug tracking-tight text-text-primary-active-light dark:text-text-primary-active-dark placeholder:text-text-placeholder-default-light dark:placeholder:text-text-placeholder-default-dark placeholder:font-normal"
@@ -341,11 +360,11 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                     <div className="flex items-center gap-4">
                         <span className="flex items-center gap-1 text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                             <FileLinesIcon className="w-2.5 h-2.5" />
-                            {wordCount} {wordCount === 1 ? "word" : "words"}
+                            {wordCount} {wordCount === 1 ? t('smartNotes.word') : t('smartNotes.words')}
                         </span>
                         <span className="flex items-center gap-1 text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                             <ClockIcon className="w-2.5 h-2.5" />
-                            {note?.modified ?? "Just now"}
+                            {note?.modified ? formatNoteDate(note.modified) : t('smartNotes.justNow')}
                         </span>
                     </div>
                     <kbd className="text-[10px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded px-1.5 py-0.5 font-mono">

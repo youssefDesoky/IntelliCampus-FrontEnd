@@ -1,8 +1,19 @@
+import { useTranslation } from "react-i18next";
 import ModelOverlay from "../../../../../components/ui/ModelOverlay";
 import Button from "../../../../../components/ui/Button";
 import { XIcon, FileIcon, DownloadIcon, ClockIcon, InfoIcon } from "../../../../../components/ui/icons";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 export default function ViewInstructions({ assignment, onClose }) {
+    const { t } = useTranslation('student');
+    const { convert: ar, isRTL } = useArabicDigits();
+
+    function formatDueDate(value) {
+        if (!value) return value;
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return ar(value);
+        return date.toLocaleString(isRTL ? 'ar-SA' : 'en-US');
+    }
     return (
         <ModelOverlay onClose={onClose} maxWidth="max-w-2xl">
             <div className="w-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark shadow-xl">
@@ -13,10 +24,11 @@ export default function ViewInstructions({ assignment, onClose }) {
                         </div>
                         <div>
                             <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Assignment Instructions
+                                {t('viewInstructions.title')}
                             </h2>
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                {assignment.title}
+                                {/* TODO: i18n - backend returns English only */}
+                            {assignment.title}
                             </p>
                         </div>
                     </div>
@@ -33,14 +45,14 @@ export default function ViewInstructions({ assignment, onClose }) {
                         <div className="flex items-center gap-2 text-sm p-3 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                             <ClockIcon size={16} className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                             <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Due Date:
+                                {t('viewInstructions.dueDate')}
                             </span>
                             <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {assignment.dueDate}
+                                {formatDueDate(assignment.dueDate)}
                             </span>
                             {assignment.daysLeft && (
                                 <span className="text-amber-600 dark:text-amber-400 font-medium">
-                                    ({assignment.daysLeft} days left)
+                                    {ar(t('viewInstructions.daysLeft', { count: assignment.daysLeft }))}
                                 </span>
                             )}
                         </div>
@@ -49,7 +61,7 @@ export default function ViewInstructions({ assignment, onClose }) {
                     {assignment.description && (
                         <div className="space-y-2">
                             <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Description
+                                {t('viewInstructions.description')}
                             </h3>
                             <div className="p-4 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark leading-relaxed">
@@ -62,7 +74,7 @@ export default function ViewInstructions({ assignment, onClose }) {
                     {assignment.fullInstructions && (
                         <div className="space-y-2">
                             <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Instructions
+                                {t('viewInstructions.instructions')}
                             </h3>
                             <div className="p-4 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark leading-relaxed whitespace-pre-wrap">
@@ -77,7 +89,7 @@ export default function ViewInstructions({ assignment, onClose }) {
                             <div className="flex items-center gap-2">
                                 <FileIcon size={16} className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                                 <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                    Attachments ({assignment.attachments.length})
+                                    {ar(t('viewInstructions.attachments', { count: assignment.attachments.length }))}
                                 </h3>
                             </div>
                             <div className="space-y-2">

@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useTranslation } from 'react-i18next';
 import Button from "./Button";
 import TextArea from "./TextArea";
 import { CloudUploadIcon, XIcon, FileIcon, TrashIcon, PaperPlaneIcon } from "./icons";
@@ -10,16 +11,23 @@ export default function QuickUpload({
     assignment,
     onClose,
     onSubmit,
-    title = "Submit Assignment",
+    title,
     subtitle,
     noteEnabled = true,
-    noteLabel = "Submission Note",
-    notePlaceholder = "Add a note to your instructor about this submission...",
-    noteOptionalText = "(optional)",
-    submitText = "Submit Assignment",
-    loadingText = "Uploading",
+    noteLabel,
+    notePlaceholder,
+    noteOptionalText,
+    submitText,
+    loadingText,
     maxSizeMb = MAX_SIZE_MB,
 }) {
+    const { t } = useTranslation('common');
+    const resolvedTitle = title ?? t('labels.submitAssignment', 'Submit Assignment');
+    const resolvedNoteLabel = noteLabel ?? t('labels.submissionNote', 'Submission Note');
+    const resolvedNotePlaceholder = notePlaceholder ?? t('labels.submissionNotePlaceholder', 'Add a note to your instructor about this submission...');
+    const resolvedNoteOptionalText = noteOptionalText ?? t('labels.optional', '(optional)');
+    const resolvedSubmitText = submitText ?? t('labels.submitAssignment', 'Submit Assignment');
+    const resolvedLoadingText = loadingText ?? t('status.loading', 'Loading...');
     const [files, setFiles] = useState([]);
     const [note, setNote] = useState("");
     const [dragOver, setDragOver] = useState(false);
@@ -51,7 +59,7 @@ export default function QuickUpload({
             await onSubmit?.({ files, note });
             onClose?.();
         } catch (err) {
-            showError(err.message || "Failed to submit assignment.");
+            showError(err.message || t('labels.failedToSubmit', 'Failed to submit assignment.'));
         } finally {
             setUploading(false);
         }
@@ -76,7 +84,7 @@ export default function QuickUpload({
                     </div>
                     <div>
                         <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                            {title}
+                            {resolvedTitle}
                         </h2>
                         {(subtitle || assignment?.title) && (
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
@@ -99,12 +107,12 @@ export default function QuickUpload({
                 {noteEnabled && (
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wide">
-                            {noteLabel} <span className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark font-normal normal-case">{noteOptionalText}</span>
+                            {resolvedNoteLabel} <span className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark font-normal normal-case">{resolvedNoteOptionalText}</span>
                         </label>
                         <TextArea
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
-                            placeholder={notePlaceholder}
+                            placeholder={resolvedNotePlaceholder}
                             className="w-full rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-tertiary-default-light dark:placeholder:text-text-tertiary-default-dark focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                         />
                     </div>
@@ -113,7 +121,7 @@ export default function QuickUpload({
                 {files.length > 0 && (
                     <div className="space-y-2">
                         <p className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wide">
-                            Selected Files ({files.length})
+                            {t('labels.selectedFiles', 'Selected Files')} ({files.length})
                         </p>
                         <div className="space-y-2 max-h-48 overflow-y-auto">
                             {files.map((f, idx) => (
@@ -155,17 +163,17 @@ export default function QuickUpload({
                     <CloudUploadIcon size={44} className="text-icon-accent-default-light dark:text-icon-accent-default-dark" />
                     <div className="text-center">
                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                            Drag & drop files here
+                            {t('fileUpload.dragDrop', 'Drag & drop files here')}
                         </p>
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1">
-                            or click to browse
+                            {t('fileUpload.clickBrowse', 'or click to browse')}
                         </p>
                         <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-2">
-                            Max: {maxSizeMb}MB per file
+                            {t('fileUpload.maxSize', 'Max: {{size}}MB per file', { size: maxSizeMb })}
                         </p>
                     </div>
                     <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}>
-                        Choose Files
+                        {t('labels.chooseFiles', 'Choose Files')}
                     </Button>
                     <input
                         ref={inputRef}
@@ -178,17 +186,17 @@ export default function QuickUpload({
             </div>
 
             <div className="flex items-center justify-end gap-3 p-5 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                <Button variant="secondary" onClick={onClose}>
-                    Cancel
+                    <Button variant="secondary" onClick={onClose}>
+                    {t('cancel')}
                 </Button>
                 <Button
                     startIcon={uploading ? null : <PaperPlaneIcon size={16} />}
                     onClick={handleSubmit}
                     disabled={files.length === 0 || uploading}
                     loading={uploading}
-                    loadingText={loadingText}
+                    loadingText={resolvedLoadingText}
                 >
-                    {uploading ? "" : submitText}
+                    {uploading ? "" : resolvedSubmitText}
                 </Button>
             </div>
         </div>

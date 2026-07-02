@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import InstructorWeekMaterials from "../../../feature/instructor/components/courseMaterials/InstructorWeekMaterials";
 import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
@@ -9,6 +10,7 @@ import { createFolder, createMaterial, deleteMaterial, deleteFolder, updateFolde
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function InstructorCourseMaterials() {
+    const { t } = useTranslation('instructor');
     const { course, courseId, refreshMaterials } = useOutletContext();
     const isInactive = course?.isInactive;
     const [showAddFolder, setShowAddFolder] = useState(false);
@@ -98,17 +100,15 @@ export default function InstructorCourseMaterials() {
         <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                    Materials
+                    {t('materials.title')}
                 </h2>
-                {!isInactive && (
-                    <Button
-                        variant="primary"
-                        onClick={() => setShowAddFolder(true)}
-                        startIcon={<PlusIcon size={18} />}
-                    >
-                        <span className="hidden sm:inline">Add New Folder</span>
-                    </Button>
-                )}
+                <Button
+                    variant="primary"
+                    onClick={() => setShowAddFolder(true)}
+                    startIcon={<PlusIcon size={18} />}
+                >
+                    <span className="hidden sm:inline">{t('materials.addFolder')}</span>
+                </Button>
             </div>
 
             {/* Add Folder Popup */}
@@ -117,7 +117,7 @@ export default function InstructorCourseMaterials() {
                     <div className="w-full max-w-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark overflow-hidden shadow-xl">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border-tertiary-default-light dark:border-border-tertiary-default-dark bg-linear-to-r from-bg-surface-secondary-default-light/50 to-transparent dark:from-bg-surface-secondary-default-dark/50">
                             <h3 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Add New Folder
+                                {t('materials.addFolder')}
                             </h3>
                             <button
                                 onClick={handleCancel}
@@ -130,7 +130,7 @@ export default function InstructorCourseMaterials() {
                         <div className="p-6 flex flex-col gap-4">
                             <div>
                                 <label className="block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">
-                                    Folder Name <span className="text-red-500">*</span>
+                                    {t('materials.folderName')} <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -143,19 +143,19 @@ export default function InstructorCourseMaterials() {
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">
-                                    Description
+                                    {t('materials.description')}
                                 </label>
                                 <TextArea
                                     value={newFolderDescription}
                                     onChange={(e) => setNewFolderDescription(e.target.value)}
-                                    placeholder="Brief description of the folder contents..."
+                                    placeholder={t('materials.descriptionPlaceholder')}
                                     className="w-full px-3 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark outline-none focus:border-border-primary-focus-light dark:focus:border-border-primary-focus-dark transition-colors"
                                 />
                             </div>
 
                             <div className="flex items-center justify-end gap-3 pt-2">
                                 <Button variant="secondary" onClick={handleCancel}>
-                                    Cancel
+                                    {t('materials.cancel')}
                                 </Button>
                                 <Button
                                     variant="primary"
@@ -163,7 +163,7 @@ export default function InstructorCourseMaterials() {
                                     disabled={!newFolderName.trim() || isSubmitting}
                                 >
                                     <PlusIcon size={18} />
-                                    {isSubmitting ? "Creating..." : "Add Folder"}
+                                    {isSubmitting ? t('materials.creating') : t('materials.addFolder')}
                                 </Button>
                             </div>
                         </div>
@@ -175,10 +175,10 @@ export default function InstructorCourseMaterials() {
             {displayFolders.length === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center min-h-[60vh] text-center">
                     <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                        No folders added yet
+                        {t('materials.noFolders')}
                     </h3>
                     <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
-                        Start building your course by adding a folder and uploading materials.
+                        {t('materials.noFoldersDesc')}
                     </p>
                 </div>
             ) : (

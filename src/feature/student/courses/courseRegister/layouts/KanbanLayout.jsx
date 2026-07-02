@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 import WeeklySchedule, { days } from "../../../../../components/ui/WeeklySchedule";
 import WeeklyScheduleAgenda from "../../../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import PaginationButtons from "../../../../../components/ui/PaginationButtons";
@@ -34,6 +36,8 @@ export default function KanbanLayout({
   handleConfirmRegistration,
   setSelectedSectionByCourseId,
 }) {
+  const { t } = useTranslation('student');
+  const { convert: ar } = useArabicDigits();
   const selectedCredits = selectedCourses.reduce(
     (s, c) => s + (typeof c.creditHours === "number" ? c.creditHours : 0),
     0
@@ -46,13 +50,13 @@ export default function KanbanLayout({
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-xs">
           <CheckCircleIcon className="w-3.5 h-3.5 text-bg-fill-primary-active-light dark:text-bg-fill-primary-active-dark" />
           <span className="text-text-secondary-active-light dark:text-text-secondary-active-dark">
-            {selectedCourses.length} selected
+            {ar(t('registration.selectedCount', { count: selectedCourses.length }))}
           </span>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-xs">
           <ClockIcon className="w-3.5 h-3.5 text-bg-fill-primary-active-light dark:text-bg-fill-primary-active-dark" />
           <span className="text-text-secondary-active-light dark:text-text-secondary-active-dark">
-            {selectedCredits} / 18 credits
+            {ar(t('registration.creditsCount', { credits: selectedCredits, max: 18 }))}
           </span>
         </div>
       </div>
@@ -68,14 +72,14 @@ export default function KanbanLayout({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-                Available
+                {t('registration.columnAvailable')}
               </h3>
               <p className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                {availableCourses.length} courses
+                {ar(availableCourses.length)} {t('registration.courses')}
               </p>
             </div>
             <span className="px-2 py-0.5 rounded-md bg-bg-fill-primary-muted-light dark:bg-bg-fill-primary-muted-dark text-xs font-medium text-bg-fill-primary-active-light dark:text-bg-fill-primary-active-dark">
-              {paginatedAvailable.length} showing
+              {ar(paginatedAvailable.length)} {t('registration.showing')}
             </span>
           </div>
 
@@ -97,7 +101,7 @@ export default function KanbanLayout({
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
                 <BookIcon className="w-10 h-10 mb-3 opacity-30" />
-                <p className="text-sm">No available courses.</p>
+                <p className="text-sm">{t('registration.noAvailable')}</p>
               </div>
             )}
           </div>
@@ -121,14 +125,14 @@ export default function KanbanLayout({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-                Selected
+                {t('registration.columnSelected')}
               </h3>
               <p className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                {selectedCourses.length} courses · {selectedCredits} credits
+                {ar(selectedCourses.length)} {t('registration.courses')} · {ar(selectedCredits)} {t('registration.creditsWord')}
               </p>
             </div>
             <span className="px-2 py-0.5 rounded-md bg-bg-surface-success-default-light dark:bg-bg-surface-success-default-dark text-xs font-medium text-text-success-active-light dark:text-text-success-active-dark">
-              {paginatedSelected.length} showing
+              {ar(paginatedSelected.length)} {t('registration.showing')}
             </span>
           </div>
 
@@ -162,9 +166,9 @@ export default function KanbanLayout({
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
                 <CheckCircleIcon className="w-10 h-10 mb-3 opacity-30" />
-                <p className="text-sm">No courses selected.</p>
+                <p className="text-sm">{t('registration.noSelected')}</p>
                 <p className="text-xs mt-1 opacity-60">
-                  Pick courses from the left column
+                  {t('registration.pickCourses')}
                 </p>
               </div>
             )}
@@ -186,7 +190,7 @@ export default function KanbanLayout({
         <div className="flex items-center gap-2 mb-3">
           <CalendarIcon className="w-4 h-4 text-text-secondary-active-light dark:text-text-secondary-active-dark" />
           <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-            Weekly Schedule Preview
+            {t('registration.schedulePreview')}
           </h3>
         </div>
         {schedulePreviewLoading ? (

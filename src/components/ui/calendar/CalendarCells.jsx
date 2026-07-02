@@ -8,8 +8,14 @@ import {
     isSameDay,
     addDays
 } from "date-fns";
+import { ar } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
 export default function CalendarCells({ currentMonth, selectedDate, setSelectedDate }) {
+    const { i18n } = useTranslation("common");
+    const isRTL = i18n.language === 'ar';
+    const locale = isRTL ? ar : undefined;
+    const toArabicDigits = (str) => isRTL ? str.replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) : str;
     const today = new Date();
 
     const monthStart = startOfMonth(currentMonth);
@@ -43,7 +49,7 @@ export default function CalendarCells({ currentMonth, selectedDate, setSelectedD
                             : ""}
                     `}
                 >
-                    {format(day, "d")}
+                    {toArabicDigits(format(day, "d", { locale }))}
                 </div>
             );
 

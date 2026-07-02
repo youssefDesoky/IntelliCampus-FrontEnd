@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useOutletContext } from "react-router-dom";
 
@@ -9,27 +10,10 @@ import PaginationButtons from "../../../../../components/ui/PaginationButtons";
 import { CalendarDaysIcon, ClockIcon, PlayIcon, EyeIcon, ChartBarIcon, StarIcon, BrainIcon, CheckIcon } from "../../../../../components/ui/icons";
 import { fetchCourseQuizzesOverview } from "../../../services/quizzesApi";
 import { CourseQuizzesSkeleton } from "./SkeletonLoader";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 const PAGE_SIZE = 2;
 const ACTIVE_PAGE_SIZE = 1;
-
-function toPercent(score, maxScore) {
-    if (!maxScore) return 0;
-    return Math.round((score / maxScore) * 100);
-}
-
-function formatDate(value) {
-    if (!value) return "TBD";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "TBD";
-    return date.toLocaleString();
-}
-
-function formatDuration(minutes) {
-    const numericMinutes = Number(minutes);
-    if (Number.isNaN(numericMinutes)) return "0 min";
-    return `${numericMinutes} min`;
-}
 
 function getQuizStatusStyle(status) {
     if (status === "Completed") {
@@ -43,119 +27,150 @@ function getQuizStatusStyle(status) {
     return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800";
 }
 
-function QuizCard({ quiz, isUpcoming, onStartQuiz, onViewResults, onReviewResults }) {
-    const scoreLabel = quiz.maxScore ? `${quiz.score}/${quiz.maxScore}` : "TBD";
-    const scorePercent = quiz.maxScore ? toPercent(quiz.score, quiz.maxScore) : 0;
-    const isHighScore = scorePercent >= 80;
-    const isMidScore = scorePercent >= 50 && scorePercent < 80;
-
-    return (
-        <div className="group bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg hover:border-bg-fill-accent-default-light/30 dark:hover:border-bg-fill-accent-default-dark/30 transition-all duration-200">
-            <div className="flex flex-row items-start justify-between gap-3 mb-4">
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                        <BrainIcon size={16} className="text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark shrink-0" />
-                        <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                            {quiz.title}
-                        </h3>
-                    </div>
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2 ml-7">
-                        {isUpcoming
-                            ? "Open the quiz window and complete it before the deadline."
-                            : quiz.status === "Missed"
-                                ? "This quiz was not completed before the deadline."
-                                : quiz.status === "Completed" || quiz.status === "Submitted"
-                                    ? scorePercent >= 0
-                                        ? `You scored ${scoreLabel} (${scorePercent}%). ${isHighScore ? "Great work!" : isMidScore ? "Keep practicing!" : "Review the material and try again."}`
-                                        : "Review your score and results for this quiz."
-                                    : "Review your score and results for this quiz."}
-                    </p>
-                </div>
-                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 ${getQuizStatusStyle(quiz.status)}`}>
-                    {quiz.status === "Completed" && <CheckIcon size={11} />}
-                    {quiz.status}
-                </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3">
-                <div className="col-span-2 sm:col-span-1 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3">
-                    <div className="flex items-center gap-2 text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs font-semibold uppercase tracking-wide mb-2">
-                        <CalendarDaysIcon size={14} />
-                        Deadline
-                    </div>
-                    <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                        {quiz.dueDate}
-                    </p>
-                </div>
-
-                <div className="rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3">
-                    <div className="flex items-center gap-2 text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs font-semibold uppercase tracking-wide mb-2">
-                        <ClockIcon size={14} />
-                        Duration
-                    </div>
-                    <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                        {quiz.duration}
-                    </p>
-                </div>
-
-                <div className="rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3">
-                    <div className="flex items-center gap-2 text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs font-semibold uppercase tracking-wide mb-2">
-                        <StarIcon size={14} />
-                        Score
-                    </div>
-
-                    <div className="flex flex-row justify-between items-center">
-                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                            {scoreLabel}
-                        </p>
-                        <p className={`text-xs font-bold ${isHighScore ? "text-green-600 dark:text-green-400" : isMidScore ? "text-amber-600 dark:text-amber-400" : "text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}>
-                            {quiz.maxScore ? `${scorePercent}%` : "TBD"}
-                        </p>
-                    </div>
-                    {quiz.maxScore > 0 && (
-                        <div className="mt-2 h-1.5 w-full rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
-                            <div
-                                className={`h-full rounded-full transition-all ${isHighScore ? "bg-green-500" : isMidScore ? "bg-amber-500" : "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark"}`}
-                                style={{ width: `${scorePercent}%` }}
-                            />
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                {isUpcoming ? (
-                    <Button className="w-full sm:flex-1 shadow-sm hover:shadow-md transition-shadow" startIcon={<PlayIcon size={16} />} onClick={() => onStartQuiz && onStartQuiz(quiz)}>
-                        Start Quiz
-                    </Button>
-                ) : quiz.status === "Completed" ? (
-                    <Button className="w-full sm:flex-1" variant="secondary" startIcon={<ChartBarIcon size={16} />} onClick={() => onViewResults && onViewResults(quiz)}>
-                        View Results
-                    </Button>
-                ) : quiz.status === "Submitted" ? (
-                    <Button className="w-full sm:flex-1" variant="secondary" startIcon={<EyeIcon size={16} />} onClick={() => onReviewResults && onReviewResults(quiz)}>
-                        Review Results
-                    </Button>
-                ) : quiz.status === "Missed" ? (
-                    <Button className="w-full sm:flex-1" variant="secondary" startIcon={<EyeIcon size={16} />} onClick={() => onReviewResults && onReviewResults(quiz)}>
-                        View Exam
-                    </Button>
-                ) : (
-                    <Button variant="secondary" className="w-full sm:flex-1" onClick={() => onReviewResults && onReviewResults(quiz)}>
-                        View Details
-                    </Button>
-                )}
-            </div>
-        </div>
-    );
+function translateQuizStatus(status, t) {
+    switch (status) {
+        case "Completed": return t('quizzes.completed');
+        case "Missed": return t('quizzes.missed');
+        case "Active": return t('quizzes.active');
+        case "Submitted": return t('quizzes.submitted');
+        default: return status;
+    }
 }
 
 export default function CourseQuizzes() {
+    const { t } = useTranslation('student');
+    const { convert: ar, isRTL } = useArabicDigits();
     const { course } = useOutletContext();
     const isReadOnly = course?.isReadOnly;
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
     const [activePage, setActivePage] = useState(1);
+
+    function toPercent(score, maxScore) {
+        if (!maxScore) return 0;
+        return Math.round((score / maxScore) * 100);
+    }
+
+    function formatDate(value) {
+        if (!value) return t('quizzes.tbd');
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return t('quizzes.tbd');
+        return date.toLocaleString(isRTL ? 'ar-SA' : 'en-US');
+    }
+
+    function formatDuration(minutes) {
+        const numericMinutes = Number(minutes);
+        if (Number.isNaN(numericMinutes)) return ar(t('quizzes.minutes', { count: 0 }));
+        return ar(t('quizzes.minutes', { count: numericMinutes }));
+    }
+
+    function QuizCard({ quiz, isUpcoming, onStartQuiz, onViewResults, onReviewResults }) {
+        const scoreLabel = quiz.maxScore ? ar(t('quizzes.scoreTotal', { score: quiz.score, maxScore: quiz.maxScore })) : t('quizzes.tbd');
+        const scorePercent = quiz.maxScore ? toPercent(quiz.score, quiz.maxScore) : 0;
+        const isHighScore = scorePercent >= 80;
+        const isMidScore = scorePercent >= 50 && scorePercent < 80;
+
+        return (
+            <div className="group bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-5 hover:shadow-lg hover:border-bg-fill-accent-default-light/30 dark:hover:border-bg-fill-accent-default-dark/30 transition-all duration-200">
+                <div className="flex flex-row items-start justify-between gap-3 mb-4">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                            <BrainIcon size={16} className="text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark shrink-0" />
+                            <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                                {/* TODO: i18n - backend returns English only */}
+                                {quiz.title}
+                            </h3>
+                        </div>
+                        <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2 ms-7">
+                            {isUpcoming
+                                ? t('quizzes.upcomingMessage')
+                                : quiz.status === "Missed"
+                                    ? t('quizzes.missedMessage')
+                                    : quiz.status === "Completed" || quiz.status === "Submitted"
+                                        ? scorePercent >= 0
+                                            ? `${ar(t('quizzes.youScored', { label: scoreLabel, percent: scorePercent }))} ${isHighScore ? t('quizzes.greatWork') : isMidScore ? t('quizzes.keepPracticing') : t('quizzes.needsReview')}`
+                                            : t('quizzes.reminder')
+                                        : t('quizzes.reminder')}
+                        </p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 ${getQuizStatusStyle(quiz.status)}`}>
+                        {quiz.status === "Completed" && <CheckIcon size={11} />}
+                        {translateQuizStatus(quiz.status, t)}
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-3">
+                    <div className="col-span-2 sm:col-span-1 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3">
+                        <div className="flex items-center gap-2 text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs font-semibold uppercase tracking-wide mb-2">
+                            <CalendarDaysIcon size={14} />
+                            {t('quizzes.deadline')}
+                        </div>
+                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
+                            {quiz.dueDate}
+                        </p>
+                    </div>
+
+                    <div className="rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3">
+                        <div className="flex items-center gap-2 text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs font-semibold uppercase tracking-wide mb-2">
+                            <ClockIcon size={14} />
+                            {t('quizzes.duration')}
+                        </div>
+                        <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
+                            {quiz.duration}
+                        </p>
+                    </div>
+
+                    <div className="rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3">
+                        <div className="flex items-center gap-2 text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs font-semibold uppercase tracking-wide mb-2">
+                            <StarIcon size={14} />
+                            {t('quizzes.scoreLabel')}
+                        </div>
+
+                        <div className="flex flex-row justify-between items-center">
+                            <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
+                                {scoreLabel}
+                            </p>
+                            <p className={`text-xs font-bold ${isHighScore ? "text-green-600 dark:text-green-400" : isMidScore ? "text-amber-600 dark:text-amber-400" : "text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}>
+                                {quiz.maxScore ? ar(t('quizzes.scorePercent', { percent: scorePercent })) : t('quizzes.tbd')}
+                            </p>
+                        </div>
+                        {quiz.maxScore > 0 && (
+                            <div className="mt-2 h-1.5 w-full rounded-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all ${isHighScore ? "bg-green-500" : isMidScore ? "bg-amber-500" : "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark"}`}
+                                    style={{ width: `${scorePercent}%` }}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    {isUpcoming ? (
+                        <Button className="w-full sm:flex-1 shadow-sm hover:shadow-md transition-shadow" startIcon={<PlayIcon size={16} />} onClick={() => onStartQuiz && onStartQuiz(quiz)}>
+                            {t('quizzes.start')}
+                        </Button>
+                    ) : quiz.status === "Completed" ? (
+                        <Button className="w-full sm:flex-1" variant="secondary" startIcon={<ChartBarIcon size={16} />} onClick={() => onViewResults && onViewResults(quiz)}>
+                            {t('quizzes.viewResults')}
+                        </Button>
+                    ) : quiz.status === "Submitted" ? (
+                        <Button className="w-full sm:flex-1" variant="secondary" startIcon={<EyeIcon size={16} />} onClick={() => onReviewResults && onReviewResults(quiz)}>
+                            {t('quizzes.reviewResults')}
+                        </Button>
+                    ) : quiz.status === "Missed" ? (
+                        <Button className="w-full sm:flex-1" variant="secondary" startIcon={<EyeIcon size={16} />} onClick={() => onReviewResults && onReviewResults(quiz)}>
+                            {t('quizzes.viewExam')}
+                        </Button>
+                    ) : (
+                        <Button variant="secondary" className="w-full sm:flex-1" onClick={() => onReviewResults && onReviewResults(quiz)}>
+                            {t('quizzes.viewDetails')}
+                        </Button>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     const { data: overview = null, isLoading } = useQuery({
         queryKey: ["courseQuizzes", course?.id],
@@ -239,12 +254,12 @@ export default function CourseQuizzes() {
                         <div className="flex items-center gap-2">
                             <BrainIcon size={20} className="text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark" />
                             <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
-                                Active Quizzes
+                                {t('quizzes.activeQuizzes')}
                             </h2>
                         </div>
                         {activeQuizzes.length > 0 && (
                             <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-bold">
-                                {activeQuizzes.length}
+                                {ar(activeQuizzes.length)}
                             </span>
                         )}
                     </div>
@@ -256,7 +271,7 @@ export default function CourseQuizzes() {
                             ))
                         ) : (
                             <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark py-8 text-center h-full flex items-center justify-center">
-                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No active quizzes available right now.</p>
+                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.noActiveQuizzes')}</p>
                             </div>
                         )}
                     </div>
@@ -264,7 +279,7 @@ export default function CourseQuizzes() {
                     {activeQuizzes.length > 0 && (
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 shrink-0">
                             <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                showing {pagedActive.length} of {activeQuizzes.length} active
+                                {ar(t('quizzes.showingActive', { current: pagedActive.length, total: activeQuizzes.length }))}
                             </p>
                             <PaginationButtons totalPages={activeTotalPages} currentPage={validActivePage} setCurrentPage={setActivePage} />
                         </div>
@@ -273,7 +288,7 @@ export default function CourseQuizzes() {
 
                 <Section className="flex flex-col !mb-0">
                     <div className="mb-5 shrink-0">
-                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">Quiz History</h3>
+                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">{t('quizzes.quizHistory')}</h3>
                     </div>
 
                     <div className={`overflow-y-auto w-full min-w-0 max-h-[400px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${historyQuizzes.length === 1 ? "" : "min-h-[320px]"}`}>
@@ -292,7 +307,7 @@ export default function CourseQuizzes() {
                             </div>
                         ) : (
                             <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark py-8 text-center h-full flex items-center justify-center">
-                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No quiz history yet.</p>
+                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.noQuizHistory')}</p>
                             </div>
                         )}
                     </div>
@@ -300,7 +315,7 @@ export default function CourseQuizzes() {
                     {historyQuizzes.length > 0 && (
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 shrink-0">
                             <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                showing {pagedQuizzes.length} of {historyQuizzes.length} quizzes
+                                {ar(t('quizzes.showingQuizzes', { current: pagedQuizzes.length, total: historyQuizzes.length }))}
                             </p>
 
                             <PaginationButtons totalPages={totalPages} currentPage={validCurrentPage} setCurrentPage={setCurrentPage} />
@@ -310,22 +325,22 @@ export default function CourseQuizzes() {
             </div>
 
             <div className="hidden lg:block space-y-6">
-                <BaseComponent title="Quiz Stats" contentClassName="px-5 py-5 sm:px-6 space-y-4">
+                <BaseComponent title={t('quizzes.quizStats')} contentClassName="px-5 py-5 sm:px-6 space-y-4">
                     <div className="flex items-center justify-between p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg">
-                        <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Completed</span>
-                        <span className="text-lg font-bold text-green-600 dark:text-green-400">{completedCount}</span>
+                        <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.completed')}</span>
+                        <span className="text-lg font-bold text-green-600 dark:text-green-400">{ar(completedCount)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg">
-                        <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Active</span>
-                        <span className="text-lg font-bold text-amber-600 dark:text-amber-400">{activeQuizzes.length}</span>
+                        <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.active')}</span>
+                        <span className="text-lg font-bold text-amber-600 dark:text-amber-400">{ar(activeQuizzes.length)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg">
-                        <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Missed</span>
-                        <span className="text-lg font-bold text-red-600 dark:text-red-400">{missedCount}</span>
+                        <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.missed')}</span>
+                        <span className="text-lg font-bold text-red-600 dark:text-red-400">{ar(missedCount)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg">
-                        <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Average Score</span>
-                        <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{Math.round(averageScore)}%</span>
+                        <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.averageScore')}</span>
+                        <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{ar(Math.round(averageScore))}%</span>
                     </div>
                 </BaseComponent>
             </div>

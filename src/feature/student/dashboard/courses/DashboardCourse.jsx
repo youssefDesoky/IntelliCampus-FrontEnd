@@ -1,12 +1,15 @@
 import Button from "../../../../components/ui/Button";
 import { CalendarIcon } from "../../../../components/ui/icons";
+import { useTranslation } from "react-i18next";
+import { getLocalizedField } from '../../../../utils/getLocalizedField';
 
 export default function DashboardCourse({ courseData }) {
-    const title = courseData.courseName ?? courseData.title ?? "";
-    const id = courseData.courseCode ?? courseData.id ?? "";
-    const professor = courseData.professorName ?? courseData.professor ?? "";
-    const department = courseData.departmentName ?? courseData.department ?? "";
-    const schedule = courseData.schedule ?? "";
+    const { t, i18n } = useTranslation('student');
+    const title = getLocalizedField(courseData, 'courseName', i18n.language) ?? courseData.title ?? "";
+    const id = getLocalizedField(courseData, 'courseCode', i18n.language) ?? courseData.courseCode ?? courseData.id ?? "";
+    const professor = getLocalizedField(courseData, 'professorName', i18n.language) ?? getLocalizedField(courseData, 'instructorName', i18n.language) ?? courseData.professorName ?? courseData.professor ?? "";
+    const department = getLocalizedField(courseData, 'departmentName', i18n.language) ?? courseData.department ?? "";
+    const schedule = getLocalizedField(courseData, 'schedule', i18n.language) ?? courseData.schedule ?? "";
     const weeksCompleted = courseData.weeksCompleted ?? courseData.WeeksCompleted ?? 0;
     const totalWeeks = courseData.weeks ?? courseData.Weeks ?? 16;
     const progress = totalWeeks > 0 ? `${Math.round((weeksCompleted / totalWeeks) * 100)}%` : "0%";
@@ -31,7 +34,7 @@ export default function DashboardCourse({ courseData }) {
 
             <div className="mb-4 px-4">
                 <div className="flex justify-between mb-1">
-                    <p>Course Progress</p>
+                    <p>{t("dashboard.courseProgress")}</p>
                     <span>{progress}</span>
                 </div>
                 <div className="w-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-full h-2.5">
@@ -45,7 +48,7 @@ export default function DashboardCourse({ courseData }) {
                     <span>{schedule}</span>
                 </div>
 
-                <Button className="px-4 py-2 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark rounded-lg font-medium">Enter Classroom</Button>
+                <Button className="px-4 py-2 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark rounded-lg font-medium">{t("myCourses.enterClassroom")}</Button>
             </div>
         </div>
     );

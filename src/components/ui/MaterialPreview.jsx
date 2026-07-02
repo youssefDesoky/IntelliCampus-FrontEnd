@@ -1,4 +1,5 @@
 import { DownloadIcon, FileIcon } from "./icons";
+import { useTranslation } from 'react-i18next';
 
 const OFFICE_EXTENSIONS = ["doc", "docx", "xls", "xlsx", "ppt", "pptx"];
 const BROWSER_NATIVE_EXTENSIONS = ["pdf", "txt", "html", "htm", "xml", "json", "csv", "svg"];
@@ -27,19 +28,20 @@ function getPreviewMode(type, ext) {
 
 /** Renders a "cannot preview" fallback */
 function NoPreview({ ext, downloadUrl }) {
+    const { t } = useTranslation('common');
     return (
         <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
             <FileIcon size={48} className="text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark" />
-            <p className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Preview not available</p>
+            <p className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('labels.previewNotAvailable', 'Preview not available')}</p>
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-sm">
-                This file type (.{ext || "unknown"}) cannot be previewed in the browser. Please download it instead.
+                {t('labels.cannotPreviewFileType', 'This file type ({{ext}}) cannot be previewed in the browser. Please download it instead.', { ext: ext || 'unknown' })}
             </p>
             <a
                 href={downloadUrl}
                 download
                 className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark font-semibold hover:opacity-90 transition-opacity"
             >
-                <DownloadIcon size={18} /> Download File
+                <DownloadIcon size={18} /> {t('labels.downloadFile', 'Download File')}
             </a>
         </div>
     );

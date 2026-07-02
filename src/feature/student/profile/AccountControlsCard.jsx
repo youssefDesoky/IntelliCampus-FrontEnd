@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { KeyIcon, EnvelopIcon } from "../../../components/ui/icons";
 import ChangePasswordForm from "./ChangePasswordForm";
 import ChangeRetrievalMailForm from "./ChangeRetrievalMailForm";
@@ -10,6 +11,7 @@ const FIELD_MAP = {
 };
 
 export default function AccountControlsCard({ className = "" }) {
+    const { t } = useTranslation('student');
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
     const [isChangeRetrievalMailOpen, setIsChangeRetrievalMailOpen] = useState(false);
     const [preferences, setPreferences] = useState(null);
@@ -51,8 +53,9 @@ export default function AccountControlsCard({ className = "" }) {
     };
 
     const preferenceOptions = [
-        { id: "notifications", label: "Notifications" },
-        { id: "push", label: "Push notifications" },
+        { id: "email", label: t("profile.preferenceEmail") },
+        { id: "notifications", label: t("profile.preferenceNotifications") },
+        { id: "push", label: t("profile.preferencePush") },
     ];
 
     return (
@@ -60,10 +63,10 @@ export default function AccountControlsCard({ className = "" }) {
             <div className={`rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden shadow-xl ${className}`}>
                 <div className="px-6 py-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
                     <p className="text-xs font-bold uppercase tracking-wider text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                        Account Controls
+                        {t("profile.accountControls")}
                     </p>
                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1">
-                        Manage contact and security preferences.
+                        {t("profile.managePreferences")}
                     </p>
                 </div>
 
@@ -83,7 +86,7 @@ export default function AccountControlsCard({ className = "" }) {
                                         disabled={loading || updating === id}
                                         onChange={() => togglePreference(id)}
                                     />
-                                    <div className={`h-5 w-9 rounded-full bg-bg-fill-secondary-default-light transition-colors peer-checked:bg-bg-fill-accent-default-light peer-focus:outline-none dark:bg-bg-fill-secondary-default-dark dark:peer-checked:bg-bg-fill-accent-default-dark after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:rounded-full after:bg-bg-fill-primary-default-light after:transition-transform after:content-[''] peer-checked:after:translate-x-4 dark:after:bg-bg-fill-primary-default-dark ${loading ? 'opacity-50' : ''}`} />
+                                    <div className="h-5 w-9 rounded-full bg-bg-fill-secondary-default-light transition-colors peer-checked:bg-bg-fill-accent-default-light peer-focus:outline-none dark:bg-bg-fill-secondary-default-dark dark:peer-checked:bg-bg-fill-accent-default-dark after:absolute after:top-0.5 after:start-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4 rtl:peer-checked:after:-translate-x-4 dark:after:bg-white" />
                                 </label>
                             </div>
                         ))}
@@ -96,14 +99,14 @@ export default function AccountControlsCard({ className = "" }) {
                         className="flex w-full items-center justify-center gap-2 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-2.5 text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark transition-all hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark hover:shadow-sm"
                     >
                         <KeyIcon size={14} />
-                        Reset Password
+                        {t("profile.resetPassword")}
                     </button>
                     <button
                         onClick={() => setIsChangeRetrievalMailOpen(true)}
                         className="flex w-full items-center justify-center gap-2 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-2.5 text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark transition-all hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark hover:shadow-sm"
                     >
                         <EnvelopIcon size={14} />
-                        Change Retrieval Mail
+                        {t("profile.changeRetrievalMail")}
                     </button>
                 </div>
             </div>

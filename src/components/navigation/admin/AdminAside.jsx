@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { getNavigationLinks } from "../../../data/admin/navigationLinks";
 
 export default function AdminAside({ height }) {
-    const { t } = useTranslation('admin/aside');
+    const { t } = useTranslation('admin');
     const user = useRouteLoaderData("root");
     const userRoles = useMemo(() => (user?.roles || []).map(r => r.toLowerCase()), [user]);
 

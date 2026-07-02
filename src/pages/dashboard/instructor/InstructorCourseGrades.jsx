@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useOutletContext, useNavigate, useRouteLoaderData } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { fetchCourseGrades, getCourseWorkWeight, uploadCourseGrades } from "../../../feature/instructor/services/gradesApi";
 import { fetchClassesByCourse } from "../../../feature/instructor/services/attendanceApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import useArabicDigits from '../../../hooks/useArabicDigits.js';
 import { ChartBarIcon, FilePenIcon, BrainIcon, ExclamationIcon, ImportIcon } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
@@ -51,6 +53,8 @@ function getGradeTextColor(percent) {
 }
 
 export default function InstructorCourseGrades() {
+    const { t } = useTranslation('instructor');
+    const { convert: ar } = useArabicDigits();
     const { courseId } = useOutletContext();
     const { showError } = useError();
     const navigate = useNavigate();
@@ -131,9 +135,9 @@ export default function InstructorCourseGrades() {
     if (!grades) {
         return (
             <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
-                <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No grades available</h3>
+                <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('grades.noGrades')}</h3>
                 <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    Grades will appear once assessments are graded.
+                    {t('grades.noGradesDesc')}
                 </p>
             </div>
         );
@@ -148,7 +152,7 @@ export default function InstructorCourseGrades() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                    Grades
+                    {t('grades.title')}
                 </h2>
                 <div className="flex items-center gap-2">
                     {isProfessor && (
@@ -162,7 +166,7 @@ export default function InstructorCourseGrades() {
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
                                     <path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a6.93 6.93 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58a7.07 7.07 0 0 0-.06.94c0 .32.02.64.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
                                 </svg>
-                                <span className="hidden sm:inline">Weights</span>
+                                <span className="hidden sm:inline">{t('grades.weights')}</span>
                             </Button>
                             <Button
                                 variant="secondary"
@@ -183,13 +187,13 @@ export default function InstructorCourseGrades() {
                         className="inline-flex items-center gap-2"
                     >
                         <ExclamationIcon size={16} />
-                        <span className="hidden sm:inline">View Complaints</span>
+                        <span className="hidden sm:inline">{t('grades.viewComplaints')}</span>
                     </Button>
                 </div>
             </div>
 
             <div>
-                <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">Assessment Performance</h3>
+                <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-4">{t('grades.assessmentPerformance')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {assessments.map((a) => (
                         <div key={a.id} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 hover:shadow-lg transition-shadow duration-200">
@@ -206,13 +210,13 @@ export default function InstructorCourseGrades() {
                                     a.average >= 50 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" :
                                     "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
                                 }`}>
-                                    {a.average != null ? `${a.average}%` : "—"}
+                                    {a.average != null ? `${ar(a.average)}%` : "—"}
                                 </span>
                             </div>
                             <h4 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate mb-3">{a.title}</h4>
                             <div className="flex items-center justify-between text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mb-2.5">
-                                <span>{a.maxScore} pts</span>
-                                <span>{a.submissions} submitted</span>
+                                <span>{ar(t('grades.pts', { count: a.maxScore }))}</span>
+                                <span>{ar(t('grades.submitted', { count: a.submissions }))}</span>
                             </div>
                             {a.average != null && (
                                 <div className="h-1.5 bg-bg-surface-tertiary-default-light dark:bg-bg-surface-tertiary-default-dark rounded-full overflow-hidden">
@@ -229,17 +233,17 @@ export default function InstructorCourseGrades() {
 
             <div className="hidden sm:block">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Students</h3>
+                    <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('grades.students')}</h3>
                     {students.length > 0 && (
                         <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                            {students.length} student{students.length !== 1 ? "s" : ""}
+                            {ar(t('grades.studentCount', { count: students.length }))}
                         </span>
                     )}
                 </div>
 
                 <Table
                     role="instructor"
-                    headers={["Student", ...assessmentHeaders, "Overall"]}
+                    headers={[t('grades.student'), ...assessmentHeaders, t('grades.overall')]}
                     data={students.map(s => {
                         const row = {
                             student: (
@@ -273,7 +277,7 @@ export default function InstructorCourseGrades() {
                         );
                         return row;
                     })}
-                    columnAlignments={["text-left", ...assessments.map(() => "text-center"), "text-center"]}
+                    columnAlignments={["text-start", ...assessments.map(() => "text-center"), "text-center"]}
                     columnClassNames={columnClassNames}
                     wrapInSection={false}
                     showHeaderActions={false}

@@ -1,12 +1,15 @@
+import { useTranslation } from "react-i18next";
 import { ClockIcon, LocationDotIcon, UserTieIcon } from "../../../../components/ui/icons";
+import { getLocalizedField } from '../../../../utils/getLocalizedField';
 
 export default function ClassItem({classInfo}) {
-    const title = classInfo?.title || classInfo?.name || "Upcoming Class";
-    const time = classInfo?.time || "10:00 AM - 11:00 AM";
-    const startsIn = classInfo?.startsIn || "in 30 minutes";
-    const room = classInfo?.room || "Room TBA";
-    const professor = classInfo?.professor || "Instructor TBA";
-    const duration = classInfo?.duration || "90 mins";
+    const { t, i18n } = useTranslation('student');
+    const title = getLocalizedField(classInfo, 'title', i18n.language) || classInfo?.title || classInfo?.name || t("dashboard.defaultUpcomingClass");
+    const time = classInfo?.time || t("dashboard.defaultTime");
+    const startsIn = classInfo?.startsIn || t("dashboard.defaultStartsIn");
+    const room = getLocalizedField(classInfo, 'room', i18n.language) || classInfo?.room || t("dashboard.defaultRoom");
+    const professor = getLocalizedField(classInfo, 'professorName', i18n.language) || getLocalizedField(classInfo, 'instructorName', i18n.language) || classInfo?.professor || t("dashboard.defaultInstructor");
+    const duration = classInfo?.duration || t("dashboard.defaultDuration");
     const professorAvatar = classInfo?.professorAvatar || "/images/students/youssefAhmed/profile.png";
 
     const rawStatus = String(classInfo?.status || classInfo?.state || "").toLowerCase();
@@ -31,19 +34,19 @@ export default function ClassItem({classInfo}) {
 
     const statusMeta = {
         upcoming: {
-            label: "Upcoming",
+            label: t("dashboard.statusUpcoming"),
             classes: "bg-bg-surface-blue-default-light/60 dark:bg-bg-surface-blue-default-dark/60 text-text-secondary-default-light dark:text-text-secondary-default-dark",
         },
         ongoing: {
-            label: "Ongoing",
+            label: t("dashboard.statusOngoing"),
             classes: "bg-bg-fill-warning-default-light/20 dark:bg-bg-fill-warning-default-dark/20 text-text-warning-default-light dark:text-text-warning-default-dark",
         },
         completed: {
-            label: "Completed",
+            label: t("dashboard.statusCompleted"),
             classes: "bg-bg-surface-success-default-light/20 dark:bg-bg-surface-success-default-dark/20 text-text-success-default-light dark:text-text-success-default-dark",
         },
         cancelled: {
-            label: "Cancelled",
+            label: t("dashboard.statusCancelled"),
             classes: "bg-bg-surface-danger-default-light/20 dark:bg-bg-surface-danger-default-dark/20 text-text-danger-default-light dark:text-text-danger-default-dark",
         },
     };
@@ -56,9 +59,9 @@ export default function ClassItem({classInfo}) {
             type="class-item"
             className="group relative mb-2 overflow-hidden rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-bg-fill-accent-default-light/40 dark:hover:border-bg-fill-accent-default-dark/40"
         >
-            <div className="absolute inset-y-0 left-0 w-1.5 bg-linear-to-b from-bg-fill-accent-default-light to-bg-fill-info-default-light dark:from-bg-fill-accent-default-dark dark:to-bg-fill-info-default-dark" />
+            <div className="absolute inset-y-0 start-0 w-1.5 bg-linear-to-b from-bg-fill-accent-default-light to-bg-fill-info-default-light dark:from-bg-fill-accent-default-dark dark:to-bg-fill-info-default-dark" />
 
-            <div className="pl-5 pr-4 md:pl-6 md:pr-5 py-5 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/40 dark:bg-bg-surface-secondary-default-dark/40">
+            <div className="ps-5 pe-4 md:ps-6 md:pe-5 py-5 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/40 dark:bg-bg-surface-secondary-default-dark/40">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <p className="text-xs uppercase tracking-wide text-text-tertiary-default-light dark:text-text-tertiary-default-dark">Class Time</p>
@@ -84,7 +87,7 @@ export default function ClassItem({classInfo}) {
                 </div>
             </div>
 
-            <div className="pl-5 pr-4 md:pl-6 md:pr-5 py-4 flex items-center gap-3 bg-bg-surface-primary-default-light/80 dark:bg-bg-surface-primary-default-dark/80">
+            <div className="ps-5 pe-4 md:ps-6 md:pe-5 py-4 flex items-center gap-3 bg-bg-surface-primary-default-light/80 dark:bg-bg-surface-primary-default-dark/80">
                 <img
                     src={professorAvatar}
                     alt={professor}

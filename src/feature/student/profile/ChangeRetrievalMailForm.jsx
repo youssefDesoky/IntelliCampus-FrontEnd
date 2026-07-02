@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import InputItem from "../../../components/form/InputItem";
 import Button from "../../../components/ui/Button";
@@ -7,6 +8,7 @@ import { useError } from "../../../contexts/ErrorContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 
 export default function ChangeRetrievalMailForm({ isOpen, onClose }) {
+    const { t } = useTranslation('student');
     const { showError } = useError();
     const { showToast } = useToast();
     const [errors, setErrors] = useState({});
@@ -24,16 +26,16 @@ export default function ChangeRetrievalMailForm({ isOpen, onClose }) {
 
     const validateEmailFields = (currentPassword, newEmail, confirmEmail) => {
         const newErrors = {};
-        if (!currentPassword.trim()) newErrors.currentPassword = "Current password is required.";
+        if (!currentPassword.trim()) newErrors.currentPassword = t("profile.currentPasswordRequired");
         if (!newEmail.trim()) {
-            newErrors.newEmail = "New email is required.";
+            newErrors.newEmail = t("profile.newEmailRequired");
         } else if (!/\S+@\S+\.\S+/.test(newEmail)) {
-            newErrors.newEmail = "Please enter a valid email address.";
+            newErrors.newEmail = t("profile.invalidEmail");
         }
         if (!confirmEmail.trim()) {
-            newErrors.confirmEmail = "Please confirm your new email.";
+            newErrors.confirmEmail = t("profile.confirmEmailRequired");
         } else if (newEmail && confirmEmail !== newEmail) {
-            newErrors.confirmEmail = "Emails do not match.";
+            newErrors.confirmEmail = t("profile.emailsMismatch");
         }
         return newErrors;
     };
@@ -117,7 +119,7 @@ export default function ChangeRetrievalMailForm({ isOpen, onClose }) {
             showToast({ type: "success", title: "Email Updated", message: "Your recovery email has been changed." });
             handleClose();
         } catch (err) {
-            showError(err?.message || "Failed to change recovery email.");
+            showError(err?.message || t("profile.changeRecoveryEmailFailed"));
         } finally {
             setSubmitting(false);
         }
@@ -126,11 +128,11 @@ export default function ChangeRetrievalMailForm({ isOpen, onClose }) {
     return (
         <BaseFormComponent
             isOpen={isOpen}
-            title="Change Retrieval Mail"
-            description="Verify your new recovery email with a 6-digit code sent to it."
+            title={t("profile.changeRetrievalMail")}
+            description={t("profile.changeRetrievalMailDescription")}
             onClose={handleClose}
             onSubmit={handleSubmit}
-            submitText="Change Email"
+            submitText={t("profile.changeEmail")}
             submitDisabled={submitting || !codeSent}
             submitLoading={submitting}
             maxWidth="max-w-md"
@@ -142,26 +144,26 @@ export default function ChangeRetrievalMailForm({ isOpen, onClose }) {
                     </div>
                 )}
                 <InputItem
-                    label="Current Password"
+                    label={t("profile.currentPassword")}
                     type="password"
                     name="currentPassword"
-                    placeholder="Enter current password"
+                    placeholder={t("profile.enterCurrentPassword")}
                     errorMessage={errors.currentPassword}
                 />
                 <InputItem
-                    label="New Recovery Email"
+                    label={t("profile.newRecoveryEmail")}
                     type="email"
                     name="newEmail"
-                    placeholder="Enter new email"
+                    placeholder={t("profile.enterNewEmail")}
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     errorMessage={errors.newEmail}
                 />
                 <InputItem
-                    label="Confirm New Email"
+                    label={t("profile.confirmNewEmail")}
                     type="email"
                     name="confirmEmail"
-                    placeholder="Re-enter new email"
+                    placeholder={t("profile.reenterNewEmail")}
                     errorMessage={errors.confirmEmail}
                 />
 
