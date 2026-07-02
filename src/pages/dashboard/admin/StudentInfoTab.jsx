@@ -22,11 +22,12 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
     const { t, i18n } = useTranslation('admin');
     const { convert: ar } = useArabicDigits();
     const isBachelor = student.studentType === "Bachelor";
+    const isOnProbation = student.isOnProbation === true;
     return (
         <div className="space-y-6">
             <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                    { label: t('studentDetails.gpa'), value: ar(student.gpa ?? "—"), color: "text-emerald-500", icon: ChartLineIcon },
+                    { label: t('studentDetails.gpa'), value: ar(student.gpa ?? "—"), color: "text-emerald-500", icon: ChartLineIcon, probation: isOnProbation },
                     ...(isBachelor
                         ? [{ label: t('studentDetails.level'), value: ar(student.level ?? "—"), color: "text-blue-500", icon: BookIcon }]
                         : [{ label: t('studentDetails.type'), value: student.studentType ?? "—", color: "text-blue-500", icon: BookIcon }]
@@ -40,7 +41,14 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                         </div>
                         <div>
                             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{stat.label}</p>
-                            <p className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{stat.value}</p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{stat.value}</p>
+                                {stat.probation && (
+                                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark text-text-warning-default-light dark:text-text-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
+                                        Probation
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -73,7 +81,14 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                         <div className="grid grid-cols-2 gap-3 w-full">
                             <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
                                 <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.gpa')}</span>
-                                <span className="text-2xl font-extrabold text-emerald-500">{ar(student.gpa ?? "—")}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl font-extrabold text-emerald-500">{ar(student.gpa ?? "—")}</span>
+                                    {isOnProbation && (
+                                        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark text-text-warning-default-light dark:text-text-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
+                                            Probation
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
                                 <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{isBachelor ? t('studentDetails.program') : t('studentDetails.specialization')}</span>

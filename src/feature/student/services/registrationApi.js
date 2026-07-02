@@ -33,3 +33,14 @@ export async function unregisterFromCourse(courseId) {
   await apiClient(`/api/registration/${courseId}`, { method: "DELETE" });
   return true;
 }
+
+export async function fetchRegistrationSettings() {
+  return apiClient('/api/registration/settings');
+}
+
+export async function changeCourseSection(courseId, classId) {
+  return apiClient(`/api/registration/${courseId}/section`, {
+    method: "PATCH",
+    body: JSON.stringify({ classId }),
+  });
+}

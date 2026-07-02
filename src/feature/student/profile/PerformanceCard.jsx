@@ -94,16 +94,31 @@ export default function PerformanceCard({ user = {}, loading = false }) {
     const { convert: ar } = useArabicDigits();
     const performanceStats = useMemo(() => buildPerformanceStats(user, t), [user, t]);
 
+    const isOnProbation = user.isOnProbation === true;
+    const probationThreshold = user.probationThreshold;
+
     return (
         <div className="rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-linear-to-r from-bg-surface-secondary-default-light to-bg-surface-primary-default-light dark:from-bg-surface-secondary-default-dark dark:to-bg-surface-primary-default-dark">
                 <div>
+                <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                         {t("profile.academicPerformance")}
                     </h3>
+                    {isOnProbation && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark text-text-warning-default-light dark:text-text-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
+                            {t("profile.probation")}
+                        </span>
+                    )}
+                </div>
                     <p className="text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-0.5">
                         {t("profile.currentStanding")}
                     </p>
+                    {isOnProbation && (
+                        <p className="text-[11px] text-text-warning-default-light dark:text-text-warning-default-dark mt-0.5 font-medium">
+                            GPA {user.gpa?.toFixed(2)} below {probationThreshold} threshold
+                        </p>
+                    )}
                 </div>
                 <button
                     onClick={() => navigate("/courses/transcript")}

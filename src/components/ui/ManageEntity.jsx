@@ -406,8 +406,8 @@ export default function ManageEntity({
                   const row = tableRows[rowIndex];
                   if (row?._raw) setDeleteTarget(row._raw);
                 }}
-                onPreview={(rowData) => onPreview?.(rowData._raw || rowData)}
-                actions={(rowData) => rowActions(rowData._raw, actionsHelpers)}
+                onPreview={(rowData) => onPreview?.(rowData?._raw || rowData)}
+                actions={(rowData) => rowData ? rowActions(rowData._raw, actionsHelpers) : []}
               />
             </div>
           ) : (

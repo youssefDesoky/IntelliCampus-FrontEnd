@@ -157,22 +157,13 @@ export default function ManageCourses() {
         item.isActive
           ? { label: t('manageCourses.deactivate'), onClick: async () => { await deactivateCourse(item.courseId); await loadItems(); setSuccessMessage(t('manageCourses.deactivateSuccess', { name: getLocalizedField(item, 'courseName', i18n.language) })); }, className: "text-text-warning-default-light dark:text-text-warning-default-dark" }
           : { label: t('manageCourses.reactivate'), onClick: async () => { await reactivateCourse(item.courseId); await loadItems(); setSuccessMessage(t('manageCourses.reactivateSuccess', { name: getLocalizedField(item, 'courseName', i18n.language) })); }, className: "text-text-success-default-light dark:text-text-success-default-dark" },
-        {
+        ...(item.isActive ? [{
           label: t('manageCourses.delete'),
-          onClick: async () => {
-            if (item.isActive) {
-              try {
-                await deactivateCourse(item.courseId);
-                await loadItems();
-              } catch (err) {
-                showError(err.message);
-                return;
-              }
-            }
-            onDelete(item);
-          },
+          onClick: () => onDelete(item),
           className: "text-text-danger-default-light dark:text-text-danger-default-dark",
-        },
+        }] : []),
+          className: "text-text-danger-default-light dark:text-text-danger-default-dark",
+        }] : []),
       ]}
       renderBeforeTable={({ selectedRowIds, rawItems, loadItems }) => {
         if (selectedRowIds.length === 0) return null;

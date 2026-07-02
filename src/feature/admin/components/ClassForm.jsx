@@ -129,6 +129,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
             };
             if (isEdit) {
                 base.instructorId = selectedInstructor?.value;
+                if (capacity) base.capacity = parseInt(capacity);
             } else {
                 base.instructorName = selectedInstructor?.label || selectedInstructor?.fullName || "";
                 if (capacity) base.capacity = parseInt(capacity);

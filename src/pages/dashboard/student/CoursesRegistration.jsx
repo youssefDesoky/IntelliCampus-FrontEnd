@@ -12,7 +12,6 @@ import Dialog from "../../../components/ui/Dialog";
 import { FileLinesIcon, CalendarIcon, AngleDownIcon } from "../../../components/ui/icons";
 
 import CourseCard from "../../../feature/student/courses/courseRegister/CourseCard";
-import CourseRegistrationNote from "../../../feature/student/courses/courseRegister/CourseRegistrationNote";
 import CourseRegistrationHeader from "../../../feature/student/courses/courseRegister/CourseRegistrationHeader";
 import CoursesRegistrationActionButtons from "../../../feature/student/courses/courseRegister/CourseRegistrationActionButtons";
 import { RegistrationPageSkeleton } from "../../../feature/student/courses/courseRegister/SkeletonLoader";
@@ -23,6 +22,8 @@ import {
     getMyRegistrations,
     registerForCourse,
     unregisterFromCourse,
+    fetchRegistrationSettings,
+    changeCourseSection,
 } from "../../../feature/student/courses/courseRegister/registrationApi";
 import { fetchMySchedule } from "../../../feature/student/schedule/scheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
@@ -36,19 +37,22 @@ export default function CoursesRegistration() {
     const { isDesktop, isMobile } = useDeviceType();
     const { convert: ar } = useArabicDigits();
 
-    const mapRegistrationToCard = (reg) => ({
-        id:          getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? reg.courseId ?? "",
-        title:       getLocalizedField(reg, 'courseName', i18n.language)  ?? "",
-        code:        getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? "",
-        creditHours: reg.creditHours ?? "",
-        professor:   getLocalizedField(reg, 'professorName', i18n.language) ?? getLocalizedField(reg, 'instructorName', i18n.language) ?? reg.professorName ?? reg.professor ?? "",
-        avatar:      reg.professorAvatar ?? reg.instructorAvatar ?? reg.avatar ?? null,
-        schedule:    getLocalizedField(reg, 'schedule', i18n.language) ?? reg.schedule ?? "",
-        room:        getLocalizedField(reg, 'room', i18n.language) ?? reg.roomAr ?? reg.room ?? "",
-        courseId:     reg.courseId,
-        classId:      reg.classId,
-        isRegistered: true,
-    });
+    const mapRegistrationToCard = (reg) => {
+        const scheduleParts = [reg.day, reg.startTime && reg.endTime ? `${reg.startTime} - ${reg.endTime}` : ""].filter(Boolean);
+        return {
+            id:          getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? reg.courseId ?? "",
+            title:       getLocalizedField(reg, 'courseName', i18n.language)  ?? "",
+            code:        getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? "",
+            creditHours: reg.creditHours ?? "",
+            professor:   getLocalizedField(reg, 'professorName', i18n.language) ?? getLocalizedField(reg, 'instructorName', i18n.language) ?? reg.professorName ?? reg.professor ?? "",
+            avatar:      reg.professorAvatar ?? reg.instructorAvatar ?? reg.avatar ?? null,
+            schedule:    getLocalizedField(reg, 'schedule', i18n.language) ?? reg.schedule ?? scheduleParts.join(" ") ?? "",
+            room:        getLocalizedField(reg, 'room', i18n.language) ?? reg.roomAr ?? reg.room ?? "",
+            courseId:     reg.courseId,
+            classId:      reg.classId,
+            isRegistered: true,
+        };
+    };
 
     const mapActiveCourseToCard = (course) => ({
         id:            getLocalizedField(course, 'courseCode', i18n.language) ?? course.courseCode  ?? course.code ?? course.courseId ?? course.id ?? "",
@@ -69,6 +73,8 @@ export default function CoursesRegistration() {
     const [locallyAddedCourses, setLocallyAddedCourses] = useState([]);
     const [sectionOptionsByCourseId, setSectionOptionsByCourseId] = useState({});
     const [selectedSectionByCourseId, setSelectedSectionByCourseId] = useState({});
+    const [courseClassesData, setCourseClassesData] = useState({});
+    const [registrationSettings, setRegistrationSettings] = useState(null);
     const [activeFilter, setActiveFilter] = useState("all");
     const [searchValue, setSearchValue] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -96,10 +102,20 @@ export default function CoursesRegistration() {
     });
 
     const { data: scheduleData = [], isLoading: schedulePreviewLoading } = useQuery({
-        queryKey: ["studentSchedule"],
+        queryKey: ["studentSchedule", "registration"],
         queryFn: fetchMySchedule,
-        staleTime: 5 * 60 * 1000,
+        staleTime: 2 * 60 * 1000,
     });
+
+    const { data: settingsData } = useQuery({
+        queryKey: ["registrationSettings"],
+        queryFn: fetchRegistrationSettings,
+        staleTime: 2 * 60 * 1000,
+    });
+
+    useEffect(() => {
+        if (settingsData) setRegistrationSettings(settingsData);
+    }, [settingsData]);
 
     const selectedCourses = useMemo(() => {
         const serverSelected = (registrationData?.registrations || []).map(mapRegistrationToCard);
@@ -136,12 +152,77 @@ export default function CoursesRegistration() {
     const [scheduleOpen, setScheduleOpen] = useState(false);
     const schedulePreview = Array.isArray(scheduleData) ? scheduleData : [];
 
+    const mergedSchedulePreview = useMemo(() => {
+        const serverEvents = Array.isArray(scheduleData) ? scheduleData : [];
+        const pendingEvents = [];
+
+        locallyAddedCourses.forEach((course) => {
+            const classes = courseClassesData[course.courseId];
+            if (!classes) return;
+
+            const toDayKey = (dayStr) => {
+                if (!dayStr) return null;
+                const d = dayStr.toLowerCase().slice(0, 3);
+                return d === "sat" ? "sat" : d === "sun" ? "sun" : d === "mon" ? "mon"
+                    : d === "tue" ? "tue" : d === "wed" ? "wed" : d === "thu" ? "thu"
+                    : d === "fri" ? "fri" : d;
+            };
+
+            const formatTime = (time) => {
+                if (!time) return null;
+                if (typeof time === "string") return time;
+                const h = time.hours ?? time.hour ?? 0;
+                const m = time.minutes ?? time.minute ?? 0;
+                const period = h >= 12 ? "PM" : "AM";
+                const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                return `${hour12.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} ${period}`;
+            };
+
+            if (classes.lecture) {
+                const lec = classes.lecture;
+                const dayKey = toDayKey(lec.dayName ?? lec.day ?? "");
+                if (dayKey) {
+                    pendingEvents.push({
+                        day: dayKey,
+                        startTime: formatTime(lec.startTime),
+                        endTime: formatTime(lec.endTime),
+                        title: course.title,
+                        location: lec.room ?? "",
+                        type: "lecture",
+                        instructor: lec.instructorName ?? "",
+                    });
+                }
+            }
+
+            const selectedSectionOpt = selectedSectionByCourseId[course.courseId];
+            if (selectedSectionOpt) {
+                const sectionClass = classes.sections.find((s) => (s.classId ?? s.id) === selectedSectionOpt.value);
+                if (sectionClass) {
+                    const dayKey = toDayKey(sectionClass.dayName ?? sectionClass.day ?? "");
+                    if (dayKey) {
+                        pendingEvents.push({
+                            day: dayKey,
+                            startTime: formatTime(sectionClass.startTime),
+                            endTime: formatTime(sectionClass.endTime),
+                            title: course.title,
+                            location: sectionClass.room ?? "",
+                            type: "section",
+                            instructor: sectionClass.instructorName ?? "",
+                        });
+                    }
+                }
+            }
+        });
+
+        return [...serverEvents, ...pendingEvents];
+    }, [scheduleData, locallyAddedCourses, courseClassesData, selectedSectionByCourseId]);
+
     const selectedCredits = selectedCourses.reduce(
         (sum, c) => sum + (typeof c.creditHours === 'number' ? c.creditHours : 0),
         0
     );
 
-    /* ── Load sections for selected courses ── */
+    /* ── Load sections & class data for selected courses ── */
     useEffect(() => {
         let isMounted = true;
 
@@ -152,6 +233,7 @@ export default function CoursesRegistration() {
 
             if (courseIds.length === 0) {
                 setSectionOptionsByCourseId({});
+                setCourseClassesData({});
                 return;
             }
 
@@ -164,6 +246,10 @@ export default function CoursesRegistration() {
                             const type = (cls.classTypeName ?? cls.classType ?? cls.type ?? "").toString().toLowerCase();
                             return type === "section";
                         });
+                        const lecture = list.find((cls) => {
+                            const type = (cls.classTypeName ?? cls.classType ?? cls.type ?? "").toString().toLowerCase();
+                            return type === "lecture";
+                        });
 
                         const options = sections.map((cls) => {
                             const groupName = cls.groupCode ?? cls.group ?? cls.groupName ?? cls.className ?? "";
@@ -175,18 +261,21 @@ export default function CoursesRegistration() {
                             };
                         });
 
-                        return { courseId, options };
+                        return { courseId, options, lecture, sections, allClasses: list };
                     })
                 );
 
                 if (!isMounted) return;
 
                 const optionsMap = {};
-                results.forEach(({ courseId, options }) => {
+                const classesMap = {};
+                results.forEach(({ courseId, options, lecture, sections, allClasses }) => {
                     optionsMap[courseId] = options;
+                    classesMap[courseId] = { lecture, sections, allClasses };
                 });
 
                 setSectionOptionsByCourseId(optionsMap);
+                setCourseClassesData(classesMap);
 
                 setSelectedSectionByCourseId((prev) => {
                     const next = { ...prev };
@@ -247,13 +336,36 @@ export default function CoursesRegistration() {
 
     const handleConfirmRegistration = async () => {
         const pending = selectedCourses.filter((c) => !c.isRegistered);
-        if (pending.length === 0) return;
+        if (pending.length === 0 && selectedCourses.length === 0) return;
 
         for (const course of pending) {
             const section = selectedSectionByCourseId[course.courseId];
             if (!section?.value) {
                 showError(t('registration.selectSection', { title: course.title }));
                 return;
+            }
+        }
+
+        const settings = registrationSettings;
+        if (settings) {
+            const totalCredits = selectedCourses.reduce(
+                (sum, c) => sum + (typeof c.creditHours === 'number' ? c.creditHours : 0),
+                0
+            );
+            const isSummer = settings.semester?.toLowerCase().startsWith("summer") ?? false;
+            if (settings.effectiveMaxCreditHours != null && totalCredits > settings.effectiveMaxCreditHours) {
+                showError(`Total credits (${totalCredits}) exceed the maximum of ${settings.effectiveMaxCreditHours}.`);
+                return;
+            }
+            if (!isSummer && settings.minCreditHoursPerSemester != null && totalCredits < settings.minCreditHoursPerSemester) {
+                showError(`Total credits (${totalCredits}) are below the minimum of ${settings.minCreditHoursPerSemester}.`);
+                return;
+            }
+            if (settings.isOnProbation) {
+                if (settings.probationRegistrationLimit != null && totalCredits > settings.probationRegistrationLimit) {
+                    showError(`You are on academic probation (GPA: ${settings.currentGpa?.toFixed(2)}). Maximum credits limited to ${settings.probationRegistrationLimit}.`);
+                    return;
+                }
             }
         }
 
@@ -265,15 +377,36 @@ export default function CoursesRegistration() {
             try {
                 await registerForCourse(course.courseId, section.value);
                 successMsgs.push(t('registration.registerSuccess', { title: course.title }));
-            } catch {
-                failureMsgs.push(t('registration.registerError', { title: course.title }));
+            } catch (err) {
+                const msg = err?.message || err?.toString() || "Unknown error";
+                failureMsgs.push(t('registration.registerError', { title: course.title }) + `: ${msg}`);
+            }
+        }
+
+        const registeredCourses = selectedCourses.filter((c) => c.isRegistered);
+        for (const course of registeredCourses) {
+            const newSection = selectedSectionByCourseId[course.courseId];
+            if (newSection && newSection.value !== course.classId) {
+                try {
+                    await changeCourseSection(course.courseId, newSection.value);
+                    successMsgs.push(`Changed section for ${course.title}`);
+                } catch (err) {
+                    const msg = err?.message || err?.toString() || "Unknown error";
+                    failureMsgs.push(`Failed to change section for ${course.title}: ${msg}`);
+                }
+            }
+        }
             }
         }
 
         setLocallyAddedCourses([]);
         await queryClient.invalidateQueries({ queryKey: ["coursesRegistration"] });
+        await queryClient.invalidateQueries({ queryKey: ["studentSchedule", "registration"] });
 
-        if (failureMsgs.length === 0) {
+        if (failureMsgs.length === 0 && successMsgs.length === 0) {
+            setResultDialogVariant("info");
+            setResultDialogMessage("No changes were made.");
+        } else if (failureMsgs.length === 0) {
             setResultDialogVariant("success");
             setResultDialogMessage(successMsgs.join(", ") + " " + t('registration.successSuffix'));
         } else if (successMsgs.length === 0) {
@@ -297,6 +430,7 @@ export default function CoursesRegistration() {
                 onFilterChange={setActiveFilter}
                 searchValue={searchValue}
                 onSearchChange={setSearchValue}
+                registrationSettings={registrationSettings}
             />
 
             {loading ? (
@@ -401,9 +535,9 @@ export default function CoursesRegistration() {
                             {schedulePreviewLoading ? (
                                 <div className="animate-pulse bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl h-48 w-full" />
                             ) : isMobile ? (
-                                <WeeklyScheduleAgenda days={days} schedule={schedulePreview} variant="default" />
+                                <WeeklyScheduleAgenda days={days} schedule={mergedSchedulePreview} variant="default" />
                             ) : (
-                                <WeeklySchedule schedule={schedulePreview} />
+                                <WeeklySchedule schedule={mergedSchedulePreview} />
                             )}
                         </div>
                     )}
@@ -412,7 +546,6 @@ export default function CoursesRegistration() {
                 {/* Bottom action bar */}
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-t-2 border-border-primary-default-light dark:border-border-primary-default-dark pt-6">
                     <CoursesRegistrationActionButtons onConfirm={handleConfirmRegistration} />
-                    <CourseRegistrationNote />
                 </div>
             </div>
             )}

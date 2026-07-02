@@ -63,7 +63,7 @@ export default function InstructorDetails() {
         if (!emailSubject.trim() || !emailBody.trim()) return;
         setSendingEmail(true);
         try {
-            await sendEmail({ to: instructor.email, subject: emailSubject, body: emailBody });
+            await sendEmail({ recipientEmail: instructor.email, subject: emailSubject, body: emailBody });
             setIsEmailOpen(false);
             setEmailSubject("");
             setEmailBody("");
