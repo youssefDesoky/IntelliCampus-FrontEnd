@@ -11,6 +11,13 @@ import { fileGradeComplaint } from "../../../services/gradeApi";
 import { useToast } from "../../../../../contexts/ToastContext";
 import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
+const complaintTypes = [
+	{ value: "quiz", label: "Quiz" },
+	{ value: "assignment", label: "Assignment" },
+	{ value: "midterm", label: "Midterm" },
+	{ value: "project", label: "Project" },
+];
+
 export default function GradeComplaint({ className = "", items = [], compact = false, courseId }) {
 	const { t } = useTranslation('student');
 	const { convert: ar } = useArabicDigits();

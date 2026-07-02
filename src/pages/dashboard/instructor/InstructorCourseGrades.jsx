@@ -76,17 +76,6 @@ export default function InstructorCourseGrades() {
         c => c.classTypeName === "Lecture" && c.instructorId === user?.userId
     );
 
-    const { data: classes } = useQuery({
-        queryKey: ["courseClasses", courseId],
-        queryFn: () => fetchClassesByCourse(courseId),
-        staleTime: 5 * 60 * 1000,
-        enabled: !!courseId,
-    });
-
-    const isProfessor = classes?.some(
-        c => c.classTypeName === "Lecture" && c.instructorId === user?.userId
-    );
-
     const {
         data: grades,
         isLoading: loading,
@@ -187,7 +176,7 @@ export default function InstructorCourseGrades() {
                                 className="inline-flex items-center gap-2"
                             >
                                 <ImportIcon size={16} />
-                                <span className="hidden sm:inline">{uploading ? "Uploading..." : "Upload Midterm Grade"}</span>
+                                <span className="hidden sm:inline">{uploading ? t('grades.uploading') : t('grades.uploadMidterm')}</span>
                             </Button>
                         </>
                     )}
