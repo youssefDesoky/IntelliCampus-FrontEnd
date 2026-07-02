@@ -11,9 +11,10 @@ import {
     ChartBarIcon,
     ChartLineIcon,
     SandClockIcon,
+    WarningIcon,
 } from "../../../../components/ui/icons";
 
-const MAX_CREDITS = 18;
+const DEFAULT_MAX_CREDITS = 18;
 
 const filterOptions = [
     { value: "all", label: "All Courses", icon: FilterIcon },
@@ -49,15 +50,22 @@ export default function CourseRegistrationHeader({
     onFilterChange,
     searchValue = "",
     onSearchChange,
+    registrationSettings = null,
 }) {
     const isSmall = useMediaQuery('(max-width: 639px)');
+
+    const maxCredits = registrationSettings?.effectiveMaxCreditHours ?? DEFAULT_MAX_CREDITS;
+    const minCredits = registrationSettings?.minCreditHoursPerSemester ?? null;
+    const isOnProbation = registrationSettings?.isOnProbation ?? false;
+    const currentGpa = registrationSettings?.currentGpa ?? 0;
+    const isSummer = (registrationSettings?.semester ?? "").toLowerCase().startsWith("summer");
 
     const selectedCredits = selectedCourses.reduce(
         (sum, c) => sum + (typeof c.creditHours === "number" ? c.creditHours : 0),
         0
     );
-    const remainingCredits = Math.max(0, MAX_CREDITS - selectedCredits);
-    const progressPercent = Math.min(100, (selectedCredits / MAX_CREDITS) * 100);
+    const remainingCredits = Math.max(0, maxCredits - selectedCredits);
+    const progressPercent = Math.min(100, (selectedCredits / maxCredits) * 100);
 
     const progressTextColor = useMemo(() => {
         if (progressPercent >= 100) return "text-text-danger-default-light dark:text-text-danger-default-dark";
@@ -69,7 +77,7 @@ export default function CourseRegistrationHeader({
     return (
         <PageHeader
             title="Course Registration"
-            subtitle="Spring 2026 Semester"
+            subtitle={registrationSettings?.semester ?? "Spring 2026"}
             headerDir="col"
         >
             <div className="flex flex-col gap-5 w-full">
@@ -91,7 +99,7 @@ export default function CourseRegistrationHeader({
                                         {selectedCredits}
                                     </span>
                                     <span className="text-[10px] text-text-secondary-active-light dark:text-text-secondary-active-dark font-medium">
-                                        / {MAX_CREDITS}
+                                        / {maxCredits}
                                     </span>
                                 </div>
                             </CircularProgress>
@@ -125,13 +133,34 @@ export default function CourseRegistrationHeader({
                             />
                             <StatCard
                                 icon={ChartLineIcon}
-                                value={MAX_CREDITS}
+                                value={maxCredits}
                                 label="Maximum"
                                 colorClass="bg-bg-fill-secondary-active-light dark:bg-bg-fill-secondary-active-dark"
                                 delay={200}
                             />
                         </div>
                     </div>
+
+                    {isOnProbation && (
+                        <div className="mt-3 flex items-center gap-2 p-3 rounded-lg bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
+                            <WarningIcon className="w-5 h-5 text-text-warning-default-light dark:text-text-warning-default-dark shrink-0" />
+                            <p className="text-xs font-medium text-text-warning-default-light dark:text-text-warning-default-dark">
+                                Academic Probation &mdash; GPA: {currentGpa.toFixed(2)}
+                                {registrationSettings?.probationRegistrationLimit
+                                    ? ` (Max ${registrationSettings.probationRegistrationLimit} credits)`
+                                    : ""}
+                            </p>
+                        </div>
+                    )}
+
+                    {!isSummer && minCredits != null && selectedCredits > 0 && selectedCredits < minCredits && (
+                        <div className="mt-3 flex items-center gap-2 p-3 rounded-lg bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
+                            <WarningIcon className="w-5 h-5 text-text-warning-default-light dark:text-text-warning-default-dark shrink-0" />
+                            <p className="text-xs font-medium text-text-warning-default-light dark:text-text-warning-default-dark">
+                                Minimum {minCredits} credits required per semester. Currently at {selectedCredits}.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Filters & Search */}

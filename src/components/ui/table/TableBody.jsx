@@ -1,10 +1,21 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import DropdownMenu from "../DropdownMenu";
-import { EllipsisVerticalIcon } from "../icons";
+import { EllipsisVerticalIcon, EyeIcon, FilePenIcon, TrashIcon, UserPlusIcon } from "../icons";
 import Dialog from "../Dialog";
 import AdminForm from "../../../feature/admin/components/AdminForm";
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 import StudentForm from "../../../feature/admin/components/StudentForm";
+
+const actionIcon = (label) => {
+    const map = {
+        'View Details': EyeIcon,
+        'Edit': FilePenIcon,
+        'Delete': TrashIcon,
+        'Assign Role': UserPlusIcon,
+    };
+    const Icon = map[label];
+    return Icon ? <Icon size={20} className="inline-block mr-2" /> : null;
+};
 
 const buttonStyle = "w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
 
@@ -174,12 +185,13 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 						actions(rowData[actionButtonClicked], actionButtonClicked).map((action, i) => (
 							<button
 								key={i}
-								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark ${action.className || ""}`}
+								className={`${buttonStyle} ${action.className || "text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark"}`}
 								onClick={() => {
 									action.onClick();
 									setActionButtonClicked(null);
 								}}
 							>
+								{actionIcon(action.label)}
 								{action.label}
 							</button>
 						))
@@ -189,18 +201,21 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
 								onClick={() => { onPreview?.(rowData[actionButtonClicked]?._raw ?? rowData[actionButtonClicked]); setActionButtonClicked(null); }}
 							>
+								<EyeIcon size={20} className="inline-block mr-2" />
 								View Details
 							</button>
 							<button 
 								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
 								onClick={() => handleEditClick(actionButtonClicked)}
 							>
+								<FilePenIcon size={20} className="inline-block mr-2" />
 								Edit
 							</button>
 							<button 
 								className={`${buttonStyle} text-text-danger-default-light dark:text-text-danger-default-dark hover:text-text-danger-hover-light dark:hover:text-text-danger-default-dark`}
 								onClick={() => handleDeleteClick(actionButtonClicked)}
 							>
+								<TrashIcon size={20} className="inline-block mr-2" />
 								Delete
 							</button>
 						</>

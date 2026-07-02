@@ -105,7 +105,7 @@ export default function ManageStudents() {
         return items;
       }}
       getDeleteMessage={(item) => (
-        <>Are you sure you want to delete <strong>{item?.fullName}</strong> ({item?.studentId})? This action cannot be undone.</>
+        <>Are you sure you want to delete <strong>{item?.fullName}</strong>? This action cannot be undone.</>
       )}
       renderFilters={({ rawItems, setCurrentPage }) => {
         const departments = [...new Set(rawItems.map(s => s.department || s.departmentName || s.faculty).filter(Boolean))].sort();

@@ -42,7 +42,7 @@ export async function fetchStudentCompletedCourses(studentId) {
 }
 
 export async function fetchAvailableCoursesForStudent(studentId) {
-    const result = await apiClient('/api/Courses/active?PageSize=50');
+    const result = await apiClient(`/api/Courses/active?PageSize=50&StudentId=${studentId}`);
     return result?.data ?? result ?? [];
 }
 

@@ -3,16 +3,30 @@ import apiClient from "../../../api/apiClient";
 // ─── Courses ────────────────────────────────────────────────
 
 export async function fetchCourses(params = {}) {
-    const { search, status, departmentId, isActiveOnly } = params;
+    const { search, status, departmentId, isActiveOnly, pageSize } = params;
     const query = new URLSearchParams();
     if (search) query.set('search', search);
     if (status) query.set('status', status);
     if (departmentId) query.set('departmentId', departmentId);
     if (isActiveOnly) query.set('isActiveOnly', 'true');
-    query.set('PageSize', '500');
+    query.set('PageSize', pageSize ?? '200');
     const qs = query.toString();
     const result = await apiClient(`/api/courses?${qs}`);
     return result?.data ?? result ?? [];
+}
+
+export async function fetchCoursesPaginated({ pageIndex, pageSize, searchQuery, departmentId } = {}) {
+    const query = new URLSearchParams();
+    if (pageIndex) query.set('PageIndex', pageIndex);
+    if (pageSize) query.set('PageSize', pageSize);
+    if (searchQuery) query.set('search', searchQuery);
+    if (departmentId) query.set('departmentId', departmentId);
+    const qs = query.toString();
+    const result = await apiClient(`/api/courses?${qs}`);
+    return {
+        data: result?.data ?? [],
+        totalCount: result?.totalCount ?? 0,
+    };
 }
 
 export async function fetchCourseById(id) {
@@ -26,6 +40,7 @@ function toCoursePayload(data) {
         courseCodeAr: data.courseCodeAr,
         courseCode: data.courseId,
         departmentName: data.departmentName || data.departmentId || "",
+        creditHours: data.creditHours,
         description: data.description,
         descriptionAr: data.descriptionAr,
     };

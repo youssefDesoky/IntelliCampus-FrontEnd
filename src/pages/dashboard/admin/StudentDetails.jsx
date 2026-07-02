@@ -69,7 +69,7 @@ export default function StudentDetails() {
         if (!emailSubject.trim() || !emailBody.trim()) return;
         setSendingEmail(true);
         try {
-            await sendEmail({ to: student.email, subject: emailSubject, body: emailBody });
+            await sendEmail({ recipientEmail: student.email, subject: emailSubject, body: emailBody });
             setIsEmailOpen(false);
             setEmailSubject("");
             setEmailBody("");

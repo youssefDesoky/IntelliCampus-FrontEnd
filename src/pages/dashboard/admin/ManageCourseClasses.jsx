@@ -274,6 +274,7 @@ export default function ManageCourseClasses() {
             schedule: scheduleStr,
             room: cls.room,
             roomId: cls.roomId,
+            capacity: cls.capacity,
         });
     };
 
@@ -450,6 +451,7 @@ export default function ManageCourseClasses() {
                     onClose={() => setEditingClass(null)}
                     onSubmit={handleEditSubmit}
                     courseDepartment={course?.departmentName || course?.department || ""}
+                    classType={editingClass.type}
                 />
             )}
 
