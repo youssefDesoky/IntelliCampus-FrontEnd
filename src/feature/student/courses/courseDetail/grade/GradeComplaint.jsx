@@ -14,7 +14,6 @@ const complaintTypes = [
 	{ value: "assignment", label: "Assignment" },
 	{ value: "midterm", label: "Midterm" },
 	{ value: "project", label: "Project" },
-	{ value: "final", label: "Final Exam" },
 ];
 
 export default function GradeComplaint({ className = "", items = [], compact = false, courseId }) {
