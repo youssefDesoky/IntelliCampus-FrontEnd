@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { ar } from 'date-fns/locale';
 import {
   AreaChart,
   Area,
@@ -55,15 +57,6 @@ const statIconStyles = {
   rooms:         "bg-cyan-100   dark:bg-bg-surface-cyan-default-dark",
 };
 
-const statLabels = {
-  totalStudents: "Total Students",
-  instructors:   "Instructors",
-  courses:       "Courses",
-  departments:   "Departments",
-  activeClasses: "Active Classes",
-  rooms:         "Rooms",
-};
-
 const GRADE_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#f97316", "#ef4444"];
 const COURSE_STATUS_COLORS = ["#22c55e", "#f59e0b"];
 
@@ -90,15 +83,16 @@ function CustomTooltip({ active, payload, label }) {
 
 // ─── Chart components ─────────────────────────────────────────────────────────
 
-function AttendanceTrendChart({ data }) {
+function AttendanceTrendChart({ data, t }) {
   return (
     <ChartCard
-      title="Attendance Rate"
-      subtitle="Weekly attendance % across all classes"
-      chartType="area" chartData={data} categoryField="week" series={[{ field: "attendance", name: "Attendance %" }]}
+      title={t('dashboard.attendanceRate')}
+      subtitle={t('dashboard.attendanceSubtitle')}
+      chartType="area" chartData={data} categoryField="week" series={[{ field: "attendance", name: t('dashboard.attendancePercent') }]}
     >
-      <ResponsiveContainer width="100%" height={210}>
-        <AreaChart data={data} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+      <div dir="ltr">
+        <ResponsiveContainer width="100%" height={210}>
+          <AreaChart data={data} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
           <defs>
             <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.2} />
@@ -125,20 +119,21 @@ function AttendanceTrendChart({ data }) {
           <Area
             type="monotone"
             dataKey="attendance"
-            name="Attendance %"
+            name={t('dashboard.attendancePercent')}
             stroke="#3b82f6"
             strokeWidth={2}
             fill="url(#enrollGrad)"
             dot={false}
             activeDot={{ r: 4, strokeWidth: 0 }}
           />
-        </AreaChart>
-      </ResponsiveContainer>
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     </ChartCard>
   );
 }
 
-function GradeDistributionChart({ data }) {
+function GradeDistributionChart({ data, t }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -163,30 +158,32 @@ function GradeDistributionChart({ data }) {
 
   return (
     <ChartCard
-      title="Grade Distribution"
-      subtitle="A–F breakdown across all courses this semester"
-      chartType="pie" chartData={data} categoryField="name" series={[{ field: "value", name: "Students" }]}
+      title={t('dashboard.gradeDistribution')}
+      subtitle={t('dashboard.gradeDistributionSubtitle')}
+      chartType="pie" chartData={data} categoryField="name" series={[{ field: "value", name: t('dashboard.students') }]}
     >
       <div className="flex items-center gap-6">
-        <ResponsiveContainer width="55%" height={210}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%" cy="50%"
-              innerRadius={52}
-              outerRadius={84}
-              dataKey="value"
-              labelLine={false}
-              label={renderLabel}
-              strokeWidth={0}
-            >
-              {data.map((_, i) => (
-                <Cell key={i} fill={GRADE_COLORS[i]} />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+        <div dir="ltr">
+          <ResponsiveContainer width="55%" height={210}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%" cy="50%"
+                innerRadius={52}
+                outerRadius={84}
+                dataKey="value"
+                labelLine={false}
+                label={renderLabel}
+                strokeWidth={0}
+              >
+                {data.map((_, i) => (
+                  <Cell key={i} fill={GRADE_COLORS[i]} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
 
         <div className="flex-1 space-y-2.5">
           {data.map((entry, i) => (
@@ -196,7 +193,7 @@ function GradeDistributionChart({ data }) {
                 style={{ backgroundColor: GRADE_COLORS[i] }}
               />
               <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark flex-1">
-                Grade {entry.name}
+                {t('dashboard.gradeLabel')} {entry.name}
               </span>
               <span className="text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark tabular-nums">
                 {entry.value.toLocaleString()}
@@ -206,7 +203,7 @@ function GradeDistributionChart({ data }) {
           <div className="pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
             <div className="flex items-center justify-between">
               <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                Total
+                {t('dashboard.total')}
               </span>
               <span className="text-xs font-bold text-text-primary-active-light dark:text-text-primary-active-dark tabular-nums">
                 {total.toLocaleString()}
@@ -219,19 +216,20 @@ function GradeDistributionChart({ data }) {
   );
 }
 
-function TopCoursesChart({ data }) {
+function TopCoursesChart({ data, t }) {
   return (
     <ChartCard
-      title="Top Enrolled Courses"
-      subtitle="5 most popular courses this semester"
-      chartType="bar" chartData={data} categoryField="course" series={[{ field: "enrolled", name: "Enrolled" }]}
+      title={t('dashboard.topEnrolledCourses')}
+      subtitle={t('dashboard.topEnrolledSubtitle')}
+      chartType="bar" chartData={data} categoryField="course" series={[{ field: "enrolled", name: t('dashboard.enrolled') }]}
     >
-      <ResponsiveContainer width="100%" height={210}>
-        <BarChart
-          data={data}
-          layout="vertical"
-          margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
-        >
+      <div dir="ltr">
+        <ResponsiveContainer width="100%" height={210}>
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
+          >
           <CartesianGrid
             strokeDasharray="3 3"
             horizontal={false}
@@ -254,25 +252,27 @@ function TopCoursesChart({ data }) {
           <Tooltip content={<CustomTooltip />} />
           <Bar
             dataKey="enrolled"
-            name="Enrolled"
+            name={t('dashboard.enrolled')}
             radius={[0, 5, 5, 0]}
             fill="#8b5cf6"
           />
-        </BarChart>
-      </ResponsiveContainer>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </ChartCard>
   );
 }
 
-function CourseStatusChart({ data }) {
+function CourseStatusChart({ data, t }) {
   return (
     <ChartCard
-      title="Course Status by Department"
-      subtitle="Active, completed, and upcoming courses per department"
-      chartType="bar" chartData={data} categoryField="dept" series={[{ field: "active", name: "Active" }, { field: "completed", name: "Completed" }, { field: "upcoming", name: "Upcoming" }]}
+      title={t('dashboard.courseStatusByDept')}
+      subtitle={t('dashboard.courseStatusByDeptSubtitle')}
+      chartType="bar" chartData={data} categoryField="dept" series={[{ field: "active", name: t('dashboard.chartActive') }, { field: "completed", name: t('dashboard.chartCompleted') }, { field: "upcoming", name: t('dashboard.chartUpcoming') }]}
     >
-      <ResponsiveContainer width="100%" height={210}>
-        <BarChart data={data} margin={{ top: 0, right: 8, left: -24, bottom: 0 }}>
+      <div dir="ltr">
+        <ResponsiveContainer width="100%" height={210}>
+          <BarChart data={data} margin={{ top: 0, right: 8, left: -24, bottom: 0 }}>
           <CartesianGrid
             strokeDasharray="3 3"
             vertical={false}
@@ -295,16 +295,17 @@ function CourseStatusChart({ data }) {
             iconType="circle"
             wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }}
           />
-          <Bar dataKey="active"    name="Active"    stackId="a" fill="#3b82f6" />
-          <Bar dataKey="completed" name="Completed" stackId="a" fill="#22c55e" />
-          <Bar dataKey="upcoming"  name="Upcoming"  stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
+          <Bar dataKey="active"    name={t('dashboard.chartActive')}    stackId="a" fill="#3b82f6" />
+          <Bar dataKey="completed" name={t('dashboard.chartCompleted')} stackId="a" fill="#22c55e" />
+          <Bar dataKey="upcoming"  name={t('dashboard.chartUpcoming')}  stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </ChartCard>
   );
 }
 
-function CourseStatusBreakdownChart({ data }) {
+function CourseStatusBreakdownChart({ data, t }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -329,30 +330,32 @@ function CourseStatusBreakdownChart({ data }) {
 
   return (
     <ChartCard
-      title="Course Catalog Status"
-      subtitle="Active, inactive, and archived courses"
-      chartType="pie" chartData={data} categoryField="name" series={[{ field: "value", name: "Courses" }]}
+      title={t('dashboard.courseCatalogStatus')}
+      subtitle={t('dashboard.courseCatalogStatusSubtitle')}
+      chartType="pie" chartData={data} categoryField="name" series={[{ field: "value", name: t('dashboard.courses') }]}
     >
       <div className="flex items-center gap-6">
-        <ResponsiveContainer width="55%" height={210}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%" cy="50%"
-              innerRadius={52}
-              outerRadius={84}
-              dataKey="value"
-              labelLine={false}
-              label={renderLabel}
-              strokeWidth={0}
-            >
-              {data.map((_, i) => (
-                <Cell key={i} fill={COURSE_STATUS_COLORS[i] ?? "#9ca3af"} />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+        <div dir="ltr">
+          <ResponsiveContainer width="55%" height={210}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%" cy="50%"
+                innerRadius={52}
+                outerRadius={84}
+                dataKey="value"
+                labelLine={false}
+                label={renderLabel}
+                strokeWidth={0}
+              >
+                {data.map((_, i) => (
+                  <Cell key={i} fill={COURSE_STATUS_COLORS[i] ?? "#9ca3af"} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
 
         <div className="flex-1 space-y-2.5">
           {data.map((entry, i) => (
@@ -372,7 +375,7 @@ function CourseStatusBreakdownChart({ data }) {
           <div className="pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
             <div className="flex items-center justify-between">
               <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                Total
+                {t('dashboard.total')}
               </span>
               <span className="text-xs font-bold text-text-primary-active-light dark:text-text-primary-active-dark tabular-nums">
                 {total.toLocaleString()}
@@ -387,23 +390,23 @@ function CourseStatusBreakdownChart({ data }) {
 
 // ─── Academic Snapshot panel ──────────────────────────────────────────────────
 
-function AcademicSnapshot({ stats, snapshot }) {
+function AcademicSnapshot({ stats, snapshot, t }) {
   const snap = snapshot ?? {};
   const metrics = [
-    { label: "Pass Rate",          value: `${(snap.passRate ?? 0).toFixed(0)}%`,      progress: snap.passRate ?? 0, color: "#22c55e" },
-    { label: "Course Completion",  value: `${(snap.courseCompletion ?? 0).toFixed(0)}%`, progress: snap.courseCompletion ?? 0, color: "#3b82f6" },
-    { label: "Student Retention",  value: `${(snap.studentRetention ?? 0).toFixed(0)}%`, progress: snap.studentRetention ?? 0, color: "#8b5cf6" },
-    { label: "Average GPA",        value: `${(snap.averageGpa ?? 0).toFixed(2)} / 4.0`,progress: ((snap.averageGpa ?? 0) / 4 * 100), color: "#f59e0b" },
+    { label: t('dashboard.passRate'),          value: `${(snap.passRate ?? 0).toFixed(0)}%`,      progress: snap.passRate ?? 0, color: "#22c55e" },
+    { label: t('dashboard.courseCompletion'),  value: `${(snap.courseCompletion ?? 0).toFixed(0)}%`, progress: snap.courseCompletion ?? 0, color: "#3b82f6" },
+    { label: t('dashboard.studentRetention'),  value: `${(snap.studentRetention ?? 0).toFixed(0)}%`, progress: snap.studentRetention ?? 0, color: "#8b5cf6" },
+    { label: t('dashboard.averageGpa'),        value: `${(snap.averageGpa ?? 0).toFixed(2)} / 4.0`,progress: ((snap.averageGpa ?? 0) / 4 * 100), color: "#f59e0b" },
   ];
 
   return (
     <div className="h-full p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl flex flex-col">
       <div className="mb-6">
         <h2 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-          Academic Snapshot
+          {t('dashboard.academicSnapshot')}
         </h2>
         <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-0.5">
-          Key performance indicators — current semester
+          {t('dashboard.kpiSubtitle')}
         </p>
       </div>
 
@@ -431,15 +434,10 @@ function AcademicSnapshot({ stats, snapshot }) {
       {stats.totalStudents > 0 && (
         <div className="mt-6 pt-4 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
           <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark leading-relaxed">
-            Reflects{" "}
-            <span className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-              {stats.totalStudents?.toLocaleString()}
-            </span>{" "}
-            students across{" "}
-            <span className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-              {stats.departments}
-            </span>{" "}
-            departments.
+            {t('dashboard.reflectsStudents', {
+              students: stats.totalStudents?.toLocaleString(),
+              departments: stats.departments,
+            })}
           </p>
         </div>
       )}
@@ -450,8 +448,18 @@ function AcademicSnapshot({ stats, snapshot }) {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
+  const { t, i18n } = useTranslation('admin');
   const queryClient = useQueryClient();
   const [newsInput, setNewsInput] = useState("");
+
+  const statLabels = {
+    totalStudents: t('dashboard.totalStudents'),
+    instructors:   t('dashboard.instructors'),
+    courses:       t('dashboard.courses'),
+    departments:   t('dashboard.departments'),
+    activeClasses: t('dashboard.activeClasses'),
+    rooms:         t('dashboard.rooms'),
+  };
 
   const { data: dashboard, isLoading, error } = useQuery({
     queryKey: ["adminDashboard"],
@@ -497,7 +505,7 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-        Loading dashboard...
+        {t('dashboard.loading')}
       </div>
     );
   }
@@ -505,7 +513,7 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64 text-text-error-default-light dark:text-text-error-default-dark">
-        Failed to load dashboard. Please try again later.
+        {t('dashboard.error')}
       </div>
     );
   }
@@ -533,10 +541,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-                Latest Announcements
+                {t('dashboard.latestAnnouncements')}
               </h2>
               <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-0.5">
-                Broadcast to all students and instructors
+                {t('dashboard.broadcastSubtitle')}
               </p>
             </div>
             <BullHornIcon className="w-5 h-5 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
@@ -547,7 +555,7 @@ export default function Dashboard() {
               minHeight={60}
               maxHeight={120}
               className={textAreaClasses}
-              placeholder="Write an announcement..."
+              placeholder={t('dashboard.announcementPlaceholder')}
               value={newsInput}
               onChange={(e) => setNewsInput(e.target.value)}
             />
@@ -557,10 +565,10 @@ export default function Dashboard() {
                 variant="primary"
                 size="sm"
                 loading={publishMutation.isPending}
-                loadingText="Publishing"
+                loadingText={t('dashboard.publishing')}
                 startIcon={<PaperPlaneIcon className="w-4 h-4" />}
               >
-                Publish
+                {t('dashboard.publish')}
               </Button>
             </div>
           </form>
@@ -585,8 +593,8 @@ export default function Dashboard() {
                     )}
                     <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                       {item.date
-                        ? `Posted ${formatDistanceToNow(new Date(item.date), { addSuffix: true })}`
-                        : "Posted recently"}
+                        ? t('dashboard.postedTime', { time: formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) })
+                        : t('dashboard.postedRecently')}
                     </p>
                   </div>
                 </li>
@@ -595,7 +603,7 @@ export default function Dashboard() {
               <li className="py-10 text-center">
                 <BullHornIcon className="w-10 h-10 mx-auto mb-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark opacity-25" />
                 <p className="text-sm text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                  No announcements yet. Publish one above.
+                  {t('dashboard.noAnnouncements')}
                 </p>
               </li>
             )}
@@ -604,8 +612,8 @@ export default function Dashboard() {
 
         {/* Academic KPI snapshot */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          <AcademicSnapshot stats={stats} snapshot={dashboard?.snapshot} />
-          <CourseStatusBreakdownChart data={courseStatusData} />
+          <AcademicSnapshot stats={stats} snapshot={dashboard?.snapshot} t={t} />
+          <CourseStatusBreakdownChart data={courseStatusData} t={t} />
         </div>
       </Section>
 
@@ -615,22 +623,22 @@ export default function Dashboard() {
           <ChartBarIcon className="w-6 h-6 text-text-accent-default-light dark:text-text-accent-default-dark" />
           <div>
             <h2 className="text-xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
-              Analytics Overview
+              {t('dashboard.analyticsOverview')}
             </h2>
             <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-0.5">
-              Enrollment, grades, and course activity
+              {t('dashboard.analyticsSubtitle')}
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AttendanceTrendChart data={attendanceData} />
-          <GradeDistributionChart data={gradeData} />
+          <AttendanceTrendChart data={attendanceData} t={t} />
+          <GradeDistributionChart data={gradeData} t={t} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <TopCoursesChart data={topCoursesData} />
-          <CourseStatusChart data={deptStatusData} />
+          <TopCoursesChart data={topCoursesData} t={t} />
+          <CourseStatusChart data={deptStatusData} t={t} />
         </div>
       </Section>
     </>

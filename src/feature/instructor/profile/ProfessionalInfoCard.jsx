@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import useArabicDigits from "../../../hooks/useArabicDigits.js";
 import {
     BookIcon,
     CalendarDaysIcon,
@@ -10,11 +12,13 @@ function Skeleton({ className = "" }) {
 }
 
 export default function ProfessionalInfoCard({ user = {}, loading = false }) {
+    const { t } = useTranslation('instructor');
+    const { convert: ar } = useArabicDigits();
     const infoFields = [
-        { label: "Instructor Code", value: user.instructorCode || user.instructorId || "–", icon: HashIcon },
-        { label: "Department", value: user.department || user.departmentName || "–", icon: BookIcon },
-        { label: "Specialization", value: user.specialization || user.specializationName || "–", icon: StarIcon },
-        { label: "Joined", value: user.joinedDate || user.enrollmentDate || "–", icon: CalendarDaysIcon },
+        { label: t('profile.instructorCode'), value: user.instructorCode ? ar(user.instructorCode) : (user.instructorId ? ar(user.instructorId) : "–"), icon: HashIcon },
+        { label: t('profile.department'), value: user.department || user.departmentName || "–", icon: BookIcon },
+        { label: t('profile.specialization'), value: user.specialization || user.specializationName || "–", icon: StarIcon },
+        { label: t('profile.joined'), value: user.joinedDate || user.enrollmentDate || "–", icon: CalendarDaysIcon },
     ];
 
     return (
@@ -22,14 +26,14 @@ export default function ProfessionalInfoCard({ user = {}, loading = false }) {
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-linear-to-r from-bg-surface-secondary-default-light to-bg-surface-primary-default-light dark:from-bg-surface-secondary-default-dark dark:to-bg-surface-primary-default-dark">
                 <div>
                     <h3 className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                        Professional Information
+                        {t('profile.professionalInfo')}
                     </h3>
                     <p className="text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-0.5">
-                        Instructor details and credentials
+                        {t('profile.professionalInfoSub')}
                     </p>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-400/10 text-green-500 border border-green-400/20">
-                    Active
+                    {t('profile.active')}
                 </span>
             </div>
 

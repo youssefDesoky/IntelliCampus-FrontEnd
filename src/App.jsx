@@ -10,6 +10,8 @@ import { authAction, logoutAction } from "./routes/actions";
 
 import CustomCursor from "./components/ui/CustomCursor";
 import { ContextMenuProvider } from "./components/ui/ContextMenu";
+import InstallPrompt from "./components/ui/InstallPrompt";
+import UpdateBanner from "./components/ui/UpdateBanner";
 import SidebarProvider from "./contexts/SidebarProvider";
 import CourseShell from "./feature/course/component/CourseShell";
 
@@ -237,6 +239,8 @@ export default function App() {
             <SidebarProvider>
                 <RouterProvider router={router} />
             </SidebarProvider>
+            <InstallPrompt />
+            <UpdateBanner />
         </ContextMenuProvider>
     );
 }

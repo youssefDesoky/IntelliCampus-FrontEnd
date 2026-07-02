@@ -1,8 +1,10 @@
+import { useTranslation } from "react-i18next";
 import ModelOverlay from "../../../../../components/ui/ModelOverlay";
 import Button from "../../../../../components/ui/Button";
 import { XIcon, FileIcon, DownloadIcon, EyeIcon, CheckIcon } from "../../../../../components/ui/icons";
 
 export default function ViewSubmission({ assignment, onClose }) {
+    const { t } = useTranslation('student');
     const submissionFiles = assignment.submissions || [];
 
     const getFileIcon = (filename) => {
@@ -33,10 +35,11 @@ export default function ViewSubmission({ assignment, onClose }) {
                         </div>
                         <div>
                             <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                View Submission
+                                {t('viewSubmission.title')}
                             </h2>
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                {assignment.title}
+                                {/* TODO: i18n - backend returns English only */}
+                            {assignment.title}
                             </p>
                         </div>
                     </div>
@@ -52,9 +55,9 @@ export default function ViewSubmission({ assignment, onClose }) {
                     {assignment.submittedDate && (
                         <div className="flex items-center gap-2 text-sm bg-green-50 dark:bg-green-900/10 p-3 rounded-lg">
                             <CheckIcon size={16} className="text-green-600 dark:text-green-400" />
-                            <span className="text-green-700 dark:text-green-300 font-medium">Submitted</span>
+                            <span className="text-green-700 dark:text-green-300 font-medium">{t('assignments.submitted')}</span>
                             <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                on {assignment.submittedDate}
+                                {t('viewSubmission.submittedOn', { date: assignment.submittedDate })}
                             </span>
                         </div>
                     )}
@@ -64,7 +67,7 @@ export default function ViewSubmission({ assignment, onClose }) {
                             <div className="flex items-center gap-2">
                                 <FileIcon size={16} className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                                 <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                    Submitted Files ({submissionFiles.length})
+                                    {t('viewSubmission.submittedFiles', { count: submissionFiles.length })}
                                 </h3>
                             </div>
                             <div className="grid gap-3">
@@ -112,7 +115,7 @@ export default function ViewSubmission({ assignment, onClose }) {
                         <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark p-8 text-center">
                             <FileIcon size={40} className="mx-auto mb-3 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                No files submitted for this assignment
+                                {t('viewSubmission.noFiles')}
                             </p>
                         </div>
                     )}
@@ -120,7 +123,7 @@ export default function ViewSubmission({ assignment, onClose }) {
                     {assignment.submissionNote && (
                         <div className="space-y-2">
                             <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Submission Note
+                                {t('assignments.submissionNote')}
                             </h3>
                             <div className="p-4 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark leading-relaxed">

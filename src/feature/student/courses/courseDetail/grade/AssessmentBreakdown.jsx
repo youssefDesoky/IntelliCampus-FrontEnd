@@ -1,6 +1,10 @@
+import { useTranslation } from "react-i18next";
 import BaseComponent from "../../../../../components/ui/BaseComponent";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 export default function AssessmentBreakdown({ groups = [] }) {
+	const { t } = useTranslation('student');
+	const { convert: ar } = useArabicDigits();
 
 	const getTier = (percent) => {
 		if (percent >= 85) return { progressClass: "bg-linear-to-r from-emerald-400 to-emerald-500", metricClass: "text-emerald-600 dark:text-emerald-400" };
@@ -12,16 +16,16 @@ export default function AssessmentBreakdown({ groups = [] }) {
 
 	return (
 		<BaseComponent
-			title="Assessment Breakdown"
-			description="Overview of your performance across different assessment categories"
-			subtitle={`By Category`}
+			title={t('grades.assessmentBreakdown')}
+			description={t('assessmentBreakdown.description')}
+			subtitle={t('assessmentBreakdown.subtitle')}
 			className="h-full flex flex-col"
 			contentClassName="px-5 py-5 sm:px-6 space-y-3 flex-1 flex flex-col"
 		>
 			{groups.length === 0 ? (
 				<div className="flex-1 flex flex-col items-center justify-center text-center">
 					<p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-						No assessment categories available yet.
+						{t('assessmentBreakdown.empty')}
 					</p>
 				</div>
 			) : (
@@ -34,17 +38,17 @@ export default function AssessmentBreakdown({ groups = [] }) {
 							<div className="flex-1">
 								<div className="flex items-center justify-between mb-2">
 									<p className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">{group.category}</p>
-									<span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">{group.totalWeight}% weight</span>
+									<span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('assessmentBreakdown.weight', { weight: ar(group.totalWeight) })}</span>
 								</div>
 								<div className="h-1.5 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-full overflow-hidden">
 									<div className={`h-full rounded-full transition-all ${tier.progressClass}`} style={{ width: percent + "%" }} />
 								</div>
 								<div className="flex items-center justify-between mt-2 gap-2">
 									<span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-										{group.totalMaxScore ? `${group.totalScore}/${group.totalMaxScore}` : "Not graded"}
+										{group.totalMaxScore ? `${ar(group.totalScore)}/${ar(group.totalMaxScore)}` : t('assessmentBreakdown.notGraded')}
 									</span>
 									<span className={`text-xs font-semibold ${tier.metricClass}`}>
-										{percent}%
+										{ar(percent)}%
 									</span>
 								</div>
 							</div>

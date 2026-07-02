@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import DropdownMenu from "../DropdownMenu";
 import { EllipsisVerticalIcon } from "../icons";
 import Dialog from "../Dialog";
@@ -6,9 +7,11 @@ import AdminForm from "../../../feature/admin/components/AdminForm";
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 import StudentForm from "../../../feature/admin/components/StudentForm";
 
-const buttonStyle = "w-full text-left px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
+const buttonStyle = "w-full text-start px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
 
-export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true, columnAlignments, columnClassNames, emptyMessage = "No data found." }) {
+export default function TableBody({ role, rowData, columnCount, selectAll, setSelectAll, selectedRows, setSelectedRows, onDelete, onEdit, onPreview, actions, showSelectionColumn = true, showActionsColumn = true, columnAlignments, columnClassNames, emptyMessage }) {
+	const { t } = useTranslation('common');
+	const resolvedEmptyMessage = emptyMessage ?? t('empty.noData', 'No data found.');
 	const [editingRow, setEditingRow] = useState(null);
 	const [deleteButtonClicked, setDeleteButtonClicked] = useState(false);
 	const [actionButtonClicked, setActionButtonClicked] = useState(null);
@@ -111,7 +114,7 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 					<tr
 						key={rowIndex}
 						className={`${showSelectionColumn ? "text-center" : "text-center"} relative z-0 no-transitions hover:z-10 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark 
-							divide-x divide-border-primary-default-light dark:divide-border-primary-default-dark hover:divide-border-primary-hover-light dark:hover:divide-border-primary-hover-dark                
+							[&>td]:border-e [&>td]:border-e-border-primary-default-light dark:[&>td]:border-e-border-primary-default-dark [&>td:last-child]:border-e-0 hover:[&>td]:border-e-border-primary-hover-light dark:hover:[&>td]:border-e-border-primary-hover-dark                
 							border border-border-primary-default-light dark:border-border-primary-default-dark hover:ring-1 hover:ring-inset hover:ring-border-primary-hover-light dark:hover:ring-border-primary-hover-dark
 						`}
 						onClick={showSelectionColumn ? () => handleCheckboxChange(rowIndex) : undefined}
@@ -157,7 +160,7 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
                         }
                         className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark"
                     >
-                        {emptyMessage}
+                        {resolvedEmptyMessage}
                     </td>
                 </tr>
             )}
@@ -189,19 +192,19 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
 								onClick={() => { onPreview?.(rowData[actionButtonClicked]?._raw ?? rowData[actionButtonClicked]); setActionButtonClicked(null); }}
 							>
-								View Details
+								{t('labels.viewDetails', 'View Details')}
 							</button>
 							<button 
 								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
 								onClick={() => handleEditClick(actionButtonClicked)}
 							>
-								Edit
+								{t('edit')}
 							</button>
 							<button 
 								className={`${buttonStyle} text-text-danger-default-light dark:text-text-danger-default-dark hover:text-text-danger-hover-light dark:hover:text-text-danger-default-dark`}
 								onClick={() => handleDeleteClick(actionButtonClicked)}
 							>
-								Delete
+								{t('delete')}
 							</button>
 						</>
 					)}
@@ -213,7 +216,7 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 			<Dialog
 				isOpen={deleteButtonClicked !== false}
 				variant="error"
-				title={`Delete ${role === "admin" ? "Admin" : role === "student" ? "Student" : "Instructor"}`}
+				title={t('confirm.deleteTitle', 'Delete {{entity}}', { entity: role === "admin" ? t('labels.admin', 'Admin') : role === "student" ? t('labels.student', 'Student') : t('labels.instructor', 'Instructor') })}
 				onClose={() => setDeleteButtonClicked(false)}
 				onConfirm={() => {
 					if (onDelete) {
@@ -222,11 +225,11 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 					setDeleteButtonClicked(false);
 					return true;
 				}}
-				confirmText="Delete"
-				cancelText="Cancel"
+				confirmText={t('delete')}
+				cancelText={t('cancel')}
 				showCloseButton={true}
 			>
-				Are you sure you want to delete this {role === "admin" ? "Admin" : role === "student" ? "Student" : "Instructor"}? This action cannot be undone.
+				{t('confirm.deleteMessage', 'Are you sure you want to delete this {{entity}}? This action cannot be undone.', { entity: role === "admin" ? t('labels.admin', 'Admin') : role === "student" ? t('labels.student', 'Student') : t('labels.instructor', 'Instructor') })}
 			</Dialog>
 		)}
 

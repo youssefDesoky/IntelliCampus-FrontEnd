@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from 'react-i18next';
 import Section from "../../../components/ui/Section";
 
 import MyCourse from "../../../feature/student/courses/myCourses/MyCourse";
@@ -12,54 +13,75 @@ import DataBanner from "../../../components/ui/DataBanner";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
 import MyCoursesHeader from "../../../feature/student/courses/myCourses/MyCoursesHeader";
 import { fetchMyStudentCourses } from "../../../feature/course/services/coursesApi";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import useArabicDigits from "../../../hooks/useArabicDigits";
 
+const GRADE_MAP = {
+  "A+": "ممتاز مرتفع", "A": "ممتاز", "A-": "ممتاز منخفض",
+  "B+": "جيد جداً مرتفع", "B": "جيد جداً", "B-": "جيد جداً منخفض",
+  "C+": "جيد مرتفع", "C": "جيد", "C-": "جيد منخفض",
+  "D+": "مقبول مرتفع", "D": "مقبول", "D-": "مقبول منخفض",
+  "F": "راسب", "N/A": "غير متاح",
+};
 
-function mapCourseToMyCourseProps(course) {
-    const initials = (course.departmentName || course.courseCode || "")
-        .split(" ")
-        .map(w => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2) || "CS";
-
-    const type = course.isElective ? "elective" : "mandatory";
-    const status = course.studentCourseStatusName === "Completed" ? "completed" : "in-progress";
-
-    let attendanceValue = "0%";
-    let attendanceStatus = "good";
-    if (course.attendance != null) {
-        attendanceValue = `${Math.round(course.attendance)}%`;
-        attendanceStatus = course.attendance >= 75 ? "good" : course.attendance >= 50 ? "warning" : "risk";
-    }
-
-    const gradeValue = course.grade != null
-        ? typeof course.grade === "number"
-            ? `${Math.round(course.grade)}%`
-            : String(course.grade)
-        : "—";
-    const section = course.className || "";
-    const creditHours = course.creditHours || 0;
-
-    return {
-        courseId: course.courseId,
-        initials,
-        code: course.courseCode || "",
-        semester: course.semester || "",
-        type,
-        status,
-        title: course.courseName || "",
-        instructor: course.professorName || "",
-        room: course.room || "",
-        attendance: { value: attendanceValue, status: attendanceStatus },
-        section,
-        grade: gradeValue,
-        creditHours,
-    };
+function toArabicGrade(g, isAr) {
+  if (!isAr) return g;
+  const clean = String(g).trim().toUpperCase();
+  return GRADE_MAP[clean] || g;
 }
 
 export default function MyCourses() {
+    const { t, i18n } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
     const { isMobile } = useDeviceType();
     const navigate = useNavigate();
+
+    const mapCourseToMyCourseProps = (course) => {
+        const initials = (getLocalizedField(course, 'departmentName', i18n.language) || getLocalizedField(course, 'courseCode', i18n.language) || course.courseCode || "")
+            .split(" ")
+            .map(w => w[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2) || "CS";
+
+        const type = course.isElective ? "elective" : "mandatory";
+        const status = course.studentCourseStatusName === "Completed" ? "completed" : "in-progress";
+
+        const isAr = i18n.language === 'ar';
+        let attendanceValue = isAr ? "٠%" : "0%";
+        let attendanceStatus = "good";
+        if (course.attendance != null) {
+            attendanceValue = `${ar(Math.round(course.attendance))}%`;
+            attendanceStatus = course.attendance >= 75 ? "good" : course.attendance >= 50 ? "warning" : "risk";
+        }
+
+        let gradeValue = "—";
+        if (course.grade != null) {
+            if (typeof course.grade === "number") {
+                gradeValue = `${ar(Math.round(course.grade))}%`;
+            } else {
+                gradeValue = toArabicGrade(String(course.grade), isAr);
+            }
+        }
+        const section = getLocalizedField(course, 'className', i18n.language) || course.classNameAr || course.className || "";
+        const creditHours = course.creditHours || 0;
+
+        return {
+            courseId: course.courseId,
+            initials,
+            code: getLocalizedField(course, 'courseCode', i18n.language) || course.courseCode || "",
+            semester: getLocalizedField(course, 'semester', i18n.language) || course.semester || "",
+            type,
+            status,
+            title: getLocalizedField(course, 'courseName', i18n.language) || "",
+            instructor: getLocalizedField(course, 'professorName', i18n.language) || getLocalizedField(course, 'instructorName', i18n.language) || course.professorName || "",
+            room: getLocalizedField(course, 'room', i18n.language) || course.roomAr || course.room || "",
+            attendance: { value: attendanceValue, status: attendanceStatus },
+            section,
+            grade: gradeValue,
+            creditHours,
+        };
+    };
 
     const PAGE_SIZE = 6;
     const [page, setPage] = useState(1);
@@ -134,10 +156,10 @@ export default function MyCourses() {
     const totalHours = filteredCourses.reduce((sum, c) => sum + (c.creditHours || 0), 0);
 
     const stats = [
-        { label: "Total Courses", value: filteredCourses.length },
-        { label: "Active Courses", value: activeCourses.length },
-        { label: "Completed Courses", value: inactiveCourses.length },
-        { label: "Total Hours", value: totalHours },
+        { label: t('myCourses.totalCourses'), value: filteredCourses.length },
+        { label: t('myCourses.active'), value: activeCourses.length },
+        { label: t('myCourses.completedCourses'), value: inactiveCourses.length },
+        { label: t('myCourses.totalHours'), value: totalHours },
     ];
 
     return (
@@ -159,7 +181,7 @@ export default function MyCourses() {
                 {filteredCourses.length > 0 && (
                     <Section className="hidden md:grid grid-cols-4 gap-6 mb-6">
                         <DataBanner
-                            title="Course Statistics"
+                            title={t('myCourses.statistics')}
                             data={stats}
                         />
                     </Section>
@@ -171,12 +193,12 @@ export default function MyCourses() {
                     <div className="flex flex-col items-center justify-center flex-1 text-center">
                         <BookIcon className="w-12 h-12 mb-4 opacity-40 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
                         <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                            {courses.length === 0 ? "No courses enrolled" : "No courses match your filters"}
+                            {courses.length === 0 ? t('myCourses.noEnrolled') : t('myCourses.noMatch')}
                         </h3>
                         <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
                             {courses.length === 0
-                                ? "You are not currently enrolled in any courses."
-                                : "Try adjusting the status or type filters above."}
+                                ? t('myCourses.notEnrolledDesc')
+                                : t('myCourses.adjustFilters')}
                         </p>
                     </div>
                 )}
@@ -195,7 +217,7 @@ export default function MyCourses() {
                             totalPages={totalPages}
                             currentPage={page}
                             setCurrentPage={setPage}
-                            {...(!isMobile ? { from, to, total: filteredCourses.length, label: "courses" } : {})}
+                            {...(!isMobile ? { from, to, total: filteredCourses.length, label: t('myCourses.courses') } : {})}
                         />
                     </Section>
                 )}

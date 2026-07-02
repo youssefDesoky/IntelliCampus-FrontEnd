@@ -1,4 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { LocationDotIcon, UserTieIcon } from "../icons";
+import useArabicDigits from "../../../hooks/useArabicDigits";
+import { getLocalizedField } from "../../../utils/getLocalizedField";
 
 const typeBadge = {
     lecture: "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark text-text-blue-accent-light dark:text-text-blue-accent-dark",
@@ -14,6 +17,17 @@ const dotColor = {
     default: "bg-border-primary-default-light dark:bg-border-primary-default-dark",
 };
 
+function getDayLabel(t, key) {
+    return t(`days.${key}`);
+}
+
+function getEventTypeLabel(t, type) {
+    if (type === "lecture") return t("schedule.typeLecture");
+    if (type === "section") return t("schedule.typeSection");
+    if (type === "activity") return t("schedule.typeActivity");
+    return type;
+}
+
 /**
  * Vertical, full-width agenda. Used in place of the hour-by-hour grid on
  * phones, where there isn't enough width for a horizontal timeline without
@@ -22,12 +36,14 @@ const dotColor = {
  * needed.
  */
 export default function WeeklyScheduleAgenda({ days, schedule = [], variant = "default", onEventClick }) {
+    const { t, i18n } = useTranslation("common");
+    const { localizeTime, convert: ar } = useArabicDigits();
     const activeDays = days.filter((day) => schedule.some((ev) => ev.day === day.key));
 
     if (activeDays.length === 0) {
         return (
             <div className="p-8 text-center text-sm text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                No {variant === "exam" ? "exams" : "classes"} scheduled this week.
+                {t(variant === "exam" ? "schedule.noEventsWeek_exam" : "schedule.noEventsWeek_class")}
             </div>
         );
     }
@@ -46,10 +62,10 @@ export default function WeeklyScheduleAgenda({ days, schedule = [], variant = "d
                     >
                         <div className="flex items-center justify-between px-4 py-2.5 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
                             <span className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {day.label}
+                                {getDayLabel(t, day.key)}
                             </span>
                             <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                                {events.length} {variant === "exam" ? "exam" : "class"}{events.length === 1 ? "" : "es"}
+                                {ar(t(variant === "exam" ? "schedule.examCount" : "schedule.classCount", { count: events.length }))}
                             </span>
                         </div>
 
@@ -59,31 +75,31 @@ export default function WeeklyScheduleAgenda({ days, schedule = [], variant = "d
                                     key={ev.id}
                                     type="button"
                                     onClick={() => onEventClick?.(ev)}
-                                    className="w-full flex gap-3 px-4 py-3 text-left hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors"
+                                    className="w-full flex gap-3 px-4 py-3 text-start hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors"
                                 >
                                     <div className={`mt-1 w-1.5 rounded-full ${dotColor[ev.type] || dotColor.default}`} />
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-baseline justify-between gap-2">
                                             <span className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                                                {ev.title}
+                                                {getLocalizedField(ev, 'title', i18n.language)}
                                             </span>
-                                            <span className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">
-                                                {ev.startTime} – {ev.endTime}
-                                            </span>
+                            <span className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">
+                                {localizeTime(ev.startTime)} – {localizeTime(ev.endTime)}
+                            </span>
                                         </div>
 
-                                        {variant !== "exam" && (ev.location || ev.instructor) && (
+                                        {variant !== "exam" && (getLocalizedField(ev, 'location', i18n.language) || getLocalizedField(ev, 'instructor', i18n.language)) && (
                                             <div className="mt-1 flex items-center gap-3 text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                                                {ev.location && (
+                                                {getLocalizedField(ev, 'location', i18n.language) && (
                                                     <span className="flex items-center gap-1">
                                                         <LocationDotIcon className="w-3 h-3" />
-                                                        {ev.location}
+                                                        {getLocalizedField(ev, 'location', i18n.language)}
                                                     </span>
                                                 )}
-                                                {ev.instructor && (
+                                                {getLocalizedField(ev, 'instructor', i18n.language) && (
                                                     <span className="flex items-center gap-1">
                                                         <UserTieIcon className="w-3 h-3" />
-                                                        {ev.instructor}
+                                                        {getLocalizedField(ev, 'instructor', i18n.language)}
                                                     </span>
                                                 )}
                                             </div>
@@ -91,7 +107,7 @@ export default function WeeklyScheduleAgenda({ days, schedule = [], variant = "d
 
                                         {variant !== "exam" && ev.type && (
                                             <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${typeBadge[ev.type] || typeBadge.default}`}>
-                                                {ev.type}
+                                                {getEventTypeLabel(t, ev.type)}
                                             </span>
                                         )}
                                     </div>

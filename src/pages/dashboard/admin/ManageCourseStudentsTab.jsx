@@ -1,9 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { fetchCourseStudents } from "../../../feature/admin/services/adminCoursesApi";
 import { SearchIcon, UserIcon } from "../../../components/ui/icons";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import useArabicDigits from '../../../hooks/useArabicDigits';
 
 export default function ManageCourseStudentsTab({ courseId }) {
+    const { t, i18n } = useTranslation('admin');
+    const { convert: ar } = useArabicDigits();
     const { showError } = useError();
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -36,7 +41,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
     if (loading) {
         return (
             <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                Loading students...
+                {t('manageCourseStudents.loading')}
             </p>
         );
     }
@@ -45,17 +50,17 @@ export default function ManageCourseStudentsTab({ courseId }) {
         <div className="space-y-4">
             <div className="flex items-center gap-3">
                 <div className="relative flex-1 max-w-xs">
-                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+                    <SearchIcon className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                     <input
                         type="text"
-                        placeholder="Search students..."
+                        placeholder={t('manageCourseStudents.searchPlaceholder')}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark outline-none transition-all"
+                        className="w-full ps-9 pe-3 py-2 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark outline-none transition-all"
                     />
                 </div>
                 <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    {filtered.length} / {students.length} students
+                    {t('manageCourseStudents.count', { filtered: filtered.length, total: students.length })}
                 </span>
             </div>
 
@@ -64,11 +69,11 @@ export default function ManageCourseStudentsTab({ courseId }) {
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                <th className="text-left px-4 py-3 font-medium">Student</th>
-                                <th className="text-left px-4 py-3 font-medium">ID</th>
-                                <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Email</th>
-                                <th className="text-center px-4 py-3 font-medium hidden md:table-cell">Section</th>
-                                <th className="text-center px-4 py-3 font-medium hidden md:table-cell">GPA</th>
+                                <th className="text-start px-4 py-3 font-medium">{t('manageCourseStudents.student')}</th>
+                                <th className="text-start px-4 py-3 font-medium">{t('manageCourseStudents.id')}</th>
+                                <th className="text-start px-4 py-3 font-medium hidden sm:table-cell">{t('manageCourseStudents.email')}</th>
+                                <th className="text-center px-4 py-3 font-medium hidden md:table-cell">{t('manageCourseStudents.section')}</th>
+                                <th className="text-center px-4 py-3 font-medium hidden md:table-cell">{t('manageCourseStudents.gpa')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
@@ -80,7 +85,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
                                                 <UserIcon className="w-4 h-4 text-text-accent-active-light dark:text-text-accent-active-dark" />
                                             </div>
                                             <span className="font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate max-w-40">
-                                                {s.fullName || s.name}
+                                                {getLocalizedField(s, 'fullName', i18n.language) || s.name}
                                             </span>
                                         </div>
                                     </td>
@@ -94,7 +99,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
                                         {s.section || "—"}
                                     </td>
                                     <td className="px-4 py-3 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark hidden md:table-cell">
-                                        {s.gpa != null ? s.gpa.toFixed(2) : "—"}
+                                        {s.gpa != null ? ar(s.gpa.toFixed(2)) : "—"}
                                     </td>
                                 </tr>
                             ))}
@@ -105,7 +110,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
                 <div className="text-center py-16 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
                     <UserIcon className="w-12 h-12 mx-auto text-text-secondary-default-light dark:text-text-secondary-default-dark mb-3" />
                     <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        {search ? "No students match your search." : "No students registered in this course yet."}
+                        {search ? t('manageCourseStudents.noMatch') : t('manageCourseStudents.noStudents')}
                     </p>
                 </div>
             )}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from "react-router-dom";
 import Button from "../../../components/ui/Button";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
@@ -24,20 +25,22 @@ import StudentForm from "../../../feature/admin/components/StudentForm";
 import StudentInfoTab from "./StudentInfoTab";
 import StudentCompletedTab from "./StudentCompletedTab";
 import StudentRegisteredTab from "./StudentRegisteredTab";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 const ITEMS_PER_PAGE = 10;
 
-const tabs = [
-    { key: "info", label: "Information" },
-    { key: "completed", label: "Completed" },
-    { key: "registered", label: "Registered" },
-];
-
 export default function StudentDetails() {
+    const { t, i18n } = useTranslation('admin');
     const { studentId } = useParams();
     const navigate = useNavigate();
 
     const { showError } = useError();
+
+    const tabs = [
+        { key: "info", label: t('studentDetails.information') },
+        { key: "completed", label: t('studentDetails.completed') },
+        { key: "registered", label: t('studentDetails.registered') },
+    ];
 
     const [student, setStudent] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -121,7 +124,7 @@ export default function StudentDetails() {
     if (loading) {
         return (
             <div className="p-6">
-                <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading student details...</p>
+                <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.loading')}</p>
             </div>
         );
     }
@@ -131,10 +134,10 @@ export default function StudentDetails() {
             <div className="p-6">
                 <div className="flex items-center gap-4 mb-6">
                     <Button variant="outline" size="sm" onClick={() => navigate("/admin/students")}>
-                        <ArrowRightIcon className="w-4 h-4 rotate-180" /> Back
+                        <ArrowRightIcon className="w-4 h-4 rotate-180 rtl:scale-x-[-1]" /> {t('studentDetails.back')}
                     </Button>
                 </div>
-                <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">Student not found.</p>
+                <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.notFound')}</p>
             </div>
         );
     }
@@ -148,12 +151,12 @@ export default function StudentDetails() {
                         onClick={() => navigate("/admin/students")}
                         className="shrink-0 w-10 h-10 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors"
                     >
-                        <ArrowRightIcon className="w-5 h-5 rotate-180 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+                        <ArrowRightIcon className="w-5 h-5 rotate-180 rtl:scale-x-[-1] text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                     </button>
                     <div className="flex items-center gap-4 min-w-0">
                         <div className="hidden sm:block w-14 h-14 rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ring-2 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shrink-0">
                             {student.profileImage ? (
-                                <img src={student.profileImage} alt={student.fullName || student.name} className="w-full h-full object-cover" />
+                                <img src={student.profileImage} alt={getLocalizedField(student, 'fullName', i18n.language) || student.name} className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                     <UserIcon className="w-6 h-6 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
@@ -162,7 +165,7 @@ export default function StudentDetails() {
                         </div>
                         <div className="min-w-0">
                             <h1 className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                                {student.fullName || student.name}
+                                {getLocalizedField(student, 'fullName', i18n.language) || student.name}
                             </h1>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs font-mono tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">
@@ -175,11 +178,11 @@ export default function StudentDetails() {
                 <div className="flex items-center gap-2 shrink-0">
                     <Button variant="secondary" size="sm" onClick={() => { setEmailSubject(""); setEmailBody(""); setIsEmailOpen(true); }}>
                         <EnvelopIcon className="w-4 h-4" />
-                        <span className="hidden sm:inline"> Send Email</span>
+                        <span className="hidden sm:inline"> {t('studentDetails.sendEmail')}</span>
                     </Button>
                     <Button variant="primary" size="sm" onClick={() => setIsEditOpen(true)}>
                         <FilePenIcon className="w-4 h-4" />
-                        <span className="hidden sm:inline"> Edit</span>
+                        <span className="hidden sm:inline"> {t('studentDetails.edit')}</span>
                     </Button>
                 </div>
             </div>
@@ -188,43 +191,43 @@ export default function StudentDetails() {
                 <ModelOverlay onClose={() => { setIsEmailOpen(false); setEmailSubject(""); setEmailBody(""); }} maxWidth="max-w-xl">
                     <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-4 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark">Send Email</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary-default-light dark:text-text-primary-default-dark">{t('studentDetails.sendEmail')}</h3>
                             <button onClick={() => { setIsEmailOpen(false); setEmailSubject(""); setEmailBody(""); }} className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors">
                                 <XIcon className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="p-5 space-y-5">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">To</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.to')}</label>
                                 <div className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm">
                                     {student?.email}
                                 </div>
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Subject</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.subject')}</label>
                                 <input
                                     type="text"
                                     value={emailSubject}
                                     onChange={(e) => setEmailSubject(e.target.value)}
                                     disabled={sendingEmail}
-                                    placeholder="Enter email subject"
+                                    placeholder={t('studentDetails.emailSubjectPlaceholder')}
                                     className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50 placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark"
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">Message</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.message')}</label>
                                 <TextArea
                                     value={emailBody}
                                     onChange={(e) => setEmailBody(e.target.value)}
                                     disabled={sendingEmail}
-                                    placeholder="Write your message here..."
+                                    placeholder={t('studentDetails.messagePlaceholder')}
                                     className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all disabled:opacity-50 placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark"
                                 />
                             </div>
                             <div className="flex justify-end gap-2 pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <Button variant="outline" size="sm" onClick={() => { setIsEmailOpen(false); setEmailSubject(""); setEmailBody(""); }}>Cancel</Button>
+                                <Button variant="outline" size="sm" onClick={() => { setIsEmailOpen(false); setEmailSubject(""); setEmailBody(""); }}>{t('studentDetails.cancel')}</Button>
                                 <Button variant="primary" size="sm" onClick={handleSendEmail} disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim()}>
-                                    {sendingEmail ? "Sending..." : <><PaperPlaneIcon className="w-4 h-4" /> Send</>}
+                                    {sendingEmail ? t('studentDetails.sending') : <><PaperPlaneIcon className="w-4 h-4" /> {t('studentDetails.send')}</>}
                                 </Button>
                             </div>
                         </div>

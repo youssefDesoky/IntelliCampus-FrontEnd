@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 import QuickUpload from "../../../../../components/ui/QuickUpload";
@@ -12,11 +13,14 @@ import ViewInstructions from "./ViewInstructions";
 import ModelOverlay from "../../../../../components/ui/ModelOverlay";
 import { fetchAssignmentsByCourse, submitAssignment, fetchAssignmentStats } from "../../assignmentsApi";
 import { CourseAssignmentsSkeleton } from "./SkeletonLoader";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 
 const PAGE_SIZE = 2;
 
 export default function CourseAssignments() {
+    const { t } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
     const { course } = useOutletContext();
     const [submitModal, setSubmitModal] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -116,10 +120,10 @@ export default function CourseAssignments() {
                 <Section className="flex flex-col !mb-0">
                     <div className="flex items-center justify-between mb-5 shrink-0">
                         <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
-                            Upcoming Assignments
+                            {t('courseAssignments.upcomingTitle')}
                         </h2>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
-                            {upcomingAssignments.length} Pending
+                            {ar(t('courseAssignments.pendingCount', { count: upcomingAssignments.length }))}
                         </span>
                     </div>
 
@@ -142,7 +146,7 @@ export default function CourseAssignments() {
                             ))
                         ) : (
                             <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark py-8 text-center h-full flex items-center justify-center">
-                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No upcoming assignments right now.</p>
+                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('courseAssignments.noUpcoming')}</p>
                             </div>
                         )}
                     </div>
@@ -150,7 +154,7 @@ export default function CourseAssignments() {
                     {upcomingAssignments.length > 0 && (
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 shrink-0">
                             <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                showing {pagedUpcoming.length} of {upcomingAssignments.length} upcoming
+                                {ar(t('courseAssignments.showingUpcoming', { count: pagedUpcoming.length, total: upcomingAssignments.length }))}
                             </p>
                             <PaginationButtons totalPages={upcomingTotalPages} currentPage={validUpcomingPage} setCurrentPage={setUpcomingPage} />
                         </div>
@@ -160,7 +164,7 @@ export default function CourseAssignments() {
                 {/* Past Submissions */}
                 <Section className="flex flex-col !mb-0">
                     <div className="mb-5 shrink-0">
-                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">Past Submissions</h3>
+                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">{t('courseAssignments.pastTitle')}</h3>
                     </div>
 
                     <div className={`overflow-y-auto w-full min-w-0 max-h-[400px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${pastAssignments.length === 1 ? "" : "min-h-[320px]"}`}>
@@ -192,7 +196,7 @@ export default function CourseAssignments() {
                         </div>
                     ) : (
                         <div className="rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark py-8 text-center h-full flex items-center justify-center">
-                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No past submissions yet.</p>
+                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('courseAssignments.noPast')}</p>
                         </div>
                     )}
                     </div>
@@ -200,7 +204,7 @@ export default function CourseAssignments() {
                     {pastAssignments.length > 0 && (
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 shrink-0">
                             <p className="hidden sm:block text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                showing {pagedAssignments.length} of {pastAssignments.length} assignments
+                                {ar(t('courseAssignments.showingAssignments', { count: pagedAssignments.length, total: pastAssignments.length }))}
                             </p>
 
                             <PaginationButtons totalPages={totalPages} currentPage={validCurrentPage} setCurrentPage={setCurrentPage} />
@@ -212,28 +216,28 @@ export default function CourseAssignments() {
             {/* Sidebar */}
             <div className="hidden lg:block min-w-0">
                 <BaseComponent
-                    title="Assignment Stats"
-                    description="Overview of your assignment activity for this course"
+                    title={t('courseAssignments.statsTitle')}
+                    description={t('courseAssignments.statsDesc')}
                     contentClassName="space-y-4"
                 >
                     <div className="flex items-center justify-between p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg">
                         <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            Pending
+                            {t('courseAssignments.statsPending')}
                         </span>
-                        <span className="text-lg font-bold text-amber-600 dark:text-amber-400">{stats.pending}</span>
+                        <span className="text-lg font-bold text-amber-600 dark:text-amber-400">{ar(stats.pending)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg">
                         <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            Submitted
+                            {t('courseAssignments.statsSubmitted')}
                         </span>
-                        <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{stats.submitted}</span>
+                        <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{ar(stats.submitted)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-lg">
                         <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            Average Grade
+                            {t('courseAssignments.statsAvgGrade')}
                         </span>
                         <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                            {stats.averageGrade !== null ? Math.round(stats.averageGrade) : 0}%
+                            {ar(stats.averageGrade !== null ? Math.round(stats.averageGrade) : 0)}%
                         </span>
                     </div>
                 </BaseComponent>

@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
+import useArabicDigits from "../../hooks/useArabicDigits";
 import { CalendarIcon, ClockIcon} from "../ui/icons";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const MONTHS   = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const WEEKDAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
 const HOURS_12 = Array.from({ length: 12 }, (_, i) => i + 1);
 const ALL_MINS = Array.from({ length: 60 }, (_, i) => i);
 
@@ -26,9 +26,9 @@ function dateToISO(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function dateToDisplay(d) {
+function dateToDisplay(d, locale) {
     if (!d) return "";
-    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    return d.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 // ─── Time helpers ─────────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ function parseDTValue(v) {
 
 function ChevronLeft() {
     return (
-        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-3.5 h-3.5 rtl:scale-x-[-1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
         </svg>
     );
@@ -81,7 +81,7 @@ function ChevronLeft() {
 
 function ChevronRight() {
     return (
-        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-3.5 h-3.5 rtl:scale-x-[-1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6" />
         </svg>
     );
@@ -89,7 +89,7 @@ function ChevronRight() {
 
 // ─── Scroll Column (shared by hour & minute) ──────────────────────────────────
 
-function ScrollColumn({ items, selected, onSelect }) {
+function ScrollColumn({ items, selected, onSelect, convert }) {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -121,7 +121,7 @@ function ScrollColumn({ items, selected, onSelect }) {
                                 : "text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-light dark:hover:bg-bg-surface-secondary-dark",
                         ].join(" ")}
                     >
-                        {String(item).padStart(2, "0")}
+                        {convert ? convert(String(item).padStart(2, "0")) : String(item).padStart(2, "0")}
                     </button>
                 );
             })}
@@ -143,6 +143,21 @@ export default function DateTimeInput({
     minDate = getTodayISO(),
     maxDate,
 }) {
+    const { t, i18n } = useTranslation("common");
+    const { convert: ar } = useArabicDigits();
+    const isRTL = i18n.language === 'ar';
+    const locale = isRTL ? "ar-SA" : "en";
+
+    const months = useMemo(() =>
+        Array.from({ length: 12 }, (_, i) =>
+            new Date(2024, i, 1).toLocaleDateString(locale, { month: "long" })
+        ), [locale]);
+
+    const weekdays = useMemo(() =>
+        Array.from({ length: 7 }, (_, i) =>
+            new Date(2024, 0, i + 1).toLocaleDateString(locale, { weekday: "short" })
+        ), [locale]);
+
     // ── Derive state from a datetime-local value string ──────────────────────
     const initState = (v) => {
         const { date, time } = parseDTValue(v);
@@ -283,9 +298,9 @@ export default function DateTimeInput({
     };
 
     // ── Display strings ───────────────────────────────────────────────────────
-    const dateDisplay = date ? dateToDisplay(date) : "";
+    const dateDisplay = date ? dateToDisplay(date, i18n.language) : "";
     const timeDisplay = hasTime
-        ? `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${period}`
+        ? `${ar(String(hour).padStart(2, "0"))}:${ar(String(minute).padStart(2, "0"))} ${isRTL ? (period === "AM" ? "ص" : "م") : period}`
         : "";
 
     // ── Calendar grid builder ─────────────────────────────────────────────────
@@ -321,7 +336,7 @@ export default function DateTimeInput({
                         !disabled && !isSelected && "hover:bg-bg-surface-secondary-light dark:hover:bg-bg-surface-secondary-dark",
                     ].filter(Boolean).join(" ")}
                 >
-                    {d}
+                    {ar(d)}
                 </button>
             );
         }
@@ -339,7 +354,7 @@ export default function DateTimeInput({
     const footerCls = "mt-3 pt-3 flex items-center justify-between border-t border-border-primary-default-light dark:border-border-primary-default-dark";
 
     return (
-        <div ref={containerRef} className={`relative ${className}`}>
+        <div ref={containerRef} className={`relative ${className}`} dir={isRTL ? 'rtl' : 'ltr'}>
 
             {/* Label */}
             {label && (
@@ -374,12 +389,12 @@ activePanel === "date"
                                     ? "text-text-accent-default-light dark:text-text-accent-default-dark"
                                     : "text-text-secondary-default-light dark:text-text-secondary-default-dark"
                     }`} />
-                    <span className={`text-sm truncate ${
+                    <span dir="auto" className={`text-sm truncate ${
                         dateDisplay
                             ? "text-text-primary-default-light dark:text-text-primary-default-dark"
                             : "text-text-secondary-default-light dark:text-text-secondary-default-dark"
                     }`}>
-                        {dateDisplay || "Select date"}
+                        {dateDisplay || t("dateTime.selectDate")}
                     </span>
                 </button>
 
@@ -402,12 +417,12 @@ activePanel === "time"
                                     ? "text-text-accent-default-light dark:text-text-accent-default-dark"
                                     : "text-text-secondary-default-light dark:text-text-secondary-default-dark"
                     }`} />
-                    <span className={`text-sm truncate ${
+                    <span dir="auto" className={`text-sm truncate ${
                         timeDisplay
                             ? "text-text-primary-default-light dark:text-text-primary-default-dark"
                             : "text-text-secondary-default-light dark:text-text-secondary-default-dark"
                     }`}>
-                        {timeDisplay || "Select time"}
+                        {timeDisplay || t("dateTime.selectTime")}
                     </span>
                 </button>
             </div>
@@ -436,7 +451,7 @@ activePanel === "time"
                             <ChevronLeft />
                         </button>
                         <span className="text-sm font-semibold select-none text-text-primary-default-light dark:text-text-primary-default-dark">
-                            {MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}
+                            {months[viewMonth.getMonth()]} {ar(viewMonth.getFullYear())}
                         </span>
                         <button
                             type="button"
@@ -450,7 +465,7 @@ activePanel === "time"
 
                     {/* Weekday headers */}
                     <div className="grid grid-cols-7 mb-1">
-                        {WEEKDAYS.map((d) => (
+                        {weekdays.map((d) => (
                             <div key={d} className="text-center text-xs font-semibold py-1 select-none text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 {d}
                             </div>
@@ -470,7 +485,7 @@ activePanel === "time"
                                 onClick={handleClear}
                                 className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-danger-default-light dark:hover:text-text-danger-default-dark transition-colors"
                             >
-                                Clear
+                                {t("dateTime.clear")}
                             </button>
                         ) : <span />}
                         <button
@@ -478,7 +493,7 @@ activePanel === "time"
                             onClick={() => setPanel("time")}
                             className="flex items-center gap-1 text-xs font-medium text-text-accent-default-light dark:text-text-accent-default-dark hover:underline transition-colors"
                         >
-                            Select time <ChevronRight />
+                            {t("dateTime.selectTime")} <ChevronRight />
                         </button>
                     </div>
                 </div>,
@@ -499,23 +514,23 @@ activePanel === "time"
                 >
 
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-center mb-3 select-none text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        Select Time
+                        {t("dateTime.selectTime")}
                     </p>
 
                     <div className="flex items-start gap-1">
 
                         {/* Hour column */}
                         <div className="flex flex-col items-center gap-1">
-                            <span className="text-[10px] font-semibold uppercase tracking-wider select-none text-text-secondary-default-light dark:text-text-secondary-default-dark">Hr</span>
-                            <ScrollColumn items={HOURS_12} selected={hour} onSelect={handleHour} />
+                            <span className="text-[10px] font-semibold uppercase tracking-wider select-none text-text-secondary-default-light dark:text-text-secondary-default-dark">{t("dateTime.hour")}</span>
+                            <ScrollColumn items={HOURS_12} selected={hour} onSelect={handleHour} convert={ar} />
                         </div>
 
                         <span className="text-lg font-bold select-none mt-[22px] text-text-secondary-default-light dark:text-text-secondary-default-dark">:</span>
 
                         {/* Minute column */}
                         <div className="flex flex-col items-center gap-1">
-                            <span className="text-[10px] font-semibold uppercase tracking-wider select-none text-text-secondary-default-light dark:text-text-secondary-default-dark">Min</span>
-                            <ScrollColumn items={ALL_MINS} selected={minute} onSelect={handleMinute} />
+                            <span className="text-[10px] font-semibold uppercase tracking-wider select-none text-text-secondary-default-light dark:text-text-secondary-default-dark">{t("dateTime.minute")}</span>
+                            <ScrollColumn items={ALL_MINS} selected={minute} onSelect={handleMinute} convert={ar} />
                         </div>
 
                         {/* Vertical divider */}
@@ -535,7 +550,7 @@ activePanel === "time"
                                             : "text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-light dark:hover:bg-bg-surface-secondary-dark",
                                     ].join(" ")}
                                 >
-                                    {p}
+                                    {t(p === "AM" ? "dateTime.am" : "dateTime.pm")}
                                 </button>
                             ))}
                         </div>
@@ -548,14 +563,14 @@ activePanel === "time"
                             onClick={() => setPanel("date")}
                             className="flex items-center gap-1 text-xs font-medium transition-colors text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark"
                         >
-                            <ChevronLeft /> Back to date
+                            <ChevronLeft /> {t("dateTime.backToDate")}
                         </button>
                         <button
                             type="button"
                             onClick={() => setPanel(null)}
                             className="text-xs font-medium text-text-accent-default-light dark:text-text-accent-default-dark hover:underline transition-colors"
                         >
-                            Done
+                            {t("dateTime.done")}
                         </button>
                     </div>
                 </div>,

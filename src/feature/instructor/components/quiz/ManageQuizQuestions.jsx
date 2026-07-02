@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import Button from "../../../../components/ui/Button";
 import TextArea from "../../../../components/ui/TextArea";
 import NumberInput from "../../../../components/form/NumberInput";
@@ -6,12 +7,16 @@ import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import { PlusIcon, TrashIcon, XIcon, EyeIcon, PenSquareIcon } from "../../../../components/ui/icons";
 import { addQuestions, fetchQuestions, deleteQuestion } from "./instructorQuizApi";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
+import useArabicDigits from '../../../../hooks/useArabicDigits.js';
+import { getLocalizedField } from '../../../../utils/getLocalizedField.js';
 
-const QUESTION_TYPES = [
-    { value: "TF", label: "True/False", desc: "True or false statement" },
-    { value: "MCQ", label: "Multiple Choice", desc: "Select from options" },
-    { value: "Written", label: "Written", desc: "Free-text response" },
-];
+function getQuestionTypes(t) {
+    return [
+        { value: "TF", label: t('questions.typeTF'), desc: t('questions.typeTFDesc') },
+        { value: "MCQ", label: t('questions.typeMCQ'), desc: t('questions.typeMCQDesc') },
+        { value: "Written", label: t('questions.typeWritten'), desc: t('questions.typeWrittenDesc') },
+    ];
+}
 
 const TYPE_COLORS = {
     TF: { bg: "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark", text: "text-text-blue-default-light dark:text-text-blue-default-dark", border: "border-border-blue-default-light dark:border-border-blue-default-dark" },
@@ -20,6 +25,8 @@ const TYPE_COLORS = {
 };
 
 export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz }) {
+    const { t, i18n } = useTranslation('instructor');
+    const { convert: ar } = useArabicDigits();
     const [existingQuestions, setExistingQuestions] = useState([]);
     const [newQuestions, setNewQuestions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -27,6 +34,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
     const [deleting, setDeleting] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
     const { showError } = useError();
+    const QUESTION_TYPES = getQuestionTypes(t);
 
     const [type, setType] = useState("TF");
     const [prompt, setPrompt] = useState("");
@@ -63,23 +71,23 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
     };
 
     const handleAdd = () => {
-        if (!prompt.trim()) { showError("Enter a question prompt."); return; }
-        if (!points.trim()) { showError("Enter points for this question."); return; }
+        if (!prompt.trim()) { showError(t('questions.errorPrompt')); return; }
+        if (!points.trim()) { showError(t('questions.errorPoints')); return; }
 
         if (type === "MCQ") {
             const filledOptions = options.filter(o => o.trim());
-            if (filledOptions.length < 2) { showError("Add at least 2 options for MCQ."); return; }
-            if (!correctAnswer.trim()) { showError("Select the correct answer."); return; }
+            if (filledOptions.length < 2) { showError(t('questions.errorOptions')); return; }
+            if (!correctAnswer.trim()) { showError(t('questions.errorCorrectAnswer')); return; }
         }
 
         if (type === "TF" && !correctAnswer) {
-            showError("Select the correct answer (True/False).");
+            showError(t('questions.errorTFAnswer'));
             return;
         }
 
         const newPts = Number(points);
         if (totalPoints + newPts > quiz.maxScore) {
-            showError(`Points exceed quiz max grade of ${quiz.maxScore}. Current total: ${totalPoints}. Would be: ${totalPoints + newPts}.`);
+            showError(ar(t('questions.errorPointsExceed', { max: quiz.maxScore, total: totalPoints, newTotal: totalPoints + newPts })));
             return;
         }
 
@@ -94,9 +102,9 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
     };
 
     const handleSave = async () => {
-        if (newQuestions.length === 0) { showError("Add at least one question first."); return; }
+        if (newQuestions.length === 0) { showError(t('questions.errorNoQuestions')); return; }
         if (totalPoints !== quiz.maxScore) {
-            showError(`Total points (${totalPoints}) must equal quiz max grade (${quiz.maxScore}). Adjust question points or quiz max grade.`);
+            showError(ar(t('questions.errorTotalPoints', { total: totalPoints, max: quiz.maxScore })));
             return;
         }
         setSaving(true);
@@ -105,7 +113,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
             setNewQuestions([]);
             onClose();
         } catch (err) {
-            showError(err.message || "Failed to save questions.");
+            showError(err.message || t('questions.errorSaveFailed'));
         } finally {
             setSaving(false);
         }
@@ -117,7 +125,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
             await deleteQuestion(courseId, quiz.id, q.id);
             setExistingQuestions(prev => prev.filter(x => x.id !== q.id));
         } catch (err) {
-            showError(err.message || "Failed to delete question.");
+            showError(err.message || t('questions.errorDeleteFailed'));
         } finally {
             setDeleting(null);
         }
@@ -168,8 +176,8 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
             <div className="relative z-50 w-full max-w-2xl rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)] animate-fade-in max-h-[90vh] flex flex-col">
                 <div className="shrink-0 flex items-center justify-between gap-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark px-6 py-4">
                     <div className="min-w-0 truncate">
-                        <h3 className="text-xl font-semibold truncate text-text-primary-default-light dark:text-text-primary-default-dark">Manage Questions</h3>
-                        <p className="mt-1 text-sm truncate text-text-secondary-default-light dark:text-text-secondary-default-dark">{quiz?.title}</p>
+                        <h3 className="text-xl font-semibold truncate text-text-primary-default-light dark:text-text-primary-default-dark">{t('questions.manage')}</h3>
+                        <p className="mt-1 text-sm truncate text-text-secondary-default-light dark:text-text-secondary-default-dark">{getLocalizedField(quiz, 'title', i18n.language) || quiz?.title}</p>
                     </div>
                     <div className="flex items-center gap-2">
                         {allQuestions.length > 0 && (
@@ -177,11 +185,11 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                 type="button"
                                 onClick={() => setShowPreview(true)}
                                 className="relative rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-2 text-icon-primary-default-light dark:text-icon-primary-default-dark transition-colors hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark"
-                                title="View all questions"
+                                                                title={t('questions.viewAll')}
                             >
                                 <EyeIcon size={20} />
-                                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark">
-                                    {allQuestions.length}
+                                <span className="absolute -top-1.5 -end-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark">
+                                    {ar(allQuestions.length)}
                                 </span>
                             </button>
                         )}
@@ -198,20 +206,20 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                 <div className="flex-1 overflow-y-auto no-scrollbar px-6 py-6 space-y-6">
 
                     {loading && (
-                        <div className="text-center py-4 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading questions...</div>
+                        <div className="text-center py-4 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('questions.loadingQuestions')}</div>
                     )}
 
                     {!loading && existingQuestions.length > 0 && (
                         <div className="space-y-2">
                             <h4 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Existing Questions ({existingQuestions.length})
+                                {ar(t('questions.existingQuestions', { count: existingQuestions.length }))}
                             </h4>
                             {existingQuestions.map((q) => (
                                 <div key={q.id} className="flex items-start justify-between gap-3 p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                     <div className="flex-1 min-w-0 space-y-1">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TYPE_COLORS[q.type]?.bg || TYPE_COLORS.TF.bg} ${TYPE_COLORS[q.type]?.text || TYPE_COLORS.TF.text}`}>{q.type}</span>
-                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{q.points} pts</span>
+                                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TYPE_COLORS[q.type]?.bg || TYPE_COLORS.TF.bg} ${TYPE_COLORS[q.type]?.text || TYPE_COLORS.TF.text}`}>{QUESTION_TYPES.find(t => t.value === q.type)?.label || q.type}</span>
+                                            <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{ar(q.points)} {t('questions.pts')}</span>
                                         </div>
                                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{q.prompt}</p>
                                     </div>
@@ -220,7 +228,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                         onClick={() => handleDelete(q)}
                                         disabled={deleting === q.id}
                                         className="shrink-0 p-1.5 rounded-lg text-icon-danger-default-light dark:text-icon-danger-default-dark hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark transition-colors disabled:opacity-50"
-                                        title="Delete question"
+                                        title={t('questions.deleteQuestion')}
                                     >
                                         <TrashIcon size={16} />
                                     </button>
@@ -232,18 +240,18 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                     <div className="space-y-5 p-5 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                         <div className="flex items-center gap-2">
                             <PlusIcon size={18} className="text-text-accent-default-light dark:text-text-accent-default-dark" />
-                            <h4 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Add Question</h4>
+                            <h4 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('questions.addQuestion')}</h4>
                         </div>
 
                         <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg" style={{ backgroundColor: pointsMatch ? 'var(--color-success-bg, #e8f5e9)' : 'var(--color-warning-bg, #fff3e0)', border: `1px solid ${pointsMatch ? 'var(--color-success-border, #a5d6a7)' : 'var(--color-warning-border, #ffe0b2)'}` }}>
                             <span className="text-sm font-medium" style={{ color: pointsMatch ? 'var(--color-success-text, #2e7d32)' : 'var(--color-warning-text, #e65100)' }}>
-                                {allQuestions.length} question{allQuestions.length !== 1 ? "s" : ""} &middot; {totalPoints} / {quiz?.maxScore} pts
+                                {ar(t('questions.pointsSummary', { count: allQuestions.length, total: totalPoints, max: quiz?.maxScore }))}
                             </span>
                             {!pointsMatch && totalPoints > 0 && (
                                 <>
                                     <span style={{ color: pointsMatch ? 'var(--color-success-text, #2e7d32)' : 'var(--color-warning-text, #e65100)' }}>|</span>
                                     <span className="text-xs font-semibold" style={{ color: 'var(--color-warning-text, #e65100)' }}>
-                                        Must equal {quiz?.maxScore} pts
+                                        {ar(t('questions.pointsMismatch', { max: quiz?.maxScore }))}
                                     </span>
                                 </>
                             )}
@@ -270,34 +278,34 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">Question Prompt</label>
+                            <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">{t('questions.prompt')}</label>
                             <div className="relative">
                                 <TextArea
                                     value={prompt}
                                     onChange={e => setPrompt(e.target.value)}
-                                    placeholder="Enter the question text..."
+                                    placeholder={t('questions.promptPlaceholder')}
                                     className={`${inputClass} min-h-[80px]`}
                                 />
-                                <span className="absolute bottom-3 right-3 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                    {prompt.length}/500
+                                <span className="absolute bottom-3 end-3 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                    {ar(prompt.length)}/{ar(500)}
                                 </span>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">Points</label>
+                            <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">{t('questions.points')}</label>
                             <NumberInput
                                 value={points}
                                 onChange={e => setPoints(e.target.value)}
                                 min="1"
-                                placeholder="e.g., 10"
+                                placeholder={t('questions.pointsPlaceholder')}
                                 className="w-full"
                             />
                         </div>
 
                         {type === "MCQ" && (
                             <div>
-                                <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">Options</label>
+                                <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">{t('questions.options')}</label>
                                 <div className="space-y-2">
                                     {options.map((opt, i) => {
                                         const label = String.fromCharCode(65 + i);
@@ -311,7 +319,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                                             ? "border-border-success-default-light dark:border-border-success-default-dark"
                                                             : "border-border-primary-default-light dark:border-border-primary-default-dark"
                                                     }`}
-                                                    title="Mark as correct answer"
+                                                    title={t('questions.markCorrect')}
                                                 >
                                                     {correctAnswer === label && (
                                                         <span className="w-2.5 h-2.5 rounded-full bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark" />
@@ -327,7 +335,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                                 <input
                                                     value={opt}
                                                     onChange={e => updateOption(i, e.target.value)}
-                                                    placeholder={`Option ${i + 1}`}
+                                                    placeholder={ar(t('questions.optionPlaceholder', { index: i + 1 }))}
                                                     className={`${inputClass} flex-1`}
                                                 />
                                                 {options.length > 2 && (
@@ -348,7 +356,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                         className="flex items-center gap-1.5 text-sm font-medium text-text-accent-default-light dark:text-text-accent-default-dark hover:text-text-accent-hover-light dark:hover:text-text-accent-hover-dark transition-colors"
                                     >
                                         <PlusIcon size={14} />
-                                        Add option
+                                        {t('questions.addOption')}
                                     </button>
                                 </div>
                             </div>
@@ -357,8 +365,8 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                         {type !== "MCQ" && (
                             <div>
                                 <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">
-                                    Correct Answer
-                                    {type === "Written" && <span className="ml-1 text-text-secondary-default-light dark:text-text-secondary-default-dark font-normal">(optional — graded manually)</span>}
+                                    {t('questions.correctAnswer')}
+                                    {type === "Written" && <span className="ms-1 text-text-secondary-default-light dark:text-text-secondary-default-dark font-normal">{t('questions.writtenHint')}</span>}
                                 </label>
                                 {type === "TF" ? (
                                     <div className="flex gap-3">
@@ -373,7 +381,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                                         : "border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark"
                                                 }`}
                                             >
-                                                {val === "true" ? "True" : "False"}
+                                                {val === "true" ? t('questions.true') : t('questions.false')}
                                             </button>
                                         ))}
                                     </div>
@@ -381,7 +389,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                     <input
                                         value={correctAnswer}
                                         onChange={e => setCorrectAnswer(e.target.value)}
-                                        placeholder="Model answer (optional)"
+                                        placeholder={t('questions.modelAnswer')}
                                         className={inputClass}
                                     />
                                 )}
@@ -390,7 +398,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
 
                         <Button type="button" variant="primary" onClick={handleAdd} width="w-full">
                             <PlusIcon size={18} />
-                            Add Question
+                            {t('questions.addQuestion')}
                         </Button>
                     </div>
                 </div>
@@ -398,16 +406,16 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                 <div className="shrink-0 flex flex-col gap-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-2">
                         <span className={`text-xs font-medium ${pointsMatch ? 'text-text-success-default-light dark:text-text-success-default-dark' : 'text-text-warning-default-light dark:text-text-warning-default-dark'}`}>
-                            {allQuestions.length} question{allQuestions.length !== 1 ? "s" : ""} &middot; {totalPoints} / {quiz?.maxScore} pts
+                            {ar(t('questions.pointsSummary', { count: allQuestions.length, total: totalPoints, max: quiz?.maxScore }))}
                         </span>
                         {!pointsMatch && totalPoints > 0 && (
                             <span className="text-xs text-text-warning-default-light dark:text-text-warning-default-dark">
-                                Must match
+                                {t('questions.mustMatch')}
                             </span>
                         )}
                     </div>
                     <div className="flex gap-3">
-                        <Button variant="secondary" type="button" onClick={onClose} width="flex-1 sm:w-auto">Cancel</Button>
+                        <Button variant="secondary" type="button" onClick={onClose} width="flex-1 sm:w-auto">{t('quizzes.cancel')}</Button>
                         <Button
                             variant="primary"
                             type="button"
@@ -416,7 +424,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                             disabled={saving || newQuestions.length === 0 || !pointsMatch}
                             loading={saving}
                         >
-                            Save {newQuestions.length > 0 ? `(${newQuestions.length})` : ""}
+                            {ar(t('questions.save', { count: newQuestions.length }))}
                         </Button>
                     </div>
                 </div>
@@ -428,7 +436,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                     <div className="relative w-full max-w-lg max-h-[70vh] overflow-y-auto no-scrollbar rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-xl animate-fade-in p-6" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <h4 className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                All Questions ({allQuestions.length})
+                                {ar(t('questions.allQuestions', { count: allQuestions.length }))}
                             </h4>
                             <button
                                 type="button"
@@ -445,9 +453,9 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                     <div key={q._existing ? `e-${q.id}` : `n-${i}`} className="flex items-start justify-between gap-3 p-4 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                         <div className="flex-1 min-w-0 space-y-2">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${colors.bg} ${colors.text}`}>{q.type}</span>
-                                                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{q.points} pts</span>
-                                                {q._existing && <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">(saved)</span>}
+                                                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${colors.bg} ${colors.text}`}>{QUESTION_TYPES.find(t => t.value === q.type)?.label || q.type}</span>
+<span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{ar(q.points)} {t('questions.pts')}</span>
+                                                {q._existing && <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('questions.saved')}</span>}
                                             </div>
                                             <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{q.prompt}</p>
                                             {q.options && q.options.length > 0 && (
@@ -464,12 +472,12 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                             )}
                                             {q.type === "TF" && q.correctAnswer && (
                                                 <span className="text-xs px-2 py-0.5 rounded-md border border-border-success-default-light dark:border-border-success-default-dark bg-bg-surface-green-default-light dark:bg-bg-surface-green-default-dark text-text-green-default-light dark:text-text-green-default-dark">
-                                                    Answer: {q.correctAnswer === "true" ? "True" : "False"}
+                                                    {t('questions.answerLabel', { value: q.correctAnswer === "true" ? t('questions.true') : t('questions.false') })}
                                                 </span>
                                             )}
                                             {q.type === "Written" && q.correctAnswer && (
                                                 <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                    Model answer: {q.correctAnswer}
+                                                    {t('questions.modelAnswerLabel', { value: q.correctAnswer })}
                                                 </span>
                                             )}
                                         </div>
@@ -480,7 +488,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                                         type="button"
                                                         onClick={() => handleEditQuestion(newQuestions.findIndex(x => x === q))}
                                                         className="shrink-0 p-1.5 rounded-lg text-icon-primary-default-light dark:text-icon-primary-default-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark transition-colors"
-                                                        title="Edit question"
+                                                        title={t('questions.editQuestion')}
                                                     >
                                                         <PenSquareIcon size={16} />
                                                     </button>
@@ -488,7 +496,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                                                         type="button"
                                                         onClick={() => { removeNewQuestion(newQuestions.findIndex(x => x === q)); if (allQuestions.length === 1) setShowPreview(false); }}
                                                         className="shrink-0 p-1.5 rounded-lg text-icon-danger-default-light dark:text-icon-danger-default-dark hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark transition-colors"
-                                                        title="Remove question"
+                                                        title={t('questions.removeQuestion')}
                                                     >
                                                         <TrashIcon size={16} />
                                                     </button>
@@ -500,8 +508,8 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
                             })}
                         </div>
                         <div className="mt-4 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark text-center">
-                            {allQuestions.length} question{allQuestions.length !== 1 ? "s" : ""} &middot; {totalPoints} / {quiz?.maxScore} pts
-                            {!pointsMatch && totalPoints > 0 && <span className="ml-2 text-text-warning-default-light dark:text-text-warning-default-dark font-semibold">(must match!)</span>}
+                            {ar(t('questions.pointsSummary', { count: allQuestions.length, total: totalPoints, max: quiz?.maxScore }))}
+                            {!pointsMatch && totalPoints > 0 && <span className="ms-2 text-text-warning-default-light dark:text-text-warning-default-dark font-semibold">{t('questions.mustMatchBold')}</span>}
                         </div>
                     </div>
                 </div>

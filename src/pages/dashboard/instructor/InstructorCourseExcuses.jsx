@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { fetchExcuses, updateExcuseStatus } from "../../../feature/instructor/components/attendance/instructorAttendanceApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import useArabicDigits from '../../../hooks/useArabicDigits.js';
 import { CheckIcon, XIcon, FileIcon, CalendarDaysIcon, ClockIcon, UserIcon, ArrowLeftIcon } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import BaseComponent from "../../../components/ui/BaseComponent";
@@ -13,7 +15,19 @@ const STATUS_STYLES = {
     Rejected: "bg-bg-surface-danger-default-light text-text-danger-active-light dark:bg-bg-surface-danger-default-dark dark:text-text-danger-active-dark",
 };
 
+function translateSessionType(t, type) {
+    const lower = String(type || "").toLowerCase();
+    if (lower.includes("lecture")) return t('attendance.typeLecture');
+    if (lower.includes("lab")) return t('attendance.typeLab');
+    if (lower.includes("section")) return t('attendance.typeSection');
+    if (lower.includes("workshop")) return t('attendance.typeWorkshop');
+    if (lower.includes("seminar")) return t('attendance.typeSeminar');
+    return type || "";
+}
+
 export default function InstructorCourseExcuses() {
+    const { t, i18n } = useTranslation('instructor');
+    const { localizeTime, convert: ar } = useArabicDigits();
     const { courseId } = useOutletContext();
     const { showError } = useError();
     const navigate = useNavigate();
@@ -28,7 +42,7 @@ export default function InstructorCourseExcuses() {
             const data = await fetchExcuses(courseId);
             setExcuses(Array.isArray(data) ? data : []);
         } catch (err) {
-            showError(err.message || "Failed to load excuse requests.");
+            showError(err.message || t('excuses.errorLoad'));
             setExcuses([]);
         } finally {
             setLoading(false);
@@ -46,7 +60,8 @@ export default function InstructorCourseExcuses() {
                 e.excuseId === excuseId || e.id === excuseId ? { ...e, status } : e
             ));
         } catch (err) {
-            showError(err.message || `Failed to ${status.toLowerCase()} excuse.`);
+            const statusLower = status.toLowerCase();
+            showError(err.message || (statusLower === 'approve' ? t('excuses.errorApprove') : t('excuses.errorReject')));
         }
     };
 
@@ -60,13 +75,13 @@ export default function InstructorCourseExcuses() {
                     onClick={() => navigate("../attendance")}
                     className="shrink-0 p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                 >
-                    <ArrowLeftIcon size={20} />
+                    <ArrowLeftIcon size={20} className="rtl:scale-x-[-1]" />
                 </button>
                 <div className="flex-1 flex items-center justify-between min-w-0">
-                    <h2 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Excuse Requests</h2>
+                    <h2 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{t('excuses.title')}</h2>
                     <p className="shrink-0 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        {excuses.length} request{excuses.length !== 1 ? "s" : ""}
-                        {pendingCount > 0 ? ` (${pendingCount} pending)` : ""}
+                        {ar(t('excuses.count', { count: excuses.length }))}
+                        {pendingCount > 0 ? ` (${ar(t('excuses.pendingCount', { count: pendingCount }))})` : ""}
                     </p>
                 </div>
             </div>
@@ -75,9 +90,9 @@ export default function InstructorCourseExcuses() {
                 <CourseExcusesSkeleton />
             ) : excuses.length === 0 ? (
                 <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
-                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No excuse requests</h3>
+                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('excuses.noExcuses')}</h3>
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        Students haven&apos;t submitted any excuse requests for this course yet.
+                        {t('excuses.noExcusesDesc')}
                     </p>
                 </div>
             ) : (
@@ -103,17 +118,17 @@ export default function InstructorCourseExcuses() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                                                        {excuse.studentName || excuse.studentFullName || "Unknown Student"}
+                                                        {excuse.studentName || excuse.studentFullName || t('excuses.unknownStudent')}
                                                     </p>
                                                     {excuse.studentCode && (
-                                                        <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                            {excuse.studentCode}
-                                                        </p>
+                                                        <span className="inline-flex items-center rounded-full border border-border-primary-default-light px-2 py-0.5 text-xs font-medium text-text-secondary-default-light dark:border-border-primary-default-dark dark:text-text-secondary-default-dark">
+                                                            {ar(excuse.studentCode)}
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
                                             <span className={`shrink-0 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusStyle}`}>
-                                                {status}
+                                                {t(`excuses.${status.toLowerCase()}`)}
                                             </span>
                                         </div>
 
@@ -127,22 +142,22 @@ export default function InstructorCourseExcuses() {
                                             {excuse.sessionTime && (
                                                 <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                                     <ClockIcon size={14} />
-                                                    {excuse.sessionTime}
+                                                    {localizeTime(excuse.sessionTime)}
                                                 </span>
                                             )}
                                             {excuse.sessionType && (
                                                 <span className="inline-flex items-center rounded-full border border-border-primary-default-light px-2 py-0.5 text-xs font-medium text-text-secondary-default-light dark:border-border-primary-default-dark dark:text-text-secondary-default-dark">
-                                                    {excuse.sessionType}
+                                                    {translateSessionType(t, excuse.sessionType)}
                                                 </span>
                                             )}
                                         </div>
 
                                         <div className="rounded-xl bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark px-4 py-3">
                                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark mb-1">
-                                                Reason
+                                                {t('excuses.reason')}
                                             </p>
                                             <p className="text-sm text-text-primary-default-light dark:text-text-primary-default-dark leading-6">
-                                                {excuse.reason || "No reason provided."}
+                                                {excuse.reason || t('excuses.noReason')}
                                             </p>
                                         </div>
 
@@ -154,7 +169,7 @@ export default function InstructorCourseExcuses() {
                                                 className="inline-flex items-center gap-2 rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light px-3 py-2 text-sm font-medium text-text-accent-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-accent-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
                                             >
                                                 <FileIcon size={16} />
-                                                {excuse.fileName || "View attached document"}
+                                                {excuse.fileName || t('excuses.viewDocument')}
                                             </a>
                                         )}
                                     </div>
@@ -168,7 +183,7 @@ export default function InstructorCourseExcuses() {
                                                 onClick={() => handleStatusUpdate(eid, "Approved")}
                                                 className="w-full"
                                             >
-                                                Approve
+                                                {t('excuses.approve')}
                                             </Button>
                                             <Button
                                                 variant="danger"
@@ -177,7 +192,7 @@ export default function InstructorCourseExcuses() {
                                                 onClick={() => handleStatusUpdate(eid, "Rejected")}
                                                 className="w-full"
                                             >
-                                                Reject
+                                                {t('excuses.reject')}
                                             </Button>
                                         </div>
                                     )}

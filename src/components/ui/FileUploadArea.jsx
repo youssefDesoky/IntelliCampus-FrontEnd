@@ -1,7 +1,9 @@
 import { useState, useRef } from "react";
+import { useTranslation } from 'react-i18next';
 import { CloudUploadIcon, PaperclipIcon, XIcon } from "./icons";
 
 export default function FileUploadArea({ files, onFilesChange, maxSizeMb = 50 }) {
+    const { t } = useTranslation('common');
     const [dragOver, setDragOver] = useState(false);
     const inputRef = useRef(null);
 
@@ -27,7 +29,7 @@ export default function FileUploadArea({ files, onFilesChange, maxSizeMb = 50 })
                     {files.map((f, idx) => (
                         <div
                             key={idx}
-                            className="group inline-flex items-center gap-2 pl-3 pr-1 py-1.5 rounded-full text-xs font-medium bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-colors"
+                            className="group inline-flex items-center gap-2 ps-3 pe-1 py-1.5 rounded-full text-xs font-medium bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-colors"
                         >
                             <PaperclipIcon size={13} />
                             <span className="truncate max-w-[160px]" title={`${f.name} (${formatSize(f.size)})`}>{f.name}</span>
@@ -56,8 +58,8 @@ export default function FileUploadArea({ files, onFilesChange, maxSizeMb = 50 })
             >
                 <CloudUploadIcon size={28} className="text-icon-accent-default-light dark:text-icon-accent-default-dark shrink-0" />
                 <div className="min-w-0">
-                    <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Drag & drop files here <span className="font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">or click to browse</span></p>
-                    <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">Max: {maxSizeMb}MB per file</p>
+                    <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{t('fileUpload.dragDrop')} <span className="font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('fileUpload.clickBrowse')}</span></p>
+                    <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{t('fileUpload.maxSize', { size: maxSizeMb })}</p>
                 </div>
             </div>
 

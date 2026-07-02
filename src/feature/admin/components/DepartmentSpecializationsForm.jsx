@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
@@ -6,8 +7,10 @@ import NumberInput from "../../../components/form/NumberInput";
 import { PlusIcon, TrashIcon, XIcon } from "../../../components/ui/icons";
 import { fetchSpecializations, createSpecialization, deleteSpecialization } from "../services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 export default function DepartmentSpecializationsForm({ department, onClose, onUpdate }) {
+    const { t, i18n } = useTranslation('admin');
     const { showError } = useError();
     const [newName, setNewName] = useState("");
     const [newNameAr, setNewNameAr] = useState("");
@@ -74,7 +77,7 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                 <div className="shrink-0 flex items-center justify-between gap-4 border-b border-border-primary-default-light px-3 sm:px-6 py-4 dark:border-border-primary-default-dark">
                     <div className="min-w-0 truncate">
                         <h3 className="text-xl font-semibold truncate text-text-primary-default-light dark:text-text-primary-default-dark">
-                            Set Specializations
+                            {t('manageDepartments.setSpecializations')}
                         </h3>
                         <p className="mt-1 text-sm truncate text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             {department?.departmentName || departmentId}
@@ -93,7 +96,7 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                 <div className="p-6 overflow-y-auto">
                     {loading ? (
                         <p className="text-center py-8 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            Loading specializations...
+                            {t('manageBylaws.loadingSpecializations')}
                         </p>
                     ) : (
                         <>
@@ -104,7 +107,7 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                                         value={newName}
                                         onChange={(e) => setNewName(e.target.value)}
                                         onKeyDown={handleKeyDown}
-                                        placeholder="Enter English name"
+                                        placeholder={t('deptSpecializationsForm.namePlaceholder')}
                                         className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm"
                                     />
                                     <div dir="rtl">
@@ -113,14 +116,14 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                                             value={newNameAr}
                                             onChange={(e) => setNewNameAr(e.target.value)}
                                             onKeyDown={handleKeyDown}
-                                            placeholder="اسم التخصص بالعربية"
+                                            placeholder={t('deptSpecializationsForm.nameArPlaceholder')}
                                             className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm"
                                         />
                                     </div>
                                     <NumberInput
                                         value={newMaxCapacity}
                                         onChange={(e) => setNewMaxCapacity(e.target.value)}
-                                        placeholder="Max capacity (optional)"
+                                        placeholder={t('deptSpecializationsForm.maxCapacityPlaceholder')}
                                         min="0"
                                         className="w-full"
                                     />
@@ -134,14 +137,14 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                                         className="w-full sm:w-auto"
                                     >
                                         <PlusIcon size={18} />
-                                        Add Specialization
+                                        {t('deptSpecializationsForm.addSpecialization')}
                                     </Button>
                                 </div>
                             </div>
 
                             {specializations.length === 0 ? (
                                 <p className="text-center py-8 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                    No specializations yet. Add one above.
+                                    {t('deptSpecializationsForm.noSpecializations')}
                                 </p>
                             ) : (
                                 <ul className="space-y-2">
@@ -152,21 +155,16 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                                                 key={specId}
                                                 className="flex items-center justify-between px-3 py-2 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark"
                                             >
-                                                <div className="flex flex-col text-left">
+                                                <div className="flex flex-col text-start">
                                                     <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                        {spec.name}
+                                                        {getLocalizedField(spec, 'name', i18n.language)}
                                                     </span>
-                                                    {spec.nameAr && (
-                                                        <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark" dir="rtl">
-                                                            {spec.nameAr}
-                                                        </span>
-                                                    )}
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={() => handleDelete(specId)}
                                                     className="p-1 rounded-md text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:bg-bg-status-error-light dark:hover:bg-bg-status-error-dark hover:text-text-status-error-light dark:hover:text-text-status-error-dark transition-colors"
-                                                    aria-label={`Delete ${spec.name}`}
+                                                    aria-label={t('deptSpecializationsForm.delete', { name: getLocalizedField(spec, 'name', i18n.language) })}
                                                 >
                                                     <TrashIcon size={16} />
                                                 </button>
@@ -181,7 +179,7 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
 
                 <div className="shrink-0 flex justify-end border-t border-border-primary-default-light px-3 sm:px-6 py-4 dark:border-border-primary-default-dark">
                     <Button variant="secondary" onClick={onClose}>
-                        Close
+                        {t('manageCourses.close')}
                     </Button>
                 </div>
             </div>

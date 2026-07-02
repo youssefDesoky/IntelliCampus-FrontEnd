@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import useDeviceType from "../../../hooks/useDeviceType";
+import useArabicDigits from "../../../hooks/useArabicDigits";
 
 import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
 import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
@@ -24,46 +26,45 @@ import {
 } from "../../../feature/student/courses/courseRegister/registrationApi";
 import { fetchMySchedule } from "../../../feature/student/schedule/scheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 
-function mapRegistrationToCard(reg) {
-    return {
-        id:          reg.courseCode  ?? reg.code ?? reg.courseId ?? "",
-        title:       reg.courseName  ?? "",
-        code:        reg.courseCode  ?? reg.code ?? "",
+const ITEMS_PER_PAGE = 3;
+
+export default function CoursesRegistration() {
+    const { t, i18n } = useTranslation('student');
+    const { isDesktop, isMobile } = useDeviceType();
+    const { convert: ar } = useArabicDigits();
+
+    const mapRegistrationToCard = (reg) => ({
+        id:          getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? reg.courseId ?? "",
+        title:       getLocalizedField(reg, 'courseName', i18n.language)  ?? "",
+        code:        getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? "",
         creditHours: reg.creditHours ?? "",
-        professor:   reg.professorName ?? reg.professor ?? "",
+        professor:   getLocalizedField(reg, 'professorName', i18n.language) ?? getLocalizedField(reg, 'instructorName', i18n.language) ?? reg.professorName ?? reg.professor ?? "",
         avatar:      reg.professorAvatar ?? reg.instructorAvatar ?? reg.avatar ?? null,
-        schedule:    reg.schedule    ?? "",
-        room:        reg.room        ?? "",
+        schedule:    getLocalizedField(reg, 'schedule', i18n.language) ?? reg.schedule ?? "",
+        room:        getLocalizedField(reg, 'room', i18n.language) ?? reg.roomAr ?? reg.room ?? "",
         courseId:     reg.courseId,
         classId:      reg.classId,
         isRegistered: true,
-    };
-}
+    });
 
-function mapActiveCourseToCard(course) {
-    return {
-        id:            course.courseCode  ?? course.code ?? course.courseId ?? course.id ?? "",
-        title:         course.courseName  ?? course.title   ?? "",
-        code:          course.courseCode  ?? course.code ?? "",
+    const mapActiveCourseToCard = (course) => ({
+        id:            getLocalizedField(course, 'courseCode', i18n.language) ?? course.courseCode  ?? course.code ?? course.courseId ?? course.id ?? "",
+        title:         getLocalizedField(course, 'courseName', i18n.language)  ?? course.title   ?? "",
+        code:          getLocalizedField(course, 'courseCode', i18n.language) ?? course.courseCode  ?? course.code ?? "",
         creditHours:   course.creditHours ?? "",
-        professor:     course.professorName ?? course.professor ?? course.instructor ?? "",
+        professor:     getLocalizedField(course, 'professorName', i18n.language) ?? getLocalizedField(course, 'instructorName', i18n.language) ?? course.professorName ?? course.professor ?? course.instructor ?? "",
         avatar:        course.professorAvatar ?? course.instructorAvatar ?? course.avatar ?? null,
-        schedule:      course.schedule    ?? "",
-        room:          course.room        ?? "",
+        schedule:      getLocalizedField(course, 'schedule', i18n.language) ?? course.schedule ?? "",
+        room:          getLocalizedField(course, 'room', i18n.language) ?? course.room ?? "",
         preRequisites: course.prerequisites ?? course.preRequisites ?? null,
         courseId:       course.courseId    ?? course.id,
         classId:       course.classId,
         isElective:    course.isElective ?? false,
         isRegistered: false,
-    };
-}
-
-const ITEMS_PER_PAGE = 3;
-
-export default function CoursesRegistration() {
-    const { isDesktop, isMobile } = useDeviceType();
+    });
 
     const [locallyAddedCourses, setLocallyAddedCourses] = useState([]);
     const [sectionOptionsByCourseId, setSectionOptionsByCourseId] = useState({});
@@ -201,7 +202,7 @@ export default function CoursesRegistration() {
                 });
             } catch (err) {
                 if (!isMounted) return;
-                showError(err.message || "Failed to load sections");
+                showError(err.message || t('registration.sectionError'));
             }
         }
 
@@ -240,7 +241,7 @@ export default function CoursesRegistration() {
             await unregisterFromCourse(course.courseId);
             await queryClient.invalidateQueries({ queryKey: ["coursesRegistration"] });
         } catch (err) {
-            showError(err.message || "Failed to unregister from course");
+            showError(err.message || t('registration.unregisterError'));
         }
     };
 
@@ -251,7 +252,7 @@ export default function CoursesRegistration() {
         for (const course of pending) {
             const section = selectedSectionByCourseId[course.courseId];
             if (!section?.value) {
-                showError(`Please select a section for ${course.title}.`);
+                showError(t('registration.selectSection', { title: course.title }));
                 return;
             }
         }
@@ -263,9 +264,9 @@ export default function CoursesRegistration() {
             const section = selectedSectionByCourseId[course.courseId];
             try {
                 await registerForCourse(course.courseId, section.value);
-                successMsgs.push(`Registered ${course.title}`);
+                successMsgs.push(t('registration.registerSuccess', { title: course.title }));
             } catch {
-                failureMsgs.push(`Failed to register ${course.title}`);
+                failureMsgs.push(t('registration.registerError', { title: course.title }));
             }
         }
 
@@ -274,14 +275,14 @@ export default function CoursesRegistration() {
 
         if (failureMsgs.length === 0) {
             setResultDialogVariant("success");
-            setResultDialogMessage(successMsgs.join(", ") + " successfully!");
+            setResultDialogMessage(successMsgs.join(", ") + " " + t('registration.successSuffix'));
         } else if (successMsgs.length === 0) {
             setResultDialogVariant("error");
             setResultDialogMessage(failureMsgs.join(", "));
         } else {
             setResultDialogVariant("warning");
             setResultDialogMessage(
-                "Partial success:\n" + successMsgs.join(", ") + "\n\nFailures:\n" + failureMsgs.join(", ")
+                t('registration.partialSuccess') + "\n" + successMsgs.join(", ") + "\n\n" + t('registration.failures') + "\n" + failureMsgs.join(", ")
             );
         }
         setShowResultDialog(true);
@@ -309,9 +310,9 @@ export default function CoursesRegistration() {
                         <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/50 dark:bg-bg-surface-secondary-default-dark/50">
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark" />
-                                <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">Available Courses</h3>
+                                <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">{t('registration.availableCourses')}</h3>
                             </div>
-                            <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">{availableCourses.length}</span>
+                            <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">{ar(availableCourses.length)}</span>
                         </div>
 
                         <div className="flex-1 p-4 space-y-4 min-h-[420px]">
@@ -328,7 +329,7 @@ export default function CoursesRegistration() {
                             ) : (
                                 <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
                                     <FileLinesIcon className="w-12 h-12 mb-3 opacity-40" />
-                                    <p className="text-sm">No available courses.</p>
+                                    <p className="text-sm">{t('registration.noAvailable')}</p>
                                 </div>
                             )}
                         </div>
@@ -343,9 +344,9 @@ export default function CoursesRegistration() {
                         <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-success-default-light/10 dark:bg-bg-surface-success-default-dark/10">
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark" />
-                                <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">Selected Courses</h3>
+                                <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">{t('registration.selectedCourses')}</h3>
                             </div>
-                            <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">{selectedCredits}</span>
+                            <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">{ar(selectedCredits)}</span>
                         </div>
 
                         <div className="flex-1 p-4 space-y-4 min-h-[420px]">
@@ -370,7 +371,7 @@ export default function CoursesRegistration() {
                             ) : (
                                 <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
                                     <FileLinesIcon className="w-12 h-12 mb-3 opacity-40" />
-                                    <p className="text-sm">No courses selected yet.</p>
+                                    <p className="text-sm">{t('registration.noSelected')}</p>
                                 </div>
                             )}
                         </div>
@@ -386,11 +387,11 @@ export default function CoursesRegistration() {
                     <button
                         type="button"
                         onClick={() => setScheduleOpen((prev) => !prev)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 text-start hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50 transition-colors"
                     >
                         <div className="flex items-center gap-2">
                             <CalendarIcon className="w-4 h-4 text-text-secondary-active-light dark:text-text-secondary-active-dark" />
-                            <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">Weekly Schedule Preview</h3>
+                            <h3 className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">{t('registration.weeklyPreview')}</h3>
                         </div>
                         <AngleDownIcon className={`w-4 h-4 text-text-secondary-active-light dark:text-text-secondary-active-dark transition-transform duration-200 ${scheduleOpen ? 'rotate-180' : ''}`} />
                     </button>
@@ -419,9 +420,9 @@ export default function CoursesRegistration() {
             <Dialog
                 isOpen={showResultDialog}
                 variant={resultDialogVariant}
-                title={resultDialogVariant === "success" ? "Registration Complete" : resultDialogVariant === "warning" ? "Partial Completion" : "Registration Failed"}
+                title={resultDialogVariant === "success" ? t('registration.complete') : resultDialogVariant === "warning" ? t('registration.partial') : t('registration.failed')}
                 onClose={() => setShowResultDialog(false)}
-                confirmText="OK"
+                confirmText={t('registration.ok')}
             >
                 <p>{resultDialogMessage}</p>
             </Dialog>

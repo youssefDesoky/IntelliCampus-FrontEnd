@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
@@ -23,29 +24,33 @@ import {
 } from "../../../feature/instructor/components/assignments/instructorAssignmentsApi";
 import { CourseAssignmentsSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import useArabicDigits from '../../../hooks/useArabicDigits';
 
-function formatDueDate(value) {
+function formatDueDate(value, locale) {
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "Invalid date";
+    if (Number.isNaN(date.getTime())) return "—";
     
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(locale, {
         year: "numeric",
         month: "short",
         day: "2-digit",
     }).format(date);
 }
 
-function formatDueTime(value) {
+function formatDueTime(value, locale) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
     
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(locale, {
         hour: "2-digit",
         minute: "2-digit",
     }).format(date);
 }
 
 export default function InstructorCourseAssignments() {
+    const { t, i18n } = useTranslation('instructor');
+    const { convert: ar } = useArabicDigits();
     const { courseId } = useOutletContext();
     
     const { showError } = useError();
@@ -87,7 +92,7 @@ export default function InstructorCourseAssignments() {
             return (Array.isArray(data) ? data : []).map((item) => ({
                 id: item.id,
                 title: item.title,
-                description: item.description,
+                description: getLocalizedField(item, 'description', i18n.language),
                 fullInstructions: item.fullInstructions,
                 dueDate: item.dueDate,
                 totalPoints: item.totalPoints,
@@ -244,7 +249,7 @@ export default function InstructorCourseAssignments() {
                 submittedAt: s.submittedAt || s.SubmittedAt || s.SubmittedDate || null,
                 note: s.note || s.Note || null,
                 files: s.files || s.Files || [],
-                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (s.student.fullName || s.student.name) : s.student) || null,
+                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (getLocalizedField(s.student, 'fullName', i18n.language) || s.student.name) : s.student) || null,
                 score: s.score ?? s.Score ?? null,
                 feedback: s.feedback ?? s.Feedback ?? null,
                 grade: s.grade ?? null,
@@ -267,7 +272,7 @@ export default function InstructorCourseAssignments() {
                 submittedAt: s.submittedAt || s.SubmittedAt || s.SubmittedDate || null,
                 note: s.note || s.Note || null,
                 files: s.files || s.Files || [],
-                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (s.student.fullName || s.student.name) : s.student) || null,
+                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (getLocalizedField(s.student, 'fullName', i18n.language) || s.student.name) : s.student) || null,
                 score: s.score ?? s.Score ?? null,
                 feedback: s.feedback ?? s.Feedback ?? null,
                 grade: s.grade ?? null,
@@ -367,7 +372,7 @@ export default function InstructorCourseAssignments() {
         <div className="flex flex-col flex-1">
         <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                Assignments
+                {t('assignments.title')}
             </h2>
             <Button
                 type="button"
@@ -375,65 +380,65 @@ export default function InstructorCourseAssignments() {
                 onClick={() => setIsFormOpen(true)}
                 startIcon={<PlusIcon size={18} />}
             >
-                <span className="hidden sm:inline">Create Assignment</span>
+                <span className="hidden sm:inline">{t('assignments.create')}</span>
             </Button>
         </div>
 
         <BaseFormComponent
         isOpen={isFormOpen}
-        title={editingAssignmentId ? "Edit Assignment" : "Create Assignment"}
-        description="Add assignment details and publish it to your students."
+        title={editingAssignmentId ? t('assignments.edit') : t('assignments.create')}
+        description={t('assignments.formDesc')}
         onClose={handleCloseForm}
         onSubmit={editingAssignmentId ? handleUpdateAssignment : handleCreateAssignment}
-        submitText={editingAssignmentId ? "Update Assignment" : "Create Assignment"}
+        submitText={editingAssignmentId ? t('assignments.update') : t('assignments.create')}
         submitDisabled={isSubmitting || !title.trim() || !dueDate || !courseId}
         submitLoading={isSubmitting}
         maxWidth="max-w-2xl"
         contentClassName="space-y-4"
         >
         <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Title</label>
+        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">{t('assignments.titleLabel')}</label>
         <input
         type="text"
         value={title}
         onChange={(event) => setTitle(event.target.value)}
-        placeholder="Assignment title"
+        placeholder={t('assignments.titlePlaceholder')}
         className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
         />
         </div>
         
         <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Description</label>
+        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">{t('assignments.descriptionLabel')}</label>
         <TextArea
         value={description}
         onChange={(event) => setDescription(event.target.value)}
-        placeholder="Short summary..."
+        placeholder={t('assignments.descriptionPlaceholder')}
         className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
         />
         </div>
         
         <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Full Instructions</label>
+        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">{t('assignments.instructionsLabel')}</label>
         <TextArea
         value={instructions}
         onChange={(event) => setInstructions(event.target.value)}
-        placeholder="Detailed instructions for students..."
+        placeholder={t('assignments.instructionsPlaceholder')}
         className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
         />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <DateTimeInput label="Due Date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+        <DateTimeInput label={t('assignments.dueDate')} value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
         
-        <NumberInput label="Total Points" min={1} value={totalPoints} onChange={(event) => setTotalPoints(event.target.value)} />
+        <NumberInput label={t('assignments.totalPoints')} min={1} value={totalPoints} onChange={(event) => setTotalPoints(event.target.value)} />
         </div>
 
         <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Attachments</label>
+        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">{t('assignments.attachments')}</label>
         {(existingAttachments.length > 0 || assignmentFiles.length > 0) && (
             <div className="flex flex-wrap gap-2 mb-2">
             {existingAttachments.map((att, i) => (
-                <span key={att.id ?? i} className="group inline-flex items-center gap-1.5 pl-3 pr-1 py-1.5 rounded-full text-xs font-medium bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-colors">
+                <span key={att.id ?? i} className="group inline-flex items-center gap-1.5 ps-3 pe-1 py-1.5 rounded-full text-xs font-medium bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-colors">
                 <PaperclipIcon size={13} />
                 <span className="truncate max-w-[160px]" title={att.name}>{att.name}</span>
                 <button
@@ -453,9 +458,9 @@ export default function InstructorCourseAssignments() {
         
         {sortedAssignments.length === 0 ? (
             <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
-                <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No assignments yet</h3>
+                <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('assignments.empty')}</h3>
                 <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    Create your first assignment for this course.
+                    {t('assignments.emptyDesc')}
                 </p>
             </div>
         ) : (
@@ -469,18 +474,18 @@ export default function InstructorCourseAssignments() {
                     <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 justify-between">
                         <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                        {assignment.title}
+                            {getLocalizedField(assignment, 'title', i18n.language)}
                         </h3>
                         {assignment.totalPoints && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap shrink-0">
                             <ChartBarIcon size={14} />
-                            {assignment.totalPoints} pts
+                            {ar(t('assignments.points', { count: assignment.totalPoints }))}
                         </span>
                         )}
                     </div>
                     {assignment.description && (
                         <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">
-                        {assignment.description}
+                        {getLocalizedField(assignment, 'description', i18n.language)}
                         </p>
                     )}
                     </div>
@@ -489,11 +494,11 @@ export default function InstructorCourseAssignments() {
                 <div className="flex flex-col gap-1 mt-3 text-sm">
                     <div className="flex items-center gap-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">
                     <CalendarDaysIcon size={16} />
-                    <span>{formatDueDate(assignment.dueDate)}</span>
+                    <span>{ar(formatDueDate(assignment.dueDate, i18n.language))}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">
                     <ClockIcon size={16} />
-                    <span>{formatDueTime(assignment.dueDate)}</span>
+                    <span>{ar(formatDueTime(assignment.dueDate, i18n.language))}</span>
                     </div>
                 </div>
 
@@ -506,7 +511,7 @@ export default function InstructorCourseAssignments() {
                     className="flex-1 sm:flex-none sm:w-auto justify-center"
                     onClick={() => openSubmissions(assignment)}
                     >
-                    <span className="hidden sm:inline">Submissions</span>
+                    <span className="hidden sm:inline">{t('assignments.submissions')}</span>
                     </Button>
                     <Button
                     type="button"
@@ -532,7 +537,7 @@ export default function InstructorCourseAssignments() {
                         setIsFormOpen(true);
                     }}
                     >
-                    <span className="hidden sm:inline">Edit</span>
+                    <span className="hidden sm:inline">{t('assignments.editBtn')}</span>
                     </Button>
                     <Button
                     type="button"
@@ -542,7 +547,7 @@ export default function InstructorCourseAssignments() {
                     className="flex-1 sm:flex-none sm:w-auto justify-center text-text-danger-default-light dark:text-text-danger-default-dark"
                     onClick={() => handleDeleteClick(assignment)}
                     >
-                    <span className="hidden sm:inline">Delete</span>
+                    <span className="hidden sm:inline">{t('assignments.deleteBtn')}</span>
                     </Button>
                 </div>
                 </div>
@@ -560,10 +565,10 @@ export default function InstructorCourseAssignments() {
             </div>
             <div>
             <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-            Submissions
+            {t('assignments.submissions')}
             </h2>
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-            View student submissions for this assignment
+            {t('assignments.submissionsDesc')}
             </p>
             </div>
             </div>
@@ -577,9 +582,9 @@ export default function InstructorCourseAssignments() {
             
             <div className="p-5 space-y-4">
             {isLoadingSubmissions ? (
-                <p>Loading submissions...</p>
+                <p>{t('assignments.loadingSubmissions')}</p>
             ) : submissions.length === 0 ? (
-                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No submissions yet.</p>
+                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('assignments.noSubmissions')}</p>
             ) : (
                 <div className="space-y-3">
                 {submissions.map((s) => {
@@ -600,7 +605,7 @@ export default function InstructorCourseAssignments() {
                             </span>
                         ) : (
                             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-bg-fill-warning-default-light/20 dark:bg-bg-fill-warning-default-dark/20 text-bg-fill-warning-default-light dark:text-bg-fill-warning-default-dark border border-bg-fill-warning-default-light/30 dark:border-bg-fill-warning-default-dark/30">
-                                Pending
+                                {t('assignments.pending')}
                             </span>
                         )}
                         </div>
@@ -610,7 +615,7 @@ export default function InstructorCourseAssignments() {
                         className={`p-2 rounded-lg transition-colors ${hasFile ? "hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-primary-default-light dark:text-text-primary-default-dark" : "opacity-40 text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}
                         onClick={() => openFilePreview(primaryFile, s)}
                         disabled={!hasFile}
-                        title={hasFile ? "Preview submission" : "No file available"}
+                        title={hasFile ? t('assignments.previewSubmission') : t('assignments.noFile')}
                         >
                         <EyeIcon size={16} />
                         </button>
@@ -618,14 +623,14 @@ export default function InstructorCourseAssignments() {
                             <button
                             onClick={() => downloadFile(primaryFile.url, primaryFile.name, primaryFile.id)}
                             className="p-2 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-primary-default-light dark:text-text-primary-default-dark transition-colors"
-                            title="Download submission"
+                            title={t('assignments.downloadSubmission')}
                             >
                             <DownloadIcon size={16} />
                             </button>
                         ) : (
                             <span
                             className="p-2 rounded-lg opacity-40 text-text-secondary-default-light dark:text-text-secondary-default-dark"
-                            title="No file available"
+                            title={t('assignments.noFile')}
                             >
                             <DownloadIcon size={16} />
                             </span>
@@ -638,7 +643,7 @@ export default function InstructorCourseAssignments() {
             setGradeFeedback(s.grade?.feedback ?? s.feedback ?? "");
             setGradeModal(s);
                         }}
-                        title="Grade submission"
+                        title={t('assignments.gradeSubmitTooltip')}
                         >
                         <ClipboardCheckIcon size={16} />
                         </button>
@@ -668,7 +673,7 @@ export default function InstructorCourseAssignments() {
             </div>
             <div>
             <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-            Grade Submission
+            {t('assignments.gradeSubmission')}
             </h2>
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
             {typeof gradeModal.student === 'string' ? gradeModal.student : `Student ${gradeModal.id}`}
@@ -685,10 +690,10 @@ export default function InstructorCourseAssignments() {
 
             <div className="p-5 space-y-4">
             <NumberInput
-            label={`Score (out of ${selectedAssignmentTotalPoints})`}
+            label={t('assignments.score', { max: selectedAssignmentTotalPoints })}
             value={gradeScore}
             onChange={(e) => setGradeScore(e.target.value)}
-            placeholder={`0 - ${selectedAssignmentTotalPoints}`}
+            placeholder={`0 \u2013 ${selectedAssignmentTotalPoints}`}
             min={0}
             max={selectedAssignmentTotalPoints}
             required
@@ -696,12 +701,12 @@ export default function InstructorCourseAssignments() {
 
             <div className="space-y-2">
             <label className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-            Feedback
+            {t('assignments.feedback')}
             </label>
             <TextArea
             value={gradeFeedback}
             onChange={(e) => setGradeFeedback(e.target.value)}
-            placeholder="Optional feedback for the student..."
+            placeholder={t('assignments.feedbackPlaceholder')}
             className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
             />
             </div>
@@ -712,7 +717,7 @@ export default function InstructorCourseAssignments() {
             className="flex-1"
             onClick={() => { setGradeModal(null); setGradeScore(""); setGradeFeedback(""); }}
             >
-            Cancel
+            {t('assignments.cancel')}
             </Button>
             <Button
             variant="primary"
@@ -721,7 +726,7 @@ export default function InstructorCourseAssignments() {
             loading={isGrading}
             disabled={!gradeScore}
             >
-            Submit Grade
+            {t('assignments.submitGrade')}
             </Button>
             </div>
             </div>
@@ -739,13 +744,13 @@ export default function InstructorCourseAssignments() {
             </div>
             <div>
             <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-            Preview
+            {t('assignments.preview')}
             </h2>
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
             {previewFile.name}
             </p>
             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-            {typeof selectedSubmission?.student === 'string' ? selectedSubmission.student : "Selected submission"}
+            {typeof selectedSubmission?.student === 'string' ? selectedSubmission.student : t('assignments.selectedSubmission')}
             </p>
             </div>
             </div>
@@ -762,7 +767,7 @@ export default function InstructorCourseAssignments() {
                     closeFilePreview();
                 }
             }}
-            title="Grade submission"
+            title={t('assignments.gradeSubmitTooltip')}
             >
             <ClipboardCheckIcon size={20} />
             </button>
@@ -779,7 +784,7 @@ export default function InstructorCourseAssignments() {
             
             {selectedSubmission?.note && (
                 <div className="border-t border-border-primary-default-light dark:border-border-primary-default-dark pt-4">
-                <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">Student's Note:</h3>
+                <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">{t('assignments.studentNote')}</h3>
                 <p className="text-sm text-text-primary-default-light dark:text-text-primary-default-dark whitespace-pre-wrap bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3 rounded-lg">
                 {selectedSubmission.note}
                 </p>
@@ -792,31 +797,31 @@ export default function InstructorCourseAssignments() {
             <Dialog
                 isOpen={deletingAssignment !== null}
                 variant="warning"
-                title="Delete Assignment"
+                title={t('assignments.deleteTitle')}
                 onClose={() => setDeletingAssignment(null)}
                 onConfirm={handleDeleteConfirm}
-                confirmText="Delete"
-                cancelText="Cancel"
+                confirmText={t('assignments.deleteBtn')}
+                cancelText={t('assignments.cancel')}
             >
-                Are you sure you want to delete &ldquo;{deletingAssignment?.title}&rdquo;? This action cannot be undone.
+                {t('assignments.deleteConfirm', { title: deletingAssignment?.title })}
             </Dialog>
 
         <Dialog
             isOpen={gradeResult === "success"}
             variant="success"
-            title="Graded Successfully"
+            title={t('assignments.gradedSuccess')}
             onClose={() => setGradeResult(null)}
             autoCloseDuration={2000}
         >
-            The submission has been graded.
+            {t('assignments.gradedMessage')}
         </Dialog>
         <Dialog
             isOpen={gradeResult === "error"}
             variant="error"
-            title="Grading Failed"
+            title={t('assignments.gradingFailed')}
             onClose={() => setGradeResult(null)}
         >
-            Failed to grade the submission.
+            {t('assignments.gradingFailedMessage')}
         </Dialog>
         </div>
     );

@@ -1,13 +1,17 @@
 import { useState, useRef, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import TextArea from "../../../components/ui/TextArea";
 import { ImageIcon } from "../../../components/ui/icons";
 import BasePanel from "./BasePanel";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 export default function CreateGroupPanel({
   friends = [],
   onCreate,
   onCancel,
 }) {
+  const { t, i18n } = useTranslation('chat');
+  const isRTL = i18n.language === 'ar';
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [profileImage, setProfileImage] = useState(null);
@@ -46,7 +50,7 @@ export default function CreateGroupPanel({
       friends.filter(
         (f) =>
           !searchQuery.trim() ||
-          f.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getLocalizedField(f, 'name', i18n.language)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           String(f.id).includes(searchQuery)
       ),
     [friends, searchQuery]
@@ -61,7 +65,7 @@ export default function CreateGroupPanel({
           <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       }
-      title="Create Group"
+      title={t('group.create')}
       onBack={onCancel}
     >
       <div className="flex flex-col gap-5 px-5 py-5 overflow-y-auto flex-1 no-scrollbar">
@@ -72,21 +76,21 @@ export default function CreateGroupPanel({
             className="relative w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-700/80 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all group"
           >
             {profileImage ? (
-              <img src={profileImage} alt="Group" className="w-full h-full object-cover" />
+              <img src={profileImage} alt={t('group.photoAlt')} className="w-full h-full object-cover" />
             ) : (
               <div className="flex flex-col items-center gap-1">
                 <ImageIcon size={20} className="text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
               </div>
             )}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-2xl" />
-            <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-white dark:bg-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.12)] flex items-center justify-center">
+            <div className="absolute bottom-1 end-1 w-6 h-6 rounded-full bg-white dark:bg-gray-800 shadow-[0_1px_3px_rgba(0,0,0,0.12)] flex items-center justify-center">
               <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-500">
                 <path d="M8 3v10M3 8h10" />
               </svg>
             </div>
           </button>
           <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 tracking-wide">
-            Group Photo — optional
+            {t('group.photo')}
           </span>
           <input
             ref={fileInputRef}
@@ -99,12 +103,13 @@ export default function CreateGroupPanel({
 
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-            Group Title
+            {t('group.title')}
           </label>
           <input
             type="text"
+            dir={isRTL ? 'rtl' : 'ltr'}
             className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all"
-            placeholder="e.g. Design Team"
+            placeholder={t('group.titlePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -112,14 +117,14 @@ export default function CreateGroupPanel({
 
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-            Description
-            <span className="ml-1.5 normal-case text-gray-300 dark:text-gray-600 font-normal tracking-normal">
+            {t('group.description')}
+            <span className="ms-1.5 normal-case text-gray-300 dark:text-gray-600 font-normal tracking-normal">
               — optional
             </span>
           </label>
           <TextArea
             className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all"
-            placeholder="What's this group about?"
+            placeholder={t('group.descriptionPlaceholder')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
@@ -127,10 +132,10 @@ export default function CreateGroupPanel({
 
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
-          <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Members</span>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{t('group.members')}</span>
           {selectedFriends.length > 0 && (
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 shadow-[inset_0_1px_2px_rgba(59,130,246,0.1)]">
-              {selectedFriends.length} selected
+              {t('group.selected', { count: selectedFriends.length })}
             </span>
           )}
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
@@ -147,12 +152,12 @@ export default function CreateGroupPanel({
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium ring-1 ring-blue-200 dark:ring-blue-800"
                 >
                   <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold">
-                    {friend.name?.[0]?.toUpperCase() ?? "?"}
+                    {getLocalizedField(friend, 'name', i18n.language)?.[0]?.toUpperCase() ?? "?"}
                   </span>
-                  {friend.name}
+                  {getLocalizedField(friend, 'name', i18n.language)}
                   <button
                     onClick={() => handleRemoveSelected(id)}
-                    className="ml-0.5 text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                    className="ms-0.5 text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <path d="M4 4l8 8M12 4l-8 8" />
@@ -165,7 +170,7 @@ export default function CreateGroupPanel({
         )}
 
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <span className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="7" cy="7" r="5" />
               <path d="M11 11l3 3" />
@@ -173,8 +178,9 @@ export default function CreateGroupPanel({
           </span>
           <input
             type="text"
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all"
-            placeholder="Search friends..."
+            dir={isRTL ? 'rtl' : 'ltr'}
+            className="w-full ps-9 pe-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all"
+            placeholder={t('searchFriends')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -190,7 +196,7 @@ export default function CreateGroupPanel({
                 </svg>
               </div>
               <p className="text-sm text-gray-400 dark:text-gray-500">
-                {searchQuery ? "No friends match your search" : "No friends to add yet"}
+                {searchQuery ? t('group.noFriendsSearch') : t('group.noFriends')}
               </p>
             </div>
           ) : (
@@ -200,7 +206,7 @@ export default function CreateGroupPanel({
                 <button
                   key={friend.id}
                   onClick={() => handleToggleFriend(friend.id)}
-                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left transition-all active:scale-[0.98] ${
+                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-start transition-all active:scale-[0.98] ${
                     isSelected
                       ? "bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-200 dark:ring-blue-800 shadow-[0_1px_3px_rgba(59,130,246,0.08)]"
                       : "hover:bg-white dark:hover:bg-gray-800/60 hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:hover:shadow-none hover:ring-1 hover:ring-gray-100 dark:hover:ring-gray-700/50"
@@ -211,14 +217,14 @@ export default function CreateGroupPanel({
                       ? "bg-blue-600 text-white"
                       : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                   }`}>
-                    {friend.name?.[0]?.toUpperCase() ?? "?"}
+                    {getLocalizedField(friend, 'name', i18n.language)?.[0]?.toUpperCase() ?? "?"}
                   </div>
 
-                  <div className="min-w-0 flex-1 text-left">
+                  <div className="min-w-0 flex-1 text-start">
                     <p className={`text-sm font-medium truncate leading-tight transition-colors ${
                       isSelected ? "text-blue-700 dark:text-blue-300" : "text-gray-800 dark:text-gray-100"
                     }`}>
-                      {friend.name}
+                      {getLocalizedField(friend, 'name', i18n.language)}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 truncate leading-tight">
                       ID: {friend.id}
@@ -248,7 +254,7 @@ export default function CreateGroupPanel({
           onClick={onCancel}
           className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all"
         >
-          Cancel
+          {t('group.cancel')}
         </button>
         <button
           onClick={handleCreate}
@@ -258,7 +264,7 @@ export default function CreateGroupPanel({
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M8 3v10M3 8h10" />
           </svg>
-          Create Group
+          {t('group.create')}
         </button>
       </div>
     </BasePanel>

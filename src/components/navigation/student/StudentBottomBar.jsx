@@ -6,7 +6,7 @@ import { BookIcon, ClipboardCheckIcon, FilePenIcon, ChartBarIcon, FileLinesIcon 
 
 
 export default function StudentBottomBar({ visible, floatingAction }) {
-    const { t } = useTranslation('student/aside');
+    const { t } = useTranslation('student');
     const allLinks = getNavigationLinks(t);
 
     const links = [

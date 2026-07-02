@@ -1,11 +1,13 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import ToggleTheme from "../components/ui/ToggleTheme";
 
 export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", children }) {
+    const { t, i18n } = useTranslation('auth');
     const [currTheme, setCurrTheme] = useState(localStorage.getItem('theme') || 'light');
 
     const bgStyle = {
-        backgroundImage: `url('/images/${bgImageName}-${currTheme}.png')`,
+        backgroundImage: `url('/static/images/${bgImageName}-${currTheme}.png')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -24,21 +26,21 @@ export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", c
 
                 {/* Left panel */}
                 <div
-                    className="hidden lg:flex p-5 flex-col items-left justify-start space-y-5 rounded-l-2xl col-span-45"
+                    className="hidden lg:flex p-5 flex-col items-start justify-start space-y-5 rounded-s-2xl col-span-45"
                     style={bgStyle}
                 >
-                    <div className="flex flex-row items-center space-x-2">
+                    <div className="flex flex-row items-center gap-x-2">
                         <img
-                            src="/images/IntelliCampusLogo.png"
-                            alt="IntelliCampus Logo"
+                            src="/static/images/IntelliCampusLogo.png"
+                            alt={t('errorPage.logoAlt')}
                             className="h-24 w-24 object-contain"
                         />
-                        <div className="text-left flex flex-col space-y-1">
+                        <div className="text-start flex flex-col space-y-1">
                             <h2 className="text-4xl font-['Playfair_Display'] text-text-primary-active-light dark:text-text-primary-active-dark">
                                 IntelliCampus
                             </h2>
                             <p className="font-['Source_Sans_3'] text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                                Smart Campus. Smart Learning
+                                {t('tagline')}
                             </p>
                         </div>
                     </div>
@@ -57,8 +59,8 @@ export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", c
                                     p-5 sm:p-6 lg:p-12 rounded-2xl shadow-2xl min-h-125 max-w-125
                                     flex flex-col justify-center">
                         
-                        {/* CHANGED: Adjusted to top-3 right-3 so it stays snug in the corner with the new padding */}
-                        <ToggleTheme className="absolute top-3 right-3 sm:top-4 sm:right-4" onChange={setCurrTheme} />
+                        {/* CHANGED: Adjusted to top-3 end-3 so it stays snug in the corner with the new padding */}
+                        <ToggleTheme className="absolute top-3 end-3 sm:top-4 sm:end-4" onChange={setCurrTheme} />
 
                         <div className="mb-6 space-y-2 md:space-y-3 pt-2">
                             <h2 className="text-2xl lg:text-3xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">

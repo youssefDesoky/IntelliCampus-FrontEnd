@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { useQuery } from "@tanstack/react-query";
 import { useOutletContext } from "react-router-dom";
 import Section from "../../../../../components/ui/Section";
@@ -13,8 +14,11 @@ import AttendanceExcuseCard from "./AttendanceExcuseCard";
 import { useError } from "../../../../../contexts/ErrorContext.jsx";
 import { fetchMyAttendance, submitExcuse } from "../../../services/profileApi";
 import { CourseAttendanceSkeleton } from "./SkeletonLoader";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 export default function CourseAttendance() {
+    const { t } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
     const fileInputRef = useRef(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -65,11 +69,11 @@ export default function CourseAttendance() {
 
     const handleExport = () => {
         if (!attendanceData?.history || attendanceData.history.length === 0) {
-            showError("No attendance data to export.");
+            showError(t('attendance.noExportData'));
             return;
         }
 
-        const headers = ["Date", "Time", "Type", "Status"];
+        const headers = [t('attendance.date'), t('attendance.time'), t('attendance.type'), t('attendance.status')];
         const rows = attendanceData.history.map((session) => [
             session.date || "",
             session.time || "",
@@ -100,12 +104,12 @@ export default function CourseAttendance() {
     if (!attendanceData) {
         return (
             <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
-                <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                    No attendance data available
-                </h3>
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
-                    Attendance records for this course are not available yet.
-                </p>
+                    <h3 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
+                        {t('attendance.noData')}
+                    </h3>
+                    <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
+                        {t('attendance.noDataDesc')}
+                    </p>
             </div>
         );
     }
@@ -124,10 +128,10 @@ export default function CourseAttendance() {
 
             <Section>
                 <Table
-                    title="Attendance History"
-                    description="Complete record of your class attendance"
-                    componentButton={<Button variant="secondary" onClick={handleExport} startIcon={<DownloadIcon size={18} />}>Export</Button>}
-                    headers={["Date", "Time", "Type", "Status"]}
+                    title={t('attendance.historyTitle')}
+                    description={t('attendance.historyDesc')}
+                    componentButton={<Button variant="secondary" onClick={handleExport} startIcon={<DownloadIcon size={18} />}>{t('attendance.export')}</Button>}
+                    headers={[t('attendance.date'), t('attendance.time'), t('attendance.type'), t('attendance.status')]}
                     data={(history || []).map((session) => ({
                         date: <span className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">{session.date}</span>,
                         time: <span className="text-sm text-text-secondary-light dark:text-text-secondary-dark">{session.time}</span>,
@@ -159,12 +163,12 @@ export default function CourseAttendance() {
 
             <BaseFormComponent
                 isOpen={isFormOpen}
-                title="Request an excuse"
-                description="Add a supporting file and explain the reason for your absence or delay."
+                title={t('attendance.requestExcuse')}
+                description={t('attendance.requestExcuseDesc')}
                 onClose={closeForm}
                 onSubmit={handleSubmit}
-                submitText={submitting ? "Submitting..." : "Submit Request"}
-                cancelText="Cancel"
+                submitText={submitting ? t('attendance.submitting') : t('attendance.submitRequest')}
+                cancelText={t('attendance.cancel')}
                 submitDisabled={submitting}
                 maxWidth="max-w-xl"
                 contentClassName="space-y-6"
@@ -174,14 +178,14 @@ export default function CourseAttendance() {
                         <label className="block">
                             <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
                                 <CalendarDaysIcon size={16} className="text-text-secondary-light dark:text-text-secondary-dark" />
-                                Select session
+                                {t('attendance.selectSession')}
                             </span>
                             <select
                                 value={selectedSessionId}
                                 onChange={(e) => setSelectedSessionId(e.target.value)}
                                 className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
                             >
-                                <option value="">Choose a session...</option>
+                                <option value="">{t('attendance.chooseSession')}</option>
                                 {(attendanceData?.history || []).map((session) => (
                                     <option key={session.sessionId || session.id} value={session.sessionId || session.id}>
                                         {session.date} — {session.time} ({session.type})
@@ -194,12 +198,12 @@ export default function CourseAttendance() {
                     <label className="block">
                         <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
                             <FileLinesIcon size={16} className="text-text-secondary-light dark:text-text-secondary-dark" />
-                            Reason for excuse
+                            {t('attendance.excuseReason')}
                         </span>
                         <TextArea
                             value={reason}
                             onChange={(event) => setReason(event.target.value)}
-                            placeholder="Explain why you missed the session and any relevant details..."
+                            placeholder={t('attendance.excusePlaceholder')}
                             className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-all placeholder:text-text-secondary-light focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-dark"
                         />
                     </label>
@@ -207,7 +211,7 @@ export default function CourseAttendance() {
                     <div className="block">
                         <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
                             <PaperclipIcon size={16} className="text-text-secondary-light dark:text-text-secondary-dark" />
-                            Supporting document
+                            {t('attendance.supportingDoc')}
                         </span>
 
                         {!selectedFile ? (
@@ -216,10 +220,10 @@ export default function CourseAttendance() {
                                     <CloudUploadIcon size={24} className="text-text-secondary-light dark:text-text-secondary-dark" />
                                 </div>
                                 <p className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">
-                                    Click to upload or drag and drop
+                                    {t('attendance.clickUpload')}
                                 </p>
                                 <p className="mt-1 text-xs text-text-secondary-light dark:text-text-secondary-dark text-center">
-                                    PDF, PNG, JPG, or DOC (max. 10MB)
+                                    {t('attendance.allowedFormats')}
                                 </p>
                                 <input
                                     ref={fileInputRef}
@@ -238,7 +242,7 @@ export default function CourseAttendance() {
                                     <div className="min-w-0">
                                         <p className="text-sm font-semibold truncate text-text-primary-light dark:text-text-primary-dark">{selectedFile.name}</p>
                                         <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-0.5">
-                                            {selectedFile.size ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}
+                                            {selectedFile.size ? `${ar((selectedFile.size / 1024 / 1024).toFixed(2))} MB` : t('attendance.unknownSize')}
                                         </p>
                                     </div>
                                 </div>
