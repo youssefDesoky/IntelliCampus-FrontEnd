@@ -71,11 +71,20 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 		const buttonEl = buttonRefs.current[rowIndex];
 		if (buttonEl) {
 			const rect = buttonEl.getBoundingClientRect();
-			setDropdownStyle({
-				top: rect.bottom + 8,
-				left: rect.left + rect.width / 2,
-				transform: 'translateX(-50%)',
-			});
+			const spaceBelow = window.innerHeight - rect.bottom;
+			if (spaceBelow < 200) {
+				setDropdownStyle({
+					bottom: window.innerHeight - rect.top + 8,
+					left: rect.left + rect.width / 2,
+					transform: 'translateX(-50%)',
+				});
+			} else {
+				setDropdownStyle({
+					top: rect.bottom + 8,
+					left: rect.left + rect.width / 2,
+					transform: 'translateX(-50%)',
+				});
+			}
 		}
 		setActionButtonClicked(rowIndex);
 	}, [actionButtonClicked]);

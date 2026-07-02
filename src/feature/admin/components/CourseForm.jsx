@@ -29,7 +29,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             .catch(console.error);
     }, [initialData.departmentId, initialData.departmentName]);
 
-    const [formData, setFormData] = useState({ title: "", titleArabic: "", id: "", courseCodeAr: "", creditHours: "", description: "", descriptionAr: "" });
+    const [formData, setFormData] = useState({ title: "", titleArabic: "", id: "", courseCodeAr: "", creditHours: "", description: "", descriptionAr: "", isProject: false });
 
     useEffect(() => {
         setFormData({
@@ -40,8 +40,9 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             creditHours: initialData.creditHours?.toString() || "",
             description: initialData.description || "",
             descriptionAr: initialData.descriptionAr || "",
+            isProject: initialData.isProject ?? false,
         });
-    }, [initialData.courseName, initialData.title, initialData.courseNameAr, initialData.titleArabic, initialData.courseCode, initialData.id, initialData.courseCodeAr, initialData.creditHours, initialData.description, initialData.descriptionAr]);
+    }, [initialData.courseName, initialData.title, initialData.courseNameAr, initialData.titleArabic, initialData.courseCode, initialData.id, initialData.courseCodeAr, initialData.creditHours, initialData.description, initialData.descriptionAr, initialData.isProject]);
 
     const handleChange = (field) => (e) => {
         setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -59,6 +60,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             creditHours: parseInt(formData.creditHours, 10) || 0,
             description: formData.description,
             descriptionAr: formData.descriptionAr || undefined,
+            isProject: formData.isProject,
         };
 
         if (onSubmit) onSubmit(courseData);
@@ -144,6 +146,22 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                         min="1"
                     />
                 </div>
+
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                        type="checkbox"
+                        name="isProject"
+                        checked={formData.isProject}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isProject: e.target.checked }))}
+                        className="w-4 h-4 rounded border-border-primary-default-light dark:border-border-primary-default-dark text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark focus:ring-bg-fill-accent-default-light dark:focus:ring-bg-fill-accent-default-dark"
+                    />
+                    <span className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
+                        Project Course
+                    </span>
+                    <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                        (hides section selection during registration)
+                    </span>
+                </label>
 
                 <div>
                     <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1">

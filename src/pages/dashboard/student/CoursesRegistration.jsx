@@ -7,7 +7,7 @@ import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
 import WeeklyScheduleAgenda from "../../../components/ui/schedule/WeeklyScheduleAgenda.phone";
 import PaginationButtons from "../../../components/ui/PaginationButtons";
 import Dialog from "../../../components/ui/Dialog";
-import { FileLinesIcon, CalendarIcon, AngleDownIcon } from "../../../components/ui/icons";
+import { FileLinesIcon, CalendarIcon, AngleDownIcon, WarningIcon } from "../../../components/ui/icons";
 
 import CourseCard from "../../../feature/student/courses/courseRegister/CourseCard";
 import CourseRegistrationHeader from "../../../feature/student/courses/courseRegister/CourseRegistrationHeader";
@@ -40,6 +40,7 @@ function mapRegistrationToCard(reg) {
         room:    reg.room ?? "",
         courseId:     reg.courseId,
         classId:      reg.classId,
+        isProject:    reg.isProject ?? false,
         isRegistered: true,
     };
 }
@@ -58,11 +59,76 @@ function mapActiveCourseToCard(course) {
         courseId:       course.courseId    ?? course.id,
         classId:       course.classId,
         isElective:    course.isElective ?? false,
+        isProject:     course.isProject ?? false,
         isRegistered: false,
     };
 }
 
 const ITEMS_PER_PAGE = 3;
+
+/* ── Time utilities ── */
+function parseTimeToMinutes(timeStr) {
+    if (!timeStr) return 0;
+    const match12 = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (match12) {
+        let h = parseInt(match12[1], 10);
+        const m = parseInt(match12[2], 10);
+        if (match12[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+        if (match12[3].toUpperCase() === 'AM' && h === 12) h = 0;
+        return h * 60 + m;
+    }
+    const parts = timeStr.split(':');
+    return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
+}
+
+function normalizeDay(day) {
+    if (!day) return '';
+    return day.toLowerCase().slice(0, 3);
+}
+
+function isOverlapping(a, b) {
+    const dayA = normalizeDay(a.day ?? a.dayName ?? '');
+    const dayB = normalizeDay(b.day ?? b.dayName ?? '');
+    if (dayA !== dayB) return false;
+    const sA = parseTimeToMinutes(a.startTime ?? a.start ?? '');
+    const eA = parseTimeToMinutes(a.endTime ?? a.end ?? '');
+    const sB = parseTimeToMinutes(b.startTime ?? b.start ?? '');
+    const eB = parseTimeToMinutes(b.endTime ?? b.end ?? '');
+    return sA < eB && sB < eA;
+}
+
+function formatTimeOption(timeStr) {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    const h = parseInt(parts[0], 10);
+    const m = parts[1] || '00';
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12.toString().padStart(2, '0')}:${m} ${ampm}`;
+}
+
+function detectTimeConflicts(registeredEvents, lecture, selectedSection, courseTitle, courseId) {
+    const conflicts = [];
+    const candidates = [];
+    if (lecture) candidates.push({ type: 'Lecture', courseId, ...lecture });
+    if (selectedSection) candidates.push({ type: 'Section', courseId, ...selectedSection });
+
+    for (const candidate of candidates) {
+        for (const event of registeredEvents) {
+            if (isOverlapping(candidate, event)) {
+                conflicts.push({
+                    type: candidate.type,
+                    courseTitle,
+                    courseId: candidate.courseId,
+                    conflictWith: event.title || event.courseName || 'Another course',
+                    day: candidate.dayName ?? candidate.day ?? '',
+                    time: `${formatTimeOption(candidate.startTime)} – ${formatTimeOption(candidate.endTime)}`,
+                });
+            }
+        }
+    }
+    return conflicts;
+}
 
 export default function CoursesRegistration() {
     const { isDesktop, isMobile } = useDeviceType();
@@ -75,6 +141,9 @@ export default function CoursesRegistration() {
     const [activeFilter, setActiveFilter] = useState("all");
     const [searchValue, setSearchValue] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [conflicts, setConflicts] = useState([]);
+    const [showConflictDialog, setShowConflictDialog] = useState(false);
+    const [conflictDialogData, setConflictDialogData] = useState({});
     const { showError } = useError();
     const queryClient = useQueryClient();
 
@@ -113,6 +182,102 @@ export default function CoursesRegistration() {
     useEffect(() => {
         if (settingsData) setRegistrationSettings(settingsData);
     }, [settingsData]);
+
+    /* ── Existing registered events for conflict checking ── */
+    const existingScheduleEvents = useMemo(() => {
+        const events = Array.isArray(scheduleData) ? scheduleData : [];
+        return events;
+    }, [scheduleData]);
+
+    /* ── Detect conflicts within the existing schedule itself ── */
+    const existingScheduleConflicts = useMemo(() => {
+        const events = existingScheduleEvents;
+        const result = [];
+        for (let i = 0; i < events.length; i++) {
+            for (let j = i + 1; j < events.length; j++) {
+                if (isOverlapping(events[i], events[j])) {
+                    result.push({
+                        type: events[i].type || 'Event',
+                        courseTitle: events[i].title || events[i].courseName || 'Course',
+                        courseId: events[i].courseId || `existing-${i}`,
+                        conflictWith: events[j].title || events[j].courseName || 'Another course',
+                        day: events[i].day,
+                        time: `${formatTimeOption(events[i].startTime)} – ${formatTimeOption(events[i].endTime)}`,
+                    });
+                }
+            }
+        }
+        return result;
+    }, [existingScheduleEvents]);
+
+    /* ── Detect time conflicts whenever selected section changes ── */
+    useEffect(() => {
+        const courseIds = locallyAddedCourses.map(c => c.courseId).filter(Boolean);
+        const found = [];
+
+        for (const courseId of courseIds) {
+            const course = locallyAddedCourses.find(c => c.courseId === courseId);
+            if (!course) continue;
+
+            const classes = courseClassesData[courseId];
+            if (!classes) continue;
+
+            const lecture = classes.lecture ?? null;
+
+            const selectedSectionOpt = selectedSectionByCourseId[courseId];
+            let selectedSection = null;
+            if (selectedSectionOpt && classes.sections?.length > 0) {
+                selectedSection = classes.sections.find(
+                    s => (s.classId ?? s.id) === selectedSectionOpt.value
+                ) ?? null;
+            }
+
+            /* ── Build pending events from other locally-added courses ── */
+            const otherPendingEvents = [];
+            for (const otherCourse of locallyAddedCourses) {
+                if (otherCourse.courseId === courseId) continue;
+                const otherClasses = courseClassesData[otherCourse.courseId];
+                if (!otherClasses) continue;
+
+                if (otherClasses.lecture) {
+                    otherPendingEvents.push({
+                        ...otherClasses.lecture,
+                        title: otherCourse.title,
+                        courseName: otherCourse.title,
+                    });
+                }
+
+                const otherSectionOpt = selectedSectionByCourseId[otherCourse.courseId];
+                if (otherSectionOpt && otherClasses.sections?.length > 0) {
+                    const otherSection = otherClasses.sections.find(
+                        s => (s.classId ?? s.id) === otherSectionOpt.value
+                    );
+                    if (otherSection) {
+                        otherPendingEvents.push({
+                            ...otherSection,
+                            title: otherCourse.title,
+                            courseName: otherCourse.title,
+                        });
+                    }
+                }
+            }
+
+            const courseConflicts = detectTimeConflicts(
+                [...existingScheduleEvents, ...otherPendingEvents],
+                lecture,
+                selectedSection,
+                course.title,
+                courseId
+            );
+            found.push(...courseConflicts);
+        }
+
+        setConflicts(found);
+    }, [selectedSectionByCourseId, locallyAddedCourses, courseClassesData, existingScheduleEvents]);
+
+    const allConflicts = useMemo(() => {
+        return [...existingScheduleConflicts, ...conflicts];
+    }, [existingScheduleConflicts, conflicts]);
 
     const selectedCourses = useMemo(() => {
         const serverSelected = (registrationData?.registrations || []).map(mapRegistrationToCard);
@@ -224,9 +389,12 @@ export default function CoursesRegistration() {
         let isMounted = true;
 
         async function loadSections() {
+            const projectCourseIds = new Set(
+                selectedCourses.filter(c => c.isProject).map(c => c.courseId).filter(Boolean)
+            );
             const courseIds = selectedCourses
                 .map((c) => c.courseId)
-                .filter((id) => id !== undefined && id !== null);
+                .filter((id) => id !== undefined && id !== null && !projectCourseIds.has(id));
 
             if (courseIds.length === 0) {
                 setSectionOptionsByCourseId({});
@@ -249,12 +417,18 @@ export default function CoursesRegistration() {
                         });
 
                         const options = sections.map((cls) => {
-                            const groupName = cls.groupCode ?? cls.group ?? cls.groupName ?? cls.className ?? "";
+                            const day = cls.dayName ?? "";
+                            const start = formatTimeOption(cls.startTime);
+                            const end = formatTimeOption(cls.endTime);
+                            const room = cls.room ?? "";
                             const taName = cls.instructorName ?? cls.taName ?? "";
                             const classId = cls.classId ?? cls.id ?? "";
+                            const timeStr = start && end ? `${start}–${end}` : "";
+                            const scheduleStr = [day, timeStr].filter(Boolean).join(" ");
+                            const label = `${scheduleStr} — ${room}${taName ? ` (${taName})` : ""}`;
                             return {
                                 value: classId,
-                                label: `${groupName} — ${taName}`,
+                                label,
                             };
                         });
 
@@ -277,6 +451,10 @@ export default function CoursesRegistration() {
                 setSelectedSectionByCourseId((prev) => {
                     const next = { ...prev };
                     selectedCourses.forEach((course) => {
+                        if (course.isProject) {
+                            next[course.courseId] = null;
+                            return;
+                        }
                         const options = optionsMap[course.courseId] || [];
                         if (course.classId && options.some((opt) => opt.value === course.classId)) {
                             next[course.courseId] = options.find((opt) => opt.value === course.classId);
@@ -309,17 +487,36 @@ export default function CoursesRegistration() {
         availableCoursesPage * ITEMS_PER_PAGE
     );
 
+    /* ── Section change handler with conflict side-effect (useEffect) ── */
+    const handleSectionChange = (courseId, option) => {
+        setSelectedSectionByCourseId((prev) => ({
+            ...prev,
+            [courseId]: option,
+        }));
+    };
+
     /* ── Register / Unregister handlers ── */
     const handleRegister = (course) => {
         setLocallyAddedCourses((prev) => {
             if (prev.some((c) => c.courseId === course.courseId)) return prev;
             return [...prev, { ...course, isRegistered: false }];
         });
+        if (course.isProject) {
+            setSelectedSectionByCourseId((prev) => ({
+                ...prev,
+                [course.courseId]: null,
+            }));
+        }
     };
 
     const handleUnregister = async (course) => {
         if (!course.isRegistered) {
             setLocallyAddedCourses((prev) => prev.filter((c) => c.courseId !== course.courseId));
+            setSelectedSectionByCourseId((prev) => {
+                const next = { ...prev };
+                delete next[course.courseId];
+                return next;
+            });
             return;
         }
 
@@ -336,11 +533,21 @@ export default function CoursesRegistration() {
         if (pending.length === 0 && selectedCourses.length === 0) return;
 
         for (const course of pending) {
+            if (course.isProject) continue;
             const section = selectedSectionByCourseId[course.courseId];
             if (!section?.value) {
                 showError(`Please select a section for ${course.title}.`);
                 return;
             }
+        }
+
+        if (allConflicts.length > 0) {
+            setConflictDialogData({
+                message: `Cannot confirm registration due to time conflict${allConflicts.length > 1 ? 's' : ''}.`,
+                conflicts: [...allConflicts],
+            });
+            setShowConflictDialog(true);
+            return;
         }
 
         const settings = registrationSettings;
@@ -370,9 +577,9 @@ export default function CoursesRegistration() {
         const failureMsgs = [];
 
         for (const course of pending) {
-            const section = selectedSectionByCourseId[course.courseId];
+            const section = course.isProject ? null : selectedSectionByCourseId[course.courseId];
             try {
-                await registerForCourse(course.courseId, section.value);
+                await registerForCourse(course.courseId, section?.value ?? null);
                 successMsgs.push(`Registered ${course.title}`);
             } catch (err) {
                 const msg = err?.message || err?.toString() || "Unknown error";
@@ -382,6 +589,7 @@ export default function CoursesRegistration() {
 
         const registeredCourses = selectedCourses.filter((c) => c.isRegistered);
         for (const course of registeredCourses) {
+            if (course.isProject) continue;
             const newSection = selectedSectionByCourseId[course.courseId];
             if (newSection && newSection.value !== course.classId) {
                 try {
@@ -490,11 +698,9 @@ export default function CoursesRegistration() {
                                         sectionOptions={sectionOptionsByCourseId[course.courseId] || []}
                                         selectedSection={selectedSectionByCourseId[course.courseId]}
                                         onSectionChange={(opt) =>
-                                            setSelectedSectionByCourseId((prev) => ({
-                                                ...prev,
-                                                [course.courseId]: opt,
-                                            }))
+                                            handleSectionChange(course.courseId, opt)
                                         }
+                                        conflicts={allConflicts.filter(c => c.courseId === course.courseId)}
                                     />
                                 ))
                             ) : (
@@ -539,8 +745,27 @@ export default function CoursesRegistration() {
                 </div>
 
                 {/* Bottom action bar */}
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-t-2 border-border-primary-default-light dark:border-border-primary-default-dark pt-6">
-                    <CoursesRegistrationActionButtons onConfirm={handleConfirmRegistration} />
+                <div className="flex flex-col gap-4 border-t-2 border-border-primary-default-light dark:border-border-primary-default-dark pt-6">
+                    {allConflicts.length > 0 && (
+                        <div className="flex items-start gap-3 p-4 rounded-lg bg-bg-surface-danger-default-light dark:bg-bg-surface-danger-default-dark border border-border-danger-default-light dark:border-border-danger-default-dark">
+                            <WarningIcon className="w-5 h-5 text-text-danger-default-light dark:text-text-danger-default-dark shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-text-danger-default-light dark:text-text-danger-default-dark">
+                                    {allConflicts.length} time conflict{allConflicts.length > 1 ? 's' : ''} detected
+                                </p>
+                                <ul className="mt-1 text-xs text-text-danger-default-light/80 dark:text-text-danger-default-dark/80 space-y-0.5">
+                                    {allConflicts.map((c, i) => (
+                                        <li key={i}>
+                                            {c.courseTitle} {c.type} — overlaps with "{c.conflictWith}" on {c.day} at {c.time}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+                    <div className="flex justify-end">
+                        <CoursesRegistrationActionButtons onConfirm={handleConfirmRegistration} />
+                    </div>
                 </div>
             </div>
             )}
@@ -553,6 +778,34 @@ export default function CoursesRegistration() {
                 confirmText="OK"
             >
                 <p>{resultDialogMessage}</p>
+            </Dialog>
+
+            <Dialog
+                isOpen={showConflictDialog}
+                variant="error"
+                title="Time Conflict Detected"
+                onClose={() => setShowConflictDialog(false)}
+                confirmText="OK"
+            >
+                <div className="space-y-3">
+                    <p>{conflictDialogData.message}</p>
+                    {conflictDialogData.conflicts?.length > 0 && (
+                        <ul className="text-left space-y-2 mt-2">
+                            {conflictDialogData.conflicts.map((c, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm">
+                                    <span className="text-text-danger-default-light dark:text-text-danger-default-dark shrink-0 mt-0.5">•</span>
+                                    <span>
+                                        <strong>{c.courseTitle}</strong> ({c.type}) — <strong>{c.day}</strong> at <strong>{c.time}</strong>
+                                        <br />
+                                        <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                                            Conflicts with: {c.conflictWith}
+                                        </span>
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </Dialog>
         </>
     );

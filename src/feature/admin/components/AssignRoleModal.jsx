@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
 import { XIcon } from "../../../components/ui/icons";
@@ -7,6 +7,7 @@ import { fetchUserRoles, assignUserRoles, fetchAssignableRoles } from "../servic
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function AssignRoleModal({ userId, userName, onClose, onRolesUpdated }) {
+    const queryClient = useQueryClient();
     const { showError } = useError();
     const [selectedRoles, setSelectedRoles] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
@@ -17,20 +18,15 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
         staleTime: 2 * 60 * 1000,
     });
 
-    const { isLoading: userRolesLoading } = useQuery({
+    const { data: userRoles = [], isLoading: userRolesLoading } = useQuery({
         queryKey: ["userRoles", userId],
-        queryFn: async () => {
-            try {
-                const roles = await fetchUserRoles(userId);
-                setSelectedRoles(roles);
-                return roles;
-            } catch (err) {
-                showError(err.message);
-                return [];
-            }
-        },
+        queryFn: () => fetchUserRoles(userId),
         staleTime: 2 * 60 * 1000,
     });
+
+    useEffect(() => {
+        setSelectedRoles(userRoles);
+    }, [userRoles]);
 
     const isLoading = rolesLoading || userRolesLoading;
 
@@ -46,6 +42,7 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
         setIsSaving(true);
         try {
             await assignUserRoles(userId, selectedRoles);
+            queryClient.invalidateQueries({ queryKey: ["userRoles", userId] });
             onRolesUpdated?.();
             onClose();
         } catch (err) {

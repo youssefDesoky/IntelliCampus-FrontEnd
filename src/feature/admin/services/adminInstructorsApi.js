@@ -68,3 +68,7 @@ export async function changeInstructorSection(instructorId, courseId, section) {
     });
     return true;
 }
+
+export async function fetchInstructorSchedule(instructorId) {
+    return apiClient(`/api/instructors/${instructorId}/schedule`);
+}

@@ -5,13 +5,14 @@ import NumberInput from "../../../components/form/NumberInput";
 import TimeInput from "../../../components/form/TimeInput";
 import SelectBox from "../../../components/ui/SelectBox";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
-import { PlusIcon, XIcon } from "../../../components/ui/icons";
+import { PlusIcon, XIcon, WarningIcon } from "../../../components/ui/icons";
 import {
     fetchLectureInstructors,
     fetchSectionInstructors,
     fetchLectureRooms,
     fetchSectionRooms,
 } from "../services/adminCoursesApi";
+import { fetchInstructorSchedule } from "../services/adminInstructorsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
 const dayOptions = [
@@ -36,12 +37,50 @@ function parseSchedule(schedule) {
     }).filter((s) => s.day);
 }
 
+/* ── Time helpers (shared with CoursesRegistration) ── */
+function parseTimeToMinutes(timeStr) {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(':');
+    return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
+}
+
+function normalizeDay(day) {
+    if (!day) return '';
+    return day.toLowerCase().slice(0, 3);
+}
+
+function isOverlapping(a, b) {
+    const dayA = normalizeDay(a.day ?? a.dayName ?? '');
+    const dayB = normalizeDay(b.day ?? b.dayName ?? '');
+    if (dayA !== dayB) return false;
+    const sA = parseTimeToMinutes(a.startTime ?? a.time ?? '');
+    const eA = parseTimeToMinutes(a.endTime ?? '');
+    const sB = parseTimeToMinutes(b.startTime ?? b.time ?? '');
+    const eB = parseTimeToMinutes(b.endTime ?? '');
+    return sA < eB && sB < eA;
+}
+
+function formatHourMin(timeStr) {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    const h = parseInt(parts[0], 10);
+    const m = parts[1];
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12}:${m} ${ampm}`;
+}
+
 export default function ClassForm({ onClose, onSubmit, initialData = null, isOpen = true, courseDepartment = "", classType }) {
     const { showError } = useError();
     const isEdit = !!initialData;
 
     const [instructorOptions, setInstructorOptions] = useState([]);
     const [selectedInstructor, setSelectedInstructor] = useState(null);
+
+    const [instructorSchedule, setInstructorSchedule] = useState([]);
+    const [scheduleConflict, setScheduleConflict] = useState(null);
+    const [checkingSchedule, setCheckingSchedule] = useState(false);
 
     const [scheduleSlots, setScheduleSlots] = useState(() => {
         const parsed = parseSchedule(initialData?.schedule);
@@ -109,8 +148,71 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
         loadData();
     }, [classType, initialData]);
 
+    /* ── Fetch instructor schedule on instructor change ── */
+    useEffect(() => {
+        if (!selectedInstructor?.value) {
+            setInstructorSchedule([]);
+            return;
+        }
+        let cancelled = false;
+        setCheckingSchedule(true);
+        fetchInstructorSchedule(selectedInstructor.value)
+            .then((data) => {
+                if (!cancelled) {
+                    setInstructorSchedule(Array.isArray(data) ? data : []);
+                    setCheckingSchedule(false);
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setInstructorSchedule([]);
+                    setCheckingSchedule(false);
+                }
+            });
+        return () => { cancelled = true; };
+    }, [selectedInstructor?.value]);
+
+    /* ── Re-check conflict whenever schedule slots or instructor schedule changes ── */
+    useEffect(() => {
+        if (!selectedInstructor || scheduleSlots.length === 0) {
+            setScheduleConflict(null);
+            return;
+        }
+        const conflict = detectInstructorConflict(scheduleSlots, instructorSchedule);
+        setScheduleConflict(conflict);
+    }, [scheduleSlots, instructorSchedule, selectedInstructor]);
+
+    function detectInstructorConflict(slots, existingSchedule) {
+        for (const slot of slots) {
+            if (!slot.day || !slot.time) continue;
+            const startMinutes = parseTimeToMinutes(slot.time);
+            const endMinutes = startMinutes + 90;
+            const slotStart = `${String(Math.floor(startMinutes / 60)).padStart(2, '0')}:${String(startMinutes % 60).padStart(2, '0')}:00`;
+            const slotEnd = `${String(Math.floor(endMinutes / 60)).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}:00`;
+            for (const event of existingSchedule) {
+                if (isOverlapping(
+                    { day: slot.day, startTime: slotStart, endTime: slotEnd },
+                    { dayName: event.dayName ?? event.day, startTime: event.startTime, endTime: event.endTime }
+                )) {
+                    const eventEnd = event.endTime ? formatHourMin(event.endTime) : '';
+                    return {
+                        day: slot.day,
+                        time: formatHourMin(slot.time),
+                        conflictWith: event.courseName ?? event.title ?? 'Another class',
+                    };
+                }
+            }
+        }
+        return null;
+    }
+
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (scheduleConflict) {
+            showError(`Cannot save: ${scheduleConflict.conflictWith} already has a class on ${scheduleConflict.day} at ${scheduleConflict.time}.`);
+            return;
+        }
 
         const room = selectedRoom?.value || "";
         if (!room) { showError("Please select a room."); return; }
@@ -166,6 +268,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
             onClose={onClose}
             onSubmit={handleSubmit}
             submitText={isEdit ? "Save Changes" : classType ? `Add ${classType}` : "Add Class"}
+            submitDisabled={!!scheduleConflict || checkingSchedule}
         >
             <div className="space-y-5 mb-6">
                 {/* Row 1: Instructor */}
@@ -241,6 +344,25 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                         ))}
                     </div>
                 </div>
+
+                {/* Conflict Warning */}
+                {checkingSchedule && (
+                    <div className="flex items-center gap-2 text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Checking instructor schedule...
+                    </div>
+                )}
+                {scheduleConflict && (
+                    <div className="flex items-start gap-3 p-4 rounded-lg bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
+                        <WarningIcon className="w-5 h-5 text-text-warning-default-light dark:text-text-warning-default-dark shrink-0 mt-0.5" />
+                        <p className="text-sm font-medium text-text-warning-default-light dark:text-text-warning-default-dark">
+                            Instructor already has a class at this time on <strong>{scheduleConflict.day}</strong> at <strong>{scheduleConflict.time}</strong> ({scheduleConflict.conflictWith})
+                        </p>
+                    </div>
+                )}
 
                 {/* Row 3: Room */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

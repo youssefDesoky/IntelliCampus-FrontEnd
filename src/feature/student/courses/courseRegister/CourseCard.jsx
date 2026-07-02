@@ -7,6 +7,7 @@ import {
     PlusIcon, 
     XIcon,
     UserIcon,
+    WarningIcon,
 } from "../../../../components/ui/icons";
 
 function getInitials(name) {
@@ -36,6 +37,7 @@ export default function CourseCard({
     sectionOptions = [],
     selectedSection,
     onSectionChange,
+    conflicts = [],
 }) {
     return(
         <div className="course-card flex flex-col gap-3 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-sm shadow-shadow-light hover:shadow-md dark:shadow-shadow-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
@@ -95,7 +97,11 @@ export default function CourseCard({
             <div className="pt-3 flex items-center gap-3 border-t border-t-border-primary-default-light dark:border-t-border-primary-default-dark">
                 { cardType === "selected" ? (
                     <>
-                        {sectionOptions.length > 0 ? (
+                        {course.isProject ? (
+                            <span className="flex-1 text-xs font-semibold text-text-accent-default-light dark:text-text-accent-default-dark">
+                                Project Course — No sections required
+                            </span>
+                        ) : sectionOptions.length > 0 ? (
                             <SelectBox
                                 className="flex-1"
                                 label=""
@@ -122,13 +128,15 @@ export default function CourseCard({
                 ) : cardType === "available" ? (
                     <>
                         <p className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark flex-1">
-                            {course.preRequisites && course.preRequisites.length > 0
-                                ? course.preRequisites.map((coursePreReq, index) => (
+                            {course.isProject ? (
+                                <span className="font-semibold text-text-accent-default-light dark:text-text-accent-default-dark">Project Course</span>
+                            ) : course.preRequisites && course.preRequisites.length > 0 ? (
+                                course.preRequisites.map((coursePreReq, index) => (
                                     <span key={index}>
                                         {formatPrerequisite(coursePreReq)}{index < course.preRequisites.length - 1 && " - "}
                                     </span>
                                 ))
-                                : "No prerequisites are needed"}
+                            ) : "No prerequisites are needed"}
                         </p>
                         <button
                             onClick={onAction}
@@ -141,20 +149,35 @@ export default function CourseCard({
                 ) : (
                     <>
                         <p className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark flex-1">
-                            {course.preRequisites && course.preRequisites.length > 0
-                                ? course.preRequisites.map((coursePreReq, index) => (
+                            {course.isProject ? (
+                                <span className="font-semibold text-text-accent-default-light dark:text-text-accent-default-dark">Project Course</span>
+                            ) : course.preRequisites && course.preRequisites.length > 0 ? (
+                                course.preRequisites.map((coursePreReq, index) => (
                                     <span key={index}>
                                         {formatPrerequisite(coursePreReq)}{index < course.preRequisites.length - 1 && " - "}
                                     </span>
                                 ))
-                                : "No prerequisites are needed"}
+                            ) : "No prerequisites are needed"}
                         </p>
                         <div className="shrink-0 w-8 h-8 flex items-center justify-center">
                             <LockIconDark className="w-5 h-5 text-text-secondary-active-light dark:text-text-secondary-active-dark" />
                         </div>
                     </>
                 )}
-            </div> 
+            </div>
+
+            {conflicts.length > 0 && (
+                <div className="flex items-start gap-2 px-3 py-2 rounded-md bg-bg-surface-danger-default-light/60 dark:bg-bg-surface-danger-default-dark/60 border border-border-danger-default-light dark:border-border-danger-default-dark">
+                    <WarningIcon className="w-4 h-4 text-text-danger-default-light dark:text-text-danger-default-dark shrink-0 mt-0.5" />
+                    <div className="text-xs text-text-danger-default-light dark:text-text-danger-default-dark">
+                        {conflicts.map((c, i) => (
+                            <p key={i}>
+                                {c.type} conflicts with <strong>{c.conflictWith}</strong> on <strong>{c.day}</strong> at <strong>{c.time}</strong>
+                            </p>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
