@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function TextArea({ minHeight = 80, maxHeight = 300, className = "", style, ...props }) {
     const ref = useRef(null);
+    const { i18n } = useTranslation();
+    const isRTL = i18n.language === 'ar';
 
     useEffect(() => {
         const textarea = ref.current;
@@ -21,6 +24,7 @@ export default function TextArea({ minHeight = 80, maxHeight = 300, className = 
     return (
         <textarea
             ref={ref}
+            dir={isRTL ? 'rtl' : 'ltr'}
             style={{ minHeight, maxHeight, overflowY: "auto", ...style }}
             className={className}
             {...props}

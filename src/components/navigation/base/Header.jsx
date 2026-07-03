@@ -66,7 +66,6 @@ function normalizeActionUrl(actionUrl) {
 }
 
 const viewLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
-
 const StudentPaths = ['/', /^\/courses(\/|$)/];
 
 function isStudentPath(path) {
@@ -91,7 +90,8 @@ function parseChatUrl(actionUrl) {
 }
 
 export default function Header({ avatar, notifications: initialNotifications, isMobile, isPhone, availableViews = [], activeView, onViewChange }) {
-    const { i18n } = useTranslation('common/header');
+    const { t, i18n } = useTranslation('ui');
+    const viewLabels = { student: t('header.student'), instructor: t('header.instructor'), admin: t('header.admin') };
     const navigate = useNavigate();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -166,7 +166,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                         if (exists) return prevNotifications;
                         const actionUrl = notification.clickUrl || notification.actionUrl;
                         showToast({
-                            title: notification.typeLabel || 'Notification',
+                            title: notification.typeLabel || t('header.notificationLabel'),
                             message: notification.message,
                             type: 'info',
                             actionUrl,
@@ -280,26 +280,43 @@ export default function Header({ avatar, notifications: initialNotifications, is
 
     return (
         <header 
-            className={`${isMobile ? 'p-2 h-15' : 'p-4 h-20'} sticky w-screen top-0 left-0 right-0 flex items-center justify-between z-50 border-b border-border-primary-default-light bg-bg-surface-primary-default-light text-text-primary-active-light dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-primary-active-dark`}
+            className={`${isMobile ? 'p-2 h-15' : 'p-4 h-20'} sticky w-screen top-0 start-0 end-0 flex items-center justify-between z-50 border-b border-border-primary-default-light bg-bg-surface-primary-default-light text-text-primary-active-light dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-primary-active-dark`}
         >
             <div id="header-logo" >
-               {/* Need To Change Color using variables */}
-                <Link to={dashboardRoute} className="flex flex-row items-center gap-2">
+                {/* Need To Change Color using variables */}
+                <Link to={dashboardRoute} className={`flex items-center gap-2 ${i18n.language === 'ar' ? 'flex-row-reverse' : 'flex-row'}`}>
                     <IntelliCampusIcon className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'}`} />
-                    <div className={`text-lg font-bold flex flex-col leading-none logo-title`}>
-                        <span
-                            className="inline-block overflow-hidden w-0 text-text-blue-default-light dark:text-text-blue-default-dark typewriter"
-                            style={{ "--w": "6ch", "--steps": "6", "--d": "1.2s", "--delay": "0s" }}
-                        >
-                            Intelli
-                        </span>
-                        <span
-                            className="inline-block overflow-hidden w-0 text-text-accent-default-light dark:text-text-accent-default-dark typewriter"
-                            style={{ "--w": "7ch", "--steps": "7", "--d": "1.2s", "--delay": "1.25s" }}
-                        >
-                            Campus
-                        </span>
-                    </div>
+                    {i18n.language === 'ar' ? (
+                        <div className={`text-lg font-bold flex flex-col leading-none logo-title`}>
+                            <span
+                                className="inline-block overflow-hidden w-0 text-text-blue-default-light dark:text-text-blue-default-dark typewriter"
+                                style={{ "--w": "6ch", "--steps": "6", "--d": "1.2s", "--delay": "0s" }}
+                            >
+                                Intelli
+                            </span>
+                            <span
+                                className="inline-block overflow-hidden w-0 text-text-accent-default-light dark:text-text-accent-default-dark typewriter"
+                                style={{ "--w": "7ch", "--steps": "7", "--d": "1.2s", "--delay": "1.25s" }}
+                            >
+                                Campus
+                            </span>
+                        </div>
+                    ) : (
+                        <div className={`text-lg font-bold flex flex-col leading-none logo-title`}>
+                            <span
+                                className="inline-block overflow-hidden w-0 text-text-blue-default-light dark:text-text-blue-default-dark typewriter"
+                                style={{ "--w": "6ch", "--steps": "6", "--d": "1.2s", "--delay": "0s" }}
+                            >
+                                Intelli
+                            </span>
+                            <span
+                                className="inline-block overflow-hidden w-0 text-text-accent-default-light dark:text-text-accent-default-dark typewriter"
+                                style={{ "--w": "7ch", "--steps": "7", "--d": "1.2s", "--delay": "1.25s" }}
+                            >
+                                Campus
+                            </span>
+                        </div>
+                    )}
                 </Link>
             </div>
 
@@ -341,7 +358,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                         onClick={() => setIsNotificationsOpen(prev => !prev)}
                     >
                         {unreadCount > 0 && (
-                            <span className="fixed flex size-2.5 ml-2.5 -mt-0.75">
+                            <span className="fixed flex size-2.5 ms-2.5 -mt-0.75">
                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 bg-bg-fill-primary-active-light dark:bg-bg-fill-primary-active-dark"></span>
                                 <span className="relative inline-flex size-2.5 rounded-full bg-bg-fill-primary-active-light dark:bg-bg-fill-primary-active-dark"></span>
                             </span>
@@ -354,12 +371,12 @@ export default function Header({ avatar, notifications: initialNotifications, is
                             <div className="fixed inset-x-0 bottom-0 top-[60px] z-50 flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
                                 <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
                                     <h3 className="text-lg font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-                                        Notifications
+                                        {t('header.notifications')}
                                     </h3>
                                     <button
                                         onClick={() => setIsNotificationsOpen(false)}
                                         className="p-1.5 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark"
-                                        aria-label="Close"
+                                        aria-label={t('header.close')}
                                     >
                                         <svg className="w-5 h-5 text-text-secondary-default-light dark:text-text-secondary-default-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -370,14 +387,14 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                 {unreadCount > 0 && (
                                     <div className="px-4 py-2 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark flex items-center justify-between">
                                         <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                            {unreadCount} unread
+                                            {t('header.unreadCount', { count: unreadCount })}
                                         </span>
                                         <button
                                             onClick={handleMarkAllAsRead}
                                             disabled={isMarkingAllRead}
                                             className="text-xs font-medium text-white bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
                                         >
-                                            {isMarkingAllRead ? 'Marking...' : 'Mark all as read'}
+                                            {isMarkingAllRead ? t('header.marking') : t('header.markAllRead')}
                                         </button>
                                     </div>
                                 )}
@@ -393,7 +410,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                                     : 'text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark'
                                             }`}
                                         >
-                                            {tab === 'all' ? 'All' : tab === 'unread' ? 'Unread' : 'Read'}
+                                            {tab === 'all' ? t('header.all') : tab === 'unread' ? t('header.unread') : t('header.read')}
                                         </button>
                                     ))}
                                 </div>
@@ -424,7 +441,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                                                 )}
                                                                 <div className="min-w-0">
                                                                     <p className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark truncate">
-                                                                        {notification.typeLabel || 'Notification'}
+                                                                        {notification.typeLabel || t('header.notificationLabel')}
                                                                     </p>
                                                                     <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 line-clamp-2">
                                                                         {notification.message || JSON.stringify(notification)}
@@ -442,7 +459,8 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                                                     }}
                                                                     className="self-start mt-1 flex-shrink-0 px-2.5 py-1 text-xs font-medium bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
                                                                 >
-                                                                    Mark Read
+                                                                    {t('header.markRead')}
+                                                                                
                                                                 </button>
                                                             )}
                                                         </div>
@@ -451,7 +469,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                             ) : (
                                                 <li className="p-6 text-center text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm flex flex-col items-center gap-2">
                                                     <BellSlashIconLight className="w-8 h-8 opacity-40" />
-                                                    No notifications
+                                                    {t('header.noNotifications')}
                                                 </li>
                                             );
                                         })()}
@@ -459,16 +477,16 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                 </div>
                             </div>
                         ) : (
-                            <div className="absolute top-full right-0 mt-2 w-80 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            <div className="absolute top-full end-0 mt-2 w-80 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                 <div className="sticky top-0 p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark flex items-center justify-between">
-                                    <h3 className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark">Notifications</h3>
+                                    <h3 className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark">{t('header.notifications')}</h3>
                                     {unreadCount > 0 && (
                                         <button
                                             onClick={handleMarkAllAsRead}
                                             disabled={isMarkingAllRead}
                                             className="text-xs font-medium text-white bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
                                         >
-                                            {isMarkingAllRead ? 'Marking...' : 'Mark all as read'}
+                                            {isMarkingAllRead ? t('header.marking') : t('header.markAllRead')}
                                         </button>
                                     )}
                                 </div>
@@ -484,7 +502,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                                     : 'text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark'
                                             }`}
                                         >
-                                            {tab === 'all' ? 'All' : tab === 'unread' ? 'Unread' : 'Read'}
+                                            {tab === 'all' ? t('header.all') : tab === 'unread' ? t('header.unread') : t('header.read')}
                                         </button>
                                     ))}
                                 </div>
@@ -514,7 +532,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                                             )}
                                                             <div className="min-w-0">
                                                                 <p className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark truncate">
-                                                                    {notification.typeLabel || 'Notification'}
+                                                                    {notification.typeLabel || t('header.notificationLabel')}
                                                                 </p>
                                                                 <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1 line-clamp-2">
                                                                     {notification.message || JSON.stringify(notification)}
@@ -532,7 +550,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                                                 }}
                                                                 className="self-start mt-1 flex-shrink-0 px-2.5 py-1 text-xs font-medium bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white rounded-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
                                                             >
-                                                                Mark Read
+                                                                {t('header.markRead')}
                                                             </button>
                                                         )}
                                                     </div>
@@ -556,7 +574,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                 {!isMobile &&
                     <Link to="/profile" className={`w-12 h-12 block rounded-full border-2 hover:scale-110 border-border-accent-default-light dark:border-border-accent-default-dark`}>
                         <div className="w-full h-full rounded-full overflow-hidden">
-                            <img src={avatar || defaultImage} alt="user profile" className="w-full h-full object-cover" />
+                            <img src={avatar || defaultImage} alt={t('header.userProfile')} className="w-full h-full object-cover" />
                         </div>
                     </Link>
                 }
@@ -567,7 +585,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                             className={`w-10 h-10 block rounded-full overflow-hidden border-2 hover:scale-110 border-border-accent-default-light dark:border-border-accent-default-dark`}
                             onClick={() => setIsProfileMenuOpen(prev => !prev)}
                         >
-                            <img src={avatar || defaultImage} alt="user profile" className="w-full h-full object-cover" />
+                            <img src={avatar || defaultImage} alt={t('header.userProfile')} className="w-full h-full object-cover" />
                         </button>
 
                         { isProfileMenuOpen &&
@@ -576,25 +594,25 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                 position="end"
                             >
                                 <li className="mb-2">
-                                    <NavLink to="/profile" className="w-full text-left flex items-center gap-2">
+                                    <NavLink to="/profile" className="w-full text-start flex items-center gap-2">
                                         <UserIcon size={20} />
-                                        <span className="text-sm font-semibold whitespace-nowrap">My Profile</span>
+                                        <span className="text-sm font-semibold whitespace-nowrap">{t('header.myProfile')}</span>
                                     </NavLink>
                                 </li>
                                 
                                 <li className="mb-2">                          
                                     <button 
                                         onClick={() => changeLanguage(i18n.language === 'en' ? 'ar' : 'en')} 
-                                        className="w-full text-left flex items-center gap-2">
+                                        className="w-full text-start flex items-center gap-2">
                                         <TranslateIcon size={20} />
-                                        <span className="text-sm font-semibold whitespace-nowrap">Language</span>
+                                        <span className="text-sm font-semibold whitespace-nowrap">{t('header.language')}</span>
                                     </button>
                                 </li>
 
                                 {availableViews.length > 1 && (
                                     <li className="mb-2 px-3">
                                         <div className="flex items-center gap-2 py-1">
-                                            <span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wider">View:</span>
+                                            <span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wider">{t('header.view')}</span>
                                             <select
                                                 value={activeView}
                                                 onChange={(e) => onViewChange(e.target.value)}
@@ -610,9 +628,9 @@ export default function Header({ avatar, notifications: initialNotifications, is
 
                                 <li >
                                     <Form method="post" action="/logout">
-                                        <button className="w-full text-left flex items-center gap-2">
+                                        <button className="w-full text-start flex items-center gap-2">
                                             <SignOutIcon size={20} />
-                                            <span className="text-sm font-semibold whitespace-nowrap">Logout</span>
+                                            <span className="text-sm font-semibold whitespace-nowrap">{t('header.logout')}</span>
                                         </button>
                                     </Form>
                                 </li>

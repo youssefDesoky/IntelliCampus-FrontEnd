@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import NumberInput from "../../../components/form/NumberInput";
 import { setCourseWorkWeight } from "../services/gradesApi";
 export default function CourseWorkWeightModal({ isOpen, onClose, courseId, currentWeight, onSaved }) {
+    const { t } = useTranslation('instructor');
     const [quizWeight, setQuizWeight] = useState("");
     const [assignmentWeight, setAssignmentWeight] = useState("");
     const [midtermWeight, setMidtermWeight] = useState("");
@@ -41,39 +43,39 @@ export default function CourseWorkWeightModal({ isOpen, onClose, courseId, curre
     return (
         <BaseFormComponent
             isOpen={isOpen}
-            title="Configure Coursework Weights"
-            description="Set the weight distribution for quizzes, assignments, and midterm exam as percentages of the total grade."
+            title={t('weights.title')}
+            description={t('weights.description')}
             onClose={onClose}
             onSubmit={handleSubmit}
-            submitText={saveMutation.isPending ? "Saving..." : "Save Weights"}
+            submitText={saveMutation.isPending ? t('weights.saving') : t('weights.saveWeights')}
             submitLoading={saveMutation.isPending}
         >
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <NumberInput
-                    label="Total Quizzes Weight (%)"
+                    label={t('weights.quizzes')}
                     value={quizWeight}
                     onChange={(e) => setQuizWeight(e.target.value)}
-                    placeholder="e.g., 5"
+                    placeholder={t('weights.placeholderQuizzes')}
                     min="0"
                     max="100"
                     step="0.1"
                     required
                 />
                 <NumberInput
-                    label="Total Assignments Weight (%)"
+                    label={t('weights.assignments')}
                     value={assignmentWeight}
                     onChange={(e) => setAssignmentWeight(e.target.value)}
-                    placeholder="e.g., 15"
+                    placeholder={t('weights.placeholderAssignments')}
                     min="0"
                     max="100"
                     step="0.1"
                     required
                 />
                 <NumberInput
-                    label="Midterm Weight (%)"
+                    label={t('weights.midterm')}
                     value={midtermWeight}
                     onChange={(e) => setMidtermWeight(e.target.value)}
-                    placeholder="e.g., 20"
+                    placeholder={t('weights.placeholderMidterm')}
                     min="0"
                     max="100"
                     step="0.1"
@@ -81,7 +83,7 @@ export default function CourseWorkWeightModal({ isOpen, onClose, courseId, curre
                 />
             </div>
             <p className="mt-4 text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                These weights along with the final exam weight (set in the bylaw) determine the total grade calculation.
+                {t('weights.note')}
             </p>
         </BaseFormComponent>
     );

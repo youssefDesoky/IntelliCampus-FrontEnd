@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation, Trans } from 'react-i18next';
 import Section from "../../../components/ui/Section";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
@@ -41,16 +42,17 @@ import {
   setSpecializationPrerequisites,
 } from "../../../feature/admin/services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
-const allTabs = [
-  { key: "bylawDetails", label: "Bylaw Details" },
-  { key: "general", label: "General Settings & Status" },
-  { key: "registration", label: "Registration & Credit Hours Rules" },
-  { key: "grading", label: "Grading System Configuration" },
-  { key: "probation", label: "Academic Probation Rules" },
-  { key: "levels", label: "Academic Levels", bachelorOnly: true },
-  { key: "majorDeclaration", label: "Major Declaration Rules", bachelorOnly: true },
-  { key: "courseMapping", label: "Course Mapping" },
+const getTabs = (t) => [
+  { key: "bylawDetails", label: t('manageBylaws.details') },
+  { key: "general", label: t('manageBylaws.generalSettings') },
+  { key: "registration", label: t('manageBylaws.registrationRules') },
+  { key: "grading", label: t('manageBylaws.gradingSystem') },
+  { key: "probation", label: t('manageBylaws.probationRules') },
+  { key: "levels", label: t('manageBylaws.levels'), bachelorOnly: true },
+  { key: "majorDeclaration", label: t('manageBylaws.majorDeclaration'), bachelorOnly: true },
+  { key: "courseMapping", label: t('manageBylaws.courseMapping') },
 ];
 
 const inputClass = "w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark focus:outline-none focus:border-border-primary-active-light";
@@ -58,44 +60,45 @@ const cardInputClass = "w-full px-2 py-1.5 border border-border-primary-default-
 
 const defaultGradeScale = { gradeLetter: "", minPercentage: 0, gpaValue: 0, sortOrder: 0 };
 const defaultLevelScale = { level: 1, minHours: 0 };
-const bylawTypes = [
-  { value: "Bachelor", label: "Bachelor" },
-  { value: "Master", label: "Master" },
-  { value: "PhD", label: "PhD" },
-  { value: "Diploma", label: "Diploma" },
+const getBylawTypes = (t) => [
+  { value: "Bachelor", label: t('manageBylaws.bachelor') },
+  { value: "Master", label: t('manageBylaws.master') },
+  { value: "PhD", label: t('manageBylaws.phd') },
+  { value: "Diploma", label: t('manageBylaws.diploma') },
 ];
 
 function GradeScaleCard({ scale, index, onChange, onRemove }) {
+  const { t } = useTranslation('admin');
   return (
     <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-2.5 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
         <span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wider">
-          Grade #{scale.sortOrder || index + 1}
+          {t('manageBylaws.gradeNumber', { number: scale.sortOrder || index + 1 })}
         </span>
         <button
           type="button"
           onClick={() => onRemove(index)}
-          className="ml-auto p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-          title="Remove grade scale"
+          className="ms-auto p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+          title={t('manageBylaws.removeGradeScale')}
         >
           <TrashIcon size={16} />
         </button>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">
         <div>
-          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">Grade</label>
+          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('courseGradesTab.grade')}</label>
           <input type="text" value={scale.gradeLetter} onChange={(e) => onChange(index, "gradeLetter", e.target.value)} placeholder="A" className={cardInputClass} />
         </div>
         <div>
-          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">Min %</label>
+          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('courseGradesTab.minPercent')}</label>
           <NumberInput step="0.01" value={scale.minPercentage} onChange={(e) => onChange(index, "minPercentage", e.target.value)} placeholder="90" className="w-full" />
         </div>
         <div>
-          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">GPA</label>
+          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('courseGradesTab.gpa')}</label>
           <NumberInput step="0.01" value={scale.gpaValue} onChange={(e) => onChange(index, "gpaValue", e.target.value)} placeholder="4.0" className="w-full" />
         </div>
         <div>
-          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">Order</label>
+          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('courseGradesTab.order')}</label>
           <NumberInput value={scale.sortOrder} onChange={(e) => onChange(index, "sortOrder", parseInt(e.target.value) || 0)} className="w-full" />
         </div>
       </div>
@@ -104,28 +107,29 @@ function GradeScaleCard({ scale, index, onChange, onRemove }) {
 }
 
 function LevelScaleCard({ scale, index, onChange, onRemove }) {
+  const { t } = useTranslation('admin');
   return (
     <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-2.5 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
         <span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wider">
-          Level {scale.level}
+          {t('courseGradesTab.level')} {scale.level}
         </span>
         <button
           type="button"
           onClick={() => onRemove(index)}
-          className="ml-auto p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-          title="Remove level scale"
+          className="ms-auto p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+          title={t('manageBylaws.removeLevelScale')}
         >
           <TrashIcon size={16} />
         </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
         <div>
-          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">Level</label>
+          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('courseGradesTab.level')}</label>
           <NumberInput min="1" value={scale.level} onChange={(e) => onChange(index, "level", parseInt(e.target.value) || 1)} className="w-full" />
         </div>
         <div>
-          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">Min Passed Credits</label>
+          <label className="block text-xs font-medium mb-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('courseGradesTab.minPassedCredits')}</label>
           <NumberInput min="0" value={scale.minHours} onChange={(e) => onChange(index, "minHours", parseInt(e.target.value) || 0)} className="w-full" />
         </div>
       </div>
@@ -133,7 +137,8 @@ function LevelScaleCard({ scale, index, onChange, onRemove }) {
   );
 }
 
-function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPrerequisites, onSetAllowedDepartments, onCreditHoursChange }) {
+function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPrerequisites, onSetAllowedDepartments, onCreditHoursChange, i18n }) {
+  const { t } = useTranslation('admin');
   const getCourse = (courseId) => allCourses.find((c) => c.courseId === courseId);
 
   const handleCreditHoursChange = (courseId, value) => {
@@ -149,12 +154,12 @@ function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPr
         </span>
         <Button variant="secondary" type="button" onClick={onAdd}>
           <PlusIcon size={14} />
-          Add Courses
+          {t('manageBylaws.addCourses')}
         </Button>
       </div>
       {items.length === 0 ? (
         <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-6 text-center border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-          No courses mapped. Click "Add Courses" to select courses.
+          {t('manageBylaws.noCoursesMapped')}
         </p>
       ) : (
         <div className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
@@ -165,10 +170,10 @@ function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPr
               <div key={entry.courseId} className="flex items-center gap-4 px-4 py-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                    {course?.courseName || entry.courseName || "Unknown Course"}
+                    {getLocalizedField(course, 'courseName', i18n?.language) || entry.courseName || t('manageBylaws.unknownCourse')}
                   </p>
                   <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    {course?.courseCode || entry.courseCode || entry.courseId}
+                    {getLocalizedField(course, 'courseCode', i18n?.language) || entry.courseCode || entry.courseId}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
@@ -185,7 +190,7 @@ function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPr
                       type="button"
                       onClick={() => onSetAllowedDepartments?.(entry)}
                       className="p-1.5 rounded-lg text-text-accent-active-light dark:text-text-accent-active-dark hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
-                      title="Set allowed departments"
+                      title={t('manageBylaws.setAllowedDepartments')}
                     >
                       <BuildingIcon size={16} />
                     </button>
@@ -194,7 +199,7 @@ function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPr
                     type="button"
                     onClick={() => onSetPrerequisites?.(entry.courseId)}
                     className="p-1.5 rounded-lg text-text-accent-active-light dark:text-text-accent-active-dark hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
-                    title="Set prerequisites"
+                    title={t('manageBylaws.setPrerequisitesTitle')}
                   >
                     <LinkIcon size={16} />
                   </button>
@@ -202,7 +207,7 @@ function CourseMappingTable({ title, items, allCourses, onAdd, onRemove, onSetPr
                     type="button"
                     onClick={() => onRemove(idx)}
                     className="p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                    title="Remove course"
+                    title={t('manageBylaws.removeCourse')}
                   >
                     <TrashIcon size={16} />
                   </button>
@@ -226,8 +231,11 @@ export default function ManageBylawDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("bylawDetails");
 
+  const { t, i18n } = useTranslation('admin');
   const isBachelor = bylaw?.type === "Bachelor";
-  const tabs = useMemo(() => allTabs.filter(t => !t.bachelorOnly || isBachelor), [isBachelor]);
+  const allTabs = useMemo(() => getTabs(t), [t]);
+  const tabs = useMemo(() => allTabs.filter(t => !t.bachelorOnly || isBachelor), [allTabs, isBachelor]);
+  const bylawTypes = useMemo(() => getBylawTypes(t), [t]);
 
   // ── General Settings & Status ──
   const [totalGraduationHours, setTotalGraduationHours] = useState("");
@@ -463,10 +471,10 @@ export default function ManageBylawDetailsPage() {
   const handleToggleActive = async () => {
     try {
       await toggleBylawActive(bylawId);
-      showSuccess("Bylaw status toggled successfully");
+      showSuccess(t('manageBylaws.successToggle'));
       await loadData();
     } catch (err) {
-      showError(err.message || "Failed to toggle status");
+      showError(err.message || t('manageBylaws.errorToggleStatus'));
     }
     setIsToggleActiveOpen(false);
   };
@@ -489,10 +497,10 @@ export default function ManageBylawDetailsPage() {
           hasComprehensiveExam: hasComprehensiveExam,
         });
       }
-      showSuccess("General settings saved successfully");
+      showSuccess(t('manageBylaws.successGeneral'));
       await loadData();
     } catch (err) {
-      showError(err.message || "Failed to save general settings");
+      showError(err.message || t('manageBylaws.errorGeneral'));
     } finally {
       setSavingGeneral(false);
     }
@@ -509,10 +517,10 @@ export default function ManageBylawDetailsPage() {
         maxCreditHoursPerSemester: parseInt(maxCreditHoursPerSemester) || null,
         summerMaxCreditHours: parseInt(summerMaxCreditHours) || null,
       });
-      showSuccess("Registration rules saved successfully");
+      showSuccess(t('manageBylaws.successRegistration'));
       await loadData();
     } catch (err) {
-      showError(err.message || "Failed to save registration rules");
+      showError(err.message || t('manageBylaws.errorRegistration'));
     } finally {
       setSavingRegistration(false);
     }
@@ -536,7 +544,7 @@ export default function ManageBylawDetailsPage() {
     
     const valid = gradeScales.filter((g) => g.gradeLetter.trim() !== "");
     if (valid.length === 0) {
-      showError("At least one grade scale is required");
+      showError(t('manageBylaws.errorGradeScaleRequired'));
       return;
     }
     setSavingGradeScales(true);
@@ -560,10 +568,10 @@ export default function ManageBylawDetailsPage() {
         minPassingFinalExamGrade: parseFloat(minPassingFinalExamGrade) || null,
         maxGradeOnRetake: maxGradeOnRetake || null,
       });
-      showSuccess("Grading configuration saved successfully");
+      showSuccess(t('manageBylaws.successGrading'));
       await loadData();
     } catch (err) {
-      showError(err.message || "Failed to save grading configuration");
+      showError(err.message || t('manageBylaws.errorGrading'));
     } finally {
       setSavingGradeScales(false);
     }
@@ -579,10 +587,10 @@ export default function ManageBylawDetailsPage() {
         probationThreshold: parseFloat(probationThreshold) || null,
         probationRegistrationLimit: parseInt(probationRegistrationLimit) || null,
       });
-      showSuccess("Probation rules saved successfully");
+      showSuccess(t('manageBylaws.successProbation'));
       await loadData();
     } catch (err) {
-      showError(err.message || "Failed to save probation rules");
+      showError(err.message || t('manageBylaws.errorProbation'));
     } finally {
       setSavingProbation(false);
     }
@@ -607,7 +615,7 @@ export default function ManageBylawDetailsPage() {
     
     const valid = levelScales.filter((l) => l.level > 0);
     if (valid.length === 0) {
-      showError("At least one level scale is required");
+      showError(t('manageBylaws.errorLevelScaleRequired'));
       return;
     }
     setSavingLevelScales(true);
@@ -616,10 +624,10 @@ export default function ManageBylawDetailsPage() {
         level: l.level,
         minHours: parseInt(l.minHours) || 0,
       })));
-      showSuccess("Academic levels saved successfully");
+      showSuccess(t('manageBylaws.successLevels'));
       await loadData();
     } catch (err) {
-      showError(err.message || "Failed to save academic levels");
+      showError(err.message || t('manageBylaws.errorLevels'));
     } finally {
       setSavingLevelScales(false);
     }
@@ -642,10 +650,10 @@ export default function ManageBylawDetailsPage() {
         await setSpecializationPrerequisites(parseInt(specId), prereqs);
       }));
       modifiedSpecPrereqIds.current.clear();
-      showSuccess("Major declaration rules saved successfully");
+      showSuccess(t('manageBylaws.successMajor'));
       await loadData();
     } catch (err) {
-      showError(err.message || "Failed to save major declaration rules");
+      showError(err.message || t('manageBylaws.errorMajor'));
     } finally {
       setSavingMinHours(false);
     }
@@ -1004,10 +1012,10 @@ export default function ManageBylawDetailsPage() {
         }
       }
 
-      showSuccess("Course mapping saved successfully");
+      showSuccess(t('manageBylaws.successCourseMapping'));
       await loadData();
     } catch (err) {
-      showError(err.message || "Failed to save course mapping");
+      showError(err.message || t('manageBylaws.errorCourseMapping'));
     } finally {
       setSavingCourseMapping(false);
     }
@@ -1018,7 +1026,7 @@ export default function ManageBylawDetailsPage() {
   const handleSaveBylawDetails = async () => {
     
     if (!editName.trim()) {
-      showError("Bylaw name is required");
+      showError(t('manageBylaws.bylawNameRequired'));
       return;
     }
     setSavingBylawDetails(true);
@@ -1033,10 +1041,10 @@ export default function ManageBylawDetailsPage() {
       for (const file of newFiles) {
         await uploadBylawDocument(bylawId, file);
       }
-      showSuccess("Bylaw details saved successfully");
+      showSuccess(t('manageBylaws.successDetails'));
       await loadData();
     } catch (err) {
-      showError(err.message || "Failed to save bylaw details");
+      showError(err.message || t('manageBylaws.errorDetails'));
     } finally {
       setSavingBylawDetails(false);
     }
@@ -1045,7 +1053,7 @@ export default function ManageBylawDetailsPage() {
   if (isLoading) {
     return (
       <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-        Loading bylaw...
+        {t('manageBylaws.loading')}
       </p>
     );
   }
@@ -1058,22 +1066,23 @@ export default function ManageBylawDetailsPage() {
           <button
             onClick={() => navigate("/admin/bylaws")}
             className="shrink-0 w-10 h-10 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors"
+            aria-label={t('manageBylaws.backToBylaws')}
           >
-            <ArrowRightIcon className="w-5 h-5 rotate-180 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+            <ArrowRightIcon className="w-5 h-5 rotate-180 rtl:scale-x-[-1] text-text-secondary-default-light dark:text-text-secondary-default-dark" />
           </button>
           <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark truncate">
-              {bylaw.name}
+              {getLocalizedField(bylaw, 'name', i18n.language)}
             </h1>
             <p className="text-text-secondary-active-light dark:text-text-secondary-active-dark text-xs md:text-sm truncate">
-              {bylaw.description || ""}
+              {getLocalizedField(bylaw, 'description', i18n.language) || ""}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${bylaw.isActive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
             {bylaw.isActive ? <CheckIcon className="w-3 h-3" /> : <XIcon className="w-3 h-3" />}
-            {bylaw.isActive ? "Active" : "Inactive"}
+            {bylaw.isActive ? t('common:status.active') : t('common:status.inactive')}
           </span>
         </div>
       </div>
@@ -1082,9 +1091,9 @@ export default function ManageBylawDetailsPage() {
       <Dialog
         isOpen={successMessage !== null}
         variant="success"
-        title="Success"
+        title={t('common:error.success')}
         onClose={() => setSuccessMessage(null)}
-        confirmText="OK"
+        confirmText={t('common:dialog.ok')}
         showCloseButton={true}
       >
         {successMessage}
@@ -1112,16 +1121,16 @@ export default function ManageBylawDetailsPage() {
         <Section>
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-              General Settings & Status
+              {t('manageBylaws.generalSettings')}
             </span>
             <div className="flex items-center gap-2">
               <Button variant="warning" type="button" onClick={() => setIsToggleActiveOpen(true)}>
                 {bylaw.isActive ? <XIcon size={16} /> : <CheckIcon size={16} />}
-                {bylaw.isActive ? "Deactivate" : "Activate"}
+                {bylaw.isActive ? t('manageBylaws.deactivate') : t('manageBylaws.activate')}
               </Button>
               <Button variant="primary" type="button" onClick={handleSaveGeneral} disabled={savingGeneral}>
                 <FloppyDiskIcon size={16} />
-                {savingGeneral ? "Saving..." : "Save"}
+                {savingGeneral ? t('common:status.saving') : t('common:labels.save')}
               </Button>
             </div>
           </div>
@@ -1133,11 +1142,11 @@ export default function ManageBylawDetailsPage() {
                   <ClipboardCheckIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Total Graduation Hours</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Total credit hours required to graduate</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.totalGraduationHours')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.totalGraduationHoursDesc')}</p>
                 </div>
               </div>
-              <NumberInput min="0" value={totalGraduationHours} onChange={(e) => setTotalGraduationHours(e.target.value)} placeholder="e.g., 130" className="w-full" />
+              <NumberInput min="0" value={totalGraduationHours} onChange={(e) => setTotalGraduationHours(e.target.value)} placeholder={t('manageBylaws.hoursPlaceholder')} className="w-full" />
             </div>
 
             {isBachelor && (
@@ -1147,11 +1156,11 @@ export default function ManageBylawDetailsPage() {
                   <UserIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Min Hours for Graduation Project</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Minimum credit hours required to register graduation project</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.minHoursGraduationProject')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.minHoursGraduationProjectDesc')}</p>
                 </div>
               </div>
-              <NumberInput min="0" value={minCreditHoursForGraduationProject} onChange={(e) => setMinCreditHoursForGraduationProject(e.target.value)} placeholder="e.g., 90" className="w-full" />
+              <NumberInput min="0" value={minCreditHoursForGraduationProject} onChange={(e) => setMinCreditHoursForGraduationProject(e.target.value)} placeholder={t('manageBylaws.hoursPlaceholder')} className="w-full" />
             </div>
             )}
 
@@ -1163,11 +1172,11 @@ export default function ManageBylawDetailsPage() {
                     <UserIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Thesis Credit Hours</h3>
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Credit hours assigned to thesis work</p>
+                    <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.thesisCreditHours')}</h3>
+                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.thesisCreditHoursDesc')}</p>
                   </div>
                 </div>
-                <NumberInput min="0" value={thesisCreditHours} onChange={(e) => setThesisCreditHours(e.target.value)} placeholder="e.g., 6" className="w-full" />
+                <NumberInput min="0" value={thesisCreditHours} onChange={(e) => setThesisCreditHours(e.target.value)} placeholder={t('manageBylaws.hoursPlaceholder')} className="w-full" />
               </div>
 
               <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
@@ -1176,8 +1185,8 @@ export default function ManageBylawDetailsPage() {
                     <ClipboardCheckIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Comprehensive Exam</h3>
-                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Whether this program requires a comprehensive exam</p>
+                    <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.comprehensiveExam')}</h3>
+                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.comprehensiveExamDesc')}</p>
                   </div>
                 </div>
                 <label className="inline-flex items-center gap-2 cursor-pointer">
@@ -1188,7 +1197,7 @@ export default function ManageBylawDetailsPage() {
                     className="rounded border-border-primary-default-light dark:border-border-primary-default-dark text-text-accent-active-light focus:ring-text-accent-active-light"
                   />
                   <span className="text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
-                    {hasComprehensiveExam ? "Required" : "Not Required"}
+                    {hasComprehensiveExam ? t('manageBylaws.required') : t('manageBylaws.notRequired')}
                   </span>
                 </label>
               </div>
@@ -1201,14 +1210,14 @@ export default function ManageBylawDetailsPage() {
                   <CalendarDaysIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Status</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Current bylaw status</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.status')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.statusDesc')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium ${bylaw.isActive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
                   {bylaw.isActive ? <CheckIcon className="w-4 h-4" /> : <XIcon className="w-4 h-4" />}
-                  {bylaw.isActive ? "Active" : "Inactive"}
+                  {bylaw.isActive ? t('common:status.active') : t('common:status.inactive')}
                 </span>
               </div>
             </div>
@@ -1222,11 +1231,11 @@ export default function ManageBylawDetailsPage() {
         <Section>
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-              Registration & Credit Hours Rules
+              {t('manageBylaws.registrationRules')}
             </span>
             <Button variant="primary" type="button" onClick={handleSaveRegistration} disabled={savingRegistration}>
               <FloppyDiskIcon size={16} />
-              {savingRegistration ? "Saving..." : "Save"}
+              {savingRegistration ? t('common:status.saving') : t('common:labels.save')}
             </Button>
           </div>
 
@@ -1237,11 +1246,11 @@ export default function ManageBylawDetailsPage() {
                   <WarningIcon size={20} className="text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Minimum Credits Per Semester</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Lowest allowed course load per semester</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.minCreditsPerSemester')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.minCreditsPerSemesterDesc')}</p>
                 </div>
               </div>
-              <NumberInput min="0" value={minCreditHoursPerSemester} onChange={(e) => setMinCreditHoursPerSemester(e.target.value)} placeholder="e.g., 12" className="w-full" />
+              <NumberInput min="0" value={minCreditHoursPerSemester} onChange={(e) => setMinCreditHoursPerSemester(e.target.value)} placeholder={t('manageBylaws.hoursPlaceholder')} className="w-full" />
             </div>
 
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
@@ -1250,11 +1259,11 @@ export default function ManageBylawDetailsPage() {
                   <CheckIcon size={20} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Maximum Credits Per Semester</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Highest allowed course load per semester</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.maxCreditsPerSemester')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.maxCreditsPerSemesterDesc')}</p>
                 </div>
               </div>
-              <NumberInput min="0" value={maxCreditHoursPerSemester} onChange={(e) => setMaxCreditHoursPerSemester(e.target.value)} placeholder="e.g., 18" className="w-full" />
+              <NumberInput min="0" value={maxCreditHoursPerSemester} onChange={(e) => setMaxCreditHoursPerSemester(e.target.value)} placeholder={t('manageBylaws.hoursPlaceholder')} className="w-full" />
             </div>
 
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
@@ -1263,11 +1272,11 @@ export default function ManageBylawDetailsPage() {
                   <ClockIcon size={20} className="text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Summer Semester Max Credits</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Maximum credits allowed in summer</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.summerMaxCredits')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.summerMaxCreditsDesc')}</p>
                 </div>
               </div>
-              <NumberInput min="0" value={summerMaxCreditHours} onChange={(e) => setSummerMaxCreditHours(e.target.value)} placeholder="e.g., 6" className="w-full" />
+              <NumberInput min="0" value={summerMaxCreditHours} onChange={(e) => setSummerMaxCreditHours(e.target.value)} placeholder={t('manageBylaws.hoursPlaceholder')} className="w-full" />
             </div>
           </div>
         </Section>
@@ -1278,20 +1287,20 @@ export default function ManageBylawDetailsPage() {
         <Section>
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-              {gradeScales.length} grade scale{gradeScales.length !== 1 ? "s" : ""}
+              {t('manageBylaws.gradeScaleCount', { count: gradeScales.length })}
             </span>
             <div className="flex items-center gap-2">
               {gradeScales.length >= 18 ? (
-                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Max grade scales reached</span>
+                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.maxGradeScalesReached')}</span>
               ) : (
                 <Button variant="secondary" type="button" onClick={addGradeScale}>
                   <PlusIcon size={16} />
-                  Add Grade Scale
+                  {t('courseGradesTab.addScale')}
                 </Button>
               )}
               <Button variant="primary" type="button" onClick={handleSaveGrading} disabled={savingGradeScales}>
                 <FloppyDiskIcon size={16} />
-                {savingGradeScales ? "Saving..." : "Save Grading"}
+                {savingGradeScales ? t('common:status.saving') : t('manageBylaws.saveGrading')}
               </Button>
             </div>
           </div>
@@ -1299,53 +1308,53 @@ export default function ManageBylawDetailsPage() {
           {/* Min Passing Grade & Min Graduation GPA */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
-              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Minimum Passing Grade</label>
-              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">The lowest passing grade letter (e.g., D)</p>
-              <input type="text" value={minPassingGradeLetter} onChange={(e) => setMinPassingGradeLetter(e.target.value)} className={inputClass} placeholder="e.g., D" />
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.minPassingGrade')}</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">{t('manageBylaws.minPassingGradeDesc')}</p>
+              <input type="text" value={minPassingGradeLetter} onChange={(e) => setMinPassingGradeLetter(e.target.value)} className={inputClass} placeholder={t('manageBylaws.gradePlaceholder')} />
             </div>
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
-              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Minimum Graduation GPA</label>
-              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">The minimum cumulative GPA to graduate</p>
-              <NumberInput step="0.01" min="0" max="4" value={minPassingGpa} onChange={(e) => setMinPassingGpa(e.target.value)} placeholder="e.g., 2.0" className="w-full" />
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.minGraduationGpa')}</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">{t('manageBylaws.minGraduationGpaDesc')}</p>
+              <NumberInput step="0.01" min="0" max="4" value={minPassingGpa} onChange={(e) => setMinPassingGpa(e.target.value)} placeholder={t('manageBylaws.gpaPlaceholder')} className="w-full" />
             </div>
           </div>
 
           {/* Course Work & Final Exam Grade Weights */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
-              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Course Work Grade (%)</label>
-              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Percentage weight of course work in the total grade</p>
-              <NumberInput step="0.1" min="0" max="100" value={courseWorkGrade} onChange={(e) => setCourseWorkGrade(e.target.value)} placeholder="e.g., 40" className="w-full" />
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.courseWorkGrade')}</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">{t('manageBylaws.courseWorkGradeDesc')}</p>
+              <NumberInput step="0.1" min="0" max="100" value={courseWorkGrade} onChange={(e) => setCourseWorkGrade(e.target.value)} placeholder={t('manageBylaws.percentagePlaceholder')} className="w-full" />
             </div>
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
-              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Final Exam Grade (%)</label>
-              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Percentage weight of the final exam in the total grade</p>
-              <NumberInput step="0.1" min="0" max="100" value={finalExamGrade} onChange={(e) => setFinalExamGrade(e.target.value)} placeholder="e.g., 60" className="w-full" />
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.finalExamGrade')}</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">{t('manageBylaws.finalExamGradeDesc')}</p>
+              <NumberInput step="0.1" min="0" max="100" value={finalExamGrade} onChange={(e) => setFinalExamGrade(e.target.value)} placeholder={t('manageBylaws.examPercentagePlaceholder')} className="w-full" />
             </div>
           </div>
 
           {/* Minimum Passing Course Work & Final Exam Grades */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
-              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Min Passing Coursework (%)</label>
-              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Minimum coursework percentage to pass the course</p>
-              <NumberInput step="0.1" min="0" max="100" value={minPassingCourseworkGrade} onChange={(e) => setMinPassingCourseworkGrade(e.target.value)} placeholder="e.g. 15" className="w-full" />
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.minPassingCoursework')}</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">{t('manageBylaws.minPassingCourseworkDesc')}</p>
+              <NumberInput step="0.1" min="0" max="100" value={minPassingCourseworkGrade} onChange={(e) => setMinPassingCourseworkGrade(e.target.value)} placeholder={t('manageBylaws.courseworkMinPlaceholder')} className="w-full" />
             </div>
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
-              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Min Passing Final Exam (%)</label>
-              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Minimum final exam percentage to pass the course</p>
-              <NumberInput step="0.1" min="0" max="100" value={minPassingFinalExamGrade} onChange={(e) => setMinPassingFinalExamGrade(e.target.value)} placeholder="e.g. 18" className="w-full" />
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.minPassingFinalExam')}</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">{t('manageBylaws.minPassingFinalExamDesc')}</p>
+              <NumberInput step="0.1" min="0" max="100" value={minPassingFinalExamGrade} onChange={(e) => setMinPassingFinalExamGrade(e.target.value)} placeholder={t('manageBylaws.examMinPlaceholder')} className="w-full" />
             </div>
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4">
-              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">Max Grade on Retake (%)</label>
-              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Maximum overall grade when retaking a failed course</p>
-              <input type="text" value={maxGradeOnRetake} onChange={(e) => setMaxGradeOnRetake(e.target.value)} className={inputClass} placeholder="e.g. D" />
+              <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.maxGradeOnRetake')}</label>
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">{t('manageBylaws.maxGradeOnRetakeDesc')}</p>
+              <input type="text" value={maxGradeOnRetake} onChange={(e) => setMaxGradeOnRetake(e.target.value)} className={inputClass} placeholder={t('manageBylaws.retakePlaceholder')} />
             </div>
           </div>
 
           {gradeScales.length === 0 ? (
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
-              No grade scales defined. Click "Add Grade Scale" to add one.
+              {t('manageBylaws.noGradeScales')}
             </p>
           ) : (
             <div ref={cardsContainerRef} className="space-y-3">
@@ -1364,7 +1373,7 @@ export default function ManageBylawDetailsPage() {
                 from={(gradeScalesPage - 1) * itemsPerPage + 1}
                 to={Math.min(gradeScalesPage * itemsPerPage, gradeScales.length)}
                 total={gradeScales.length}
-                label="grade scales"
+                label={t('manageBylaws.gradeScalesLabel')}
               />
             </div>
           )}
@@ -1376,11 +1385,11 @@ export default function ManageBylawDetailsPage() {
         <Section>
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-              Academic Probation Rules
+              {t('manageBylaws.probationRules')}
             </span>
             <Button variant="primary" type="button" onClick={handleSaveProbation} disabled={savingProbation}>
               <FloppyDiskIcon size={16} />
-              {savingProbation ? "Saving..." : "Save"}
+              {savingProbation ? t('common:status.saving') : t('common:labels.save')}
             </Button>
           </div>
 
@@ -1391,11 +1400,11 @@ export default function ManageBylawDetailsPage() {
                   <WarningIcon size={20} className="text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Probation Threshold</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Minimum GPA before student is placed on probation</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.probationThreshold')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.probationThresholdDesc')}</p>
                 </div>
               </div>
-              <NumberInput step="0.1" min="0" max="4" value={probationThreshold} onChange={(e) => setProbationThreshold(e.target.value)} placeholder="e.g., 2.0" className="w-full" />
+              <NumberInput step="0.1" min="0" max="4" value={probationThreshold} onChange={(e) => setProbationThreshold(e.target.value)} placeholder={t('manageBylaws.gpaPlaceholder')} className="w-full" />
             </div>
 
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
@@ -1404,11 +1413,11 @@ export default function ManageBylawDetailsPage() {
                   <UserIcon size={20} className="text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Probation Registration Limit</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">Maximum credits a student on probation can register</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.probationRegistrationLimit')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">{t('manageBylaws.probationRegistrationLimitDesc')}</p>
                 </div>
               </div>
-              <NumberInput min="0" value={probationRegistrationLimit} onChange={(e) => setProbationRegistrationLimit(e.target.value)} placeholder="e.g., 12" className="w-full" />
+              <NumberInput min="0" value={probationRegistrationLimit} onChange={(e) => setProbationRegistrationLimit(e.target.value)} placeholder={t('manageBylaws.hoursPlaceholder')} className="w-full" />
             </div>
           </div>
         </Section>
@@ -1419,23 +1428,23 @@ export default function ManageBylawDetailsPage() {
         <Section>
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-              {levelScales.length} level scale{levelScales.length !== 1 ? "s" : ""}
+              {t('manageBylaws.levelScaleCount', { count: levelScales.length })}
             </span>
             <div className="flex items-center gap-2">
               <Button variant="secondary" type="button" onClick={addLevelScale}>
                 <PlusIcon size={16} />
-                Add Level
+                {t('courseGradesTab.addLevel')}
               </Button>
               <Button variant="primary" type="button" onClick={handleSaveLevels} disabled={savingLevelScales}>
                 <FloppyDiskIcon size={16} />
-                {savingLevelScales ? "Saving..." : "Save Levels"}
+                {savingLevelScales ? t('common:status.saving') : t('manageBylaws.saveLevels')}
               </Button>
             </div>
           </div>
 
           {levelScales.length === 0 ? (
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
-              No level scales defined. Click "Add Level" to add one.
+              {t('manageBylaws.noLevelScales')}
             </p>
           ) : (
             <div ref={cardsContainerRef} className="space-y-3">
@@ -1454,7 +1463,7 @@ export default function ManageBylawDetailsPage() {
                 from={(levelScalesPage - 1) * itemsPerPage + 1}
                 to={Math.min(levelScalesPage * itemsPerPage, levelScales.length)}
                 total={levelScales.length}
-                label="level scales"
+                label={t('manageBylaws.levelScalesLabel')}
               />
             </div>
           )}
@@ -1467,11 +1476,11 @@ export default function ManageBylawDetailsPage() {
         <Section>
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-              Major Declaration Rules
+              {t('manageBylaws.majorDeclaration')}
             </span>
             <Button variant="primary" type="button" onClick={handleSaveMinHours} disabled={savingMinHours}>
               <FloppyDiskIcon size={16} />
-              {savingMinHours ? "Saving..." : "Save"}
+              {savingMinHours ? t('common:status.saving') : t('common:labels.save')}
             </Button>
           </div>
 
@@ -1482,11 +1491,11 @@ export default function ManageBylawDetailsPage() {
                   <UserIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Department</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Minimum passed credits to choose a department</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.department')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.departmentDesc')}</p>
                 </div>
               </div>
-              <NumberInput min="0" value={minHoursToChooseDepartment} onChange={(e) => setMinHoursToChooseDepartment(e.target.value)} placeholder="Enter minimum credits..." className="w-full" />
+              <NumberInput min="0" value={minHoursToChooseDepartment} onChange={(e) => setMinHoursToChooseDepartment(e.target.value)} placeholder={t('manageBylaws.enterMinCredits')} className="w-full" />
             </div>
 
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
@@ -1495,30 +1504,30 @@ export default function ManageBylawDetailsPage() {
                   <CheckIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Specialization</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Minimum passed credits to choose a specialization</p>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.specialization')}</h3>
+                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.specializationDesc')}</p>
                 </div>
               </div>
-              <NumberInput min="0" value={minHoursToChooseSpecialization} onChange={(e) => setMinHoursToChooseSpecialization(e.target.value)} placeholder="Enter minimum credits..." className="w-full" />
+              <NumberInput min="0" value={minHoursToChooseSpecialization} onChange={(e) => setMinHoursToChooseSpecialization(e.target.value)} placeholder={t('manageBylaws.enterMinCredits')} className="w-full" />
             </div>
           </div>
 
           {/* Specializations Table per Department */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1">
-              Specialization Prerequisites
+              {t('manageBylaws.specializationPrerequisites')}
             </h3>
             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-4">
-              Set required courses and minimum grades for each specialization declaration
+              {t('manageBylaws.specializationPrerequisitesDesc')}
             </p>
 
             {deptSpecsLoading ? (
               <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-8 text-center">
-                Loading specializations...
+                {t('manageBylaws.loadingSpecializations')}
               </p>
             ) : allDepartments.length === 0 ? (
               <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-8 text-center border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
-                No departments found.
+                {t('manageBylaws.noDepartments')}
               </p>
             ) : (
               <div className="space-y-6">
@@ -1530,10 +1539,10 @@ export default function ManageBylawDetailsPage() {
                     <div key={deptId} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
                       <div className="flex items-center gap-3 px-4 py-2.5 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
                         <span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wider">
-                          {dept.departmentName || dept.name || `Department #${deptId}`}
+                          {getLocalizedField(dept, 'departmentName', i18n.language) || dept.name || `${t('manageBylaws.department')} #${deptId}`}
                         </span>
                         <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                          ({specs.length} specialization{specs.length !== 1 ? "s" : ""})
+                          ({specs.length} {t('manageBylaws.specialization')}{specs.length !== 1 ? "s" : ""})
                         </span>
                       </div>
                       <div className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
@@ -1545,13 +1554,9 @@ export default function ManageBylawDetailsPage() {
                             <div key={specId} className="flex items-center gap-4 px-4 py-3">
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                                  {spec.name}
+                                  {getLocalizedField(spec, 'name', i18n.language)}
                                 </p>
-                                {spec.nameAr && (
-                                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark" dir="rtl">
-                                    {spec.nameAr}
-                                  </p>
-                                )}
+                                
                                 {hasPrereqs && (
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {prereqs.map((pr, i) => {
@@ -1570,7 +1575,7 @@ export default function ManageBylawDetailsPage() {
                                 type="button"
                                 onClick={() => {
                                   const existing = specPrerequisites[specId] || [];
-                                  setSpecPrereqTarget({ deptId, specId, specName: spec.name });
+                                  setSpecPrereqTarget({ deptId, specId, specName: getLocalizedField(spec, 'name', i18n.language) });
                                   setSpecPrereqSelectedCourses(existing.map(p => p.courseId));
                                   setSpecPrereqMinGrades(existing.reduce((acc, p) => {
                                     acc[p.courseId] = p.minGrade ?? "";
@@ -1580,8 +1585,8 @@ export default function ManageBylawDetailsPage() {
                                 }}
                                 className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors"
                               >
-                                <LinkIcon size={14} className="inline mr-1" />
-                                {hasPrereqs ? "Edit Prerequisites" : "Set Prerequisites"}
+                                <LinkIcon size={14} className="inline me-1" />
+                                {hasPrereqs ? t('manageBylaws.editPrerequisites') : t('manageBylaws.setPrerequisites')}
                               </button>
                             </div>
                           );
@@ -1601,40 +1606,42 @@ export default function ManageBylawDetailsPage() {
         <Section>
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-              Course Mapping
+              {t('manageBylaws.courseMapping')}
             </span>
             <Button variant="primary" type="button" onClick={handleSaveCourseMapping} disabled={savingCourseMapping}>
               <FloppyDiskIcon size={16} />
-              {savingCourseMapping ? "Saving..." : "Save"}
+              {savingCourseMapping ? t('common:status.saving') : t('common:labels.save')}
             </Button>
           </div>
 
           {allCoursesLoading ? (
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
-              Loading courses...
+              {t('manageBylaws.loadingCourses')}
             </p>
           ) : (
             <div className="space-y-6">
               <CourseMappingTable
-                title="University Required Courses"
+                title={t('manageBylaws.universityRequiredCourses')}
                 items={universityRequired}
                 allCourses={allCourses}
                 onAdd={() => openCourseSelect("university")}
                 onRemove={(idx) => removeCourseMappingRow(universityRequired, setUniversityRequired, idx)}
                 onSetPrerequisites={openPrereqSelect}
                 onCreditHoursChange={handleCreditHoursChange}
+                i18n={i18n}
               />
               <CourseMappingTable
-                title="College Required Courses"
+                title={t('manageBylaws.collegeRequiredCourses')}
                 items={collegeRequired}
                 allCourses={allCourses}
                 onAdd={() => openCourseSelect("college")}
                 onRemove={(idx) => removeCourseMappingRow(collegeRequired, setCollegeRequired, idx)}
                 onSetPrerequisites={openPrereqSelect}
                 onCreditHoursChange={handleCreditHoursChange}
+                i18n={i18n}
               />
               <CourseMappingTable
-                title="Major Required Courses"
+                title={t('manageBylaws.majorRequiredCourses')}
                 items={majorRequired}
                 allCourses={allCourses}
                 onAdd={() => openCourseSelect("major")}
@@ -1642,6 +1649,7 @@ export default function ManageBylawDetailsPage() {
                 onSetPrerequisites={openPrereqSelect}
                 onSetAllowedDepartments={openDepartmentSelect}
                 onCreditHoursChange={handleCreditHoursChange}
+                i18n={i18n}
               />
             </div>
           )}
@@ -1650,11 +1658,11 @@ export default function ManageBylawDetailsPage() {
             <div className="mt-6 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                  Course Buckets
+                  {t('manageBylaws.courseBuckets')}
                 </span>
                 <Button variant="secondary" type="button" onClick={createBucket}>
                   <PlusIcon size={14} />
-                  Create Bucket
+                  {t('manageBylaws.createBucket')}
                 </Button>
               </div>
               <div className="space-y-4">
@@ -1663,21 +1671,21 @@ export default function ManageBylawDetailsPage() {
                     {/* Header */}
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark flex-wrap">
                       <span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wider shrink-0">
-                        Bucket #{bi + 1}
+                        {t('manageBylaws.bucketNumber', { number: bi + 1 })}
                       </span>
                       <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate max-w-40">
-                        {bucket.name || "Untitled"}
+                        {getLocalizedField(bucket, 'name', i18n.language) || t('manageBylaws.untitled')}
                       </span>
-                      <div className="flex items-center gap-2 shrink-0 ml-auto">
+                      <div className="flex items-center gap-2 shrink-0 ms-auto">
                         <Button variant="secondary" type="button" onClick={() => openBucketCourseSelect(bucket.id)}>
                           <PlusIcon size={14} />
-                          Add Courses
+                          {t('manageBylaws.addCourses')}
                         </Button>
                         <button
                           type="button"
                           onClick={() => setEditingBucket(bucket)}
                           className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
-                          title="Edit bucket"
+                          title={t('manageBylaws.editBucketTitle')}
                         >
                           <PenSquareIcon size={16} />
                         </button>
@@ -1685,7 +1693,7 @@ export default function ManageBylawDetailsPage() {
                           type="button"
                           onClick={() => removeBucket(bucket.id)}
                           className="p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                          title="Remove bucket"
+                          title={t('manageBylaws.removeBucket')}
                         >
                           <TrashIcon size={16} />
                         </button>
@@ -1697,7 +1705,7 @@ export default function ManageBylawDetailsPage() {
                       {/* Min credit hours bar */}
                       <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark flex-wrap">
                         <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">
-                          Minimum credit hours:
+                          {t('manageBylaws.minCreditHours')}
                         </label>
                         <NumberInput
                           min="0"
@@ -1706,20 +1714,20 @@ export default function ManageBylawDetailsPage() {
                           className="w-20"
                         />
                         <span className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                          hrs
+                          {t('manageBylaws.hrs')}
                         </span>
                         <span className="text-xs font-medium text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                          (available: {bucket.courseIds.reduce((sum, c) => sum + (c.creditHours ?? allCourses.find(crs => crs.courseId === c.courseId)?.creditHours ?? 0), 0)} hrs)
+                          {t('manageBylaws.availableCredits', { count: bucket.courseIds.reduce((sum, c) => sum + (c.creditHours ?? allCourses.find(crs => crs.courseId === c.courseId)?.creditHours ?? 0), 0) })}
                         </span>
                         {bucket.requiredCreditHours > 0 && bucket.courseIds.length > 0 && bucket.requiredCreditHours > bucket.courseIds.reduce((sum, c) => sum + (c.creditHours ?? allCourses.find(crs => crs.courseId === c.courseId)?.creditHours ?? 0), 0) && (
-                          <span className="text-xs text-text-danger-default-light dark:text-text-danger-default-dark">(exceeds available credits)</span>
+                          <span className="text-xs text-text-danger-default-light dark:text-text-danger-default-dark">{t('manageBylaws.exceedsAvailable')}</span>
                         )}
                       </div>
 
                       {/* Courses */}
                       {bucket.courseIds.length === 0 ? (
                         <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark py-3 text-center border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
-                          No courses in this bucket. Click "Add Courses" to select courses.
+                          {t('manageBylaws.noCoursesInBucket')}
                         </p>
                       ) : (
                         <div className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark -mx-4 -mb-4">
@@ -1729,14 +1737,14 @@ export default function ManageBylawDetailsPage() {
                               <div key={item.courseId} className="flex items-center gap-4 px-4 py-2.5">
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                                    {course?.courseName || "Unknown Course"}
+                                    {getLocalizedField(course, 'courseName', i18n.language) || t('manageBylaws.unknownCourse')}
                                   </p>
                                   <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                     {course?.courseCode || `#${item.courseId}`}
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
-                                  <label className="text-[10px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark whitespace-nowrap">Credits:</label>
+                                  <label className="text-[10px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark whitespace-nowrap">{t('manageBylaws.credits')}</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -1761,7 +1769,7 @@ export default function ManageBylawDetailsPage() {
                                   type="button"
                                   onClick={() => openPrereqSelect(item.courseId)}
                                   className="p-1.5 rounded-lg text-text-accent-active-light dark:text-text-accent-active-dark hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
-                                  title="Set prerequisites"
+                                  title={t('manageBylaws.setPrerequisitesTitle')}
                                 >
                                   <LinkIcon size={16} />
                                 </button>
@@ -1769,7 +1777,7 @@ export default function ManageBylawDetailsPage() {
                                   type="button"
                                   onClick={() => removeBucketCourse(bucket.id, item.courseId)}
                                   className="shrink-0 p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                                  title="Remove course"
+                                  title={t('manageBylaws.removeCourse')}
                                 >
                                   <TrashIcon size={14} />
                                 </button>
@@ -1788,7 +1796,7 @@ export default function ManageBylawDetailsPage() {
             <div className="mt-6">
               <Button variant="secondary" type="button" onClick={createBucket}>
                 <PlusIcon size={14} />
-                Create Bucket
+                {t('manageBylaws.createBucket')}
               </Button>
             </div>
           )}
@@ -1802,7 +1810,7 @@ export default function ManageBylawDetailsPage() {
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
               <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                Select Courses
+                {t('manageBylaws.selectCourses')}
               </h2>
               <button type="button" onClick={() => setCourseSelectTarget(null)} className="p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors">
                 <XIcon size={20} />
@@ -1815,7 +1823,7 @@ export default function ManageBylawDetailsPage() {
                 type="text"
                 value={courseSearchQuery}
                 onChange={(e) => setCourseSearchQuery(e.target.value)}
-                placeholder="Search courses..."
+                placeholder={t('manageBylaws.searchCourses')}
                 className={`w-full ${inputClass}`}
               />
             </div>
@@ -1860,10 +1868,10 @@ export default function ManageBylawDetailsPage() {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                          {course.courseName}
+                          {getLocalizedField(course, 'courseName', i18n.language)}
                         </p>
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                          {course.courseCode}
+                          {getLocalizedField(course, 'courseCode', i18n.language)}
                         </p>
                       </div>
                     </label>
@@ -1881,7 +1889,7 @@ export default function ManageBylawDetailsPage() {
                 );
               }).length === 0 && (
                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
-                  No courses found.
+                  {t('manageBylaws.noCoursesFound')}
                 </p>
               )}
             </div>
@@ -1893,7 +1901,7 @@ export default function ManageBylawDetailsPage() {
                 onClick={() => setCourseSelectTarget(null)}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
               >
-                Cancel
+                {t('common:labels.cancel')}
               </button>
               <button
                 type="button"
@@ -1901,7 +1909,7 @@ export default function ManageBylawDetailsPage() {
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={selectedCourseIds.length === 0}
               >
-                Add ({selectedCourseIds.length})
+                {t('manageBylaws.addCount', { count: selectedCourseIds.length })}
               </button>
             </div>
           </div>
@@ -1915,12 +1923,12 @@ export default function ManageBylawDetailsPage() {
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
               <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                Set Prerequisites
+                {t('manageBylaws.setPrerequisites')}
               </h2>
-              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark ml-2 truncate">
-                for {allCourses.find(c => c.courseId === prereqTarget)?.courseName || "course"}
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark ms-2 truncate">
+                {t('manageBylaws.specPrereqFor', { name: getLocalizedField(allCourses.find(c => c.courseId === prereqTarget), 'courseName', i18n.language) || t('manageBylaws.unknownCourse') })}
               </p>
-              <button type="button" onClick={() => setPrereqTarget(null)} className="ml-auto p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors">
+              <button type="button" onClick={() => setPrereqTarget(null)} className="ms-auto p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors">
                 <XIcon size={20} />
               </button>
             </div>
@@ -1931,7 +1939,7 @@ export default function ManageBylawDetailsPage() {
                 type="text"
                 value={prereqSearchQuery}
                 onChange={(e) => setPrereqSearchQuery(e.target.value)}
-                placeholder="Search courses..."
+                placeholder={t('manageBylaws.searchCourses')}
                 className={`w-full ${inputClass}`}
               />
             </div>
@@ -1970,10 +1978,10 @@ export default function ManageBylawDetailsPage() {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                          {course.courseName}
+                          {getLocalizedField(course, 'courseName', i18n.language)}
                         </p>
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                          {course.courseCode}
+                          {getLocalizedField(course, 'courseCode', i18n.language)}
                         </p>
                       </div>
                     </label>
@@ -1985,7 +1993,7 @@ export default function ManageBylawDetailsPage() {
                 c.courseCode?.toLowerCase().includes(prereqSearchQuery.toLowerCase())
               ).length === 0 && (
                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
-                  No courses found.
+                  {t('manageBylaws.noCoursesFound')}
                 </p>
               )}
             </div>
@@ -1997,14 +2005,14 @@ export default function ManageBylawDetailsPage() {
                 onClick={() => setPrereqTarget(null)}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
               >
-                Cancel
+                {t('common:labels.cancel')}
               </button>
               <button
                 type="button"
                 onClick={confirmPrereqSelection}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save ({prereqSelectedIds.length})
+                {t('manageBylaws.saveCount', { count: prereqSelectedIds.length })}
               </button>
             </div>
           </div>
@@ -2017,12 +2025,12 @@ export default function ManageBylawDetailsPage() {
           <div className="w-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
               <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                Allowed Departments
+                {t('manageBylaws.allowedDepartments')}
               </h2>
-              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark ml-2 truncate">
-                for {allCourses.find(c => c.courseId === departmentTarget.courseId)?.courseName || "course"}
+              <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark ms-2 truncate">
+                {t('manageBylaws.specPrereqFor', { name: getLocalizedField(allCourses.find(c => c.courseId === departmentTarget.courseId), 'courseName', i18n.language) || t('manageBylaws.unknownCourse') })}
               </p>
-              <button type="button" onClick={() => setDepartmentTarget(null)} className="ml-auto p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors">
+              <button type="button" onClick={() => setDepartmentTarget(null)} className="ms-auto p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors">
                 <XIcon size={20} />
               </button>
             </div>
@@ -2032,7 +2040,7 @@ export default function ManageBylawDetailsPage() {
                 type="text"
                 value={deptSearchQuery}
                 onChange={(e) => setDeptSearchQuery(e.target.value)}
-                placeholder="Search departments..."
+                placeholder={t('manageBylaws.searchDepartments')}
                 className={`w-full ${inputClass}`}
               />
             </div>
@@ -2069,7 +2077,7 @@ export default function ManageBylawDetailsPage() {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                          {dept.departmentName || dept.name}
+                          {getLocalizedField(dept, 'departmentName', i18n.language) || dept.name}
                         </p>
                       </div>
                     </label>
@@ -2080,7 +2088,7 @@ export default function ManageBylawDetailsPage() {
                 (d.departmentName || d.name)?.toLowerCase().includes(deptSearchQuery.toLowerCase())
               ).length === 0 && (
                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
-                  No departments found.
+                  {t('manageBylaws.noDepartments')}
                 </p>
               )}
             </div>
@@ -2091,14 +2099,14 @@ export default function ManageBylawDetailsPage() {
                 onClick={() => setDepartmentTarget(null)}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
               >
-                Cancel
+                {t('common:labels.cancel')}
               </button>
               <button
                 type="button"
                 onClick={confirmDepartmentSelection}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save ({deptSelectedIds.length})
+                {t('manageBylaws.saveCount', { count: deptSelectedIds.length })}
               </button>
             </div>
           </div>
@@ -2112,7 +2120,7 @@ export default function ManageBylawDetailsPage() {
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
               <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                Select Courses for Bucket
+                {t('manageBylaws.selectCoursesForBucket')}
               </h2>
               <button type="button" onClick={() => setBucketCourseTarget(null)} className="p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors">
                 <XIcon size={20} />
@@ -2125,7 +2133,7 @@ export default function ManageBylawDetailsPage() {
                 type="text"
                 value={bucketSearchQuery}
                 onChange={(e) => setBucketSearchQuery(e.target.value)}
-                placeholder="Search courses..."
+                placeholder={t('manageBylaws.searchCourses')}
                 className={`w-full ${inputClass}`}
               />
             </div>
@@ -2182,10 +2190,10 @@ export default function ManageBylawDetailsPage() {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                          {course.courseName}
+                          {getLocalizedField(course, 'courseName', i18n.language)}
                         </p>
                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                          {course.courseCode}
+                          {getLocalizedField(course, 'courseCode', i18n.language)}
                         </p>
                       </div>
                     </label>
@@ -2204,7 +2212,7 @@ export default function ManageBylawDetailsPage() {
                 );
               }).length === 0 && (
                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
-                  No courses found.
+                  {t('manageBylaws.noCoursesFound')}
                 </p>
               )}
             </div>
@@ -2216,7 +2224,7 @@ export default function ManageBylawDetailsPage() {
                 onClick={() => setBucketCourseTarget(null)}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
               >
-                Cancel
+                {t('common:labels.cancel')}
               </button>
               <button
                 type="button"
@@ -2224,7 +2232,7 @@ export default function ManageBylawDetailsPage() {
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={bucketSelectedIds.length === 0}
               >
-                Add ({bucketSelectedIds.length})
+                {t('manageBylaws.addCount', { count: bucketSelectedIds.length })}
               </button>
             </div>
           </div>
@@ -2238,7 +2246,7 @@ export default function ManageBylawDetailsPage() {
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
               <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                Create New Bucket
+                {t('manageBylaws.createNewBucket')}
               </h2>
               <button type="button" onClick={() => { setIsNewBucketOpen(false); setNewBucketForm({ name: "", nameAr: "", department: "", departmentId: null }); }} className="p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors">
                 <XIcon size={20} />
@@ -2250,13 +2258,13 @@ export default function ManageBylawDetailsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                 <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-                  Elective Courses Bucket
+                  {t('manageBylaws.electiveCoursesBucket')}
                 </label>
                 <input
                   type="text"
                   value={newBucketForm.name}
                   onChange={(e) => setNewBucketForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter elective courses bucket name..."
+                  placeholder={t('manageBylaws.enterBucketName')}
                   className={inputClass}
                   autoFocus
                   />
@@ -2264,13 +2272,13 @@ export default function ManageBylawDetailsPage() {
 
                 <div dir="rtl">
                   <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-                    حزمة المقررات الاختيارية
+                    {t('manageBylaws.electiveCoursesBucket')}
                   </label>
                   <input
                     type="text"
                     value={newBucketForm.nameAr}
                     onChange={(e) => setNewBucketForm(prev => ({ ...prev, nameAr: e.target.value }))}
-                    placeholder="أدخل اسم حزمة المقررات الاختيارية..."
+                    placeholder={t('manageBylaws.enterBucketName')}
                     className={inputClass}
                   />
                 </div>
@@ -2278,16 +2286,16 @@ export default function ManageBylawDetailsPage() {
 
               <SelectBox
                 className="w-full"
-                label="Department"
+                label={t('manageBylaws.department')}
                 name="bucketDepartment"
                 labelDirection="flex-col"
                 options={[
-                  { value: "", label: "All Departments" },
-                  ...bucketDepartments.map(d => ({ value: d.departmentName || d.name, label: d.departmentName || d.name }))
+                  { value: "", label: t('manageBylaws.allDepartments') },
+                  ...bucketDepartments.map(d => ({ value: d.departmentName || d.name, label: getLocalizedField(d, 'departmentName', i18n.language) || d.name }))
                 ]}
                 selectedOption={(() => {
                   const dept = bucketDepartments.find(d => (d.departmentName || d.name) === newBucketForm.department);
-                  return dept ? { value: dept.departmentName || dept.name, label: dept.departmentName || dept.name } : { value: "", label: "All Departments" };
+                  return dept ? { value: dept.departmentName || dept.name, label: dept.departmentName || dept.name } : { value: "", label: t('manageBylaws.allDepartments') };
                 })()}
                 onChange={(opt) => {
                   const deptObj = bucketDepartments.find(d => (d.departmentName || d.name) === opt.value);
@@ -2303,7 +2311,7 @@ export default function ManageBylawDetailsPage() {
                 onClick={() => { setIsNewBucketOpen(false); setNewBucketForm({ name: "", nameAr: "", department: "", departmentId: null }); }}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
               >
-                Cancel
+                {t('common:labels.cancel')}
               </button>
               <button
                 type="button"
@@ -2311,7 +2319,7 @@ export default function ManageBylawDetailsPage() {
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!newBucketForm.name.trim()}
               >
-                Create Bucket
+                {t('manageBylaws.createBucket')}
               </button>
             </div>
           </div>
@@ -2324,7 +2332,7 @@ export default function ManageBylawDetailsPage() {
           <div className="w-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg shadow-2xl flex flex-col">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
               <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                Edit Bucket
+                {t('manageBylaws.editBucket')}
               </h2>
               <button type="button" onClick={() => setEditingBucket(null)} className="p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors">
                 <XIcon size={20} />
@@ -2335,26 +2343,26 @@ export default function ManageBylawDetailsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-                    Bucket Name
+                    {t('manageBylaws.bucketName')}
                   </label>
                   <input
                     type="text"
                     value={editingBucket.name}
                     onChange={(e) => setEditingBucket(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Enter bucket name..."
+                    placeholder={t('manageBylaws.enterBucketNamePlaceholder')}
                     className={inputClass}
                     autoFocus
                   />
                 </div>
                 <div dir="rtl">
                   <label className="block text-sm font-medium mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-                    اسم الحزمة
+                    {t('manageBylaws.bucketName')}
                   </label>
                   <input
                     type="text"
                     value={editingBucket.nameAr || ""}
                     onChange={(e) => setEditingBucket(prev => ({ ...prev, nameAr: e.target.value }))}
-                    placeholder="أدخل اسم الحزمة بالعربية..."
+                    placeholder={t('manageBylaws.enterBucketNamePlaceholder')}
                     className={inputClass}
                   />
                 </div>
@@ -2362,16 +2370,16 @@ export default function ManageBylawDetailsPage() {
 
               <SelectBox
                 className="w-full"
-                label="Department"
+                label={t('manageBylaws.department')}
                 name="editBucketDepartment"
                 labelDirection="flex-col"
                 options={[
-                  { value: "", label: "All Departments" },
-                  ...bucketDepartments.map(d => ({ value: d.departmentName || d.name, label: d.departmentName || d.name }))
+                  { value: "", label: t('manageBylaws.allDepartments') },
+                  ...bucketDepartments.map(d => ({ value: d.departmentName || d.name, label: getLocalizedField(d, 'departmentName', i18n.language) || d.name }))
                 ]}
                 selectedOption={(() => {
                   const dept = bucketDepartments.find(d => (d.departmentName || d.name) === editingBucket.department);
-                  return dept ? { value: dept.departmentName || dept.name, label: dept.departmentName || dept.name } : { value: "", label: "All Departments" };
+                  return dept ? { value: dept.departmentName || dept.name, label: dept.departmentName || dept.name } : { value: "", label: t('manageBylaws.allDepartments') };
                 })()}
                 onChange={(opt) => {
                   const deptObj = bucketDepartments.find(d => (d.departmentName || d.name) === opt.value);
@@ -2390,7 +2398,7 @@ export default function ManageBylawDetailsPage() {
                 onClick={() => setEditingBucket(null)}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
               >
-                Cancel
+                {t('common:labels.cancel')}
               </button>
               <button
                 type="button"
@@ -2402,7 +2410,7 @@ export default function ManageBylawDetailsPage() {
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!editingBucket.name.trim()}
               >
-                Save
+                {t('common:labels.save')}
               </button>
             </div>
           </div>
@@ -2414,44 +2422,44 @@ export default function ManageBylawDetailsPage() {
         <Section>
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-              Bylaw Details
+              {t('manageBylaws.details')}
             </span>
             <Button variant="primary" type="button" onClick={handleSaveBylawDetails} disabled={savingBylawDetails}>
               <FloppyDiskIcon size={16} />
-              {savingBylawDetails ? "Saving..." : "Save"}
+              {savingBylawDetails ? t('common:status.saving') : t('common:labels.save')}
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
               <label className="block text-sm font-semibold mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-                Bylaw Name
+                {t('manageBylaws.name')}
               </label>
               <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">
-                The official name of this academic bylaw
+                {t('manageBylaws.bylawNameDescription')}
               </p>
               <input
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 className={inputClass}
-                placeholder="e.g., Credit Hour System"
+                placeholder={t('manageBylaws.namePlaceholder')}
               />
             </div>
 
             <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5" dir="rtl">
               <label className="block text-sm font-semibold mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-                اسم اللائحة
+                {t('manageBylaws.name')}
               </label>
               <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">
-                الاسم الرسمي لهذه اللائحة الأكاديمية
+                {t('manageBylaws.bylawNameDescription')}
               </p>
               <input
                 type="text"
                 value={editNameAr}
                 onChange={(e) => setEditNameAr(e.target.value)}
                 className={inputClass}
-                placeholder="نظام الساعات المعتمدة"
+                placeholder={t('manageBylaws.namePlaceholder')}
               />
             </div>
           </div>
@@ -2462,8 +2470,8 @@ export default function ManageBylawDetailsPage() {
                 <ClipboardCheckIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Bylaw Type</h3>
-                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Academic program type</p>
+                <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.bylawType')}</h3>
+                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.bylawTypeDesc')}</p>
               </div>
             </div>
             <SelectBox
@@ -2479,42 +2487,42 @@ export default function ManageBylawDetailsPage() {
 
           <div className="mt-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
             <label className="block text-sm font-semibold mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-              Description
+              {t('manageBylaws.description')}
             </label>
             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">
-              Describe the purpose and scope of this bylaw
+              {t('manageBylaws.descriptionDescription')}
             </p>
             <textarea
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               rows={3}
               className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark focus:outline-none focus:border-border-primary-active-light resize-none"
-              placeholder="Describe the bylaw purpose and scope"
+              placeholder={t('manageBylaws.descriptionPlaceholder')}
             />
           </div>
 
           <div className="mt-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5" dir="rtl">
             <label className="block text-sm font-semibold mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-              الوصف
+              {t('manageBylaws.description')}
             </label>
             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">
-              وصف الغرض من هذه اللائحة ونطاقها
+              {t('manageBylaws.descriptionDescription')}
             </p>
             <textarea
               value={editDescriptionAr}
               onChange={(e) => setEditDescriptionAr(e.target.value)}
               rows={3}
               className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark focus:outline-none focus:border-border-primary-active-light resize-none"
-              placeholder="وصف الغرض من اللائحة ونطاقها"
+              placeholder={t('manageBylaws.descriptionPlaceholder')}
             />
           </div>
 
           <div className="mt-6 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
             <label className="block text-sm font-semibold mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-              Documents
+              {t('manageBylaws.documents')}
             </label>
             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2">
-              Upload bylaw documents (PDF, DOC). Click on a document to preview.
+              {t('manageBylaws.documentsDesc')}
             </p>
 
             {/* Existing documents */}
@@ -2523,13 +2531,13 @@ export default function ManageBylawDetailsPage() {
                 <button
                   type="button"
                   onClick={() => setDocumentPreviewTarget(bylaw)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors w-full text-left"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors w-full text-start"
                 >
                   <FileIcon size={18} className="shrink-0 text-text-accent-active-light dark:text-text-accent-active-dark" />
                   <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate flex-1">
                     {bylaw.fileName}
                   </span>
-                  <span className="text-[10px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark uppercase shrink-0">Click to preview</span>
+                  <span className="text-[10px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark uppercase shrink-0">{t('manageBylaws.clickToPreview')}</span>
                 </button>
               </div>
             )}
@@ -2557,7 +2565,7 @@ export default function ManageBylawDetailsPage() {
             {/* Choose File button */}
             <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors cursor-pointer">
               <CloudUploadIcon size={18} />
-              {newFiles.length > 0 ? "Add Another File" : "Choose File"}
+              {newFiles.length > 0 ? t('manageBylaws.addAnotherFile') : t('manageBylaws.chooseFile')}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -2581,9 +2589,9 @@ export default function ManageBylawDetailsPage() {
             <div className="flex items-center justify-between border-b border-border-primary-default-light dark:border-border-primary-default-dark px-5 py-4">
               <div>
                 <h4 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                  {documentPreviewTarget.fileName || "Document Preview"}
+                  {documentPreviewTarget.fileName || t('manageBylaws.documentPreviewTitle')}
                 </h4>
-                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-0.5">Policy document preview</p>
+                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-0.5">{t('manageBylaws.documentPreviewSubtitle')}</p>
               </div>
               <div className="flex items-center gap-2">
                 <a
@@ -2592,13 +2600,13 @@ export default function ManageBylawDetailsPage() {
                   className="inline-flex items-center gap-2 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark px-3.5 py-2 text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                 >
                   <DownloadIcon size={14} />
-                  Download
+                  {t('common:labels.download')}
                 </a>
                 <button
                   type="button"
                   onClick={() => setDocumentPreviewTarget(null)}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
-                  aria-label="Close bylaw preview"
+                  aria-label={t('manageBylaws.closePreview')}
                 >
                   <XIcon size={14} />
                 </button>
@@ -2606,7 +2614,7 @@ export default function ManageBylawDetailsPage() {
             </div>
             <MaterialPreview
               type={0}
-              title={documentPreviewTarget.fileName || "document"}
+              title={documentPreviewTarget.fileName || t('manageBylaws.document')}
               viewUrl={`${API_URL}/api/Bylaw/${documentPreviewTarget.bylawId ?? documentPreviewTarget.id}/view`}
               downloadUrl={`${API_URL}/api/Bylaw/${documentPreviewTarget.bylawId ?? documentPreviewTarget.id}/download`}
             />
@@ -2621,13 +2629,13 @@ export default function ManageBylawDetailsPage() {
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
               <div className="min-w-0">
                 <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                  Set Prerequisites
+                  {t('manageBylaws.setPrerequisites')}
                 </h2>
                 <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate">
-                  for {specPrereqTarget.specName}
+                  {t('manageBylaws.specPrereqFor', { name: specPrereqTarget.specName })}
                 </p>
               </div>
-              <button type="button" onClick={() => { setSpecPrereqTarget(null); setSpecPrereqSelectedCourses([]); setSpecPrereqMinGrades({}); }} className="ml-auto p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors shrink-0">
+              <button type="button" onClick={() => { setSpecPrereqTarget(null); setSpecPrereqSelectedCourses([]); setSpecPrereqMinGrades({}); }} className="ms-auto p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors shrink-0">
                 <XIcon size={20} />
               </button>
             </div>
@@ -2637,7 +2645,7 @@ export default function ManageBylawDetailsPage() {
                 type="text"
                 value={specPrereqSearchQuery}
                 onChange={(e) => setSpecPrereqSearchQuery(e.target.value)}
-                placeholder="Search courses..."
+                placeholder={t('manageBylaws.searchCourses')}
                 className={`w-full ${inputClass}`}
               />
             </div>
@@ -2701,10 +2709,10 @@ export default function ManageBylawDetailsPage() {
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                            {course.courseName}
+                            {getLocalizedField(course, 'courseName', i18n.language)}
                           </p>
                           <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            {course.courseCode}
+                            {getLocalizedField(course, 'courseCode', i18n.language)}
                           </p>
                         </div>
                       </label>
@@ -2712,7 +2720,7 @@ export default function ManageBylawDetailsPage() {
                         <div className="px-3 pb-3 pt-0 border-t border-border-primary-default-light dark:border-border-primary-default-dark mx-3">
                           <div className="flex items-center gap-3 mt-2">
                             <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">
-                              Min Grade for {course.courseCode || course.courseName}:
+                              {t('manageBylaws.minGradeFor', { code: getLocalizedField(course, 'courseCode', i18n.language) || getLocalizedField(course, 'courseName', i18n.language) })}
                             </label>
                             <SelectBox
                               options={gradeOptions}
@@ -2726,7 +2734,7 @@ export default function ManageBylawDetailsPage() {
                               className="w-24"
                             />
                             <span className="text-[10px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                              (passing is {minGradeLetter})
+                              {t('manageBylaws.passingIs', { grade: minGradeLetter })}
                             </span>
                           </div>
                         </div>
@@ -2740,7 +2748,7 @@ export default function ManageBylawDetailsPage() {
                 c.courseCode?.toLowerCase().includes(specPrereqSearchQuery.toLowerCase())
               ).length === 0 && (
                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
-                  No courses found.
+                  {t('manageBylaws.noCoursesFound')}
                 </p>
               )}
             </div>
@@ -2751,14 +2759,14 @@ export default function ManageBylawDetailsPage() {
                 onClick={() => { setSpecPrereqTarget(null); setSpecPrereqSelectedCourses([]); setSpecPrereqMinGrades({}); }}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
               >
-                Cancel
+                {t('common:labels.cancel')}
               </button>
               <button
                 type="button"
                 onClick={confirmSpecPrereqSelection}
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save ({specPrereqSelectedCourses.length})
+                {t('manageBylaws.saveCount', { count: specPrereqSelectedCourses.length })}
               </button>
             </div>
           </div>
@@ -2769,15 +2777,22 @@ export default function ManageBylawDetailsPage() {
       <Dialog
         isOpen={isToggleActiveOpen}
         variant="warning"
-        title={bylaw.isActive ? "Deactivate Bylaw" : "Activate Bylaw"}
+        title={bylaw.isActive ? t('manageBylaws.deactivateBylaw') : t('manageBylaws.activateBylaw')}
         onClose={() => setIsToggleActiveOpen(false)}
         onConfirm={() => { handleToggleActive(); return true; }}
-        confirmText={bylaw.isActive ? "Deactivate" : "Activate"}
-        cancelText="Cancel"
+        confirmText={bylaw.isActive ? t('manageBylaws.deactivate') : t('manageBylaws.activate')}
+        cancelText={t('common:labels.cancel')}
         showCloseButton={true}
       >
-        Are you sure you want to <strong>{bylaw.isActive ? "deactivate" : "activate"}</strong>{" "}
-        <strong>{bylaw.name}</strong>?
+        <Trans
+          i18nKey="manageBylaws.toggleConfirmMessage"
+          ns="admin"
+          values={{
+            action: bylaw.isActive ? t('manageBylaws.deactivate') : t('manageBylaws.activate'),
+            name: bylaw.name,
+          }}
+          components={[<strong key="action" />, <strong key="name" />]}
+        />
       </Dialog>
     </div>
   );

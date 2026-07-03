@@ -5,19 +5,21 @@ import {
   LocationDotIcon,
   UserIcon,
 } from "../../../../components/ui/icons";
+import { useTranslation } from 'react-i18next';
+import useArabicDigits from "../../../../hooks/useArabicDigits";
 
-const typeStyles = {
+const typeStyles = (t) => ({
   elective: {
-    label: "ELECTIVE",
+    label: t('myCourses.electiveLabel'),
     avatar: "bg-bg-surface-purple-default-light text-text-purple-default-light dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark",
     badge: "bg-bg-surface-purple-default-light text-text-purple-default-light border-border-purple-default-light dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark dark:border-border-purple-default-dark",
   },
   mandatory: {
-    label: "MANDATORY",
+    label: t('myCourses.mandatoryLabel'),
     avatar: "bg-bg-surface-blue-default-light text-text-blue-default-light dark:bg-bg-surface-blue-default-dark dark:text-text-blue-default-dark",
     badge: "bg-bg-surface-blue-default-light text-text-blue-default-light border-border-blue-default-light dark:bg-bg-surface-blue-default-dark dark:text-text-blue-default-dark dark:border-border-blue-default-dark",
   },
-};
+});
 
 const statusStyles = {
   "in-progress": "bg-bg-surface-secondary-default-light text-text-secondary-default-light border-border-primary-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-secondary-default-dark dark:border-border-primary-default-dark",
@@ -40,7 +42,7 @@ function StatusBadge({ label, className }) {
   );
 }
 
-function ActionButtons({ onEnterClassroom, onViewMaterials, layout }) {
+function ActionButtons({ onEnterClassroom, onViewMaterials, layout, t }) {
   const isHorizontal = layout === "horizontal";
   return (
     <div
@@ -50,13 +52,13 @@ function ActionButtons({ onEnterClassroom, onViewMaterials, layout }) {
         onClick={onEnterClassroom}
         className={`px-4 py-2 text-sm font-semibold rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap transition-opacity hover:opacity-90 ${isHorizontal ? "flex-1" : ""}`}
       >
-        Enter Classroom
+        {t('myCourses.enterClassroom')}
       </button>
       <button
         onClick={onViewMaterials}
         className={`px-4 py-2 text-sm font-semibold rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark whitespace-nowrap transition-colors hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark ${isHorizontal ? "flex-1" : ""}`}
       >
-        View Materials
+        {t('myCourses.viewMaterials')}
       </button>
     </div>
   );
@@ -97,9 +99,11 @@ export default function MyCourse({
   onEnterClassroom,
   onViewMaterials,
 }) {
-  const typeAccent = typeStyles[type] || typeStyles.elective;
+  const { t } = useTranslation('student');
+  const { convert: ar } = useArabicDigits();
+  const typeAccent = typeStyles(t)[type] || typeStyles(t).elective;
   const statusClass = statusStyles[status] || statusStyles["in-progress"];
-  const statusLabel = status === "completed" ? "COMPLETED" : "IN PROGRESS";
+  const statusLabel = status === "completed" ? t('myCourses.completedStatus') : t('myCourses.inProgress');
   const attClass = attendanceStyles[attendance.status] || attendanceStyles.good;
 
   return (
@@ -118,10 +122,10 @@ export default function MyCourse({
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-xs font-semibold">
-                {code}
+                {ar(code)}
               </span>
               <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs">
-                {semester}
+                {ar(semester)}
               </span>
               <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border leading-none ${typeAccent.badge}`}>
                 {typeAccent.label}
@@ -146,7 +150,7 @@ export default function MyCourse({
             </div>
             <div className="flex items-center gap-1.5">
               <LocationDotIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>{room}</span>
+              <span>{ar(room)}</span>
             </div>
           </div>
 
@@ -154,20 +158,20 @@ export default function MyCourse({
           <div className="flex flex-wrap items-center gap-4 sm:gap-6">
             <Stat
               icon={<CheckIcon className="w-4 h-4" />}
-              label="Attendance"
-              value={attendance.value}
+              label={t('myCourses.attendance')}
+              value={ar(attendance.value)}
               iconClass={attClass}
             />
             <Stat
               icon={<UsersIcon className="w-4 h-4" />}
-              label="Section"
-              value={section}
+              label={t('myCourses.section')}
+              value={ar(section)}
               iconClass="bg-bg-surface-purple-default-light text-text-purple-default-light dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark"
             />
             <Stat
               icon={<StarIcon className="w-4 h-4" />}
-              label="Grade"
-              value={grade}
+              label={t('myCourses.grade')}
+              value={ar(grade)}
               iconClass="bg-bg-surface-secondary-default-light text-text-secondary-default-light dark:bg-bg-surface-secondary-default-dark dark:text-text-secondary-default-dark"
             />
           </div>
@@ -181,6 +185,7 @@ export default function MyCourse({
               onEnterClassroom={onEnterClassroom}
               onViewMaterials={onViewMaterials}
               layout="vertical"
+              t={t}
             />
           </div>
         </div>
@@ -191,6 +196,7 @@ export default function MyCourse({
             onEnterClassroom={onEnterClassroom}
             onViewMaterials={onViewMaterials}
             layout="horizontal"
+            t={t}
           />
         </div>
       </div>

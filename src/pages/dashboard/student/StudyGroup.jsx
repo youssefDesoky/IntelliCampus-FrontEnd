@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
+import { useEffect, useState, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 
 import StudyGroupPost from "../../../components/ui/StudyGroupPost";
@@ -10,18 +11,20 @@ import {
 import { fetchCommunityPosts, createCommunityPost, toggleUpvote, updateCommunityPost, deleteCommunityPost } from "../../../feature/student/courses/courseDetail/community/communityService";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { StudyGroupPageSkeleton } from "../../../feature/student/studyGroup/SkeletonLoader";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 export default function StudyGroup() {
+    const { t, i18n } = useTranslation('student');
     const { course } = useOutletContext();
     const courseId = course?.id;
     const [posts, setPosts] = useState([]);
     const [postDraft, setPostDraft] = useState("");
     const { showError } = useError();
 
-    function mapPost(raw) {
+    const mapPost = useCallback((raw) => {
         return {
             id: raw.postId,
-            sender: raw.authorName,
+            sender: getLocalizedField(raw, 'authorName', i18n.language) || raw.authorName,
             senderAvatar: raw.authorProfileImage || raw.authorAvatar || null,
             title: raw.content?.split('\n')[0] || "Question",
             content: raw.content,
@@ -32,15 +35,16 @@ export default function StudyGroup() {
             canDelete: raw.canDelete || false,
             comments: (raw.comments || []).map(c => ({
                 commentId: c.commentId,
-                authorName: c.authorName,
+                authorName: getLocalizedField(c, 'authorName', i18n.language) || c.authorName,
                 authorAvatar: c.authorProfileImage || c.authorAvatar || null,
                 content: c.content,
                 createdAt: c.createdAt,
+                instructorRole: c.instructorRole,
             })),
             pinned: raw.isPinned || false,
             saved: false,
         };
-    }
+    }, [i18n.language]);
 
     function extractPosts(data) {
         if (Array.isArray(data)) return data;
@@ -120,7 +124,7 @@ export default function StudyGroup() {
                     <div className="rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5 sm:p-6">
                         <div className="mb-4 flex items-center justify-between gap-3">
                             <h2 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                Start a thread
+                                {t('studyGroup.startThread')}
                             </h2>
                             <PaperPlaneIcon className="h-4 w-4 text-text-accent-default-light dark:text-text-accent-default-dark" />
                         </div>
@@ -128,7 +132,7 @@ export default function StudyGroup() {
                         <TextArea
                             value={postDraft}
                             onChange={(event) => setPostDraft(event.target.value)}
-                            placeholder="Write a question, share notes, or ask for help..."
+                            placeholder={t('studyGroup.writePost')}
                             className="w-full rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors placeholder:text-text-tertiary-default-light focus:border-text-accent-default-light dark:text-text-primary-default-dark dark:placeholder:text-text-tertiary-default-dark dark:focus:border-text-accent-default-dark"
                         />
 
@@ -139,10 +143,10 @@ export default function StudyGroup() {
                                 type="button"
                                 disabled={!postDraft.trim() || !courseId}
                                 onClick={handleCreatePost}
-                                className="inline-flex items-center gap-2 rounded-lg bg-text-accent-default-light px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-text-accent-hover-light disabled:opacity-50 dark:bg-text-accent-default-dark dark:hover:bg-text-accent-hover-dark"
+                                className="inline-flex items-center gap-2 rounded-lg bg-text-accent-default-light px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-text-accent-hover-light disabled:opacity-50 dark:bg-text-accent-default-dark dark:hover:bg-text-accent-hover-dark rtl:flex-row-reverse"
                             >
                                 <PaperPlaneIcon className="h-3.5 w-3.5" />
-                                Post
+                                {t('studyGroup.post')}
                             </button>
                         </div>
                     </div>
@@ -162,8 +166,8 @@ export default function StudyGroup() {
                         ))
                     ) : (
                         <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-                            <p className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No posts yet</p>
-                            <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Be the first to start a discussion.</p>
+                            <p className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('studyGroup.noPosts')}</p>
+                            <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studyGroup.firstDiscussion')}</p>
                         </div>
                     )}
                 </div>

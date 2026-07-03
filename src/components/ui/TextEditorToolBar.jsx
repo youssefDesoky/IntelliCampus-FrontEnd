@@ -1,4 +1,5 @@
 import { useEditorState } from "@tiptap/react"
+import { useTranslation } from 'react-i18next';
 import {
     LargeSmallIcon, BoldIcon, ItalicIcon, OrderedListIcon,
     UnorderedListIcon, StrikeThoughtIcon, UnderlineIcon,
@@ -7,6 +8,7 @@ import {
 } from "./icons"
 
 export default function TextEditorToolBar({ editor }) {
+    const { t } = useTranslation('common');
     const {
         isLarge, isBold, isItalic, isUnderline, isStrike,
         isOrderedList, isBulletList, isHighlight, isLink,
@@ -43,7 +45,7 @@ export default function TextEditorToolBar({ editor }) {
                     <Btn
                         icon={<LargeSmallIcon />}
                         active={isLarge}
-                        title="Large text"
+                        title={t('editor.largeText', 'Large text')}
                         onClick={() => {
                             isLarge
                                 ? editor.chain().focus().unsetFontSize().run()
@@ -55,24 +57,24 @@ export default function TextEditorToolBar({ editor }) {
                 <Sep />
 
                 {/* ── Inline formatting ── */}
-                <Btn icon={<BoldIcon />}          active={isBold}      title="Bold"          onClick={() => editor.chain().focus().toggleBold().run()} />
-                <Btn icon={<ItalicIcon />}         active={isItalic}    title="Italic"        onClick={() => editor.chain().focus().toggleItalic().run()} />
-                <Btn icon={<UnderlineIcon />}      active={isUnderline} title="Underline"     onClick={() => editor.chain().focus().toggleUnderline().run()} />
-                <Btn icon={<StrikeThoughtIcon />}  active={isStrike}    title="Strikethrough" onClick={() => editor.chain().focus().toggleStrike().run()} />
-                <Btn icon={<HighlighterIcon />}    active={isHighlight} title="Highlight"     onClick={() => editor.chain().focus().toggleHighlight().run()} />
+                <Btn icon={<BoldIcon />}          active={isBold}      title={t('editor.bold', 'Bold')}          onClick={() => editor.chain().focus().toggleBold().run()} />
+                <Btn icon={<ItalicIcon />}         active={isItalic}    title={t('editor.italic', 'Italic')}        onClick={() => editor.chain().focus().toggleItalic().run()} />
+                <Btn icon={<UnderlineIcon />}      active={isUnderline} title={t('editor.underline', 'Underline')}     onClick={() => editor.chain().focus().toggleUnderline().run()} />
+                <Btn icon={<StrikeThoughtIcon />}  active={isStrike}    title={t('editor.strikethrough', 'Strikethrough')} onClick={() => editor.chain().focus().toggleStrike().run()} />
+                <Btn icon={<HighlighterIcon />}    active={isHighlight} title={t('editor.highlight', 'Highlight')}     onClick={() => editor.chain().focus().toggleHighlight().run()} />
 
                 <Sep />
 
                 {/* ── Lists + link ── */}
-                <Btn icon={<OrderedListIcon />}    active={isOrderedList} title="Numbered list" onClick={() => editor.chain().focus().toggleOrderedList().run()} />
-                <Btn icon={<UnorderedListIcon />}  active={isBulletList}  title="Bullet list"   onClick={() => editor.chain().focus().toggleBulletList().run()} />
+                <Btn icon={<OrderedListIcon />}    active={isOrderedList} title={t('editor.numberedList', 'Numbered list')} onClick={() => editor.chain().focus().toggleOrderedList().run()} />
+                <Btn icon={<UnorderedListIcon />}  active={isBulletList}  title={t('editor.bulletList', 'Bullet list')}   onClick={() => editor.chain().focus().toggleBulletList().run()} />
                 <span className="hidden sm:inline-flex">
                     <Btn
                         icon={<LinkIcon />}
                         active={isLink}
-                        title="Insert link"
+                        title={t('editor.insertLink', 'Insert link')}
                         onClick={() => {
-                            const url = window.prompt('Enter URL')
+                            const url = window.prompt(t('editor.enterUrl', 'Enter URL'))
                             if (url) editor.chain().focus().setLink({ href: url }).run()
                         }}
                     />
@@ -82,16 +84,16 @@ export default function TextEditorToolBar({ editor }) {
                     <Sep />
 
                     {/* ── Alignment ── */}
-                    <Btn icon={<AlignStartIcon />}                        active={isAlignLeft}   title="Align left"   onClick={() => editor.chain().focus().setTextAlign('left').run()} />
-                    <Btn icon={<AlignCenterIcon />}                       active={isAlignCenter} title="Align center" onClick={() => editor.chain().focus().setTextAlign('center').run()} />
-                    <Btn icon={<AlignStartIcon className="-scale-x-100" />} active={isAlignRight} title="Align right"  onClick={() => editor.chain().focus().setTextAlign('right').run()} />
+                    <Btn icon={<AlignStartIcon />}                        active={isAlignLeft}   title={t('editor.alignLeft', 'Align left')}   onClick={() => editor.chain().focus().setTextAlign('left').run()} />
+                    <Btn icon={<AlignCenterIcon />}                       active={isAlignCenter} title={t('editor.alignCenter', 'Align center')} onClick={() => editor.chain().focus().setTextAlign('center').run()} />
+                    <Btn icon={<AlignStartIcon className="-scale-x-100" />} active={isAlignRight} title={t('editor.alignRight', 'Align right')}  onClick={() => editor.chain().focus().setTextAlign('right').run()} />
                 </span>
             </div>
 
             {/* ── Undo / Redo ── */}
             <div className="flex items-center gap-0.5 shrink-0">
-                <Btn icon={<UndoIcon />}                         title="Undo" disabled={!canUndo} onClick={() => editor.chain().focus().undo().run()} />
-                <Btn icon={<UndoIcon className="-scale-x-100" />} title="Redo" disabled={!canRedo} onClick={() => editor.chain().focus().redo().run()} />
+                <Btn icon={<UndoIcon />}                         title={t('editor.undo', 'Undo')} disabled={!canUndo} onClick={() => editor.chain().focus().undo().run()} />
+                <Btn icon={<UndoIcon className="-scale-x-100" />} title={t('editor.redo', 'Redo')} disabled={!canRedo} onClick={() => editor.chain().focus().redo().run()} />
             </div>
         </div>
     )

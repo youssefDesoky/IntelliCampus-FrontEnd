@@ -1,6 +1,9 @@
 import React, { useRef, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 
 export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQuery, onSearchChange, isPhone, onBack, onDeleteFriend }) {
+  const { t, i18n } = useTranslation('chat');
+  const isRTL = i18n.language === 'ar';
   const inputRef = useRef(null);
   const [isSearching, setIsSearching] = React.useState(false);
 
@@ -23,10 +26,12 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
 
   const {
     avatar,
-    fullName = "Anonymous",
-    role = "Member",
+    fullName: rawFullName,
+    role: rawRole,
     isOnline = false
   } = chatPartner;
+  const fullName = rawFullName || t('anonymous');
+  const role = rawRole || t('member');
 
   return (
     <div className={`flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700/80 bg-white dark:bg-gray-800 shrink-0 shadow-sm z-10 transition-colors duration-200 px-6'}`}>
@@ -37,7 +42,7 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
           <button
             onClick={onBack}
             className="flex items-center justify-center rounded-xl text-gray-500 hover:text-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-100 transition-all active:scale-90 shrink-0"
-            aria-label="Back to members"
+            aria-label={t('backToMembers')}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10 12L6 8l4-4" />
@@ -61,9 +66,9 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
           )}
 
           <span
-            className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-gray-800 transform translate-x-0.5 translate-y-0.5
+            className={`absolute bottom-0 end-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-gray-800 transform translate-x-0.5 translate-y-0.5
               ${isOnline ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"}`}
-            title={isOnline ? "Online" : "Offline"}
+            title={isOnline ? t('online') : t('offline')}
           />
         </div>
 
@@ -73,14 +78,14 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
           </p>
           <div className="flex items-center gap-1.5 text-xs truncate">
             {partnerTyping ? (
-              <span className="text-green-600 dark:text-green-400 font-medium">typing…</span>
+              <span className="text-green-600 dark:text-green-400 font-medium">{t('typing')}</span>
             ) : (
               <>
                 <span className="text-gray-500 dark:text-gray-400">{role}</span>
                 {isOnline && (
                   <>
                     <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                    <span className="text-green-600 dark:text-green-400 font-medium">Active now</span>
+                    <span className="text-green-600 dark:text-green-400 font-medium">{t('activeNow')}</span>
                   </>
                 )}
               </>
@@ -100,7 +105,8 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search messages…"
+              placeholder={t('searchPlaceholder')}
+              dir={isRTL ? 'rtl' : 'ltr'}
               className={`${isPhone ? 'w-full' : 'w-40'} bg-transparent text-sm outline-none text-gray-900 dark:text-white placeholder-gray-400 min-w-0`}
             />
             <button onClick={handleClear} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors shrink-0">
@@ -128,7 +134,7 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
           )}
           <button
             className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700/60 rounded-lg transition-colors"
-            aria-label="Search messages"
+            aria-label={t('searchMessages')}
             onClick={() => setIsSearching(true)}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

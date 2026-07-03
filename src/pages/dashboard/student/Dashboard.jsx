@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { useQuery } from "@tanstack/react-query";
 
 import { formatDistanceToNow } from "date-fns";
+import { ar } from 'date-fns/locale';
 import BoxData from "../../../components/ui/BoxData";
 import Section from "../../../components/ui/Section";
 import { BookIcon, ClipboardCheckIcon, ChartLineIcon, NewspaperIcon, NewspaperSlashIcon, ChartBarIcon } from "../../../components/ui/icons";
@@ -27,6 +29,7 @@ const statIconStyles = {
 };
 
 export default function Dashboard() {
+  const { t, i18n } = useTranslation('student');
   const { data: dashboard, isLoading, error } = useQuery({
     queryKey: ["studentDashboard"],
     queryFn: fetchStudentDashboard,
@@ -37,21 +40,21 @@ export default function Dashboard() {
   const statsData = [
     {
       id: 1,
-      title: "Active Courses",
+      title: t('dashboard.activeCourses'),
       value: stats.activeCourses ?? 0,
       icon: statIcons.activeCourses,
       iconStyle: statIconStyles.activeCourses,
     },
     {
       id: 2,
-      title: "Attendance Rate",
+      title: t('dashboard.attendanceRate'),
       value: `${stats.attendanceRate ?? 0}%`,
       icon: statIcons.attendanceRate,
       iconStyle: statIconStyles.attendanceRate,
     },
     {
       id: 3,
-      title: "Current GPA",
+      title: t('dashboard.currentGpa'),
       value: stats.currentGpa ?? "0.0",
       icon: statIcons.currentGpa,
       iconStyle: statIconStyles.currentGpa,
@@ -65,7 +68,7 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64 text-text-error-default-light dark:text-text-error-default-dark">
-        Failed to load dashboard. Please try again later.
+        {t('dashboard.error')}
       </div>
     );
   }
@@ -87,7 +90,7 @@ export default function Dashboard() {
       <Section className="flex flex-col justify-evenly lg:grid lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Latest News</h2>
+            <h2 className="text-2xl font-bold">{t('dashboard.latestNews')}</h2>
             <NewspaperIcon className="w-6 h-6" />
           </div>
 
@@ -103,16 +106,16 @@ export default function Dashboard() {
                   <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                     {item.date
                       ? (item.updatedAt && new Date(item.updatedAt).getTime() !== new Date(item.date).getTime()
-                        ? `Edited ${formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}`
-                        : `Posted ${formatDistanceToNow(new Date(item.date), { addSuffix: true })}`)
-                      : "Posted recently"}
+                        ? t('dashboard.editedTime', { time: formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) })
+                        : t('dashboard.postedTime', { time: formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) }))
+                      : t('dashboard.postedRecently')}
                   </p>
                 </li>
               ))
             ) : (
               <li className="p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark h-full flex flex-col items-center justify-center gap-2">
                 <NewspaperSlashIcon className="w-12 h-12 opacity-40" />
-                <p className="text-sm">No news available</p>
+                <p className="text-sm">{t('dashboard.noNews')}</p>
               </li>
             )}
           </menu>
@@ -128,7 +131,7 @@ export default function Dashboard() {
       <Section className="block">
         <div className="flex items-center gap-3 mb-6">
           <ChartBarIcon className="w-7 h-7 text-text-accent-default-light dark:text-text-accent-default-dark" />
-          <h2 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">Analytics</h2>
+          <h2 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">{t('dashboard.analytics')}</h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

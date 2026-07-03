@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import useArabicDigits from "../../../hooks/useArabicDigits";
 import Section from "../../../components/ui/Section";
 import { BellSlashIcon, EllipsisVerticalIcon, FileIcon, FileLinesIcon, ClipboardCheckIcon, BookIcon } from "../../../components/ui/icons";
 import { addDays, format, isSameDay } from "date-fns";
+import { ar as arLocale } from "date-fns/locale";
 
 const categoryStyles = {
     assignments: {
@@ -46,42 +49,54 @@ const categoryStyles = {
     }
 };
 
-const getSubtitle = (dateStr) => {
-    const target = new Date(dateStr);
-    const now = new Date();
-    const diffMs = target - now;
-
-    if (diffMs > 0 && diffMs <= 1000 * 60 * 60 * 24) {
-        const hoursLeft = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60)));
-        return `Due in ${hoursLeft} hour${hoursLeft === 1 ? "" : "s"}`;
-    }
-
-    return target.toLocaleString("en-US", {
-        weekday: "short",
-        hour: "numeric",
-        minute: "2-digit",
-    });
-};
-
 const normalizeDate = (date) => {
     const normalized = new Date(date);
     normalized.setHours(0, 0, 0, 0);
     return normalized;
 };
 
-const getRelativeDayLabel = (baseDate, targetDate) => {
-    if (isSameDay(baseDate, new Date())) {
-        if (isSameDay(targetDate, baseDate)) return "Today";
-        if (isSameDay(targetDate, addDays(baseDate, 1))) return "Tomorrow";
-    }
-
-    return format(targetDate, "EEE, MMM d");
-};
-
 const sortByDate = (left, right) => new Date(left.dueAt) - new Date(right.dueAt);
 
 export default function Timeline({ className, reminders = {}, selectedCategory, selectedDate, onEditReminder, onDeleteReminder }) {
+    const { t, i18n } = useTranslation("student");
+    const { convert: ar } = useArabicDigits();
+    const locale = i18n.language === 'ar' ? arLocale : undefined;
     const [activeMenuId, setActiveMenuId] = useState(null);
+
+    const getCategoryLabel = (cat) => {
+        if (cat === "classes") return t("reminders.categoryClasses");
+        if (cat === "exams") return t("reminders.categoryExams");
+        if (cat === "assignments") return t("reminders.categoryAssignments");
+        if (cat === "personal") return t("reminders.categoryPersonal");
+        return cat?.toUpperCase() || "";
+    };
+
+    const getSubtitle = (dateStr) => {
+        const target = new Date(dateStr);
+        const now = new Date();
+        const diffMs = target - now;
+
+        if (diffMs > 0 && diffMs <= 1000 * 60 * 60 * 24) {
+            const hoursLeft = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60)));
+            return ar(t("reminders.dueIn", { hours: hoursLeft, count: hoursLeft }));
+        }
+
+        return target.toLocaleString(i18n.language === 'ar' ? "ar-SA" : "en-US", {
+            weekday: "short",
+            hour: "numeric",
+            minute: "2-digit",
+        });
+    };
+
+    const getRelativeDayLabel = (baseDate, targetDate) => {
+        if (isSameDay(baseDate, new Date())) {
+            if (isSameDay(targetDate, baseDate)) return t("reminders.today");
+            if (isSameDay(targetDate, addDays(baseDate, 1))) return t("reminders.tomorrow");
+        }
+
+        const localeStr = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
+        return ar(targetDate.toLocaleDateString(localeStr, { weekday: 'short', month: 'short', day: 'numeric' }));
+    };
 
     useEffect(() => {
         const handleOutsideClick = (event) => {
@@ -96,7 +111,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
     }, []);
 
     const selectedValue = selectedCategory?.value || "all";
-    const selectedCategoryLabel = selectedCategory?.label || "All Categories";
+    const selectedCategoryLabel = selectedCategory?.label || t("reminders.allCategories");
     const selectedDay = normalizeDate(selectedDate || new Date());
     const nextDay = addDays(selectedDay, 1);
     const weekEnd = addDays(selectedDay, 7);
@@ -121,22 +136,22 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
     const groups = [
         {
             key: "selectedDay",
-            title: `Selected Day • ${getRelativeDayLabel(selectedDay, selectedDay)}`,
-            subtitle: "Reminders on the day you selected",
+            title: `${t("reminders.selectedDay")} • ${getRelativeDayLabel(selectedDay, selectedDay)}`,
+            subtitle: t("reminders.dayReminders"),
             color: "bg-blue-500",
             items: selectedDayItems,
         },
         {
             key: "nextDay",
-            title: `Next Day • ${getRelativeDayLabel(selectedDay, nextDay)}`,
-            subtitle: "Reminders for the following day",
+            title: `${t("reminders.nextDayTitle")} • ${getRelativeDayLabel(selectedDay, nextDay)}`,
+            subtitle: t("reminders.followingDayReminders"),
             color: "bg-gray-400",
             items: nextDayItems,
         },
         {
             key: "week",
-            title: `This Week • ${format(addDays(selectedDay, 2), "EEE, MMM d")} - ${format(weekEnd, "EEE, MMM d")}`,
-            subtitle: "Reminders for the rest of that week",
+            title: `${t("reminders.thisWeek")} • ${ar(addDays(selectedDay, 2).toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' }))} - ${ar(weekEnd.toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' }))}`,
+            subtitle: t("reminders.weekReminders"),
             color: "bg-gray-300",
             items: weekItems,
         },
@@ -147,10 +162,10 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
             {/* Header */}
             <div className="mb-6 flex items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                    Timeline
+                    {t("reminders.timeline")}
                 </h2>
                 <span className="text-xs font-semibold text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                    Category: {selectedCategoryLabel}
+                    {t("reminders.category_label", { label: selectedCategoryLabel })}
                 </span>
             </div>
 
@@ -159,7 +174,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                 {filteredItems.length === 0 && (
                     <div className="flex-1 flex flex-col items-center justify-center w-full h-full rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark px-4 py-8 text-center text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">
                         <BellSlashIcon size={48} className="mb-4 opacity-40" />
-                        No reminders found for the selected date range.
+                        {t("reminders.noRemindersRange")}
                     </div>
                 )}
 
@@ -183,13 +198,15 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                         </div>
 
                         {/* Cards */}
-                        <div className="flex flex-col gap-4 pl-1">
+                        <div className="flex flex-col gap-4 ps-1">
                             {group.items.map((item) => {
                                 const visual = categoryStyles[item.category] || categoryStyles.default;
                                 const Icon = visual.icon;
                                 const dueDate = new Date(item.dueAt);
-                                const timeLabel = format(dueDate, "h:mm");
-                                const meridiemLabel = format(dueDate, "a");
+                                const localeStr = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
+                                const fullTime = dueDate.toLocaleTimeString(localeStr, { hour: 'numeric', minute: '2-digit', hour12: true });
+                                const meridiemLabel = fullTime.replace(/[\d\s:,-]/g, '').trim();
+                                const timeLabel = fullTime.replace(meridiemLabel, '').trim();
                                 const itemKey = item.id || item.title;
                                 const isPersonal = item.category === "personal";
                                 const completed = item.submissionState === "completed";
@@ -198,7 +215,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                         key={itemKey}
                                         className="flex flex-col md:grid md:grid-cols-[64px_minmax(0,1fr)] gap-1 md:gap-4 items-start w-full"
                                     >
-                                        <div className="flex md:block items-center gap-1 pt-0 md:pt-3 text-right leading-tight">
+                                        <div className="flex md:block items-center gap-1 pt-0 md:pt-3 text-end leading-tight">
                                             <p className="text-xs md:text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">
                                                 {timeLabel}
                                             </p>
@@ -230,7 +247,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                                     <span className="block md:inline truncate">{getSubtitle(item.dueAt)}</span>
                                                     <span className="hidden md:inline mx-1.5">•</span>
-                                                    <span className="block md:inline truncate">{item.location || "No location"}</span>
+                                                    <span className="block md:inline truncate">{item.location || t("reminders.noLocation")}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -239,11 +256,11 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                         <div className="flex items-center gap-1 md:gap-2 shrink-0">
                                             {completed ? (
                                                 <span className="px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold rounded-md bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">
-                                                    Completed
+                                                    {t("reminders.completed")}
                                                 </span>
                                             ) : (
                                                 <span className={`px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold rounded-md ${visual.badgeColor}`}>
-                                                    {visual.badge}
+                                                    {getCategoryLabel(item.category)}
                                                 </span>
                                             )}
                                             {isPersonal && (
@@ -252,7 +269,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                                         type="button"
                                                         className="relative z-20 inline-flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg text-gray-400 transition-colors touch-manipulation md:hover:bg-black/5 dark:md:hover:bg-white/10 active:bg-black/5 dark:active:bg-white/10"
                                                         data-cursor="clickable"
-                                                        aria-label="Open reminder actions"
+                                                        aria-label={t("reminders.openActions")}
                                                         onPointerUp={(event) => {
                                                             event.preventDefault();
                                                             event.stopPropagation();
@@ -263,10 +280,10 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                                     </button>
 
                                                     {activeMenuId === itemKey && (
-                                                        <div className="absolute right-0 top-full mt-2 min-w-28 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg p-1 z-50 pointer-events-auto">
+                                                        <div className="absolute end-0 top-full mt-2 min-w-28 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg p-1 z-50 pointer-events-auto">
                                                             <button
                                                                 type="button"
-                                                                className="w-full text-left px-3 py-2 text-sm rounded-md touch-manipulation md:hover:bg-black/5 dark:md:hover:bg-white/10 active:bg-black/5 dark:active:bg-white/10 text-text-primary-default-light dark:text-text-primary-default-dark"
+                                                                className="w-full text-start px-3 py-2 text-sm rounded-md touch-manipulation md:hover:bg-black/5 dark:md:hover:bg-white/10 active:bg-black/5 dark:active:bg-white/10 text-text-primary-default-light dark:text-text-primary-default-dark"
                                                                 onPointerUp={(event) => {
                                                                     event.preventDefault();
                                                                     event.stopPropagation();
@@ -274,11 +291,11 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                                                     onEditReminder?.(item);
                                                                 }}
                                                             >
-                                                                Edit
+                                                                {t("reminders.edit")}
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                className="w-full text-left px-3 py-2 text-sm rounded-md touch-manipulation md:hover:bg-red-50 dark:md:hover:bg-red-900/30 active:bg-red-50 dark:active:bg-red-900/30 text-red-600 dark:text-red-400"
+                                                                className="w-full text-start px-3 py-2 text-sm rounded-md touch-manipulation md:hover:bg-red-50 dark:md:hover:bg-red-900/30 active:bg-red-50 dark:active:bg-red-900/30 text-red-600 dark:text-red-400"
                                                                 onPointerUp={(event) => {
                                                                     event.preventDefault();
                                                                     event.stopPropagation();
@@ -286,7 +303,7 @@ export default function Timeline({ className, reminders = {}, selectedCategory, 
                                                                     onDeleteReminder?.(item);
                                                                 }}
                                                             >
-                                                                Delete
+                                                                {t("reminders.delete")}
                                                             </button>
                                                         </div>
                                                     )}

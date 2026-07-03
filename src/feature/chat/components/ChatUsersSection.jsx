@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import ChatUser from "./ChatUser";
 import { UserTieIcon, UserIcon, UsersIcon, AngleDownIcon } from "../../../components/ui/icons";
 
@@ -10,7 +11,14 @@ const SECTION_ICONS = {
 };
 
 export default function ChatUsersSection({ type, users, onSelectUser }) {
+  const { t, i18n } = useTranslation('chat');
   const [isExpanded, setIsExpanded] = useState(true);
+
+  const SECTION_LABELS = {
+    Instructors: t('instructors'),
+    Students: t('students'),
+    Groups: t('groups'),
+  };
 
   return (
     <div className="flex flex-col gap-1 bg-white/5 rounded-xl py-2">
@@ -20,12 +28,12 @@ export default function ChatUsersSection({ type, users, onSelectUser }) {
           {SECTION_ICONS[type]}
         </span>
         <span className="text-[11px] font-semibold tracking-widest uppercase text-[var(--text-secondary)]">
-          {type}
+          {SECTION_LABELS[type] || type}
         </span>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="ml-auto text-[11px] font-medium text-(--text-tertiary)">
-          <AngleDownIcon size={12} className={isExpanded ? "rotate-0" : "-rotate-90"} />
+          className="ms-auto text-[11px] font-medium text-(--text-tertiary)">
+          <AngleDownIcon size={12} className={isExpanded ? "rotate-0" : (i18n.language === 'ar' ? "rotate-90" : "-rotate-90")} />
         </button>
       </div>
 

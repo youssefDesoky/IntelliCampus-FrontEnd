@@ -5,7 +5,7 @@ import { getNavigationLinks } from "../../../data/admin/navigationLinks";
 import BottomBar from "../base/BottomBar";
 
 export default function AdminBottomBar({ visible, floatingAction }) {
-    const { t } = useTranslation('admin/aside');
+    const { t } = useTranslation('admin');
     const user = useRouteLoaderData("root");
     const userRoles = useMemo(() => (user?.roles || []).map(r => r.toLowerCase()), [user]);
 

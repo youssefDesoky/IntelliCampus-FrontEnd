@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useRef, useEffect, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import SmartNoteEditor from "./SmartNoteEditor.jsx";
@@ -5,6 +6,8 @@ import SelectBox from "../../../components/ui/SelectBox";
 import { ClockIcon, CalendarIcon, TrashIcon, FahimIcon, BookIcon, LinkIcon } from "../../../components/ui/icons";
 import { updateNoteLinkedLecture, deleteNote, fromBackendLinkedLecture } from "./notesApi";
 import Dialog from "../../../components/ui/Dialog";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import useArabicDigits from '../../../hooks/useArabicDigits';
 
 const defaultWeeklyLectureOptions = [
     {
@@ -27,29 +30,45 @@ const defaultWeeklyLectureOptions = [
     },
 ]
 
-function buildLectureOptions(courseFolders = [], fallbackCourseId = null) {
-    if (courseFolders.length > 0) {
-        return courseFolders.map((folder, idx) => {
-            const folderValue = folder.materialFolderId ?? folder.id ?? idx + 1
-            const folderLabel = folder.name || `Week ${idx + 1}`
+export default function SmartNote({ note, courseFolders = [], courseId = null, studentId = null, onSaveNote, onDeleteNote }) {
+    const { t, i18n } = useTranslation('student');
+    const { convert: ar, isRTL } = useArabicDigits();
 
-            return {
-                id: folderValue,
-                value: folderValue,
-                title: folderLabel,
-                shortTitle: folderLabel,
-                weekLabel: `${folderLabel} Lecture`,
-                description: folder.description || "",
-                course: folder.courseId ?? fallbackCourseId,
-                materialFolderId: folderValue,
-            }
-        })
+    function formatNoteDate(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        const locale = isRTL ? 'ar-SA' : 'en-US';
+        return date.toLocaleString(locale, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
     }
 
-    return defaultWeeklyLectureOptions
-}
+    const buildLectureOptions = (courseFolders = [], fallbackCourseId = null) => {
+        if (courseFolders.length > 0) {
+            return courseFolders.map((folder, idx) => {
+                const folderValue = folder.materialFolderId ?? folder.id ?? idx + 1
+                const folderLabel = getLocalizedField(folder, 'name', i18n.language) || `Week ${idx + 1}`
 
-export default function SmartNote({ note, courseFolders = [], courseId = null, studentId = null, onSaveNote, onDeleteNote }) {
+                return {
+                    id: folderValue,
+                    value: folderValue,
+                    title: folderLabel,
+                    shortTitle: folderLabel,
+                    weekLabel: `${folderLabel} Lecture`,
+                    description: getLocalizedField(folder, 'description', i18n.language) || "",
+                    course: folder.courseId ?? fallbackCourseId,
+                    materialFolderId: folderValue,
+                }
+            })
+        }
+
+        return defaultWeeklyLectureOptions
+    };
     const cardRef = useRef(null);
     const [cardWidth, setCardWidth] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
@@ -125,9 +144,9 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
             <Dialog
                 isOpen={showDeleteConfirm}
                 variant="warning"
-                title="Delete Note"
-                confirmText="Delete"
-                cancelText="Cancel"
+                title={t('smartNotes.delete')}
+                confirmText={t('smartNotes.delete')}
+                cancelText={t('smartNotes.cancel')}
                 onClose={() => setShowDeleteConfirm(false)}
                 onConfirm={() => {
                     setShowDeleteConfirm(false);
@@ -141,7 +160,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                     });
                 }}
             >
-                Are you sure you want to delete this note? This action cannot be undone.
+                {t('smartNotes.deleteConfirm')}
             </Dialog>
 
             <div
@@ -157,14 +176,14 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                     e.stopPropagation();
                     setShowDeleteConfirm(true);
                 }}
-                className="absolute right-3.5 top-3.5 shrink-0 rounded-lg border border-transparent p-1.5 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:border-red-300 hover:bg-red-50 dark:hover:border-red-800 dark:hover:bg-red-950 disabled:opacity-50"
+                className="absolute end-3.5 top-3.5 shrink-0 rounded-lg border border-transparent p-1.5 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:border-red-300 hover:bg-red-50 dark:hover:border-red-800 dark:hover:bg-red-950 disabled:opacity-50"
             >
                 <TrashIcon className="w-3.5 h-3.5 text-icon-secondary-default-light dark:text-icon-primary-default-dark" />
             </button>
 
             <div className="flex flex-col gap-3 flex-1 min-h-0">
                 {/* Title + preview */}
-                <div className="flex flex-col gap-1.5 min-w-0 pr-7 flex-1">
+                <div className="flex flex-col gap-1.5 min-w-0 pe-7 flex-1">
                     <h3 className="font-semibold text-base leading-snug text-text-primary-active-light dark:text-text-primary-active-dark truncate">
                         {note.title}
                     </h3>
@@ -185,7 +204,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                                         navigate(`/courses/${targetCourseId}/materials?folderId=${folderId}`);
                                     }
                                 }}
-                                className="flex flex-1 items-center gap-3 text-left min-w-0"
+                                className="flex flex-1 items-center gap-3 text-start min-w-0"
                             >
                                 <div className="shrink-0 w-9 h-9 rounded-[10px] bg-linear-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
                                     <BookIcon className="w-4 h-4 text-white" />
@@ -193,7 +212,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
 
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[9.5px] font-bold tracking-wide uppercase mb-0.5 bg-linear-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">
-                                        Linked Week Lecture
+                                        {t('smartNotes.linkedLectureLabel')}
                                     </p>
                                     <p className="text-[12.5px] font-medium text-text-primary-active-light dark:text-text-primary-active-dark truncate leading-snug">
                                         {linkedLecture.title}
@@ -213,7 +232,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                                 }}
                                 className="shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg border border-indigo-200 dark:border-indigo-800 bg-bg-surface-primary-default-light dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
                             >
-                                Change
+                                {t('smartNotes.change')}
                             </button>
                         </div>
                     ) : (
@@ -223,17 +242,17 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                                 e.stopPropagation();
                                 setIsPickerOpen(true);
                             }}
-                            className="flex items-center gap-2.5 w-full text-left rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 transition-colors p-2.5 opacity-75 hover:opacity-100"
+                            className="flex items-center gap-2.5 w-full text-start rounded-xl border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 transition-colors p-2.5 opacity-75 hover:opacity-100"
                         >
                             <div className="shrink-0 w-8 h-8 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center">
                                 <LinkIcon className="w-4 h-4 text-icon-secondary-default-light dark:text-icon-secondary-default-dark" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-[10px] font-semibold text-text-tertiary-default-light dark:text-text-tertiary-default-dark uppercase tracking-wide mb-0.5">
-                                    No lecture linked
+                                    {t('smartNotes.noLecture')}
                                 </p>
                                 <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                                    Click to select a lecture
+                                    {t('smartNotes.clickToSelect')}
                                 </p>
                             </div>
                         </button>
@@ -244,7 +263,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                         className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-3 space-y-3"
                     >
                         <SelectBox
-                            label="Choose Lecture"
+                            label={t('smartNotes.chooseLecture')}
                             showLabel={true}
                             compact={false}
                             disabled={isLinkLoading}
@@ -274,7 +293,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                                 }}
                                 className="flex-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
                             >
-                                Done
+                                {t('smartNotes.done')}
                             </button>
                             {linkedLecture && (
                                 <button
@@ -285,7 +304,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                                     }}
                                     className="flex-1 px-3 py-1.5 text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-red-500 transition-colors rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark"
                                 >
-                                    Clear
+                                    {t('smartNotes.clear')}
                                 </button>
                             )}
                         </div>
@@ -298,7 +317,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                 <div className="flex items-center gap-2 flex-wrap">
                     <span className="flex items-center gap-1 text-xs font-medium text-text-tertiary-default-light dark:text-text-tertiary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-full px-2.5 py-0.5">
                         <ClockIcon className="w-3 h-3" />
-                        {note.modified}
+                        {formatNoteDate(note.modified)}
                     </span>
                 </div>
                 <button
@@ -306,7 +325,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                     className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-white bg-linear-to-r from-indigo-500 to-cyan-500 hover:opacity-90 transition-opacity rounded-lg px-3 py-1.5"
                 >
                     <FahimIcon className="w-3.5 h-3.5" />
-                    {cardWidth >= 320 && <span>AI Enhance</span>}
+                    {cardWidth >= 320 && <span>{t('smartNotes.aiEnhance')}</span>}
                 </button>
             </div>
             </div>

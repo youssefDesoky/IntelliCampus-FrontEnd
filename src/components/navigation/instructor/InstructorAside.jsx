@@ -4,7 +4,7 @@ import { getNavigationLinks } from "../../../data/instructor/navigationLinks";
 
 
 export default function InstructorAside({ height }) {
-    const { t } = useTranslation('instructor/aside');
+    const { t } = useTranslation('instructor');
     
     return (
         <Aside height={height} links={getNavigationLinks(t)} >

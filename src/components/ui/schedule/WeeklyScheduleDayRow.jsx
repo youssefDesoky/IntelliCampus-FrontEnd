@@ -1,4 +1,10 @@
+import { useTranslation } from "react-i18next";
 import WeeklyScheduleEvents from "./WeeklyScheduleEvents";
+
+function getDayLabel(t, key, short = false) {
+    const suffix = short ? "Short" : "";
+    return t(`days.${key}${suffix}`);
+}
 
 const getTimeIndex = (time) => {
     const [hourStr, period] = time.split(" ");
@@ -16,6 +22,7 @@ const getTimeIndex = (time) => {
 };
 
 export default function WeeklyScheduleDayRow({ slots, days = [], schedule = [] }) {
+    const { t } = useTranslation("common");
     const totalSlots = slots.length;
     const firstSlotIndex = slots.length > 0 ? getTimeIndex(slots[0]) : 0;
     const slotStep = slots.length > 1 ? getTimeIndex(slots[1]) - firstSlotIndex : 1;
@@ -35,13 +42,13 @@ export default function WeeklyScheduleDayRow({ slots, days = [], schedule = [] }
                     style={{ gridTemplateColumns: `100px repeat(${totalSlots}, 1fr)` }}
                 >
                     {/* Day Label */}
-                    <div className="p-3 flex items-center justify-center border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                    <div className="p-3 flex items-center justify-center border-e border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                         <div className="text-center">
                             <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary-default-light dark:text-text-tertiary-default-dark lg:hidden">
-                                {day.short}
+                                {getDayLabel(t, day.key, true)}
                             </span>
                             <span className="hidden lg:block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {day.label}
+                                {getDayLabel(t, day.key)}
                             </span>
                         </div>
                     </div>

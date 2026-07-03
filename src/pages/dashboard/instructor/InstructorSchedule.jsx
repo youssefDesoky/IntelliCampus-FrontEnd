@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
@@ -8,10 +9,12 @@ import ScheduleHeader from "../../../feature/student/schedule/ScheduleHeader";
 import { ScheduleSkeleton } from "../../../feature/student/schedule/SkeletonLoader";
 import { fetchMySchedule, exportSchedulePdf } from "../../../feature/instructor/schedule/scheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from "../../../utils/getLocalizedField";
 
 const allowedTypeFilters = ["lecture", "section", "activity"];
 
 export default function InstructorSchedule() {
+    const { t } = useTranslation('instructor');
     const [selectedTypes, setSelectedTypes] = useState([]);
     const { isMobile } = useDeviceType();
     const { showError } = useError();
@@ -52,7 +55,7 @@ export default function InstructorSchedule() {
         try {
             await exportSchedulePdf(selectedTypes);
         } catch {
-            showError("Failed to export PDF. Please try again.");
+            showError(t('schedule.exportError'));
         }
     };
 
@@ -81,13 +84,13 @@ export default function InstructorSchedule() {
                     days={days}
                     schedule={filteredSchedule}
                     variant="default"
-                    onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
+                    onEventClick={(event) => showError(t('schedule.eventClick', { title: getLocalizedField(event, 'title', i18n.language) }))}
                 />
             ) : (
                 <WeeklySchedule
                     schedule={filteredSchedule}
                     isMobile={isMobile}
-                    onEventClick={(event) => showError(`Clicked on event: ${event.title}`)}
+                    onEventClick={(event) => showError(t('schedule.eventClick', { title: getLocalizedField(event, 'title', i18n.language) }))}
                 />
             )}
         </>

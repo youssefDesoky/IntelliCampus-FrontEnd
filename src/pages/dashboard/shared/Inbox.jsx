@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from 'react-i18next';
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useDeviceType } from '../../../hooks';
 import * as signalR from "@microsoft/signalr";
@@ -13,9 +14,9 @@ import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
 
 const FILTERS = [
-  { key: "all", label: "All", icon: EnvelopIcon },
-  { key: "unread", label: "Unread", icon: EnvelopIcon },
-  { key: "sent", label: "Sent", icon: PaperPlaneIcon },
+  { key: "all", labelKey: "inbox.filterAll", icon: EnvelopIcon },
+  { key: "unread", labelKey: "inbox.filterUnread", icon: EnvelopIcon },
+  { key: "sent", labelKey: "inbox.filterSent", icon: PaperPlaneIcon },
 ];
 
 function ChevronIcon({ className = "" }) {
@@ -57,15 +58,15 @@ function getThreadLatestTimestamp(thread) {
   return new Date(Math.max(rootDate.getTime(), ...replyDates.map((d) => d.getTime())));
 }
 
-function getEmptyStateMessage(filter, searchQuery) {
-  if (searchQuery) return "No messages match your search";
+function getEmptyStateMessage(filter, searchQuery, t) {
+  if (searchQuery) return t('inbox.emptySearch');
   switch (filter) {
     case "unread":
-      return "You're all caught up";
+      return t('inbox.emptyUnread');
     case "sent":
-      return "You haven't sent any messages yet";
+      return t('inbox.emptySent');
     default:
-      return "No messages yet";
+      return t('inbox.emptyAll');
   }
 }
 
@@ -86,10 +87,11 @@ function decorateThread(thread, currentUserId) {
 
 function MessageRow({ thread, currentUserId, onDelete }) {
   const navigate = useNavigate();
+  const { t } = useTranslation('common');
   const isSent = thread.direction === "sent";
   const personName = isSent
-    ? thread.recipientName || "Unknown recipient"
-    : thread.senderName || "Unknown sender";
+    ? thread.recipientName || t('message.unknownRecipient')
+    : thread.senderName || t('message.unknownSender');
   const avatarUrl = thread.senderAvatar || thread.senderImage || null;
   const initials = getInitials(personName);
   const replyCount = thread.replies?.length || 0;
@@ -142,11 +144,11 @@ function MessageRow({ thread, currentUserId, onDelete }) {
                     : "font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark"
                 }`}
               >
-                {personName} <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isSent ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark" : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark"}`}>{isSent ? "Sent" : "Received"}</span>
+                {personName} <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isSent ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark" : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark"}`}>{isSent ? t('message.sent') : t('message.received')}</span>
               </span>
               {replyCount > 0 && (
                 <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                  {replyCount} {replyCount === 1 ? "reply" : "replies"}
+                  {t('message.replyCount', { count: replyCount })}
                 </span>
               )}
             </div>
@@ -162,7 +164,7 @@ function MessageRow({ thread, currentUserId, onDelete }) {
                 : "text-text-secondary-active-light dark:text-text-secondary-active-dark"
             }`}
           >
-            {thread.subject || "(No subject)"}
+            {thread.subject || t('message.noSubject')}
           </p>
 
           <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate mt-0.5">
@@ -174,7 +176,7 @@ function MessageRow({ thread, currentUserId, onDelete }) {
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(e, thread); }}
             className="p-1 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-red-500"
-            aria-label="Delete message"
+            aria-label={t('message.deleteAriaLabel')}
           >
             <TrashIcon className="w-3.5 h-3.5" />
           </button>
@@ -186,6 +188,8 @@ function MessageRow({ thread, currentUserId, onDelete }) {
 }
 
 export default function Inbox() {
+  const { t, i18n } = useTranslation('common');
+  const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
   const user = outletContext.user;
@@ -241,25 +245,25 @@ export default function Inbox() {
       resetCompose();
       queryClient.invalidateQueries({ queryKey: inboxQueryKey });
     },
-    onError: (err) => showError(err.message || "Failed to send message"),
+    onError: (err) => showError(err.message || t('inbox.sendFailed')),
   });
 
   const handleSend = (e) => {
     e.preventDefault();
     if (!recipientEmail.trim()) {
-      showError("Recipient email is missing.");
+      showError(t('inbox.missingRecipient'));
       return;
     }
     if (recipientEmail.trim().toLowerCase() === currentUserEmail.toLowerCase()) {
-      showError("You cannot send a message to yourself.");
+      showError(t('inbox.selfMessage'));
       return;
     }
     if (!subject.trim()) {
-      showError("Subject is required.");
+      showError(t('inbox.missingSubject'));
       return;
     }
     if (!body.trim()) {
-      showError("Message body is required.");
+      showError(t('inbox.missingBody'));
       return;
     }
     setSending(true);
@@ -437,11 +441,11 @@ export default function Inbox() {
           <div className="flex items-center gap-3">
             <EnvelopIcon className="w-6 h-6 text-text-blue-default-light dark:text-text-blue-default-dark" />
             <h1 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
-              Messages
+              {t('inbox.title')}
             </h1>
             {unreadCount > 0 && (
               <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                ({unreadCount} unread)
+                {t('inbox.unreadCount', { count: unreadCount })}
               </span>
             )}
           </div>
@@ -452,22 +456,23 @@ export default function Inbox() {
               className={`flex items-center justify-center gap-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark hover:opacity-90 transition-opacity ${isPhone ? "p-2" : "px-4 py-2"}`}
             >
               <PenSquareIcon className="w-4 h-4" />
-              {!isPhone && "Send Email"}
+              {!isPhone && t('inbox.sendEmail')}
             </button>
 
             <div className="relative flex-1 sm:flex-none sm:w-64">
               <input
                 type="text"
-                placeholder="Search messages..."
+                dir={isRTL ? 'rtl' : 'ltr'}
+                placeholder={t('inbox.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2 pr-8 text-sm rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark outline-none focus:border-text-blue-default-light dark:focus:border-text-blue-default-dark"
+                className="w-full px-3 py-2 pe-8 text-sm rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark outline-none focus:border-text-blue-default-light dark:focus:border-text-blue-default-dark"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
-                  aria-label="Clear search"
+                  className="absolute end-2 top-1/2 -translate-y-1/2"
+                  aria-label={t('clearSearch')}
                 >
                   <XIcon className="w-4 h-4 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                 </button>
@@ -478,7 +483,7 @@ export default function Inbox() {
       </div>
 
       <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {FILTERS.map(({ key, label, icon: Icon }) => {
+        {FILTERS.map(({ key, labelKey, icon: Icon }) => {
           const count = key === "unread" ? unreadCount : 0;
           const isActive = activeFilter === key;
           return (
@@ -492,7 +497,7 @@ export default function Inbox() {
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
-              {label}
+              {t(labelKey)}
               {count > 0 && (
                   <span
                     className={`text-xs px-1.5 rounded-full ${
@@ -515,7 +520,7 @@ export default function Inbox() {
         ) : filteredThreads.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-text-secondary-default-light dark:text-text-secondary-default-dark gap-2">
             <MessageSlashIcon className="w-12 h-12 opacity-40" />
-            <p className="text-sm">{getEmptyStateMessage(activeFilter, searchQuery)}</p>
+            <p className="text-sm">{getEmptyStateMessage(activeFilter, searchQuery, t)}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2 pb-2">
@@ -535,42 +540,42 @@ export default function Inbox() {
         <div className="fixed inset-0 z-50 flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
             <h3 className="text-lg font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-              New Message
+              {t('inbox.newMessage')}
             </h3>
             <button
               type="button"
               onClick={resetCompose}
               className="p-1.5 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark"
-              aria-label="Close"
+              aria-label={t('close')}
             >
               <XIcon className="w-5 h-5 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
             </button>
           </div>
           <form onSubmit={handleSend} className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
             <InputItem
-              label="Recipient Email"
+              label={t('compose.recipientEmail')}
               type="email"
               name="recipientEmail"
-              placeholder="Enter recipient email"
+              placeholder={t('compose.recipientPlaceholder')}
               value={recipientEmail}
               onChange={(e) => setRecipientEmail(e.target.value)}
             />
             <InputItem
-              label="Subject"
+              label={t('compose.subject')}
               type="text"
               name="subject"
-              placeholder="Enter subject"
+              placeholder={t('compose.subjectPlaceholder')}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
             />
             <div className="flex-1 flex flex-col">
               <label className="block text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark mb-1">
-                Message
+                {t('compose.message')}
               </label>
               <TextArea
                 minHeight={120}
                 maxHeight={250}
-                placeholder="Write your message..."
+                placeholder={t('compose.messagePlaceholder')}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 className="flex-1 w-full px-3 py-2 text-sm rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark outline-none focus:border-text-blue-default-light dark:focus:border-text-blue-default-dark"
@@ -578,7 +583,7 @@ export default function Inbox() {
             </div>
             <div className="flex gap-3">
               <Button variant="secondary" type="button" onClick={resetCompose} width="flex-1">
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -587,7 +592,7 @@ export default function Inbox() {
                 disabled={sending || !recipientEmail.trim() || !subject.trim() || !body.trim()}
                 loading={sending}
               >
-                Send
+                {t('compose.send')}
               </Button>
             </div>
           </form>
@@ -595,41 +600,41 @@ export default function Inbox() {
       ) : (
         <BaseFormComponent
           isOpen={showCompose}
-          title="New Message"
+          title={t('inbox.newMessage')}
           onClose={resetCompose}
           onSubmit={handleSend}
-          submitText={sending ? "Sending..." : "Send"}
+          submitText={sending ? t('compose.sending') : t('compose.send')}
           submitDisabled={sending || !recipientEmail.trim() || !subject.trim() || !body.trim()}
           submitLoading={sending}
           maxWidth="max-w-xl"
         >
           <div className="flex flex-col gap-4">
             <InputItem
-              label="Recipient Email"
+              label={t('compose.recipientEmail')}
               type="email"
               name="recipientEmail"
-              placeholder="Enter recipient email"
+              placeholder={t('compose.recipientPlaceholder')}
               value={recipientEmail}
               onChange={(e) => setRecipientEmail(e.target.value)}
             />
 
             <InputItem
-              label="Subject"
+              label={t('compose.subject')}
               type="text"
               name="subject"
-              placeholder="Enter subject"
+              placeholder={t('compose.subjectPlaceholder')}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
             />
 
             <div>
               <label className="block text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark mb-1">
-                Message
+                {t('compose.message')}
               </label>
               <TextArea
                 minHeight={120}
                 maxHeight={250}
-                placeholder="Write your message..."
+                placeholder={t('compose.messagePlaceholder')}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark outline-none focus:border-text-blue-default-light dark:focus:border-text-blue-default-dark"

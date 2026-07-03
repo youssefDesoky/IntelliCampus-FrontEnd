@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import Button from "../../../components/ui/Button";
 import InputItem from "../../../components/form/InputItem";
 import NumberInput from "../../../components/form/NumberInput";
@@ -14,6 +15,7 @@ import {
 } from "../services/adminCoursesApi";
 import { fetchInstructorSchedule } from "../services/adminInstructorsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 const dayOptions = [
     { value: "Sun", label: "Sunday" },
@@ -72,6 +74,7 @@ function formatHourMin(timeStr) {
 }
 
 export default function ClassForm({ onClose, onSubmit, initialData = null, isOpen = true, courseDepartment = "", classType }) {
+    const { t, i18n } = useTranslation('admin');
     const { showError } = useError();
     const isEdit = !!initialData;
 
@@ -127,7 +130,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                 const roomList = Array.isArray(roomsData) ? roomsData : [];
                 const roomOpts = roomList.map((r) => ({
                     value: r.roomId,
-                    label: `${r.roomName}${r.type ? ` (${r.type})` : ""}${r.capacity ? ` - Cap: ${r.capacity}` : ""}`,
+                    label: `${getLocalizedField(r, 'roomName', i18n.language) || r.roomName}${r.type ? ` (${r.type})` : ""}${r.capacity ? ` - Cap: ${r.capacity}` : ""}`,
                     roomId: r.roomId,
                     roomType: r.type,
                 }));
@@ -215,16 +218,16 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
         }
 
         const room = selectedRoom?.value || "";
-        if (!room) { showError("Please select a room."); return; }
-        if (!selectedInstructor) { showError("Please select an instructor."); return; }
+        if (!room) { showError(t('classForm.errorRoomRequired')); return; }
+        if (!selectedInstructor) { showError(t('classForm.errorInstructorRequired')); return; }
 
         const validSlots = scheduleSlots.filter((s) => s.day && s.time);
-        if (validSlots.length === 0) { showError("Please add at least one schedule slot with a time."); return; }
+        if (validSlots.length === 0) { showError(t('classForm.errorSlotRequired')); return; }
 
         const payloads = validSlots.map((slot) => {
             const base = {
                 schedule: `${slot.day} ${slot.time.padStart(5, "0") + ":00"}`,
-                room: selectedRoom?.label?.split(" (")[0] || selectedRoom?.roomName || "",
+                room: selectedRoom?.label?.split(" (")[0] || "",
             };
             if (isEdit) {
                 base.instructorId = selectedInstructor?.value;
@@ -263,11 +266,11 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
     return (
         <BaseFormComponent
             isOpen={isOpen}
-            title={isEdit ? "Edit Class" : classType ? `Add ${classType}` : "Add Class"}
-            description={isEdit ? "Update this class details." : classType ? `Add a new ${classType.toLowerCase()} to this course.` : "Add a new lecture or section to this course."}
+            title={isEdit ? t('classForm.title.edit') : classType ? t('classForm.title.add', { type: classType }) : t('classForm.title.addDefault')}
+            description={isEdit ? t('classForm.description.edit') : classType ? t('classForm.description.add', { type: classType.toLowerCase() }) : t('classForm.description.addDefault')}
             onClose={onClose}
             onSubmit={handleSubmit}
-            submitText={isEdit ? "Save Changes" : classType ? `Add ${classType}` : "Add Class"}
+            submitText={isEdit ? t('classForm.submit.edit') : classType ? t('classForm.submit.add', { type: classType }) : t('classForm.submit.addDefault')}
             submitDisabled={!!scheduleConflict || checkingSchedule}
         >
             <div className="space-y-5 mb-6">
@@ -276,7 +279,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                     {instructorOptions.length > 0 ? (
                         <SelectBox
                             className="w-full"
-                            label={classType === "Lecture" ? "Professor" : "Teaching Assistant"}
+                            label={classType === "Lecture" ? t('classForm.professor') : t('classForm.ta')}
                             labelDirection="flex-col"
                             options={instructorOptions}
                             selectedOption={selectedInstructor}
@@ -286,8 +289,8 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                         <div className="self-end pb-1">
                             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 {courseDepartment
-                                    ? `No ${classType === "Lecture" ? "professors" : "TAs"} available for ${courseDepartment}`
-                                    : `No ${classType === "Lecture" ? "professors" : "TAs"} available`}
+                                    ? t('classForm.noInstructorForDepartment', { type: classType === "Lecture" ? t('classForm.professor').toLowerCase() : t('classForm.ta').toLowerCase(), department: courseDepartment })
+                                    : t('classForm.noInstructor', { type: classType === "Lecture" ? t('classForm.professor').toLowerCase() : t('classForm.ta').toLowerCase() })}
                             </p>
                         </div>
                     )}
@@ -297,13 +300,13 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                 <div className="border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl p-4 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                     <div className="flex items-center justify-between mb-3">
                         <label className="font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark">
-                            Schedule
+                            {t('classForm.schedule')}
                         </label>
 
                         {!isEdit && scheduleSlots.length < maxSlots && (
                             <Button type="button" variant="text" size="sm" onClick={addSlot}>
                                 <PlusIcon className="w-4 h-4" />
-                                Add day
+                                {t('classForm.addDay')}
                             </Button>
                         )}
                     </div>
@@ -335,7 +338,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                                         type="button"
                                         onClick={() => removeSlot(idx)}
                                         className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors shrink-0"
-                                        title="Remove slot"
+                                        title={t('classForm.removeSlot')}
                                     >
                                         <XIcon className="w-4 h-4" />
                                     </button>
@@ -368,7 +371,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <SelectBox
                         className="w-full"
-                        label="Room"
+                        label={t('classForm.room')}
                         labelDirection="flex-col"
                         options={roomOptions}
                         selectedOption={selectedRoom}
@@ -376,9 +379,9 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
                     />
 
                     <NumberInput
-                        label="Capacity"
+                        label={t('classForm.capacity')}
                         name="capacity"
-                        placeholder="e.g. 30"
+                        placeholder={t('classForm.capacityPlaceholder')}
                         value={capacity}
                         onChange={(e) => setCapacity(e.target.value)}
                         min="1"

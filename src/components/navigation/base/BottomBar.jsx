@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next';
 import { NavLink, useLocation } from "react-router-dom";
 
 const VISIBLE_COUNT = 5; // عدد العناصر الظاهرة
 const SLIDE_EASE = "0.4s cubic-bezier(0.34, 1.56406, 0.64, 1)";
 
 export default function BottomBar({ links = [], leftLinks = [], rightLinks = [], children, visible = true, floatingAction = null }) {
+    const { i18n } = useTranslation();
     const { pathname } = useLocation();
 
     // ── دمج اللينكات ─────────────────────────────────────────────
@@ -53,7 +55,7 @@ export default function BottomBar({ links = [], leftLinks = [], rightLinks = [],
     return (
         <nav
             id="bottom-bar"
-            className="fixed bottom-0 left-0 right-0 z-50 px-3"
+            className="fixed bottom-0 start-0 end-0 z-50 px-3"
             data-visible={String(visible)}
             style={{
                 paddingBottom: "max(12px, env(safe-area-inset-bottom))",
@@ -93,8 +95,8 @@ export default function BottomBar({ links = [], leftLinks = [], rightLinks = [],
                 {/* ── الزر العائم (مثلاً أيقونة الدردشة) ─────────────────── */}
                 {floatingAction && (
                     <div
-                        className="absolute z-20 pointer-events-auto"
-                        style={{ top: "50%", right: "12px", transform: "translateY(calc(-50% - 72px))" }}
+                        className="absolute z-20 pointer-events-auto end-3"
+                        style={{ top: "50%", transform: "translateY(calc(-50% - 72px))" }}
                     >
                         {floatingAction}
                     </div>

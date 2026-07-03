@@ -14,7 +14,7 @@ const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 function ChevronLeft() {
     return (
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"
+        <svg className="w-4 h-4 rtl:scale-x-[-1]" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2"
             strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
@@ -23,7 +23,7 @@ function ChevronLeft() {
 }
 function ChevronRight() {
     return (
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"
+        <svg className="w-4 h-4 rtl:scale-x-[-1]" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2"
             strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6" />
@@ -273,7 +273,7 @@ export default function DateInput({
                 className={[
                     "w-full px-4 py-2.5 flex items-center justify-between gap-3 border rounded-lg",
                     "bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark",
-                    "outline-none transition-colors text-left",
+                    "outline-none transition-colors text-start",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                     !isDisabled && "cursor-pointer",
                     isOpen
@@ -281,7 +281,7 @@ export default function DateInput({
                         : "border-border-primary-default-light dark:border-border-primary-default-dark",
                 ].join(" ")}
             >
-                <span className={`text-sm truncate ${
+                <span dir="auto" className={`text-sm truncate ${
                     selected
                         ? "text-text-primary-default-light dark:text-text-primary-default-dark"
                         : "text-text-secondary-default-light dark:text-text-secondary-default-dark"

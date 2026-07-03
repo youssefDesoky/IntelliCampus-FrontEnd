@@ -1,36 +1,52 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { API_URL } from "../../../config/api";
 import { InstructorProfileSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import AccountControlsCard from "../../../feature/student/profile/AccountControlsCard";
 import InstructorIdentityCard from "../../../feature/instructor/profile/InstructorIdentityCard";
 import ProfessionalInfoCard from "../../../feature/instructor/profile/ProfessionalInfoCard";
 import OfficeHoursCard from "../../../feature/instructor/profile/OfficeHoursCard";
-
-function mapProfileToUserData(profile) {
-    if (!profile) return null;
-    return {
-        name: profile.fullName || "",
-        fullName: profile.fullName || "",
-        avatar: profile.profileImage || "",
-        specialization: profile.specialization || "",
-        department: profile.departmentName || "",
-        faculty: profile.facultyName || "",
-        email: profile.email || "",
-        phone: profile.phoneNumber || "",
-        address: profile.address || "",
-        instructorCode: profile.instructorCode || "",
-        nationality: profile.nationality || "",
-        role: profile.instructorRole || "",
-        joinedDate: profile.hireDate || "",
-        facultyName: profile.facultyName || "",
-        officeHoursRoom: profile.officeHoursRoomName || "",
-        officeHoursLocation: profile.officeHoursRoomLocation || "",
-    };
-}
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import useArabicDigits from '../../../hooks/useArabicDigits.js';
 
 export default function InstructorProfile() {
+    const { t, i18n } = useTranslation('instructor');
+    const { convert: ar } = useArabicDigits();
     const authUser = useRouteLoaderData("root");
+
+    const mapProfileToUserData = (profile) => {
+        if (!profile) return null;
+        const hireDateStr = profile.hireDate || profile.HireDate || "";
+        let joinedDate = hireDateStr;
+        if (hireDateStr) {
+            const d = new Date(hireDateStr);
+            if (!isNaN(d.getTime())) {
+                joinedDate = d.toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                });
+            }
+        }
+        return {
+            name: getLocalizedField(profile, 'fullName', i18n.language) || "",
+            fullName: getLocalizedField(profile, 'fullName', i18n.language) || "",
+            avatar: profile.profileImage || "",
+            specialization: getLocalizedField(profile, 'specialization', i18n.language) || "",
+            department: getLocalizedField(profile, 'departmentName', i18n.language) || "",
+            faculty: getLocalizedField(profile, 'facultyName', i18n.language) || "",
+            email: profile.email || "",
+            phone: profile.phoneNumber || "",
+            address: getLocalizedField(profile, 'address', i18n.language) || "",
+            instructorCode: profile.instructorCode || "",
+            nationality: profile.nationality || "",
+            role: profile.instructorRole || "",
+            joinedDate,
+            facultyName: getLocalizedField(profile, 'facultyName', i18n.language) || "",
+            officeHoursRoom: getLocalizedField(profile, 'officeHoursRoomName', i18n.language) || "",
+            officeHoursLocation: getLocalizedField(profile, 'officeHoursRoomLocation', i18n.language) || "",
+        };
+    };
+
     const initialData = mapProfileToUserData(authUser);
 
     const { data: userData, isLoading: profileLoading, refetch } = useQuery({
@@ -53,7 +69,7 @@ export default function InstructorProfile() {
     if (!userData && !authUser) {
         return (
             <div className="flex items-center justify-center py-20">
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Unable to load profile.</p>
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('profile.error')}</p>
             </div>
         );
     }

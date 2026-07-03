@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import Button from "../../../../../components/ui/Button";
 import { FileLinesIcon, DownloadIcon, FileSlashIcon } from "../../../../../components/ui/icons";
 
 import CourseWeekMaterialContent from "./CourseWeekMaterialContent";
 import { getMaterialDownloadUrl } from "../../../../course/services/materialsApi";
+import { getLocalizedField } from '../../../../../utils/getLocalizedField';
 
 function downloadAllMaterials(materials) {
     materials.forEach((material, idx) => {
@@ -20,6 +22,7 @@ function downloadAllMaterials(materials) {
 }
 
 export default function CourseWeekMaterials({ folder, highlighted = false, highlightedMaterialId }) {
+    const { t, i18n } = useTranslation('student');
     const materials = folder.materials || [];
 
     return (
@@ -31,22 +34,22 @@ export default function CourseWeekMaterials({ folder, highlighted = false, highl
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between gap-3 min-w-0">
                         <h3 className="text-xl md:text-2xl font-bold truncate text-text-primary-default-light dark:text-text-primary-default-dark min-w-0">
-                            {folder.name}
+                            {getLocalizedField(folder, 'name', i18n.language)}
                         </h3>
                         {materials.length > 0 && (
                             <button
                                 onClick={() => downloadAllMaterials(materials)}
                                 className="group flex shrink-0 items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg text-white bg-linear-to-r from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-500 hover:from-indigo-600 hover:to-indigo-700 dark:hover:from-indigo-500 dark:hover:to-indigo-400 shadow-md hover:shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all duration-200 active:scale-95"
-                                aria-label="Download All Materials"
+                                aria-label={t('courseMaterials.downloadAllAria')}
                             >
                                 <DownloadIcon size={18} className="group-hover:animate-bounce" />
-                                <span className="hidden sm:inline">Download All</span>
+                                <span className="hidden sm:inline">{t('courseMaterials.downloadAll')}</span>
                             </button>
                         )}
                     </div>
-                    {folder.description && (
+                    {getLocalizedField(folder, 'description', i18n.language) && (
                         <p className="text-base text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-3xl">
-                            {folder.description}
+                            {getLocalizedField(folder, 'description', i18n.language)}
                         </p>
                     )}
                 </div>
@@ -59,10 +62,10 @@ export default function CourseWeekMaterials({ folder, highlighted = false, highl
                             <FileSlashIcon size={24} className="text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark" />
                         </div>
                         <h4 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                            No materials available
+                            {t('courseMaterials.noMaterials')}
                         </h4>
                         <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
-                            Materials for this week will be uploaded soon. Check back later!
+                            {t('courseMaterials.noMaterialsDesc')}
                         </p>
                     </div>
                 ) : (

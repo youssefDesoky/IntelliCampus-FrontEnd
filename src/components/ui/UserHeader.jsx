@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import PageHeader from "./PageHeader";
 import Button from "./Button";
 import ImportDialog from "./ImportDialog";
@@ -7,20 +8,16 @@ import { fetchBylaws } from "../../feature/admin/services/adminBylawsApi";
 import { uploadStudents } from "../../feature/admin/services/adminImportsApi";
 import { useError } from '../../contexts/ErrorContext.jsx';
 
-const roleLabels = {
-    student: { plural: "Students", singular: "Student" },
-    instructor: { plural: "Instructors", singular: "Instructor" },
-    admin: { plural: "Admins", singular: "Admin" },
-};
-
 export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }) {
+    const { t } = useTranslation('common');
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [bylaws, setBylaws] = useState([]);
     const [selectedBylaw, setSelectedBylaw] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isLoadingBylaws, setIsLoadingBylaws] = useState(false);
     const { showError } = useError();
-    const labels = roleLabels[role] || roleLabels.student;
+    const roleSingular = role === 'student' ? t('labels.student', 'Student') : role === 'admin' ? t('labels.admin', 'Admin') : t('labels.instructor', 'Instructor');
+    const rolePlural = role === 'student' ? t('labels.students', 'Students') : role === 'admin' ? t('labels.admins', 'Admins') : t('labels.instructors', 'Instructors');
 
     const openImport = useCallback(() => {
         setIsImportOpen(true);
@@ -65,7 +62,7 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
 
     const bylawSelector = role === "student" && (
         <div>
-            <label className="block text-sm font-medium mb-2">Apply Bylaw to All Imported Students</label>
+            <label className="block text-sm font-medium mb-2">{t('labels.applyBylaw', 'Apply Bylaw to All Imported Students')}</label>
             <select
                 className="w-full rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark px-3 py-2 bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-sm"
                 value={selectedBylaw?.value || ""}
@@ -75,7 +72,7 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
                     setSelectedBylaw(match || null);
                 }}
             >
-                <option value="">No Bylaw</option>
+                <option value="">{t('labels.noBylaw', 'No Bylaw')}</option>
                 {bylaws.map(b => (
                     <option key={b.value} value={b.value}>{b.label}</option>
                 ))}
@@ -85,14 +82,14 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
 
     return (
         <>
-            <PageHeader title={`Manage ${labels.plural}`} subtitle={`Administer ${labels.singular.toLowerCase()} records and information`} >
+            <PageHeader title={t('labels.manageRole', 'Manage {{role}}', { role: rolePlural })} subtitle={t('labels.administerRoleRecords', 'Administer {{role}} records and information', { role: roleSingular.toLowerCase() })} >
                 <div className="flex items-center gap-2">
                     <Button 
                         variant="secondary"
                         onClick={openImport}
                     >
                         <ImportIcon size={24} />
-                        <span className="hidden sm:inline">Import {labels.plural}</span>
+                        <span className="hidden sm:inline">{t('labels.importRole', 'Import {{role}}', { role: rolePlural })}</span>
                     </Button>
                     
                     <Button 
@@ -100,18 +97,18 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
                         onClick={() => setIsUserFormOpen(true)}
                     >
                         <PlusIcon size={24} />
-                        <span className="hidden sm:inline">Add {labels.singular}</span>
+                        <span className="hidden sm:inline">{t('labels.addRole', 'Add {{role}}', { role: roleSingular })}</span>
                     </Button>
                 </div>
             </PageHeader>
 
             {isImportOpen && (
                 <ImportDialog
-                    title={`Import ${labels.plural}`}
+                    title={t('labels.importRole', 'Import {{role}}', { role: rolePlural })}
                     subtitle={
                         isLoadingBylaws
-                            ? "Loading bylaws..."
-                            : `Upload a file to bulk-import ${labels.singular.toLowerCase()} records.`
+                            ? t('labels.loadingBylaws', 'Loading bylaws...')
+                            : t('labels.importDescription', 'Upload a file to import records into the system.')
                     }
                     onClose={() => setIsImportOpen(false)}
                     onImport={handleImport}

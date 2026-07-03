@@ -1,7 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import Button from "../../../../../components/ui/Button";
 import { CheckIcon, ClockIcon, ExclamationIcon } from "../../../../../components/ui/icons";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 function TimerDisplay({ timeLeft, formatTime, totalSeconds }) {
+	const { t } = useTranslation('student');
 	const progress = totalSeconds > 0 ? (timeLeft / totalSeconds) * 100 : 0;
 	const isUrgent = timeLeft < 60;
 	const isWarning = timeLeft >= 60 && timeLeft < 120;
@@ -48,7 +51,7 @@ function TimerDisplay({ timeLeft, formatTime, totalSeconds }) {
 					{formatTime(timeLeft)}
 				</span>
 				<span className="text-[9px] text-text-secondary-default-light dark:text-text-secondary-default-dark font-medium leading-none">
-					remaining
+					{t('quizzes.remaining')}
 				</span>
 			</div>
 		</div>
@@ -56,6 +59,7 @@ function TimerDisplay({ timeLeft, formatTime, totalSeconds }) {
 }
 
 function SegmentedProgress({ questions, answers, currentPage, pageSize }) {
+	const { t } = useTranslation('student');
 	if (!questions || questions.length === 0) return null;
 
 	return (
@@ -77,7 +81,7 @@ function SegmentedProgress({ questions, answers, currentPage, pageSize }) {
 									? "bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ring-1 ring-inset ring-text-secondary-default-light/40 dark:ring-text-secondary-default-dark/40"
 									: "bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark opacity-40"
 						}`}
-						title={`Question ${idx + 1}${isAnswered ? " — answered" : ""}`}
+						title={isAnswered ? t('quizzes.questionAnswered', { num: idx + 1 }) : t('quizzes.question', { num: idx + 1 })}
 					/>
 				);
 			})}
@@ -102,6 +106,8 @@ export default function QuizHeader({
 	currentPage,
 	pageSize,
 }) {
+	const { t } = useTranslation('student');
+	const { convert: ar } = useArabicDigits();
 	const isUrgent = timeLeft < 60 && !hideControls;
 	const isWarning = timeLeft >= 60 && timeLeft < 120 && !hideControls;
 
@@ -111,13 +117,13 @@ export default function QuizHeader({
 			{isUrgent && (
 				<div className="mb-2 rounded-xl px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-2 text-xs font-semibold text-red-700 dark:text-red-300 animate-pulse">
 					<ExclamationIcon size={14} />
-					<span>Less than a minute remaining! Submit your quiz soon.</span>
+					<span>{t('quizzes.urgentRemaining')}</span>
 				</div>
 			)}
 			{isWarning && !isUrgent && (
 				<div className="mb-2 rounded-xl px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-300">
 					<ExclamationIcon size={14} />
-					<span>Less than 2 minutes remaining!</span>
+					<span>{t('quizzes.lessThan2Remaining')}</span>
 				</div>
 			)}
 
@@ -137,18 +143,18 @@ export default function QuizHeader({
 						<div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
 							{hideControls && score ? (
 								<div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-									<div className="text-right">
+									<div className="text-end">
 										<p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-											Score
+											{t('quizzes.scoreLabel')}
 										</p>
 										<p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 leading-none">
-											{score.percentage}%
+											{ar(score.percentage)}%
 										</p>
 									</div>
 									<div className="h-8 w-px bg-emerald-200 dark:bg-emerald-800" />
 									<div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-										{score.score}
-										<span className="text-emerald-500 font-normal">/{score.maxScore}</span>
+										{ar(score.score)}
+										<span className="text-emerald-500 font-normal">/{ar(score.maxScore)}</span>
 									</div>
 								</div>
 							) : !hideControls ? (
@@ -166,7 +172,7 @@ export default function QuizHeader({
 											onClick={onSubmit}
 											className="shadow-sm w-full sm:w-auto"
 										>
-											Submit
+											{t('quizzes.submit')}
 										</Button>
 									</div>
 								</>
@@ -186,19 +192,19 @@ export default function QuizHeader({
 					<div className="flex items-center justify-between mt-2">
 						<span className="text-[11px] sm:text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
 							<span className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-								{answeredCount ?? "—"}
+								{ar(answeredCount ?? "—")}
 							</span>{" "}
-							of{" "}
+							{t('quizzes.of')}{" "}
 							<span className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-								{totalCount ?? "—"}
+								{ar(totalCount ?? "—")}
 							</span>{" "}
-							answered
+							{t('quizzes.answered')}
 						</span>
 						{currentQuestion && (
 							<span className="text-[11px] sm:text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-								Viewing{" "}
+								{t('quizzes.viewing')}{" "}
 								<span className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-									{currentQuestion}
+									{ar(currentQuestion)}
 								</span>
 							</span>
 						)}

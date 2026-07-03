@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import WeeklyScheduleEvent from "./WeeklyScheduleEvent";
 
 const getTimeIndex = (time) => {
@@ -42,6 +43,7 @@ function layoutColumns(events) {
 }
 
 export default function WeeklyScheduleEvents ({ days, day, schedule, rangeStart, totalDuration }) {
+    const { t } = useTranslation("common");
     const eventsByDay = days.reduce((acc, day) => {
         acc[day.key] = schedule.filter(event => event.day === day.key);
         return acc;
@@ -64,7 +66,7 @@ export default function WeeklyScheduleEvents ({ days, day, schedule, rangeStart,
 
             {laidOutEvents.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-xs md:text-sm">
-                    No classes scheduled
+                    {t("schedule.noClassesScheduled")}
                 </div>
             )}
         </div>

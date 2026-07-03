@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { OpenInNewTabIcon } from "../../../components/ui/icons";
+import useArabicDigits from "../../../hooks/useArabicDigits";
 
 function Skeleton({ className = "" }) {
     return <div className={`animate-pulse rounded bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ${className}`} />;
@@ -12,7 +14,7 @@ function isStatus(course, ...statuses) {
     return statuses.some((st) => s === st || s === String(st));
 }
 
-function buildPerformanceStats(user) {
+function buildPerformanceStats(user, t) {
     const courses = user.courses || [];
     const gpa = user.gpa ?? 0;
 
@@ -25,57 +27,61 @@ function buildPerformanceStats(user) {
 
     const creditBreakdown = completedCourses.reduce((acc, c) => {
         const hours = c.creditHours || 0;
-        const key = hours === 2 ? "2 Hours" : hours === 3 ? "3 Hours" : "Other";
+        const key = hours === 2 ? t("profile.creditHours2") : hours === 3 ? t("profile.creditHours3") : t("profile.creditHoursOther");
         if (!acc[key]) acc[key] = 0;
         acc[key] += 1;
         return acc;
     }, {});
 
+    const creditOrder = {};
+    creditOrder[t("profile.creditHours2")] = 1;
+    creditOrder[t("profile.creditHours3")] = 2;
+    creditOrder[t("profile.creditHoursOther")] = 3;
+
     return [
         {
-            label: "Cumulative GPA",
+            label: t("profile.cumulativeGpa"),
             value: `${gpa} / 4.0`,
-            trend: gpa > 0 ? "Current" : "N/A",
+            trend: gpa > 0 ? t("profile.trendCurrent") : t("profile.notAvailable"),
             positive: gpa >= 2.0 ? true : gpa > 0 ? false : null,
             percentage: `${Math.min(Math.round((gpa / 4.0) * 100), 100)}%`,
             colSpan: 1,
         },
         {
-            label: "Current Courses",
+            label: t("profile.currentCourses"),
             value: String(inProgressCourses.length),
-            trend: "Enrolled",
+            trend: t("profile.trendEnrolled"),
             positive: true,
             percentage: `${inProgressCourses.length > 0 ? 60 : 0}%`,
             colSpan: 1,
         },
         {
-            label: "Completed Courses",
+            label: t("profile.completedCourses"),
             value: String(completedCourses.length),
-            trend: "Total",
+            trend: t("profile.trendTotal"),
             positive: true,
             colSpan: 1,
             percentage: completedCourses.length > 0 ? "100%" : "0%",
             subStats: Object.entries(creditBreakdown)
                 .sort(([a], [b]) => {
-                    const order = { "2 Hours": 1, "3 Hours": 2 };
-                    return (order[a] || 99) - (order[b] || 99);
+                    return (creditOrder[a] || 99) - (creditOrder[b] || 99);
                 })
                 .map(([label, count]) => ({
                     label,
-                    value: `${count} Course${count !== 1 ? "s" : ""}`,
+                    value: t("profile.courseCount", { count }),
                 })),
         },
         {
-            label: "Credits Earned",
+            label: t("profile.creditsEarned"),
             value: String(completedCredits),
-            trend: completedCredits > 0 ? "Completed" : "N/A",
+            trend: completedCredits > 0 ? t("profile.trendCompleted") : t("profile.notAvailable"),
             colSpan: 1,
             positive: true,
             percentage: completedCredits > 0 ? "100%" : "0%",
             subStats: [
                 {
-                    label: "Completed Courses",
-                    value: `${completedCourses.length} Course${completedCourses.length !== 1 ? "s" : ""}`,
+                    label: t("profile.completedCourses"),
+                    value: t("profile.courseCount", { count: completedCourses.length }),
                 },
             ],
         },
@@ -84,7 +90,9 @@ function buildPerformanceStats(user) {
 
 export default function PerformanceCard({ user = {}, loading = false }) {
     const navigate = useNavigate();
-    const performanceStats = useMemo(() => buildPerformanceStats(user), [user]);
+    const { t } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
+    const performanceStats = useMemo(() => buildPerformanceStats(user, t), [user, t]);
 
     const isOnProbation = user.isOnProbation === true;
     const probationThreshold = user.probationThreshold;
@@ -95,16 +103,16 @@ export default function PerformanceCard({ user = {}, loading = false }) {
                 <div>
                     <div className="flex items-center gap-2">
                         <h3 className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                            Academic Performance
+                            {t("profile.academicPerformance")}
                         </h3>
                         {isOnProbation && (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark text-text-warning-default-light dark:text-text-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
-                                Probation
+                                {t("profile.probation")}
                             </span>
                         )}
                     </div>
                     <p className="text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-0.5">
-                        Current standing · cumulative
+                        {t("profile.currentStanding")}
                     </p>
                     {isOnProbation && (
                         <p className="text-[11px] text-text-warning-default-light dark:text-text-warning-default-dark mt-0.5 font-medium">
@@ -116,7 +124,7 @@ export default function PerformanceCard({ user = {}, loading = false }) {
                     onClick={() => navigate("/courses/transcript")}
                     className="flex items-center gap-1 text-[11px] font-semibold text-text-accent-active-light dark:text-text-accent-active-dark hover:underline"
                 >
-                    Full transcript
+                    {t("profile.fullTranscript")}
                     <OpenInNewTabIcon size={12} />
                 </button>
             </div>
@@ -164,7 +172,7 @@ export default function PerformanceCard({ user = {}, loading = false }) {
                                             {stat.label}
                                         </span>
                                         <span className="block text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark leading-tight">
-                                            {stat.value}
+                                            {ar(stat.value)}
                                         </span>
                                     </div>
                                 </div>
@@ -186,7 +194,7 @@ export default function PerformanceCard({ user = {}, loading = false }) {
                                     {stat.subStats.map((sub) => (
                                         <div key={sub.label} className="flex justify-between text-xs">
                                             <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">{sub.label}</span>
-                                            <span className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{sub.value}</span>
+                                            <span className="font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{ar(sub.value)}</span>
                                         </div>
                                     ))}
                                 </div>

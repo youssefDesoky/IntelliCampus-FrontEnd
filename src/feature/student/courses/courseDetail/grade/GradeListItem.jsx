@@ -1,19 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { CheckIcon, SandClockIcon } from "../../../../../components/ui/icons";
-
-const STATUS_CONFIG = {
-    Graded: {
-        label: "Graded",
-        icon: CheckIcon,
-        badgeClass: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200/70 dark:border-emerald-800/60",
-        helperText: "Reviewed and completed",
-    },
-    Upcoming: {
-        label: "Upcoming",
-        icon: SandClockIcon,
-        badgeClass: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200/70 dark:border-amber-800/60",
-        helperText: "Waiting for grading",
-    },
-};
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 const PERFORMANCE_CONFIG = [
     {
@@ -67,7 +54,22 @@ function getPerformanceConfig(percentage) {
 }
 
 export default function GradeListItem({ item = {}, toPercent }) {
-    // Fallback gracefully if status is missing or unexpected
+    const { t } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
+
+    const STATUS_CONFIG = {
+        Graded: {
+            label: t('gradeListItem.graded'),
+            icon: CheckIcon,
+            badgeClass: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200/70 dark:border-emerald-800/60",
+        },
+        Upcoming: {
+            label: t('gradeListItem.upcoming'),
+            icon: SandClockIcon,
+            badgeClass: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200/70 dark:border-amber-800/60",
+        },
+    };
+
     const statusInfo = STATUS_CONFIG[item.status] || STATUS_CONFIG.Upcoming;
     const StatusIcon = statusInfo.icon;
     
@@ -86,9 +88,9 @@ export default function GradeListItem({ item = {}, toPercent }) {
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
 					<h3 className="truncate text-base font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark sm:text-lg">
-						{item.title || "Untitled Assignment"}
+						{item.title || t('gradeListItem.untitled')}
 					</h3>
-					<span className="ml-auto" />
+					<span className="ms-auto" />
 					<span
 						className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold tracking-wide ${statusInfo.badgeClass}`}
 						role="status"
@@ -99,7 +101,7 @@ export default function GradeListItem({ item = {}, toPercent }) {
 				</div>
 
 				<div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-					<span>{item.date || "Date TBD"}</span>
+					<span>{item.date || t('gradeListItem.dateTbd')}</span>
 				</div>
 			</div>
                 </div>
@@ -107,36 +109,36 @@ export default function GradeListItem({ item = {}, toPercent }) {
                 <div className="mt-4 grid grid-cols-3 gap-3">
                     <div className="rounded-xl border border-border-primary-default-light/70 bg-bg-surface-secondary-default-light/60 px-3 py-3 dark:border-border-primary-default-dark/70 dark:bg-bg-surface-secondary-default-dark/60">
                         <dt className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            Score
+                            {t('gradeListItem.score')}
                         </dt>
                         <dd className="mt-1 truncate text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
-                            {isGraded && item.maxScore ? `${item.score}/${item.maxScore}` : "TBD"}
+                            {isGraded && item.maxScore ? `${ar(item.score)}/${ar(item.maxScore)}` : t('gradeListItem.tbd')}
                         </dd>
                     </div>
 
                     <div className="rounded-xl border border-border-primary-default-light/70 bg-bg-surface-secondary-default-light/60 px-3 py-3 dark:border-border-primary-default-dark/70 dark:bg-bg-surface-secondary-default-dark/60">
                         <dt className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            Weight
+                            {t('gradeListItem.weight')}
                         </dt>
                         <dd className={`mt-1 truncate text-sm font-semibold ${performanceInfo.metricToneClass}`}>
-                            {item.weight ? `${item.weight}%` : "—"}
+                            {item.weight ? `${ar(item.weight)}%` : "—"}
                         </dd>
                     </div>
 
                     <div className="rounded-xl border border-border-primary-default-light/70 bg-bg-surface-secondary-default-light/60 px-3 py-3 dark:border-border-primary-default-dark/70 dark:bg-bg-surface-secondary-default-dark/60">
                         <dt className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            Percentage
+                            {t('gradeListItem.percentage')}
                         </dt>
                         <dd className={`mt-1 truncate text-sm font-semibold ${isComplete ? "text-text-primary-light dark:text-text-primary-dark" : "text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}>
-                            {calculatedPercentage !== null ? `${calculatedPercentage}%` : "—"}
+                            {calculatedPercentage !== null ? `${ar(calculatedPercentage)}%` : "—"}
                         </dd>
                     </div>
                 </div>
 
                 <div className="mt-4">
                     <div className="mb-2 flex items-center justify-between text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        <span>Progress</span>
-                        <span>{calculatedPercentage !== null ? `${calculatedPercentage}%` : "Pending"}</span>
+                        <span>{t('gradeListItem.progress')}</span>
+                        <span>{calculatedPercentage !== null ? `${ar(calculatedPercentage)}%` : t('gradeListItem.pending')}</span>
                     </div>
 
                     <div className="h-2 overflow-hidden rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">

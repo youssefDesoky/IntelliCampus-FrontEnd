@@ -1,14 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import useArabicDigits from "../../../hooks/useArabicDigits";
 import { PlusIcon, FilterIcon } from "../../../components/ui/icons";
 import PageHeader from "../../../components/ui/PageHeader";
-
-const defaultCategories = [
-    { value: "all", label: "All", dotColor: "bg-gray-500" },
-    { value: "classes", label: "Classes", dotColor: "bg-blue-500" },
-    { value: "exams", label: "Exams", dotColor: "bg-yellow-500" },
-    { value: "assignments", label: "Assignments", dotColor: "bg-red-500" },
-    { value: "personal", label: "Personal", dotColor: "bg-purple-500" },
-];
 
 const countsFromReminders = (reminders) => {
     if (!reminders || !Array.isArray(reminders)) return {};
@@ -18,10 +12,22 @@ const countsFromReminders = (reminders) => {
     }, {});
 };
 
-export default function RemindersHeader({ setIsFormOpen, selectedCategory, onSelectCategory, reminders, categories = defaultCategories }) {
+export default function RemindersHeader({ setIsFormOpen, selectedCategory, onSelectCategory, reminders, categories: categoriesProp }) {
+    const { t } = useTranslation("student");
+    const { convert } = useArabicDigits();
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const menuRef = useRef(null);
     const counts = countsFromReminders(reminders);
+
+    const defaultCategories = [
+        { value: "all", label: t("reminders.categoryLabelAll"), dotColor: "bg-gray-500" },
+        { value: "classes", label: t("reminders.categoryClasses"), dotColor: "bg-blue-500" },
+        { value: "exams", label: t("reminders.categoryExams"), dotColor: "bg-yellow-500" },
+        { value: "assignments", label: t("reminders.categoryAssignments"), dotColor: "bg-red-500" },
+        { value: "personal", label: t("reminders.categoryPersonal"), dotColor: "bg-purple-500" },
+    ];
+
+    const categories = categoriesProp || defaultCategories;
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -35,8 +41,8 @@ export default function RemindersHeader({ setIsFormOpen, selectedCategory, onSel
 
     return (
         <PageHeader
-            title="Reminders"
-            subtitle="Manage your study reminders and stay on track with your academic goals."
+            title={t("reminders.title")}
+            subtitle={t("reminders.subtitle")}
         >
             <div className="flex items-center gap-2">
                 {/* Mobile filter dropdown */}
@@ -50,7 +56,7 @@ export default function RemindersHeader({ setIsFormOpen, selectedCategory, onSel
                     </button>
 
                     {isFilterOpen && (
-                        <div className="absolute right-0 top-full mt-1 min-w-40 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg p-1 z-50">
+                        <div className="absolute end-0 top-full mt-1 min-w-40 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg p-1 z-50">
                             {categories.map((cat) => (
                                 <button
                                     key={cat.value}
@@ -70,7 +76,7 @@ export default function RemindersHeader({ setIsFormOpen, selectedCategory, onSel
                                         <span>{cat.label}</span>
                                     </div>
                                     {counts[cat.value] > 0 && (
-                                        <span className="text-xs text-gray-400">{counts[cat.value]}</span>
+                                        <span className="text-xs text-gray-400">{convert(counts[cat.value])}</span>
                                     )}
                                 </button>
                             ))}
@@ -84,7 +90,7 @@ export default function RemindersHeader({ setIsFormOpen, selectedCategory, onSel
                     className="flex items-center justify-center h-9 w-9 md:w-auto md:px-4 rounded-lg border border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark font-medium text-sm transition-colors"
                 >
                     <PlusIcon size={16}/>
-                    <span className="hidden md:inline ml-2">Add Reminder</span>
+                    <span className="hidden md:inline ms-2">{t("reminders.addReminder")}</span>
                 </button>
             </div>
         </PageHeader>

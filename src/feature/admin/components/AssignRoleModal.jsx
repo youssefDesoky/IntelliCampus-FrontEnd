@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
@@ -8,6 +9,7 @@ import { useError } from '../../../contexts/ErrorContext.jsx';
 
 export default function AssignRoleModal({ userId, userName, onClose, onRolesUpdated }) {
     const queryClient = useQueryClient();
+    const { t } = useTranslation('admin');
     const { showError } = useError();
     const [selectedRoles, setSelectedRoles] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
@@ -57,7 +59,7 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
             <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full flex flex-col max-h-[80vh]">
                 <div className="flex items-center justify-between p-6 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
                     <div>
-                        <h2 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Assign Roles</h2>
+                        <h2 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{t('assignRole.title')}</h2>
                         <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mt-1">{userName}</p>
                     </div>
                     <button onClick={onClose} className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors">
@@ -67,7 +69,7 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
 
                 <div className="p-6 overflow-y-auto flex-1">
                     {isLoading ? (
-                        <p className="text-center py-8 text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading roles...</p>
+                        <p className="text-center py-8 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('assignRole.loadingRoles')}</p>
                     ) : (
                         <div className="space-y-4">
                             {availableRoles.map(role => {
@@ -101,9 +103,9 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
                 </div>
 
                 <div className="flex justify-end gap-3 p-4 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-                    <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
+                    <Button variant="secondary" size="sm" onClick={onClose}>{t('manageExams.cancel')}</Button>
                     <Button variant="primary" size="sm" onClick={handleSave} disabled={isLoading || isSaving}>
-                        {isSaving ? "Saving..." : "Save Roles"}
+                        {isSaving ? t('roomForm.saving') : t('assignRole.saveRoles')}
                     </Button>
                 </div>
             </div>

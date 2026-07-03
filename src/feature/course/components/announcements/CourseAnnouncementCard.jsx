@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import Button from "../../../../components/ui/Button";
 import DropdownMenu from "../../../../components/ui/DropdownMenu";
 import { CommentsIcon, DownloadIcon, EllipsisVerticalIcon, XIcon, PinIcon, LinkIcon, FilePenIcon, TrashIcon } from "../../../../components/ui/icons";
@@ -10,29 +11,34 @@ import CourseAnnouncementAttachment from "./CourseAnnouncementAttachment";
 import CourseAnnouncementCommentItem from "./CourseAnnouncementCommentItem";
 import { createAnnouncementComment, deleteCourseAnnouncement, pinCourseAnnouncement, unpinCourseAnnouncement } from "./announcementsApi";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../../utils/getLocalizedField';
+import useArabicDigits from '../../../../hooks/useArabicDigits';
 
-function formatAnnouncementDate(value) {
+function formatAnnouncementDate(value, i18n, arFn) {
     const date = new Date(value);
 
     if (Number.isNaN(date.getTime())) {
         return value;
     }
 
+    const locale = i18n?.language?.startsWith('ar') ? 'ar-EG' : 'en-US';
     const day = date.getDate();
-    const month = date.toLocaleString("en-US", { month: "short" });
-    return `${day} ${month}`;
+    const month = date.toLocaleString(locale, { month: "short" });
+    return `${arFn ? arFn(day) : day} ${month}`;
 }
 
-export default function CourseAnnouncementCard({ 
-    announcement, 
-    currentUser, 
-    courseId, 
-    onDelete, 
-    onEdit, 
-    onPin, 
+export default function CourseAnnouncementCard({
+    announcement,
+    currentUser,
+    courseId,
+    onDelete,
+    onEdit,
+    onPin,
     onUnpin,
     userRole = "student" // "student" or "instructor"
 }) {
+    const { t, i18n } = useTranslation('instructor');
+    const { convert: ar } = useArabicDigits();
     const [showComments, setShowComments] = useState(false);
     const [showActionsMenu, setShowActionsMenu] = useState(false);
     const [actionsMenuStyle, setActionsMenuStyle] = useState({});
@@ -171,7 +177,7 @@ export default function CourseAnnouncementCard({
     }, [announcement.id, courseId, newComment, posting]);
 
     const handleDeleteAnnouncement = useCallback(async () => {
-        if (!window.confirm("Are you sure you want to delete this announcement?")) {
+        if (!window.confirm(t('announcements.deleteConfirm'))) {
             return;
         }
 
@@ -181,7 +187,7 @@ export default function CourseAnnouncementCard({
             await deleteCourseAnnouncement(courseId, announcement.id);
             onDelete?.(announcement.id);
         } catch (error) {
-            showError("Failed to delete announcement");
+            showError(t('announcements.failedDelete'));
         } finally {
             setIsDeleting(false);
         }
@@ -194,7 +200,7 @@ export default function CourseAnnouncementCard({
             await pinCourseAnnouncement(courseId, announcement.id);
             onPin?.(announcement.id);
         } catch (error) {
-            showError("Failed to pin announcement");
+            showError(t('announcements.failedPin'));
         } finally {
             setIsPinning(false);
             setShowActionsMenu(false);
@@ -208,7 +214,7 @@ export default function CourseAnnouncementCard({
             await unpinCourseAnnouncement(courseId, announcement.id);
             onUnpin?.(announcement.id);
         } catch (error) {
-            showError("Failed to unpin announcement");
+            showError(t('announcements.failedUnpin'));
         } finally {
             setIsPinning(false);
             setShowActionsMenu(false);
@@ -237,10 +243,10 @@ export default function CourseAnnouncementCard({
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <img src={announcement.sender?.avatar || ""} alt={announcement.sender?.name || "User"} className="w-10 h-10 rounded-full" />
+                        <img src={announcement.sender?.avatar || ""} alt={announcement.sender?.name || t('announcements.user')} className="w-10 h-10 rounded-full" />
                         <div className="flex flex-col">
-                            <h3 className="font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{announcement.sender?.name || "Unknown"}</h3>
-                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{formatAnnouncementDate(announcement.date)}</p>
+                            <h3 className="font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{getLocalizedField(announcement.sender, 'name', i18n.language) || announcement.sender?.name || t('announcements.unknown')}</h3>
+                            <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{formatAnnouncementDate(announcement.date, i18n, ar)}</p>
                         </div>
                     </div>
 
@@ -250,7 +256,7 @@ export default function CourseAnnouncementCard({
                                 ref={actionsButtonRef}
                                 type="button"
                                 variant="text"
-                                aria-label="Open announcement actions"
+                                aria-label={t('announcements.announcementActions')}
                                 aria-haspopup="menu"
                                 aria-expanded={showActionsMenu}
                                 data-announcement-actions-button="true"
@@ -263,10 +269,13 @@ export default function CourseAnnouncementCard({
                                     const button = actionsButtonRef.current;
                                     if (button) {
                                         const rect = button.getBoundingClientRect();
+                                        const isRtl = document.dir === 'rtl';
                                         setActionsMenuStyle({
                                             top: rect.bottom + 8,
-                                            left: rect.right,
-                                            transform: "translateX(-100%)",
+                                            ...(isRtl
+                                                ? { right: window.innerWidth - rect.left, transform: 'translateX(100%)' }
+                                                : { left: rect.right, transform: 'translateX(-100%)' }
+                                            ),
                                         });
                                     }
 
@@ -295,7 +304,7 @@ export default function CourseAnnouncementCard({
                                                 }}
                                                 disabled={isPinning}
                                             >
-                                                {isPinning ? "..." : announcement.isPinned ? "Unpin" : "Pin"}
+                                                {isPinning ? "..." : announcement.isPinned ? t('announcements.unpin') : t('announcements.pin')}
                                             </Button>
                                             <Button
                                                 type="button"
@@ -323,7 +332,7 @@ export default function CourseAnnouncementCard({
                                                     setShowActionsMenu(false);
                                                 }}
                                             >
-                                                Copy link
+                                                {t('announcements.copyLink')}
                                             </Button>
                                             <Button
                                                 type="button"
@@ -338,7 +347,7 @@ export default function CourseAnnouncementCard({
                                                 }}
                                                 disabled={isDeleting}
                                             >
-                                                {isDeleting ? "Deleting..." : "Delete"}
+                                                {isDeleting ? t('announcements.deleting') : t('announcements.delete')}
                                             </Button>
                                         </>
                                     ) : (
@@ -354,7 +363,7 @@ export default function CourseAnnouncementCard({
                                                 setShowActionsMenu(false);
                                             }}
                                         >
-                                            Copy link
+                                            {t('announcements.copyLink')}
                                         </Button>
                                     )}
                                 </DropdownMenu>
@@ -406,10 +415,10 @@ export default function CourseAnnouncementCard({
                     }}
                 >
                     {showComments
-                        ? 'Hide Comments'
+                        ? t('announcements.hideComments')
                         : commentCount > 0
-                            ? `View Comments (${commentCount})`
-                            : 'Add a comment'}
+                            ? ar(t('announcements.viewComments', { count: commentCount }))
+                            : t('announcements.addComment')}
                 </Button>
             </div>
 
@@ -447,7 +456,7 @@ export default function CourseAnnouncementCard({
                 <ModelOverlay onClose={closeAttachmentPreview} maxWidth="max-w-5xl">
                     <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
                         <div className="flex items-center justify-between p-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                            <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate pr-4">
+                            <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate pe-4">
                                 {previewAttachment.name}
                             </h3>
                             <div className="flex items-center gap-2 shrink-0">

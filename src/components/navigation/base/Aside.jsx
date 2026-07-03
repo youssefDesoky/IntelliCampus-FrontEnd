@@ -9,21 +9,21 @@ const isPathActive = (to, pathname) =>
     to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(to + "/");
 
 export default function Aside({ height, links=[], children }) {
-    const { t } = useTranslation('common/aside');
+    const { t } = useTranslation('ui');
     const { width, isCompact, toggleSidebar, linkCls } = useSidebar();
     const { pathname } = useLocation();
 
     if (!links) {
-        return <p>No Links Provided</p>
+        return <p>{t('aside.noLinks')}</p>
     }
 
-    const dashboardLink = links.find(link => link.label.toLowerCase() === 'dashboard');
-    const otherLinks = links.filter(link => link.label.toLowerCase() !== 'dashboard');
+    const dashboardLink = links.find(link => link.to === "/instructor" || link.to === "/admin" || link.to === "/");
+    const otherLinks = links.filter(link => link.to !== dashboardLink?.to);
 
     return (
         <aside 
             id="sidebar" 
-            className={`${localStorage.getItem('lang') === 'ar' ? 'lg:right-0' : 'lg:left-0'} lg:flex-col lg:border-r fixed z-50 p-4 flex border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark bottom-0 lg:bottom-auto border-t lg:border-t-0`}
+            className={`lg:start-0 lg:flex-col lg:border-e fixed z-50 p-4 flex border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-active-light dark:text-text-primary-active-dark bottom-0 lg:bottom-auto border-t lg:border-t-0`}
             style={{ 
                 height: `calc(100vh - ${ height }px)`,  
                 top: `${ height }px`, 
@@ -70,7 +70,7 @@ export default function Aside({ height, links=[], children }) {
                     <Form method="post" action="/logout">
                         <button className="w-full p-2 flex items-center gap-3 border border-transparent rounded-md hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark text-text-danger-default-light dark:text-text-danger-default-dark hover:text-text-danger-hover-light dark:hover:text-text-danger-hover-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark">
                             <SignOutIcon className="w-5 h-5 shrink-0" />
-                            {!isCompact && <span className={pageNameStyle}>{t('logout')}</span>}
+                            {!isCompact && <span className={pageNameStyle}>{t('aside.logout')}</span>}
                         </button>
                     </Form>
                 </div>

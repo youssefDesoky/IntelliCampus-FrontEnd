@@ -1,0 +1,59 @@
+{
+  "specializationPreference.title": "تفضيل التخصص",
+  "specializationPreference.subtitle_specializations": "رتب وأعد تفضيلاتك للتخصصات",
+  "specializationPreference.subtitle_departments": "رتب وأعد تفضيلاتك للأقسام",
+
+  "specializationPreference.targetLabel.departments": "الأقسام",
+  "specializationPreference.targetLabel.specializations": "التخصصات",
+
+  "specializationPreference.eligibility.eligible": "أنت مؤهل لتقديم تفضيلاتك",
+  "specializationPreference.eligibility.notEligible": "غير مؤهل بعد",
+  "specializationPreference.eligibility.metRequirement": "لقد استوفيت متطلبات الساعات الائتمانية — رتب {{targetLabel}} أدناه.",
+  "specializationPreference.eligibility.needMoreHours_zero": "ستحتاج إلى {{remaining}} ساعات ائتمانية إضافية قبل أن تتمكن من التقديم.",
+  "specializationPreference.eligibility.needMoreHours_one": "ستحتاج إلى {{remaining}} ساعة ائتمانية إضافية قبل أن تتمكن من التقديم.",
+  "specializationPreference.eligibility.needMoreHours_two": "ستحتاج إلى {{remaining}} ساعتين ائتمانيتين إضافيتين قبل أن تتمكن من التقديم.",
+  "specializationPreference.eligibility.needMoreHours_few": "ستحتاج إلى {{remaining}} ساعات ائتمانية إضافية قبل أن تتمكن من التقديم.",
+  "specializationPreference.eligibility.needMoreHours_many": "ستحتاج إلى {{remaining}} ساعة ائتمانية إضافية قبل أن تتمكن من التقديم.",
+  "specializationPreference.eligibility.needMoreHours_other": "ستحتاج إلى {{remaining}} ساعة ائتمانية إضافية قبل أن تتمكن من التقديم.",
+  "specializationPreference.eligibility.hrsCompleted": "{{hours}} ساعة مكتملة",
+  "specializationPreference.eligibility.hrsRequired": "{{hours}} ساعة مطلوبة",
+
+  "specializationPreference.saveSuccess.title": "تم حفظ التفضيلات بنجاح!",
+  "specializationPreference.saveSuccess.description": "تم تقديم تفضيلاتك المرتبة.",
+
+  "specializationPreference.clearAll": "مسح الكل",
+
+  "specializationPreference.status.noPreferences": "لا توجد تفضيلات بعد",
+  "specializationPreference.status.preferencesRanked_zero": "0 تفضيل مرتب",
+  "specializationPreference.status.preferencesRanked_one": "تفضيل واحد مرتب",
+  "specializationPreference.status.preferencesRanked_two": "تفضيلان مرتبان",
+  "specializationPreference.status.preferencesRanked_few": "{{count}} تفضيلات مرتبة",
+  "specializationPreference.status.preferencesRanked_many": "{{count}} تفضيلًا مرتبًا",
+  "specializationPreference.status.preferencesRanked_other": "{{count}} تفضيل مرتب",
+  "specializationPreference.status.addToSave_specialization": "أضف تخصصًا واحدًا على الأقل للحفظ.",
+  "specializationPreference.status.addToSave_department": "أضف قسمًا واحدًا على الأقل للحفظ.",
+  "specializationPreference.status.dragToReorder": "اسحب لإعادة الترتيب أو استخدم أزرار الأسهم.",
+
+  "specializationPreference.saveButton": "حفظ التفضيلات",
+
+  "specializationPreference.available.specializations": "التخصصات المتاحة",
+  "specializationPreference.available.departments": "الأقسام المتاحة",
+
+  "specializationPreference.search.specializations": "البحث في التخصصات...",
+  "specializationPreference.search.departments": "البحث في الأقسام...",
+
+  "specializationPreference.empty.noMatches": "لا توجد نتائج لـ \"{{query}}\"",
+  "specializationPreference.empty.allAdded_specializations": "تمت إضافة جميع التخصصات إلى ترتيبك",
+  "specializationPreference.empty.allAdded_departments": "تمت إضافة جميع الأقسام إلى ترتيبك",
+  "specializationPreference.empty.tryDifferentSearch": "جرب مصطلح بحث مختلف.",
+  "specializationPreference.empty.addMoreItems": "أضف المزيد من العناصر من اللوحة اليسرى.",
+
+  "specializationPreference.ranking.title": "ترتيبك",
+  "specializationPreference.ranking.empty.title": "لا توجد تفضيلات مرتبة بعد",
+  "specializationPreference.ranking.empty.description_specializations": "أضف تخصصات من اللوحة اليسرى لبدء الترتيب.",
+  "specializationPreference.ranking.empty.description_departments": "أضف أقسامًا من اللوحة اليسرى لبدء الترتيب.",
+
+  "specializationPreference.actions.moveUp": "نقل لأعلى",
+  "specializationPreference.actions.moveDown": "نقل لأسفل",
+  "specializationPreference.actions.remove": "إزالة"
+}

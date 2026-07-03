@@ -1,5 +1,8 @@
+import { useTranslation } from "react-i18next";
+import useArabicDigits from "../../../hooks/useArabicDigits";
 import Section from "../../../components/ui/Section";
 import { CalendarSlashIcon, ClockIcon, LocationDotIcon } from "../../../components/ui/icons";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 const examTypeStyles = {
     Midterm: "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark text-text-blue-default-light dark:text-text-blue-default-dark border-border-blue-default-light dark:border-border-blue-default-dark",
@@ -7,6 +10,8 @@ const examTypeStyles = {
 };
 
 export default function ExamSchedule({ exams = [] }) {
+    const { t } = useTranslation("student");
+    const { convert, isRTL, localizeTime } = useArabicDigits();
     const getDaysRemaining = (dateStr) => {
         const examDate = new Date(dateStr);
         const today = new Date();
@@ -30,7 +35,7 @@ export default function ExamSchedule({ exams = [] }) {
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                         <CalendarSlashIcon className="w-12 h-12 mb-4 opacity-40" />
-                        <p className="text-sm">No exams scheduled</p>
+                        <p className="text-sm">{t("schedule.noExams")}</p>
                     </div>
                 )}
             </div>
@@ -39,7 +44,15 @@ export default function ExamSchedule({ exams = [] }) {
 }
 
 function ExamCard({ exam, daysRemaining }) {
+    const { t } = useTranslation("student");
+    const { convert, isRTL, localizeTime } = useArabicDigits();
     const examDate = new Date(exam.date);
+
+    const getExamTypeLabel = (type) => {
+        if (type === "Midterm") return t("schedule.examTypeMidterm");
+        if (type === "Final") return t("schedule.examTypeFinal");
+        return type;
+    };
 
     return (
         <div
@@ -61,13 +74,13 @@ function ExamCard({ exam, daysRemaining }) {
                 `}
             >
                 <span className="text-xl md:text-2xl font-bold leading-none">
-                    {examDate.getDate()}
+                    {convert(examDate.getDate())}
                 </span>
                 <span className="text-xs uppercase tracking-wide mt-1">
-                    {examDate.toLocaleDateString("en-US", { month: "short" })}
+                    {examDate.toLocaleDateString(isRTL ? "ar-SA" : "en-US", { month: "short" })}
                 </span>
                 <span className="text-xs mt-0.5">
-                    {exam.day?.slice(0, 3)}
+                    {examDate.toLocaleDateString(isRTL ? "ar-SA" : "en-US", { weekday: "short" })}
                 </span>
             </div>
 
@@ -75,43 +88,43 @@ function ExamCard({ exam, daysRemaining }) {
             <div className="flex-1 min-w-0 flex flex-col justify-center space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                        {exam.courseCode}
+                        {getLocalizedField(exam, 'courseCode', isRTL ? 'ar' : 'en')}
                     </span>
 
                     <span
                         className={`px-2.5 py-1 text-xs font-semibold rounded-full capitalize ${examTypeStyles[exam.examType]}`}
                     >
-                        {exam.examType}
+                        {getExamTypeLabel(exam.examType)}
                     </span>
 
                 </div>
 
                 <h3 className="text-sm md:text-lg font-semibold text-text-primary-active-light dark:text-text-primary-active-dark truncate">
-                    {exam.courseName}
+                    {getLocalizedField(exam, 'courseName', isRTL ? 'ar' : 'en')}
                 </h3>
 
                 <div className="flex flex-col gap-1 text-xs md:text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">
                     <span className="flex items-center gap-1.5">
                         <ClockIcon className="w-4 h-4" />
-                        {exam.startTime} - {exam.endTime}
+                        {localizeTime(exam.startTime)} - {localizeTime(exam.endTime)}
                     </span>
 
                     <span className="flex items-center gap-1.5">
                         <LocationDotIcon className="w-4 h-4" />
-                        {exam.location}
+                        {getLocalizedField(exam, 'location', isRTL ? 'ar' : 'en')}
                     </span>
                 </div>
             </div>
 
             {/* Days Remaining */}
             {daysRemaining >= 0 && (
-                <div className="flex items-center justify-center pl-2 md:pl-4 border-l border-border-primary-default-light dark:border-border-primary-default-dark w-16 md:w-20 shrink-0">
+                <div className="flex items-center justify-center ps-2 md:ps-4 border-s border-border-primary-default-light dark:border-border-primary-default-dark w-16 md:w-20 shrink-0">
                     <div className="text-center">
                         <span className="text-xl md:text-2xl font-bold text-text-accent-active-light dark:text-text-accent-active-dark leading-none">
-                            {daysRemaining}
+                            {convert(daysRemaining)}
                         </span>
                         <p className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                            days left
+                            {t("schedule.daysLeft")}
                         </p>
                     </div>
                 </div>

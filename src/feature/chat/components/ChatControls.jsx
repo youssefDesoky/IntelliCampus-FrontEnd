@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import { PaperclipIcon, PaperPlaneIcon, ImageIcon, FileIcon } from "../../../components/ui/icons";
 
 export default function ChatControls({ sendMessage, onInputChange, onAttachFile }) {
+  const { t, i18n } = useTranslation('chat');
+  const isRTL = i18n.language === 'ar';
   const [text, setText] = useState("");
   const [focused, setFocused] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -55,6 +58,7 @@ export default function ChatControls({ sendMessage, onInputChange, onAttachFile 
         className={`
           flex items-center gap-2 w-full
           rounded-xl border px-3 py-2.5 transition-all duration-200
+          rtl:flex-row-reverse
           ${focused
             ? "border-[var(--primary)]/50 bg-white/6 shadow-[0_0_0_3px_var(--primary-10,rgba(59,130,246,0.08))]"
             : "border-white/10 bg-white/4 hover:border-white/20"
@@ -67,28 +71,28 @@ export default function ChatControls({ sendMessage, onInputChange, onAttachFile 
             type="button"
             onClick={() => setMenuOpen((prev) => !prev)}
             className="p-1 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-white/6 transition-colors"
-            aria-label="Attach file"
+            aria-label={t('attachFile')}
           >
             <PaperclipIcon size={17} />
           </button>
 
           {menuOpen && (
-            <div className="absolute bottom-full left-0 mb-2 w-44 rounded-xl border border-white/10 bg-[var(--surface)] shadow-xl p-1.5 z-50">
+            <div className="absolute bottom-full start-0 mb-2 w-44 rounded-xl border border-white/10 bg-[var(--surface)] shadow-xl p-1.5 z-50">
               <button
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
-                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-white/6 transition-colors text-left"
+                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-white/6 transition-colors text-start"
               >
                 <ImageIcon size={16} className="text-[var(--primary)]" />
-                Photo / Video
+                {t('photoVideo')}
               </button>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-white/6 transition-colors text-left"
+                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-white/6 transition-colors text-start"
               >
                 <FileIcon size={16} className="text-[var(--primary)]" />
-                Document
+                {t('document')}
               </button>
             </div>
           )}
@@ -119,7 +123,8 @@ export default function ChatControls({ sendMessage, onInputChange, onAttachFile 
           onKeyDown={handleKeyDown}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder="Type a message…"
+          placeholder={t('typeMessage')}
+          dir={isRTL ? 'rtl' : 'ltr'}
           className="
             flex-1 bg-transparent outline-none border-none
             text-sm text-[var(--text-primary)]
@@ -140,7 +145,7 @@ export default function ChatControls({ sendMessage, onInputChange, onAttachFile 
               : "bg-white/6 text-[var(--text-tertiary)]"
             }
           `}
-          aria-label="Send message"
+          aria-label={t('send')}
           disabled={!canSend}
         >
           <PaperPlaneIcon size={18} />
@@ -148,7 +153,7 @@ export default function ChatControls({ sendMessage, onInputChange, onAttachFile 
       </div>
 
       <p className="hidden md:block text-center text-[10px] text-[var(--text-tertiary)] mt-2">
-        Enter to send · Shift+Enter for new line
+        {t('sendHint')}
       </p>
 
       <style>{`
