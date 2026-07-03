@@ -64,12 +64,6 @@ export default function CourseRegistrationHeader({
         { value: "elective", label: t('registration.filterElective'), icon: BookIcon },
     ];
 
-    const maxCredits = registrationSettings?.effectiveMaxCreditHours ?? DEFAULT_MAX_CREDITS;
-    const minCredits = registrationSettings?.minCreditHoursPerSemester ?? null;
-    const isOnProbation = registrationSettings?.isOnProbation ?? false;
-    const currentGpa = registrationSettings?.currentGpa ?? 0;
-    const isSummer = (registrationSettings?.semester ?? "").toLowerCase().startsWith("summer");
-
     const selectedCredits = selectedCourses.reduce(
         (sum, c) => sum + (typeof c.creditHours === "number" ? c.creditHours : 0),
         0

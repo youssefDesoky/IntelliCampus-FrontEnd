@@ -21,16 +21,6 @@ export default function InstructorCourses() {
     const { isMobile } = useDeviceType();
     const navigate = useNavigate();
 
-    const PAGE_SIZE = 6;
-    const [page, setPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
-
-    useEffect(() => {
-        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
-        return () => clearTimeout(timer);
-    }, [searchQuery]);
-
     const mapCourseToCardProps = (course) => {
         const initials = (getLocalizedField(course, 'departmentName', i18n.language) || getLocalizedField(course, 'courseCode', i18n.language) || course.courseCode || "")
             .split(" ")

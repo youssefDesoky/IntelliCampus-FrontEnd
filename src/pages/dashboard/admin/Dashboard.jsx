@@ -630,7 +630,7 @@ export default function Dashboard() {
             </div>
           </form>
 
-          <menu className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 no-scrollbar">
+          <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 no-scrollbar">
             {dashboard.latestNews?.length > 0 ? (
               dashboard.latestNews.slice(0, 5).map((item) => {
                 const itemKey = `${item.kind ?? "Broadcast"}-${item.id}`;
@@ -713,7 +713,6 @@ export default function Dashboard() {
                         </button>
                       </div>
                     )}
-                  </div>
                 </li>
               );
             })
@@ -725,7 +724,7 @@ export default function Dashboard() {
                 </p>
               </li>
             )}
-          </menu>
+          </div>
         </div>
 
         {/* Academic KPI snapshot */}
