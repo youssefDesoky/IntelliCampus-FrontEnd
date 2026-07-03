@@ -32,7 +32,7 @@ const eventColors = {
     section: "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark border-border-purple-default-light dark:border-border-purple-default-dark text-text-purple-default-light dark:text-text-purple-default-dark",
     default: "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark",
 };
-export default function WeeklyScheduleEvent({ event, rangeStart = 0, totalDuration = 12 }) {
+export default function WeeklyScheduleEvent({ event, rangeStart = 0, totalDuration = 12, columnIndex = 0, columnCount = 1 }) {
     const { t, i18n } = useTranslation('common');
     const { localizeTime } = useArabicDigits();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,6 +41,8 @@ export default function WeeklyScheduleEvent({ event, rangeStart = 0, totalDurati
     const colSpan = getColSpan(event.startTime, event.endTime);
     const leftPercent = totalDuration > 0 ? ((startIndex - rangeStart) / totalDuration) * 100 : 0;
     const widthPercent = totalDuration > 0 ? (colSpan / totalDuration) * 100 : 0;
+    const adjustedWidth = widthPercent / columnCount;
+    const adjustedLeft = leftPercent + (columnIndex * adjustedWidth);
     const colorClass = eventColors[event.type] || eventColors.default;
 
     const getTypeLabel = (type) => {
@@ -55,8 +57,8 @@ export default function WeeklyScheduleEvent({ event, rangeStart = 0, totalDurati
             <div
                 className={`absolute top-1 bottom-1 rounded-lg border-s-4 p-2 transition-all hover:shadow-md hover:scale-[1.02] ${colorClass}`}
                 style={{
-                    left: `calc(${leftPercent}% + 2px)`,
-                    width: `calc(${widthPercent}% - 4px)`,
+                    left: `calc(${adjustedLeft}% + 2px)`,
+                    width: `calc(${adjustedWidth}% - 4px)`,
                 }}
                 onClick={() => setIsModalOpen(true)}
                 title={`${localizedTitle} - ${localizeTime(event.startTime)} to ${localizeTime(event.endTime)}`}

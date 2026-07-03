@@ -84,6 +84,7 @@ export default function CourseShell() {
     const refreshMaterials = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ["courseMaterials", courseId] });
         queryClient.invalidateQueries({ queryKey: ["courseById", courseId] });
+        queryClient.invalidateQueries({ queryKey: ["courseFolders", courseId] });
     }, [queryClient, courseId]);
 
     const isInactive = courseData?.status === "Inactive";

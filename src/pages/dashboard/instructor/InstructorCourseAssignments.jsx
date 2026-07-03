@@ -70,8 +70,6 @@ export default function InstructorCourseAssignments() {
     const [editingAssignmentId, setEditingAssignmentId] = useState(null);
     
     const [isSubmissionsOpen, setIsSubmissionsOpen] = useState(false);
-    const [submissions, setSubmissions] = useState([]);
-    const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(false);
     const [previewFile, setPreviewFile] = useState(null);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
     const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
@@ -108,7 +106,32 @@ export default function InstructorCourseAssignments() {
     useEffect(() => {
         if (error) showError(error.message || "Failed to load assignments.");
     }, [error, showError]);
-    
+
+    const normalizeSubmission = (s) => ({
+        id: s.id,
+        status: s.status,
+        submittedAt: s.submittedAt || s.SubmittedAt || s.SubmittedDate || null,
+        note: s.note || s.Note || null,
+        files: s.files || s.Files || [],
+        student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (s.student.fullName || s.student.name) : s.student) || null,
+        score: s.score ?? s.Score ?? null,
+        feedback: s.feedback ?? s.Feedback ?? null,
+        grade: s.grade ?? null,
+    });
+
+    const {
+        data: submissions = [],
+        isLoading: isLoadingSubmissions,
+    } = useQuery({
+        queryKey: ["assignmentSubmissions", selectedAssignmentId],
+        queryFn: async () => {
+            const data = await fetchAssignmentSubmissions(selectedAssignmentId);
+            return (Array.isArray(data) ? data : []).map(normalizeSubmission);
+        },
+        enabled: !!selectedAssignmentId && isSubmissionsOpen,
+        staleTime: 30_000,
+    });
+
     const sortedAssignments = useMemo(() => [...assignments].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)), [assignments]);
     
     const handleCloseForm = () => {
@@ -236,56 +259,21 @@ export default function InstructorCourseAssignments() {
         }
     };
     
-    const openSubmissions = async (assignment) => {
+    const openSubmissions = (assignment) => {
         setSelectedSubmission(null);
-        setSubmissions([]);
-        setIsSubmissionsOpen(true);
-        setIsLoadingSubmissions(true);
         setSelectedAssignmentId(assignment.id);
         setSelectedAssignmentTotalPoints(assignment.totalPoints || 100);
-        try {
-            const data = await fetchAssignmentSubmissions(assignment.id);
-                const normalized = (Array.isArray(data) ? data : []).map((s) => ({
-                id: s.id,
-                status: s.status,
-                submittedAt: s.submittedAt || s.SubmittedAt || s.SubmittedDate || null,
-                note: s.note || s.Note || null,
-                files: s.files || s.Files || [],
-                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (getLocalizedField(s.student, 'fullName', i18n.language) || s.student.name) : s.student) || null,
-                score: s.score ?? s.Score ?? null,
-                feedback: s.feedback ?? s.Feedback ?? null,
-                grade: s.grade ?? null,
-            }));
-            setSubmissions(normalized);
-        } catch (err) {
-            showError(err.message || "Failed to load submissions.");
-        } finally {
-            setIsLoadingSubmissions(false);
-        }
+        setIsSubmissionsOpen(true);
     };
     
-    const refreshSubmissions = async () => {
-        if (!selectedAssignmentId) return;
-        try {
-            const data = await fetchAssignmentSubmissions(selectedAssignmentId);
-            const normalized = (Array.isArray(data) ? data : []).map((s) => ({
-                id: s.id,
-                status: s.status,
-                submittedAt: s.submittedAt || s.SubmittedAt || s.SubmittedDate || null,
-                note: s.note || s.Note || null,
-                files: s.files || s.Files || [],
-                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (getLocalizedField(s.student, 'fullName', i18n.language) || s.student.name) : s.student) || null,
-                score: s.score ?? s.Score ?? null,
-                feedback: s.feedback ?? s.Feedback ?? null,
-                grade: s.grade ?? null,
-            }));
-            setSubmissions(normalized);
-        } catch { /* ignore */ }
+    const refreshSubmissions = () => {
+        if (!selectedAssignmentId) return Promise.resolve();
+        return queryClient.invalidateQueries({ queryKey: ["assignmentSubmissions", selectedAssignmentId] });
     };
 
     const closeSubmissions = () => {
         setIsSubmissionsOpen(false);
-        setSubmissions([]);
+        setSelectedAssignmentId(null);
         setSelectedSubmission(null);
     };
     
@@ -331,14 +319,31 @@ export default function InstructorCourseAssignments() {
 
         setIsGrading(true);
         try {
-            await gradeAssignmentSubmission(selectedAssignmentId, {
+            const response = await gradeAssignmentSubmission(selectedAssignmentId, {
                 studentAssignmentId: Number(gradeModal.id),
                 score,
                 feedback: gradeFeedback.trim() || null,
             });
             setGradeResult("success");
-            queryClient.invalidateQueries({ queryKey: ["instructorCourseAssignments", courseId] });
-            refreshSubmissions();
+
+            const fb = gradeFeedback.trim() || null;
+            queryClient.setQueryData(["assignmentSubmissions", selectedAssignmentId], (prev = []) =>
+                prev.map((s) =>
+                    String(s.id) === String(gradeModal.id)
+                        ? {
+                              ...s,
+                              grade: (response?.grade) || { score, totalPoints: selectedAssignmentTotalPoints, feedback: fb },
+                              score: (response?.score) != null ? response.score : score,
+                              feedback: (response?.feedback) != null ? response.feedback : fb,
+                          }
+                        : s
+                )
+            );
+
+            queryClient.invalidateQueries({ queryKey: ["courseAssignments", courseId] });
+            queryClient.invalidateQueries({ queryKey: ["assignmentStats", courseId] });
+            await queryClient.invalidateQueries({ queryKey: ["instructorCourseAssignments", courseId] });
+            await refreshSubmissions();
             setGradeModal(null);
             setGradeScore("");
             setGradeFeedback("");
@@ -643,6 +648,7 @@ export default function InstructorCourseAssignments() {
                             <DownloadIcon size={16} />
                             </span>
                         )}
+                        {!isInactive && (
                         <button
                         type="button"
                         className="p-2 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-green-600 dark:text-green-400 transition-colors"
@@ -655,6 +661,7 @@ export default function InstructorCourseAssignments() {
                         >
                         <ClipboardCheckIcon size={16} />
                         </button>
+                        )}
                         </div>
                         </div>
                         
@@ -763,6 +770,7 @@ export default function InstructorCourseAssignments() {
             </div>
             </div>
             <div className="flex items-center gap-2">
+            {!isInactive && (
             <button
             type="button"
             className="p-2 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-green-600 dark:text-green-400 transition-colors"
@@ -779,6 +787,7 @@ export default function InstructorCourseAssignments() {
             >
             <ClipboardCheckIcon size={20} />
             </button>
+            )}
             <button onClick={() => downloadFile(previewFile.url, previewFile.name, previewFile.id)} className="p-2 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg">
             <DownloadIcon size={20} />
             </button>

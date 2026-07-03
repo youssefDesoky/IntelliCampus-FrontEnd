@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef } from "react";
-import { Link, NavLink, Form, useNavigate } from "react-router-dom";
+import { Link, NavLink, Form, useNavigate, matchPath } from "react-router-dom";
 import defaultImage from "../../../assets/defaultImage.jpg";
 import { fetchMyNotifications, markNotificationAsRead, markAllNotificationsAsRead, subscribeNotificationsChanged } from "../../../api/notifications";
 
@@ -14,6 +14,58 @@ import { useToast } from '../../../contexts/ToastContext.jsx';
 import { openChat, subscribeChatState } from '../../../utils/notificationHandler';
 
 
+const NOTIFICATION_ROUTES = [
+  // Student
+  { path: "/courses/:courseId" },
+  { path: "/courses/:courseId/materials" },
+  { path: "/courses/:courseId/assignments" },
+  { path: "/courses/:courseId/quizzes" },
+  { path: "/courses/:courseId/quizzes/practice" },
+  { path: "/courses/:courseId/attendance" },
+  { path: "/courses/:courseId/grades" },
+  { path: "/courses/:courseId/community" },
+  { path: "/courses/:courseId/community/questions/:postId" },
+  { path: "/courses/:courseId/smart-notes" },
+  { path: "/courses/:courseId/meeting" },
+  // Instructor
+  { path: "/instructor/courses/:courseId" },
+  { path: "/instructor/courses/:courseId/materials" },
+  { path: "/instructor/courses/:courseId/assignments" },
+  { path: "/instructor/courses/:courseId/quizzes" },
+  { path: "/instructor/courses/:courseId/attendance" },
+  { path: "/instructor/courses/:courseId/attendance/:sessionId" },
+  { path: "/instructor/courses/:courseId/attendance/excuses" },
+  { path: "/instructor/courses/:courseId/grades" },
+  { path: "/instructor/courses/:courseId/grades/complaints" },
+  { path: "/instructor/courses/:courseId/community" },
+  { path: "/instructor/courses/:courseId/community/questions/:postId" },
+  { path: "/instructor/courses/:courseId/smart-notes" },
+  { path: "/instructor/courses/:courseId/analytics" },
+  { path: "/instructor/courses/:courseId/meeting" },
+];
+
+function normalizeActionUrl(actionUrl) {
+  let pathname;
+  try {
+    const parsed = new URL(actionUrl);
+    pathname = parsed.pathname.replace(/\/+$/, "");
+  } catch {
+    pathname = actionUrl.split("?")[0].replace(/\/+$/, "");
+  }
+  const qs = actionUrl.includes("?") ? actionUrl.slice(actionUrl.indexOf("?")) : "";
+  let path = pathname;
+  while (path) {
+    if (NOTIFICATION_ROUTES.some((r) => matchPath(r.path, path))) {
+      return path + qs;
+    }
+    const slashIdx = path.lastIndexOf("/");
+    if (slashIdx <= 0) break;
+    path = path.slice(0, slashIdx);
+  }
+  return actionUrl;
+}
+
+const viewLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
 const StudentPaths = ['/', /^\/courses(\/|$)/];
 
 function isStudentPath(path) {
@@ -125,7 +177,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                                         const info = parseChatUrl(actionUrl);
                                         openChat(info.type, info.userId, info.userName);
                                     } else if (canNavigateRef.current?.(actionUrl)) {
-                                        navigate(actionUrl);
+                                        navigate(normalizeActionUrl(actionUrl));
                                     }
                                 }
                                 : undefined,
@@ -200,7 +252,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
         if (chatInfo) {
             openChat(chatInfo.type, chatInfo.userId, chatInfo.userName);
         } else if (canNavigateTo(actionUrl)) {
-            navigate(actionUrl);
+            navigate(normalizeActionUrl(actionUrl));
         }
     };
 

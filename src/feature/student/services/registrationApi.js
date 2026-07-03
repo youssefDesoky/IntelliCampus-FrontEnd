@@ -44,3 +44,7 @@ export async function changeCourseSection(courseId, classId) {
     body: JSON.stringify({ classId }),
   });
 }
+
+export async function fetchStudentCourseRegistrations(studentId) {
+  return apiClient(`/api/StudentCourse/${studentId}`);
+}

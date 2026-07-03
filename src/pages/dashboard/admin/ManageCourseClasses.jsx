@@ -29,7 +29,6 @@ import {
   updateClass,
   deleteClassFromCourse,
   updateCourse,
-  deactivateCourse,
   fetchCourses,
 } from "../../../feature/admin/services/adminCoursesApi";
 import { importClasses } from "../../../feature/admin/services/adminImportsApi";
@@ -235,7 +234,6 @@ export default function ManageCourseClasses() {
     const [deleteTarget, setDeleteTarget] = useState(null);
 
     const [isEditCourseOpen, setIsEditCourseOpen] = useState(false);
-    const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
     const [allCourses, setAllCourses] = useState([]);
 
     const loadData = useCallback(async () => {
@@ -317,16 +315,6 @@ export default function ManageCourseClasses() {
         }
     };
 
-    const handleDeactivate = async () => {
-        try {
-            await deactivateCourse(courseId);
-            navigate("/admin/courses");
-        } catch (err) {
-            showError(err.message);
-        }
-        setIsDeactivateOpen(false);
-    };
-
     const handleOpenEdit = async () => {
         try {
             const courses = await fetchCourses();
@@ -374,10 +362,7 @@ export default function ManageCourseClasses() {
                         <FilePenIcon className="w-4 h-4" />
                         <span className="hidden sm:inline"> {t('manageCourseClasses.editCourse')}</span>
                     </Button>
-                    <Button variant="warning" size="sm" onClick={() => setIsDeactivateOpen(true)}>
-                        <span className="hidden sm:inline">{t('manageCourseClasses.deactivate')}</span>
-                        <span className="sm:hidden">X</span>
-                    </Button>
+
                 </div>
             </div>
 
@@ -510,7 +495,7 @@ export default function ManageCourseClasses() {
                 })}
             </Dialog>
 
-            {/* Deactivate Confirmation */}
+{/* Deactivate Confirmation */}
             <Dialog
                 isOpen={isDeactivateOpen}
                 variant="warning"

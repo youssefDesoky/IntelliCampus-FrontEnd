@@ -303,9 +303,11 @@ export default function InstructorCourseQuizzes() {
                                 <Button type="button" variant="secondary" size="sm" startIcon={<EyeIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => openSubmissions(quiz)}>
                                     <span className="hidden sm:inline">{t('quizzes.submissions')}</span>
                                 </Button>
-                                <Button type="button" variant="secondary" size="sm" startIcon={<ListIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => setManageQuiz(quiz)}>
-                                    <span className="hidden sm:inline">{t('quizzes.manageQuestions')}</span>
-                                </Button>
+                                {!isInactive && (
+                                    <Button type="button" variant="secondary" size="sm" startIcon={<ListIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => setManageQuiz(quiz)}>
+                                        <span className="hidden sm:inline">{t('quizzes.manageQuestions')}</span>
+                                    </Button>
+                                )}
                                 {!isInactive && (
                                     <Button type="button" variant="secondary" size="sm" startIcon={<FilePenIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => handleEdit(quiz)}>
                                         <span className="hidden sm:inline">{t('quizzes.editBtn')}</span>
@@ -369,14 +371,16 @@ export default function InstructorCourseQuizzes() {
                                                             {ar(s.score)} / {ar(s.totalScore)}
                                                         </span>
                                                     )}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openSubmissionDetail(s)}
-                                                        className="p-1.5 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark transition-colors"
-                                                        title={t('quizzes.gradeSubmitTooltip')}
-                                                    >
-                                                        <PenSquareIcon size={16} />
-                                                    </button>
+                                                   {!isInactive && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openSubmissionDetail(s)}
+                                                            className="p-1.5 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark transition-colors"
+                                                            title={t('quizzes.gradeSubmitTooltip')}
+                                                        >
+                                                            <PenSquareIcon size={16} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                             {s.note && (

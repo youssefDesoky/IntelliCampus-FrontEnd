@@ -62,10 +62,12 @@ export async function fetchAssignableRoles() {
     });
 }
 
-export async function assignUserRole(userId, roleName) {
+export async function assignUserRole(userId, roleId) {
+    const payload = { userId, roleId };
+    console.log('[RoleAssign] Sending:', JSON.stringify(payload), '| userId type:', typeof userId, '| roleId type:', typeof roleId);
     return apiClient('/api/Roles/assign', {
         method: "POST",
-        body: JSON.stringify({ userId, roleName }),
+        body: JSON.stringify(payload),
     });
 }
 
@@ -107,7 +109,7 @@ export async function assignUserRoles(userId, selectedRoles) {
     for (const roleName of rolesToAdd) {
         const role = allRoles.find(r => r.roleName?.toLowerCase() === roleName);
         if (role) {
-            await assignUserRole(userId, role.roleName);
+            await assignUserRole(userId, role.roleId);
         }
     }
 

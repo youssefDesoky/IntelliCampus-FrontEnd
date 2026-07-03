@@ -10,6 +10,7 @@ import CommentsIcon from '../components/ui/icons/CommentsIcon';
 import { setOpenChatHandler } from '../utils/notificationHandler';
 
 const VIEW_TYPES = ['student', 'instructor', 'admin'];
+const VIEW_DASHBOARD_MAP = { student: '/', instructor: '/instructor', admin: '/admin' };
 
 function resolvePrimaryRole(roles) {
     const r = (roles || []).map(r => r.toLowerCase());
@@ -53,6 +54,10 @@ export default function AppLayout() {
     const handleViewChange = (view) => {
         setActiveView(view);
         localStorage.setItem('activeView', view);
+        const target = VIEW_DASHBOARD_MAP[view];
+        if (target && window.location.pathname !== target) {
+            navigate(target, { replace: true });
+        }
     };
 
     useEffect(() => {

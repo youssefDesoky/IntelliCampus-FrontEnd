@@ -79,6 +79,8 @@ export default function CourseAssignments() {
         queryKey: ["courseAssignments", course?.id],
         queryFn: () => fetchAssignmentsByCourse(course.id).then(normalizeAssignments),
         staleTime: 2 * 60 * 1000,
+        refetchOnMount: "always",
+        refetchInterval: 30_000,
         enabled: !!course?.id,
     });
 
