@@ -180,7 +180,6 @@ export default function InstructorCourseGrades() {
                             </Button>
                         </>
                     )}
-                    )}
                     <Button
                         variant="secondary"
                         type="button"

@@ -396,8 +396,6 @@ export default function CoursesRegistration() {
                 }
             }
         }
-            }
-        }
 
         setLocallyAddedCourses([]);
         await queryClient.invalidateQueries({ queryKey: ["coursesRegistration"] });

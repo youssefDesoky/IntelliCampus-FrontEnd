@@ -15,6 +15,4 @@ export default function CoursesRegistrationActionButtons({ onConfirm }) {
             </Button>
         </div>
     );
-        </div>
-    );
 }

@@ -25,17 +25,6 @@ export default function InstructorCoursesHeader({isMobile, viewMode, setViewMode
                             onSecondModeSelect={() => setViewMode("list")}
                             firstModeLabel={<Grid2ColIcon className="w-5 h-5" />}
                             secondModeLabel={<ListIcon className="w-5 h-5" />}
-                />
-
-                {!isMobile && (
-                    <>
-                        <ToggleViewMode
-                            isVertical={false}
-                            isFirstMode={viewMode === "grid"}
-                            onFirstModeSelect={() => setViewMode("grid")}
-                            onSecondModeSelect={() => setViewMode("list")}
-                            firstModeLabel={<Grid2ColIcon className="w-5 h-5" />}
-                            secondModeLabel={<ListIcon className="w-5 h-5" />}
                         />
                         <div className="h-6 w-px bg-border-primary-default-light dark:bg-border-primary-default-dark" />
                     </>
