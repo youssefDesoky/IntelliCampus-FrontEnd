@@ -389,20 +389,6 @@ export default function CoursesRegistration() {
             if (newSection && newSection.value !== course.classId) {
                 try {
                     await changeCourseSection(course.courseId, newSection.value);
-                    successMsgs.push(`Changed section for ${course.title}`);
-                } catch (err) {
-                    const msg = err?.message || err?.toString() || "Unknown error";
-                    failureMsgs.push(`Failed to change section for ${course.title}: ${msg}`);
-                }
-            }
-        }
-
-        const registeredCourses = selectedCourses.filter((c) => c.isRegistered);
-        for (const course of registeredCourses) {
-            const newSection = selectedSectionByCourseId[course.courseId];
-            if (newSection && newSection.value !== course.classId) {
-                try {
-                    await changeCourseSection(course.courseId, newSection.value);
                     successMsgs.push('Changed section for ' + course.title);
                 } catch (err) {
                     const msg = err?.message || err?.toString() || "Unknown error";

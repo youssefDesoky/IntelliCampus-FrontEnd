@@ -52,16 +52,6 @@ export default function InstructorCourses() {
         };
     };
 
-    const PAGE_SIZE = 6;
-    const [page, setPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
-
-    useEffect(() => {
-        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
-        return () => clearTimeout(timer);
-    }, [searchQuery]);
-
     const { data: courses = [], isLoading: loading, error } = useQuery({
         queryKey: ["instructorCourses", debouncedSearch],
         queryFn: async () => {
