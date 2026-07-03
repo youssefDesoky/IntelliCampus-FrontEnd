@@ -28,7 +28,6 @@ import {
   updateClass,
   deleteClassFromCourse,
   updateCourse,
-  deactivateCourse,
   fetchCourses,
 } from "../../../feature/admin/services/adminCoursesApi";
 import { importClasses } from "../../../feature/admin/services/adminImportsApi";
@@ -228,7 +227,6 @@ export default function ManageCourseClasses() {
     const [deleteTarget, setDeleteTarget] = useState(null);
 
     const [isEditCourseOpen, setIsEditCourseOpen] = useState(false);
-    const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
     const [allCourses, setAllCourses] = useState([]);
 
     const loadData = useCallback(async () => {
@@ -310,16 +308,6 @@ export default function ManageCourseClasses() {
         }
     };
 
-    const handleDeactivate = async () => {
-        try {
-            await deactivateCourse(courseId);
-            navigate("/admin/courses");
-        } catch (err) {
-            showError(err.message);
-        }
-        setIsDeactivateOpen(false);
-    };
-
     const handleOpenEdit = async () => {
         try {
             const courses = await fetchCourses();
@@ -366,10 +354,7 @@ export default function ManageCourseClasses() {
                         <FilePenIcon className="w-4 h-4" />
                         <span className="hidden sm:inline"> Edit</span>
                     </Button>
-                    <Button variant="warning" size="sm" onClick={() => setIsDeactivateOpen(true)}>
-                        <span className="hidden sm:inline">Deactivate</span>
-                        <span className="sm:hidden">X</span>
-                    </Button>
+
                 </div>
             </div>
 
@@ -501,21 +486,7 @@ export default function ManageCourseClasses() {
                 This action cannot be undone.
             </Dialog>
 
-            {/* Deactivate Confirmation */}
-            <Dialog
-                isOpen={isDeactivateOpen}
-                variant="warning"
-                title="Deactivate Course"
-                onClose={() => setIsDeactivateOpen(false)}
-                onConfirm={() => { handleDeactivate(); return true; }}
-                confirmText="Deactivate"
-                cancelText="Cancel"
-                showCloseButton={true}
-            >
-                Are you sure you want to deactivate{" "}
-                <strong>{course?.courseName}</strong> ({course?.courseCode})?
-                This will make the course unavailable to students.
-            </Dialog>
+
         </div>
     );
 }

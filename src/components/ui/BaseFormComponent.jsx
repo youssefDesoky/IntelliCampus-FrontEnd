@@ -13,7 +13,7 @@ export default function BaseFormComponent({
     maxWidth = "max-w-5xl",
     className = "",
     contentClassName = "",
-    maxHeight = "max-h-[75vh] sm:max-h-none",
+    maxHeight = "max-h-[85vh]",
     footerClassName = "",
     submitDisabled = false,
     submitLoading = false,
@@ -53,7 +53,7 @@ export default function BaseFormComponent({
                     </button>
                 </div>
 
-                <div className={`flex-1 p-6 overflow-y-auto no-scrollbar flex flex-col justify-center ${contentClassName}`}>{children}</div>
+                <div className={`flex-1 p-6 overflow-y-auto no-scrollbar flex flex-col justify-start ${contentClassName}`}>{children}</div>
 
                 <div className={`shrink-0 flex gap-3 border-t border-border-primary-default-light px-3 sm:px-6 py-4 sm:justify-end dark:border-border-primary-default-dark ${footerClassName}`}>
                     <Button variant={cancelVariant} type="button" onClick={onClose} width="flex-1 sm:w-auto">
