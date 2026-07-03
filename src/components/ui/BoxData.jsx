@@ -1,6 +1,13 @@
+import { useTranslation } from "react-i18next";
+
 export default function BoxData({ icon, title, value, iconStyle = "", className = "", ...props }) {
+    const { i18n } = useTranslation();
+    const isRTL = i18n.language === 'ar';
+    const toArabicDigits = (str) => isRTL ? String(str).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) : str;
+
     return (
         <div
+            dir={isRTL ? 'rtl' : 'ltr'}
             className={`
                 group relative flex items-center gap-4 p-5
                 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark
@@ -30,7 +37,7 @@ export default function BoxData({ icon, title, value, iconStyle = "", className 
                     {title}
                 </p>
                 <h2 className="text-2xl md:text-3xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark leading-tight tracking-tight truncate">
-                    {value}
+                    {toArabicDigits(value)}
                 </h2>
             </div>
         </div>

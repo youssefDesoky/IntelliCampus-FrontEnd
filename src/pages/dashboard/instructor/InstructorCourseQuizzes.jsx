@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import Button from "../../../components/ui/Button";
 import TextArea from "../../../components/ui/TextArea";
@@ -16,27 +17,32 @@ import ManageQuizQuestions from "../../../feature/instructor/components/quiz/Man
 import { CourseQuizzesSkeleton } from "../../../feature/instructor/SkeletonLoader";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import useArabicDigits from '../../../hooks/useArabicDigits';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
-function formatDate(value) {
+function formatDate(value, locale) {
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "Invalid date";
-    return new Intl.DateTimeFormat("en-US", {
+    if (Number.isNaN(date.getTime())) return "—";
+    return new Intl.DateTimeFormat(locale, {
         year: "numeric",
         month: "short",
         day: "2-digit",
     }).format(date);
 }
 
-function formatTime(value) {
+function formatTime(value, locale) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(locale, {
         hour: "2-digit",
         minute: "2-digit",
     }).format(date);
 }
 
 export default function InstructorCourseQuizzes() {
+    const { t, i18n } = useTranslation('instructor');
+    const { convert: ar } = useArabicDigits();
     const outlet = useOutletContext() || {};
     const params = useParams();
     const courseId = outlet.courseId || outlet.course?.id || params.courseId;
@@ -84,8 +90,8 @@ export default function InstructorCourseQuizzes() {
     });
 
     useEffect(() => {
-        if (error) showError(error.message || "Failed to load quizzes");
-    }, [error, showError]);
+        if (error) showError(error.message || t('quizzes.errorLoad', 'Failed to load quizzes'));
+    }, [error, showError, t]);
 
     const resetForm = () => {
         setTitle("");
@@ -123,14 +129,14 @@ export default function InstructorCourseQuizzes() {
                 status: s.status ?? 'submitted',
                 submittedAt: s.submittedAt || null,
                 note: s.note || null,
-                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (s.student.fullName || s.student.name) : s.student) || null,
+                student: s.studentName || s.studentFullName || (typeof s.student === 'object' ? (getLocalizedField(s.student, 'fullName', i18n.language) || s.student.name) : s.student) || null,
                 score: s.score,
                 totalScore: s.maxScore ?? s.totalScore ?? quiz.maxScore,
                 answers: s.answerDetails || [],
             }));
             setSubmissions(normalized);
         } catch (err) {
-            showError(err.message || "Failed to load submissions.");
+            showError(err.message || t('quizzes.errorLoadSubmissions', 'Failed to load submissions.'));
         } finally {
             setIsLoadingSubmissions(false);
         }
@@ -180,7 +186,7 @@ export default function InstructorCourseQuizzes() {
             ));
             closeSubmissionDetail();
         } catch (err) {
-            showError(err.message || "Failed to save grade.");
+            showError(err.message || t('quizzes.errorSaveGrade', 'Failed to save grade.'));
         } finally {
             setIsGrading(false);
         }
@@ -193,10 +199,10 @@ export default function InstructorCourseQuizzes() {
     };
 
     const handleSave = async () => {
-        if (!title.trim()) { showError("Enter quiz title."); return; }
-        if (!maxGrade.trim()) { showError("Enter max points for the quiz."); return; }
-        if (!startDate) { showError("Select a start date."); return; }
-        if (!durationMinutes.trim()) { showError("Enter quiz duration in minutes."); return; }
+        if (!title.trim()) { showError(t('quizzes.errorTitleEmpty', 'Enter quiz title.')); return; }
+        if (!maxGrade.trim()) { showError(t('quizzes.errorMaxPointsEmpty', 'Enter max points for the quiz.')); return; }
+        if (!startDate) { showError(t('quizzes.errorStartDateEmpty', 'Select a start date.')); return; }
+        if (!durationMinutes.trim()) { showError(t('quizzes.errorDurationEmpty', 'Enter quiz duration in minutes.')); return; }
 
         const start = new Date(startDate);
         const due = new Date(start.getTime() + Number(durationMinutes) * 60000);
@@ -226,7 +232,7 @@ export default function InstructorCourseQuizzes() {
             resetForm();
             queryClient.invalidateQueries({ queryKey: ["instructorCourseQuizzes", courseId] });
         } catch (err) {
-            showError(err.message || "Failed to save quiz.");
+            showError(err.message || t('quizzes.errorSave', 'Failed to save quiz.'));
         } finally { setIsSaving(false); }
     };
 
@@ -238,24 +244,24 @@ export default function InstructorCourseQuizzes() {
             showToast({ type: "success", title: "Deleted", message: "Quiz has been deleted." });
             queryClient.invalidateQueries({ queryKey: ["instructorCourseQuizzes", courseId] });
         } catch (err) {
-            showError(err.message || "Failed to delete quiz.");
+            showError(err.message || t('quizzes.errorDelete', 'Failed to delete quiz.'));
         }
     };
 
     return (
         <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">Quizzes</h2>
-                {!isInactive && <Button type="button" variant="primary" onClick={openCreate} startIcon={<PlusIcon size={18} />}><span className="hidden sm:inline">Create Quiz</span></Button>}
+                <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{t('quizzes.title')}</h2>
+                {!isInactive && <Button type="button" variant="primary" onClick={openCreate} startIcon={<PlusIcon size={18} />}><span className="hidden sm:inline">{t('quizzes.create')}</span></Button>}
             </div>
 
             {loading ? (
                 <CourseQuizzesSkeleton />
             ) : quizzes.length === 0 ? (
                 <div className="flex flex-col flex-1 items-center justify-center min-h-[60vh] text-center">
-                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">No quizzes yet</h3>
+                    <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('quizzes.noQuizzes')}</h3>
                     <p className="mt-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        Create your first quiz for this course.
+                        {t('quizzes.noQuizzesDesc')}
                     </p>
                 </div>
             ) : (
@@ -265,14 +271,15 @@ export default function InstructorCourseQuizzes() {
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 justify-between">
-                                        <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">{quiz.title}</h3>
+                                        <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
+                                            {getLocalizedField(quiz, 'title', i18n.language)}</h3>
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap shrink-0">
                                             <ChartBarIcon size={14} />
-                                            {quiz.maxScore} pts
+                                            {ar(t('quizzes.pts', { count: quiz.maxScore }))}
                                         </span>
                                     </div>
                                     {quiz.description && (
-                                        <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">{quiz.description}</p>
+                                        <p className="mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2">{getLocalizedField(quiz, 'description', i18n.language)}</p>
                                     )}
                                 </div>
                             </div>
@@ -280,33 +287,33 @@ export default function InstructorCourseQuizzes() {
                             <div className="flex flex-col gap-1 mt-3 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 <div className="flex items-center gap-1.5">
                                     <CalendarDaysIcon size={16} />
-                                    <span>{formatDate(quiz.startDate)}</span>
+                                    <span>{ar(formatDate(quiz.startDate, i18n.language))}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <ClockIcon size={16} />
-                                    <span>{formatTime(quiz.startDate)}</span>
+                                    <span>{ar(formatTime(quiz.startDate, i18n.language))}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <SandClockIcon size={16} />
-                                    <span>{quiz.durationMinutes} min</span>
+                                    <span>{ar(t('quizzes.minutes', { count: quiz.durationMinutes }))}</span>
                                 </div>
                             </div>
 
                             <div className="flex flex-row items-center gap-2 mt-4 pt-4 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark">
                                 <Button type="button" variant="secondary" size="sm" startIcon={<EyeIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => openSubmissions(quiz)}>
-                                    <span className="hidden sm:inline">Submissions</span>
+                                    <span className="hidden sm:inline">{t('quizzes.submissions')}</span>
                                 </Button>
                                 <Button type="button" variant="secondary" size="sm" startIcon={<ListIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => setManageQuiz(quiz)}>
-                                    <span className="hidden sm:inline">Manage Questions</span>
+                                    <span className="hidden sm:inline">{t('quizzes.manageQuestions')}</span>
                                 </Button>
                                 {!isInactive && (
                                     <Button type="button" variant="secondary" size="sm" startIcon={<FilePenIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center" onClick={() => handleEdit(quiz)}>
-                                        <span className="hidden sm:inline">Edit</span>
+                                        <span className="hidden sm:inline">{t('quizzes.editBtn')}</span>
                                     </Button>
                                 )}
                                 {!isInactive && (
                                     <Button type="button" variant="secondary" size="sm" startIcon={<TrashIcon size={16} />} className="flex-1 sm:flex-none sm:w-auto justify-center text-text-danger-default-light dark:text-text-danger-default-dark" onClick={() => setDeletingQuiz(quiz)}>
-                                        <span className="hidden sm:inline">Delete</span>
+                                        <span className="hidden sm:inline">{t('quizzes.deleteBtn')}</span>
                                     </Button>
                                 )}
                             </div>
@@ -327,10 +334,10 @@ export default function InstructorCourseQuizzes() {
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                        Submissions
+                                        {t('quizzes.submissions')}
                                     </h2>
                                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                        View student submissions
+                                        {t('quizzes.submissionsDesc')}
                                     </p>
                                 </div>
                             </div>
@@ -344,29 +351,29 @@ export default function InstructorCourseQuizzes() {
 
                         <div className="p-5 space-y-4">
                             {isLoadingSubmissions ? (
-                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading submissions...</p>
+                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.loadingSubmissions')}</p>
                             ) : submissions.length === 0 ? (
-                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No submissions yet.</p>
+                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.noSubmissions')}</p>
                             ) : (
                                 <div className="space-y-3">
                                     {submissions.map((s) => (
                                         <div key={s.id} className="p-3 border rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark">
                                             <div className="flex items-center justify-between gap-3">
                                                 <div>
-                                                    <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{s.student || `Student ${s.id}`}</p>
-                                                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{s.submittedAt}</p>
+                                                    <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{s.student || t('quizzes.studentFallback', { id: s.id })}</p>
+                                                    <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{ar(s.submittedAt)}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {s.score !== undefined && s.score !== null && (
                                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap">
-                                                            {s.score} / {s.totalScore}
+                                                            {ar(s.score)} / {ar(s.totalScore)}
                                                         </span>
                                                     )}
                                                     <button
                                                         type="button"
                                                         onClick={() => openSubmissionDetail(s)}
                                                         className="p-1.5 rounded-lg hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark transition-colors"
-                                                        title="Grade submission"
+                                                        title={t('quizzes.gradeSubmitTooltip')}
                                                     >
                                                         <PenSquareIcon size={16} />
                                                     </button>
@@ -394,7 +401,7 @@ export default function InstructorCourseQuizzes() {
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                        Grade Submission
+                                        {t('quizzes.gradeSubmission')}
                                     </h2>
                                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                         {selectedSubmission.student}
@@ -411,7 +418,7 @@ export default function InstructorCourseQuizzes() {
 
                         <div className="flex-1 overflow-y-auto no-scrollbar p-5 space-y-4">
                             {(selectedSubmission.answers || []).length === 0 ? (
-                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">No answers available.</p>
+                                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.noAnswers')}</p>
                             ) : (
                                 (selectedSubmission.answers || []).map((answer, qi) => (
                                     <div key={qi} className="p-4 border rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark space-y-3">
@@ -421,7 +428,7 @@ export default function InstructorCourseQuizzes() {
                                                     {answer.type || "Q"}
                                                 </span>
                                                 <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                    Question {qi + 1} &middot; {answer.points || "?"} pts
+                                                    {ar(t('quizzes.questionLabel', { number: qi + 1 }))} &middot; {ar(t('quizzes.pts', { count: answer.points || 0 }))}
                                                 </span>
                                             </div>
                                         </div>
@@ -431,21 +438,21 @@ export default function InstructorCourseQuizzes() {
                                         {answer.type === "Written" ? (
                                             <div className="space-y-2">
                                                 <div>
-                                                    <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">Student's Answer:</label>
+                                                    <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.studentAnswer')}</label>
                                                     <div className="mt-1 p-3 rounded-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark whitespace-pre-wrap">
-                                                        {answer.studentAnswer || "No answer provided"}
+                                                        {answer.studentAnswer || t('quizzes.noAnswer')}
                                                     </div>
                                                 </div>
                                                 {answer.correctAnswer && (
                                                     <div>
-                                                        <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">Model Answer:</label>
+                                                        <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.modelAnswer')}</label>
                                                         <div className="mt-1 text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
                                                             {answer.correctAnswer}
                                                         </div>
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-3 pt-1">
-                                                    <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">Points:</label>
+                                                    <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.pointsLabel')}</label>
                                                     <input
                                                         type="number"
                                                         min="0"
@@ -461,22 +468,22 @@ export default function InstructorCourseQuizzes() {
                                         ) : (
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">Student's Answer:</span>
+                                                    <span className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('quizzes.studentAnswer')}</span>
                                                     {answer.type === "TF" ? (
                                                         <span className={`text-sm font-semibold ${answer.studentAnswer === answer.correctAnswer ? "text-text-success-default-light dark:text-text-success-default-dark" : "text-text-danger-default-light dark:text-text-danger-default-dark"}`}>
-                                                            {answer.studentAnswer === "true" ? "True" : answer.studentAnswer === "false" ? "False" : answer.studentAnswer || "No answer"}
+                                                            {answer.studentAnswer === "true" ? t('questions.true') : answer.studentAnswer === "false" ? t('questions.false') : answer.studentAnswer || t('quizzes.noAnswer')}
                                                         </span>
                                                     ) : (
                                                         <span className={`text-sm font-semibold ${answer.studentAnswer === answer.correctAnswer ? "text-text-success-default-light dark:text-text-success-default-dark" : "text-text-danger-default-light dark:text-text-danger-default-dark"}`}>
-                                                            {answer.studentAnswer ? `${answer.studentAnswer}. ${answer.options?.[answer.studentAnswer?.charCodeAt(0) - 65] || ""}` : "No answer"}
+                                                            {answer.studentAnswer ? `${answer.studentAnswer}. ${answer.options?.[answer.studentAnswer?.charCodeAt(0) - 65] || ""}` : t('quizzes.noAnswer')}
                                                         </span>
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                    <span>Correct Answer: </span>
+                                                    <span>{t('quizzes.correctAnswerLabel')} </span>
                                                     {answer.type === "TF" ? (
                                                         <span className="font-semibold text-text-success-default-light dark:text-text-success-default-dark">
-                                                            {answer.correctAnswer === "true" ? "True" : "False"}
+                                                            {answer.correctAnswer === "true" ? t('questions.true') : t('questions.false')}
                                                         </span>
                                                     ) : (
                                                         <span className="font-semibold text-text-success-default-light dark:text-text-success-default-dark">
@@ -486,7 +493,7 @@ export default function InstructorCourseQuizzes() {
                                                 </div>
                                                 {answer.autoScore !== undefined && (
                                                     <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                        Auto-graded: {answer.autoScore} / {answer.points} pts
+                                                        {t('quizzes.autoGrade', { score: answer.autoScore, points: answer.points })}
                                                     </span>
                                                 )}
                                             </div>
@@ -498,12 +505,12 @@ export default function InstructorCourseQuizzes() {
 
                         <div className="shrink-0 flex items-center justify-between gap-3 p-5 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
                             <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                Total: {selectedSubmission.score !== undefined && selectedSubmission.score !== null ? selectedSubmission.score : "?"} / {selectedSubmission.totalScore || "?"} pts
+                                {t('quizzes.totalScore', { score: selectedSubmission.score !== undefined && selectedSubmission.score !== null ? selectedSubmission.score : "?", totalScore: selectedSubmission.totalScore || "?" })}
                             </span>
                             <div className="flex gap-3">
-                                <Button variant="secondary" type="button" onClick={closeSubmissionDetail} width="flex-1 sm:w-auto">Cancel</Button>
+                                <Button variant="secondary" type="button" onClick={closeSubmissionDetail} width="flex-1 sm:w-auto">{t('quizzes.cancel')}</Button>
                                 <Button variant="primary" type="button" onClick={handleSaveGrade} width="flex-1 sm:w-auto" loading={isGrading} disabled={isGrading}>
-                                    Save Grade
+                                    {t('quizzes.saveGrade')}
                                 </Button>
                             </div>
                         </div>
@@ -513,66 +520,66 @@ export default function InstructorCourseQuizzes() {
 
             <BaseFormComponent
                 isOpen={isFormOpen}
-                title={editingQuiz ? "Edit Quiz" : "Create Quiz"}
-                description={editingQuiz ? "Update the quiz details." : "Create a new quiz for this course."}
+                title={editingQuiz ? t('quizzes.edit') : t('quizzes.create')}
+                description={editingQuiz ? t('quizzes.editDesc') : t('quizzes.createDesc')}
                 onClose={() => { setIsFormOpen(false); resetForm(); }}
                 onSubmit={handleSave}
-                submitText={editingQuiz ? "Save Changes" : "Create"}
+                submitText={editingQuiz ? t('quizzes.saveChanges') : t('quizzes.create')}
                 submitDisabled={isSaving}
                 submitLoading={isSaving}
             >
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
-                            Title <span className="text-red-500">*</span>
+                            {t('quizzes.titleLabel')} <span className="text-red-500">*</span>
                         </label>
                         <input
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Enter quiz title"
+                            placeholder={t('quizzes.titlePlaceholder')}
                             className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
                         />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
-                            Description
+                            {t('quizzes.description')}
                         </label>
                         <div className="relative">
                             <TextArea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Brief description of the quiz..."
+                                placeholder={t('quizzes.descriptionPlaceholder')}
                                 className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
                             />
-                            <span className="absolute bottom-3 right-3 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                            <span className="absolute bottom-3 end-3 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 {description.length}/500
                             </span>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Max Points</label>
-                            <NumberInput value={maxGrade} onChange={(e) => setMaxGrade(e.target.value)} placeholder="e.g., 100" min="1" className="mt-1" />
+                            <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{t('quizzes.maxPoints')}</label>
+                            <NumberInput value={maxGrade} onChange={(e) => setMaxGrade(e.target.value)} placeholder={t('quizzes.maxPointsPlaceholder')} min="1" className="mt-1" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Duration (minutes)</label>
-                            <NumberInput value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} placeholder="e.g., 60" min="1" className="mt-1" />
+                            <label className="block text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{t('quizzes.duration')}</label>
+                            <NumberInput value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} placeholder={t('quizzes.durationPlaceholder')} min="1" className="mt-1" />
                         </div>
                     </div>
-                    <DateTimeInput label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                    <DateTimeInput label={t('quizzes.startDate')} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                 </div>
             </BaseFormComponent>
 
             <Dialog
                 isOpen={deletingQuiz !== null}
                 variant="warning"
-                title="Delete Quiz"
+                title={t('quizzes.deleteTitle')}
                 onClose={() => setDeletingQuiz(null)}
                 onConfirm={handleDeleteConfirm}
-                confirmText="Delete"
-                cancelText="Cancel"
+                confirmText={t('quizzes.deleteBtn')}
+                cancelText={t('quizzes.cancel')}
             >
-                Are you sure you want to delete "{deletingQuiz?.title}"? This action cannot be undone.
+                {t('quizzes.deleteConfirm', { title: deletingQuiz?.title })}
             </Dialog>
         </div>
     );

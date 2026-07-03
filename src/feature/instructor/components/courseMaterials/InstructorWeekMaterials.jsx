@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import Button from "../../../../components/ui/Button";
 import TextArea from "../../../../components/ui/TextArea";
 import Dialog from "../../../../components/ui/Dialog";
@@ -7,6 +8,7 @@ import InstructorWeekMaterialContent from "./InstructorWeekMaterialContent";
 import { CloudUploadIcon, DownloadIcon, FilePenIcon, TrashIcon, XIcon, FileSlashIcon } from "../../../../components/ui/icons";
 import { useError } from '../../../../contexts/ErrorContext.jsx';
 import { getMaterialDownloadUrl } from "../../../course/services/materialsApi";
+import { getLocalizedField } from '../../../../utils/getLocalizedField';
     // Download all materials logic
     function downloadAllMaterials(materials) {
         materials.forEach((material, idx) => {
@@ -31,6 +33,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
     const [editDescription, setEditDescription] = useState("");
     const [isEditSubmitting, setIsEditSubmitting] = useState(false);
     const fileInputRef = useRef(null);
+    const { t, i18n } = useTranslation('instructor');
     const materials = folder.materials || [];
     const { showError } = useError();
 
@@ -63,8 +66,8 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
     };
 
     const openEditModal = () => {
-        setEditName(folder.name || "");
-        setEditDescription(folder.description || "");
+        setEditName(getLocalizedField(folder, 'name', i18n.language) || "");
+        setEditDescription(getLocalizedField(folder, 'description', i18n.language) || "");
         setShowEditModal(true);
     };
 
@@ -98,15 +101,15 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between gap-3 min-w-0">
                         <h3 className="text-xl md:text-2xl font-bold truncate text-text-primary-default-light dark:text-text-primary-default-dark min-w-0">
-                            {folder.name}
+                            {getLocalizedField(folder, 'name', i18n.language)}
                         </h3>
                         <div className="flex shrink-0 items-center gap-2">
                             {!isInactive && onEditFolder && (
                                 <button
                                     onClick={openEditModal}
                                     className="p-2.5 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark hover:bg-bg-surface-accent-default-light/10 dark:hover:bg-bg-surface-accent-default-dark/10 transition-all duration-200 active:scale-95"
-                                    aria-label="Edit folder"
-                                    title="Edit folder"
+                                    aria-label={t('materials.editFolder')}
+                                    title={t('materials.editFolder')}
                                 >
                                     <FilePenIcon size={18} />
                                 </button>
@@ -115,8 +118,8 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                                 <button
                                     onClick={() => setShowDeleteDialog(true)}
                                     className="p-2.5 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark hover:text-red-500 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 active:scale-95"
-                                    aria-label="Delete folder"
-                                    title="Delete folder"
+                                    aria-label={t('materials.deleteFolder')}
+                                    title={t('materials.deleteFolder')}
                                 >
                                     <TrashIcon size={18} />
                                 </button>
@@ -125,17 +128,17 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                                 <button
                                     onClick={() => downloadAllMaterials(materials)}
                                     className="group flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg text-white bg-linear-to-r from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-500 hover:from-indigo-600 hover:to-indigo-700 dark:hover:from-indigo-500 dark:hover:to-indigo-400 shadow-md hover:shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all duration-200 active:scale-95"
-                                    aria-label="Download All Materials"
+                                    aria-label={t('materials.downloadAll')}
                                 >
                                     <DownloadIcon size={18} className="group-hover:animate-bounce" />
-                                    <span className="hidden sm:inline">Download All</span>
+                                    <span className="hidden sm:inline">{t('materials.downloadAll')}</span>
                                 </button>
                             )}
                         </div>
                     </div>
-                    {folder.description && (
+                    {getLocalizedField(folder, 'description', i18n.language) && (
                         <p className="text-base text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-3xl">
-                            {folder.description}
+                            {getLocalizedField(folder, 'description', i18n.language)}
                         </p>
                     )}
                 </div>
@@ -149,10 +152,10 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                             <FileSlashIcon size={24} className="text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark" />
                         </div>
                         <h4 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                            No materials yet
+                            {t('materials.noMaterials')}
                         </h4>
                         <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-lg mb-6">
-                            Upload lecture notes, slides, videos, or any resources for this week.
+                            {t('materials.noMaterialsDesc')}
                         </p>
                         {!isInactive && (
                             <div
@@ -168,10 +171,10 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                             >
                                 <CloudUploadIcon size={28} className={`mb-2 ${isDragOver ? "text-text-accent-default-light dark:text-text-accent-default-dark" : "text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark"}`} />
                                 <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                    {isDragOver ? "Drop files here" : "Drag & drop files here"}
+                                    {isDragOver ? t('materials.dropFiles') : t('materials.dragDropPrompt')}
                                 </p>
                                 <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-1">
-                                    or click to browse — PDF, PPTX, MP4, MP3, and more
+                                    {t('materials.browseFiles')}
                                 </p>
                             </div>
                         )}
@@ -207,10 +210,10 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                     >
                         <CloudUploadIcon size={28} className={`mb-2 ${isDragOver ? "text-text-accent-default-light dark:text-text-accent-default-dark" : "text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark"}`} />
                         <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                            {isDragOver ? "Drop files here" : "Drag & drop files here"}
+                            {isDragOver ? t('materials.dropFilesDrag') : t('materials.dropFiles')}
                         </p>
                         <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-1">
-                            or click to browse — PDF, PPTX, MP4, MP3, and more
+                            {t('materials.browseFiles')}
                         </p>
                     </div>
                 </div>
@@ -220,7 +223,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
             {materials.length > 0 && (
                 <div className="px-6 md:px-8 py-3 border-t border-border-tertiary-default-light dark:border-border-tertiary-default-dark bg-bg-surface-secondary-default-light/30 dark:bg-bg-surface-secondary-default-dark/30">
                     <p className="text-sm text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                        {materials.length} {materials.length === 1 ? 'file' : 'files'}
+                        {t('materials.fileCount', { count: materials.length })}
                     </p>
                 </div>
             )}
@@ -230,16 +233,18 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
         <Dialog
             isOpen={showDeleteDialog}
             variant="warning"
-            title="Delete Folder"
+            title={t('materials.deleteFolder')}
             onClose={() => setShowDeleteDialog(false)}
             onConfirm={() => {
                 onDeleteFolder?.(folder.materialFolderId);
                 setShowDeleteDialog(false);
             }}
-            confirmText="Delete"
-            cancelText="Cancel"
+            confirmText={t('materials.delete')}
+            cancelText={t('materials.cancel')}
         >
-            Are you sure you want to delete &ldquo;{folder.name}&rdquo;{materials.length > 0 ? ` and its ${materials.length} material${materials.length > 1 ? 's' : ''}` : ''}? This action cannot be undone.
+            {materials.length > 0
+                ? t('materials.deleteFolderConfirmWithMaterials', { folderName: getLocalizedField(folder, 'name', i18n.language), count: materials.length })
+                : t('materials.deleteFolderConfirm', { folderName: getLocalizedField(folder, 'name', i18n.language) })}
         </Dialog>
 
         {/* Edit Folder Modal */}
@@ -248,7 +253,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                 <div className="w-full max-w-lg bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark overflow-hidden shadow-xl">
                     <div className="flex items-center justify-between px-6 py-4 border-b border-border-tertiary-default-light dark:border-border-tertiary-default-dark bg-linear-to-r from-bg-surface-secondary-default-light/50 to-transparent dark:from-bg-surface-secondary-default-dark/50">
                         <h3 className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-                            Edit Folder
+                            {t('materials.editFolder')}
                         </h3>
                         <button
                             onClick={() => setShowEditModal(false)}
@@ -261,7 +266,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                     <div className="p-6 flex flex-col gap-4">
                         <div>
                             <label className="block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">
-                                Folder Name <span className="text-red-500">*</span>
+                                {t('materials.folderName')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -273,7 +278,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1.5">
-                                Description
+                                {t('materials.description')}
                             </label>
                             <TextArea
                                 value={editDescription}
@@ -284,7 +289,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
 
                         <div className="flex items-center justify-end gap-3 pt-2">
                             <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-                                Cancel
+                                {t('materials.cancel')}
                             </Button>
                             <Button
                                 variant="primary"
@@ -292,7 +297,7 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                                 disabled={!editName.trim() || isEditSubmitting}
                             >
                                 <FilePenIcon size={18} />
-                                {isEditSubmitting ? "Saving..." : "Save Changes"}
+                                {isEditSubmitting ? t('materials.saving') : t('materials.saveChanges')}
                             </Button>
                         </div>
                     </div>

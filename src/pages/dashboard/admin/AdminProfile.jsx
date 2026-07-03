@@ -1,13 +1,16 @@
+import { useTranslation } from 'react-i18next';
 import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
 import AccountControlsCard from "../../../feature/student/profile/AccountControlsCard";
 import AdminIdentityCard from "../../../feature/admin/profile/AdminIdentityCard";
 import { fetchAdminProfile } from "../../../feature/admin/services/profileApi";
 
+
 function mapBackendToUserData(admin) {
     return {
         name: admin.fullName,
         fullName: admin.fullName,
+        fullNameAr: admin.fullNameAr || "",
         avatar: admin.profileImage || "",
         email: admin.email || "",
         phone: admin.phoneNumber || "",
@@ -28,6 +31,7 @@ function mapAuthToUserData(auth) {
     return {
         name: auth.fullName || auth.name || "",
         fullName: auth.fullName || auth.name || "",
+        fullNameAr: auth.fullNameAr || "",
         avatar: auth.profileImage || "",
         email: auth.email || "",
         phone: auth.phoneNumber || auth.phone || "",
@@ -44,6 +48,7 @@ function mapAuthToUserData(auth) {
 }
 
 export default function AdminProfile() {
+    const { t } = useTranslation('admin');
     const authUser = useRouteLoaderData("root");
     const adminId = authUser?.userId;
     const initialData = mapAuthToUserData(authUser);
@@ -62,7 +67,7 @@ export default function AdminProfile() {
     if (!userData && !adminId) {
         return (
             <div className="flex items-center justify-center py-20">
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Unable to load profile.</p>
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('profile.unableToLoad')}</p>
             </div>
         );
     }

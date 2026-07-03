@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { ar } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import ArrowUpIcon from "./icons/ArrowUpIcon";
 import CommentIcon from "./icons/CommentIcon";
 import EllipsisVerticalIcon from "./icons/EllipsisVerticalIcon";
@@ -7,13 +9,18 @@ import PenSquareIcon from "./icons/PenSquareIcon";
 import TrashIcon from "./icons/TrashIcon";
 import { fetchSinglePost, addComment } from "../../feature/student/courses/courseDetail/community/communityService";
 import { useError } from '../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../utils/getLocalizedField';
+import useArabicDigits from '../../hooks/useArabicDigits';
 import Dialog from './Dialog';
+import CommentInput from './CommentInput';
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
 const CONTENT_PREVIEW_LENGTH = 240;
 
 export default function StudyGroupPost({ className = "", postData, courseId, courseTitle = null, onUpvote, onEdit, onDelete }) {
+    const { i18n, t } = useTranslation('common');
+    const { convert: arDigits } = useArabicDigits();
     const [hasUpvoted, setHasUpvoted] = useState(postData.hasUpvoted || false);
     const [expanded, setExpanded] = useState(false);
     const [showComments, setShowComments] = useState(false);
@@ -81,7 +88,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
             const data = await fetchSinglePost(courseId, postData.id);
             const mapped = (data.comments || []).map(c => ({
                 commentId: c.commentId,
-                authorName: c.authorName,
+                authorName: getLocalizedField(c, 'authorName', i18n.language) || c.authorName,
                 authorAvatar: c.authorProfileImage || c.authorAvatar || null,
                 content: c.content,
                 createdAt: c.createdAt,
@@ -106,7 +113,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
             const data = await fetchSinglePost(courseId, postData.id);
             const mapped = (data.comments || []).map(c => ({
                 commentId: c.commentId,
-                authorName: c.authorName,
+                authorName: getLocalizedField(c, 'authorName', i18n.language) || c.authorName,
                 authorAvatar: c.authorProfileImage || c.authorAvatar || null,
                 content: c.content,
                 createdAt: c.createdAt,
@@ -196,7 +203,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                 <span className="w-1 h-1 rounded-full shrink-0 bg-text-tertiary-default-light dark:bg-text-tertiary-default-dark" />
                             </>
                         )}
-                        <span className="shrink-0">{postData.createdAt ? formatDistanceToNow(new Date(postData.createdAt), { addSuffix: true }) : ""}</span>
+                        <span className="shrink-0">{postData.createdAt ? formatDistanceToNow(new Date(postData.createdAt), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) : ""}</span>
                     </div>
                 </div>
                 {hasMenu && (
@@ -204,19 +211,19 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                         <button
                             onClick={() => setMenuOpen((prev) => !prev)}
                             className="p-1.5 rounded-full text-text-tertiary-default-light dark:text-text-tertiary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
-                            aria-label="Post actions"
+                            aria-label={t('labels.postActions', 'Post actions')}
                         >
                             <EllipsisVerticalIcon size={18} />
                         </button>
                         {menuOpen && (
-                            <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg py-1">
+                            <div className="absolute end-0 top-full mt-1 z-50 min-w-[140px] rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-lg py-1">
                                 {canEdit && (
                                     <button
                                         onClick={handleEditStart}
                                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                                     >
                                         <PenSquareIcon size={16} />
-                                        Edit
+                                        {t('edit')}
                                     </button>
                                 )}
                                 {canDelete && (
@@ -225,7 +232,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                                     >
                                         <TrashIcon size={16} />
-                                        Delete
+                                        {t('delete')}
                                     </button>
                                 )}
                             </div>
@@ -243,6 +250,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                             onChange={(e) => setEditContent(e.target.value)}
                             onKeyDown={handleEditKeyDown}
                             className="w-full rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 text-[15px] text-text-primary-default-light dark:text-text-primary-default-dark outline-none transition-colors resize-none focus:border-text-accent-default-light dark:focus:border-text-accent-default-dark"
+                            dir="auto"
                             rows={3}
                         />
                         <div className="flex items-center gap-2 self-end">
@@ -250,14 +258,14 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                 onClick={handleEditCancel}
                                 className="px-3 py-1.5 rounded-lg text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                             >
-                                Cancel
+                                {t('cancel')}
                             </button>
                             <button
                                 onClick={handleEditSave}
                                 disabled={!editContent.trim()}
                                 className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-text-accent-default-light dark:bg-text-accent-default-dark hover:bg-text-accent-hover-light dark:hover:bg-text-accent-hover-dark disabled:opacity-50 transition-colors"
                             >
-                                Save
+                                {t('save')}
                             </button>
                         </div>
                     </div>
@@ -276,7 +284,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                 onClick={() => setExpanded((prev) => !prev)}
                                 className="self-start text-[13px] font-medium text-text-accent-default-light dark:text-text-accent-default-dark hover:text-text-accent-active-light dark:hover:text-text-accent-active-dark transition-colors duration-150"
                             >
-                                {expanded ? "Show less" : "Show more"}
+                                {expanded ? t('labels.showLess', 'Show less') : t('labels.showMore', 'Show more')}
                             </button>
                         )}
                     </>
@@ -287,13 +295,13 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                 <Dialog
                     isOpen={showDeleteConfirm}
                     variant="warning"
-                    title="Delete Post"
+                    title={t('labels.deletePost', 'Delete Post')}
                     onClose={() => setShowDeleteConfirm(false)}
                     onConfirm={handleDeleteConfirm}
-                    confirmText="Delete"
-                    cancelText="Cancel"
+                    confirmText={t('delete')}
+                    cancelText={t('cancel')}
                 >
-                    Are you sure you want to delete this post? This action cannot be undone.
+                    {t('confirm.deleteMessage', 'Are you sure you want to delete this {{entity}}? This action cannot be undone.', { entity: t('labels.post', 'post') })}
                 </Dialog>
             )}
 
@@ -311,7 +319,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                     }`}
                 >
                     <ArrowUpIcon className="w-4 h-4" />
-                    <span>{postData.likes}</span>
+                    <span>{arDigits(postData.likes)}</span>
                 </button>
                 <button
                     onClick={handleToggleComments}
@@ -322,7 +330,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                     }`}
                 >
                     <CommentIcon className="w-4 h-4" />
-                    <span>{comments.length}</span>
+                    <span>{arDigits(comments.length)}</span>
                 </button>
             </div>
 
@@ -330,7 +338,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                 <div className="border-t border-border-primary-default-light dark:border-border-primary-default-dark pt-4 space-y-3">
                     {commentsLoading ? (
                         <p className="text-sm text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-center py-4">
-                            Loading comments...
+                            {t('labels.loadingComments', 'Loading comments...')}
                         </p>
                     ) : (
                         <>
@@ -354,14 +362,14 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                                     />
                                                 )}
                                             </div>
-                                            <div className="flex flex-col gap-0.5 rounded-2xl rounded-tl-sm bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 max-w-[85%]">
+                                            <div className="flex flex-col gap-0.5 rounded-ss-sm rounded-2xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 max-w-[85%]">
                                                 <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                                                     <span className="text-[13px] font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                                        {comment.authorName || "Unknown"}
+                                                        {comment.authorName || t('message.unknown', 'Unknown')}
                                                     </span>
                                                     {comment.isRecommended && (
                                                         <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-tight bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                                                            Recommended #{comment.recommendationRank}
+                                                            {t('labels.recommended', 'Recommended')} #{comment.recommendationRank}
                                                         </span>
                                                     )}
                                                     {comment.instructorRole && (
@@ -379,30 +387,18 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                 </ul>
                             ) : (
                                 <p className="text-[13px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-center py-2">
-                                    No comments yet — start the conversation.
+                                    {t('labels.noComments', 'No comments yet — start the conversation.')}
                                 </p>
                             )}
 
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    value={commentText}
-                                    onChange={(e) => setCommentText(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
-                                    placeholder="Write a comment..."
-                                    disabled={submitting}
-                                    className="flex-1 px-4 py-2 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-tertiary-default-light dark:placeholder:text-text-tertiary-default-dark focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark transition-colors duration-150"
-                                />
-                                <button
-                                    onClick={handleAddComment}
-                                    disabled={!commentText.trim() || submitting}
-                                    className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-white hover:bg-bg-surface-accent-hover-light dark:hover:bg-bg-surface-accent-hover-dark disabled:opacity-40 transition-colors duration-150"
-                                >
-                                    <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" aria-hidden="true">
-                                        <path d="M3 11l18-8-8 18-2-8-8-2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </button>
-                            </div>
+                            <CommentInput
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
+                                onPost={handleAddComment}
+                                disabled={submitting}
+                                placeholder={t('labels.writeComment', 'Write a comment...')}
+                            />
                         </>
                     )}
                 </div>

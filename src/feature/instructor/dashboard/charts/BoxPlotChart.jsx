@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 import { ChartBarIcon } from "../../../../components/ui/icons";
 import { ChartCard } from "../../../../components/charts";
+import { getLocalizedField } from '../../../../utils/getLocalizedField';
 
 const tooltipStyle = {
   backgroundColor: "var(--color-bg-surface-primary-default-light)",
@@ -34,6 +36,7 @@ function BoxPlotWhisker({ chartW, chartH, left, right, min, q1, median, q3, max,
 }
 
 export default function BoxPlotChart({ className = "", data = [] }) {
+  const { t, i18n } = useTranslation('instructor');
   const { svgWidth, height, padding, scale } = useMemo(() => {
     const padding = { top: 20, right: 20, bottom: 40, left: 40 };
     return { svgWidth: 600, height: 280, padding, scale: null };
@@ -41,9 +44,9 @@ export default function BoxPlotChart({ className = "", data = [] }) {
 
   if (!data || data.length === 0) {
     return (
-      <ChartCard title="Score Distribution (Box Plot)" icon={<ChartBarIcon size={20} />} className={className}
-        chartType="bar" chartData={data} categoryField="name" series={[{ field: "min", name: "Min" }, { field: "q1", name: "Q1" }, { field: "median", name: "Median" }, { field: "q3", name: "Q3" }, { field: "max", name: "Max" }]}>
-        <p className="text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark py-8">No data available</p>
+      <ChartCard title={t('chart.scoreDistribution')} icon={<ChartBarIcon size={20} />} className={className}
+        chartType="bar" chartData={data} categoryField="name" series={[{ field: "min", name: t('chart.min') }, { field: "q1", name: "Q1" }, { field: "median", name: t('chart.median') }, { field: "q3", name: "Q3" }, { field: "max", name: t('chart.max') }]}>
+        <p className="text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark py-8">{t('chart.noData')}</p>
       </ChartCard>
     );
   }
@@ -65,8 +68,8 @@ export default function BoxPlotChart({ className = "", data = [] }) {
   }
 
   return (
-    <ChartCard title="Score Distribution (Box Plot)" icon={<ChartBarIcon size={20} />} className={className}
-      chartType="bar" chartData={data} categoryField="name" series={[{ field: "min", name: "Min" }, { field: "q1", name: "Q1" }, { field: "median", name: "Median" }, { field: "q3", name: "Q3" }, { field: "max", name: "Max" }]}>
+    <ChartCard title={t('chart.scoreDistribution')} icon={<ChartBarIcon size={20} />} className={className}
+      chartType="bar" chartData={data} categoryField="name" series={[{ field: "min", name: t('chart.min') }, { field: "q1", name: "Q1" }, { field: "median", name: t('chart.median') }, { field: "q3", name: "Q3" }, { field: "max", name: t('chart.max') }]}>
 
       <div className="w-full overflow-x-auto">
         <svg width="100%" height={height} viewBox={`0 0 ${svgWidth} ${height}`} className="text-text-primary-default-light dark:text-text-primary-default-dark">
@@ -96,7 +99,7 @@ export default function BoxPlotChart({ className = "", data = [] }) {
                   max={d.max}
                   scale={scaleY}
                 />
-                <text x={(left + right) / 2} y={height - padding.bottom + 16} textAnchor="middle" className="text-xs fill-text-tertiary-default-light dark:fill-text-tertiary-default-dark">{d.name}</text>
+                <text x={(left + right) / 2} y={height - padding.bottom + 16} textAnchor="middle" className="text-xs fill-text-tertiary-default-light dark:fill-text-tertiary-default-dark">{getLocalizedField(d, 'name', i18n.language)}</text>
               </g>
             );
           })}

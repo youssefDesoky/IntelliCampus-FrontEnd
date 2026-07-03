@@ -1,15 +1,27 @@
+import { useTranslation } from "react-i18next";
 import CircularProgress from "../../../../../components/ui/CircularProgress";
 import GradeComplaint from "./GradeComplaint";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", items = [], courseId }) {
-    // Determine the theme variant based on the grade percentage (tiers: 85, 75, 65, 50)
+    const { t, i18n } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
+
+    const gradePercentNum = gradePercent;
+
+    const normalizedGrade = letterGrade?.toUpperCase().trim() || "N/A";
+    const isRtl = i18n.language === 'ar';
+    const displayGrade = isRtl
+        ? t(`currentGrade.grade${normalizedGrade}`, { defaultValue: letterGrade })
+        : letterGrade;
+
     const getTheme = (pct) => {
         if (pct >= 85) return {
             gradient: "from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/30",
             glow: "bg-emerald-200/30 dark:bg-emerald-900/20",
             text: "text-emerald-600 dark:text-emerald-400",
             border: "border-emerald-100 dark:border-emerald-900/50",
-            message: pct >= 95 ? "Outstanding!" : "Excellent!",
+            message: pct >= 95 ? t('currentGrade.outstanding') : t('currentGrade.excellent'),
             progressColor: "text-emerald-500 dark:text-emerald-400",
             circleColor: "text-emerald-100 dark:text-emerald-900/20",
             labelColor: "text-emerald-600 dark:text-emerald-400",
@@ -20,7 +32,7 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", it
             glow: "bg-sky-200/30 dark:bg-sky-900/20",
             text: "text-sky-700 dark:text-sky-300",
             border: "border-sky-100 dark:border-sky-900/50",
-            message: pct >= 80 ? "Very good" : "Good work",
+            message: pct >= 80 ? t('currentGrade.veryGood') : t('currentGrade.goodWork'),
             progressColor: "text-sky-500 dark:text-sky-400",
             circleColor: "text-sky-100 dark:text-sky-900/20",
             labelColor: "text-sky-700 dark:text-sky-300",
@@ -31,7 +43,7 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", it
             glow: "bg-amber-200/30 dark:bg-amber-900/20",
             text: "text-amber-700 dark:text-amber-300",
             border: "border-amber-100 dark:border-amber-900/50",
-            message: "Good progress",
+            message: t('currentGrade.goodProgress'),
             progressColor: "text-amber-500 dark:text-amber-400",
             circleColor: "text-amber-100 dark:text-amber-900/20",
             labelColor: "text-amber-700 dark:text-amber-300",
@@ -42,7 +54,7 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", it
             glow: "bg-orange-200/30 dark:bg-orange-900/20",
             text: "text-orange-700 dark:text-orange-300",
             border: "border-orange-100 dark:border-orange-900/50",
-            message: "At risk — improve soon",
+            message: t('currentGrade.atRisk'),
             progressColor: "text-orange-500 dark:text-orange-400",
             circleColor: "text-orange-100 dark:text-orange-900/20",
             labelColor: "text-orange-700 dark:text-orange-300",
@@ -53,7 +65,7 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", it
             glow: "bg-rose-200/30 dark:bg-rose-900/20",
             text: "text-rose-700 dark:text-rose-400",
             border: "border-rose-100 dark:border-rose-900/50",
-            message: "Needs attention",
+            message: t('currentGrade.needsAttention'),
             progressColor: "text-rose-500 dark:text-rose-400",
             circleColor: "text-rose-100 dark:text-rose-900/20",
             labelColor: "text-rose-700 dark:text-rose-400",
@@ -65,15 +77,15 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", it
     return (
         <div className={`relative overflow-hidden rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-linear-to-br ${theme.gradient} p-6 sm:p-8 transition-all duration-300`}>
             {/* Ambient Background Glows */}
-            <div className={`absolute -top-20 -right-20 h-40 w-40 ${theme.glow} rounded-full blur-3xl pointer-events-none`} />
-            <div className={`absolute -bottom-20 -left-20 h-40 w-40 bg-sky-200/20 dark:bg-sky-900/10 rounded-full blur-3xl pointer-events-none`} />
+            <div className={`absolute -top-20 -end-20 h-40 w-40 ${theme.glow} rounded-full blur-3xl pointer-events-none`} />
+            <div className={`absolute -bottom-20 -start-20 h-40 w-40 bg-sky-200/20 dark:bg-sky-900/10 rounded-full blur-3xl pointer-events-none`} />
             
-			<div className="relative flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-center sm:text-left">
+			<div className="relative flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-center sm:text-start">
 				{/* Progress Visualizer */}
 				<div 
 					className="relative inline-flex items-center justify-center shrink-0"
 					role="img" 
-					aria-label={`Current grade performance: ${letterGrade} (${gradePercent}%)`}
+					aria-label={t('currentGrade.ariaLabel', { letterGrade: displayGrade, gradePercent: gradePercentNum })}
 				>
 					<CircularProgress
 						progress={gradePercent}
@@ -83,19 +95,19 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", it
 						textColor={theme.labelColor}
 					>
 						<span className={`text-5xl font-black tracking-tight ${theme.labelColor}`}>
-							{letterGrade}
+							{displayGrade}
 						</span>
 					</CircularProgress>
 				</div>
 				
 				{/* Grade Analytics */}
 				<div className="flex-1 w-full">
-					<span className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light/70 dark:text-text-secondary-default-dark/70">
-						Current Standing
-					</span>
-					<p className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mt-0.5">
-						{gradePercent}% <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">Overall</span>
-					</p>
+				<span className="text-xs font-semibold uppercase tracking-wider text-text-secondary-default-light/70 dark:text-text-secondary-default-dark/70">
+					{t('currentGrade.currentStanding')}
+				</span>
+				<p className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mt-0.5">
+					{ar(gradePercentNum)}% <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('currentGrade.overall')}</span>
+				</p>
 					
 					<div className={`mt-3 pt-3 border-t ${theme.border}`}>
 						<p className={`text-sm font-semibold ${theme.text}`}>

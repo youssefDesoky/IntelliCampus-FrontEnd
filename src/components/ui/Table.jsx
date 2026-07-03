@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import Section from "./Section";
 import PaginationButtons from "./PaginationButtons";
 import BaseComponent from "./BaseComponent";
 import { TableHeader, TableHeaderActions, TableBody } from "./table/index";
 
 
-export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments, columnClassNames, emptyMessage = "No data found." }) {
+export default function Table({ role, headers, data, onDelete, onDeleteSelected, onEdit, onPreview, actions, roleLabel, wrapInSection = true, showHeaderActions = true, showPagination = true, totalPages = 1, paginationSummary, onSelectionChange, showSelectionColumn = true, showActionsColumn = true, grouped = false, title, description, componentButton, displayRowLimit, selectedRows: controlledSelectedRows, page, onPageChange, totalItems, itemsLabel, from, to, columnAlignments, columnClassNames, emptyMessage }) {
+    const { t, i18n } = useTranslation('common');
+    const isRTL = i18n.language === 'ar';
+    const toArabicDigits = (str) => isRTL ? String(str).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) : str;
     const rawData = data || [];
     const hasPagingLimit = typeof displayRowLimit === 'number' && displayRowLimit > 0;
     const computedTotalPages = hasPagingLimit ? Math.max(1, Math.ceil(rawData.length / displayRowLimit)) : totalPages || 1;
@@ -113,18 +117,18 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         showActionsColumn={showActionsColumn}
                         columnAlignments={columnAlignments}
                         columnClassNames={columnClassNames}
-                        emptyMessage={emptyMessage}
+                        emptyMessage={emptyMessage || t('empty.noData')}
                     />
                 </table>
                 </div>
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">
-                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3" dir={isRTL ? 'rtl' : 'ltr'}>
+                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark" dir={isRTL ? 'rtl' : 'ltr'}>
                             {(hasPagingLimit && rawData.length > displayRowLimit)
-                                ? (itemsLabel
-                                    ? `Showing ${(currentPage - 1) * displayRowLimit + 1}–${Math.min(currentPage * displayRowLimit, rawData.length)} of ${rawData.length} ${itemsLabel}`
-                                    : `Showing first ${displayRowLimit} of ${rawData.length} rows`)
+                                                    ? (itemsLabel
+                                                        ? `${t('pagination.showing')} ${toArabicDigits((currentPage - 1) * displayRowLimit + 1)}–${toArabicDigits(Math.min(currentPage * displayRowLimit, rawData.length))} ${t('pagination.of')} ${toArabicDigits(rawData.length)} ${itemsLabel}`
+                                                        : `${t('pagination.showingFirst', { count: displayRowLimit })} ${t('pagination.of')} ${toArabicDigits(rawData.length)} ${t('pagination.rows')}`)
                                 : paginationSummary || ""}
                         </div>
 
@@ -167,18 +171,18 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
                         showActionsColumn={showActionsColumn}
                         columnAlignments={columnAlignments}
                         columnClassNames={columnClassNames}
-                        emptyMessage={emptyMessage}
+                        emptyMessage={emptyMessage || t('empty.noData')}
                     />
                 </table>
                 </div>
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3">
-                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3" dir={isRTL ? 'rtl' : 'ltr'}>
+                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark" dir={isRTL ? 'rtl' : 'ltr'}>
                             {(hasPagingLimit && rawData.length > displayRowLimit)
-                                ? (itemsLabel
-                                    ? `Showing ${(currentPage - 1) * displayRowLimit + 1}–${Math.min(currentPage * displayRowLimit, rawData.length)} of ${rawData.length} ${itemsLabel}`
-                                    : `Showing first ${displayRowLimit} of ${rawData.length} rows`)
+                                                    ? (itemsLabel
+                                                        ? `${t('pagination.showing')} ${toArabicDigits((currentPage - 1) * displayRowLimit + 1)}–${toArabicDigits(Math.min(currentPage * displayRowLimit, rawData.length))} ${t('pagination.of')} ${toArabicDigits(rawData.length)} ${itemsLabel}`
+                                                        : `${t('pagination.showingFirst', { count: displayRowLimit })} ${t('pagination.of')} ${toArabicDigits(rawData.length)} ${t('pagination.rows')}`)
                                 : paginationSummary || ""}
                         </div>
 

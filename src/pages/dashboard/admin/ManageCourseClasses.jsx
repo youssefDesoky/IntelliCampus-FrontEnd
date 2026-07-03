@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import Section from "../../../components/ui/Section";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
@@ -33,6 +34,7 @@ import {
 } from "../../../feature/admin/services/adminCoursesApi";
 import { importClasses } from "../../../feature/admin/services/adminImportsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 const tabs = [
     { key: "classes", label: "Classes" },
@@ -40,27 +42,28 @@ const tabs = [
     { key: "grades", label: "Upload Final Grades" },
 ];
 
-function formatTime(timeSpan) {
-    if (!timeSpan) return "";
-    const parts = String(timeSpan).split(":");
-    const h = parseInt(parts[0], 10);
-    const m = parts[1] || "00";
-    const ampm = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 || 12;
-    return `${h12}:${m} ${ampm}`;
-}
-
-function formatSchedule(cls) {
-    const day = cls.dayName || "";
-    const start = formatTime(cls.startTime);
-    const end = formatTime(cls.endTime);
-    if (start && end) return `${day} ${start} – ${end}`;
-    if (start) return `${day} ${start}`;
-    return day || "—";
-}
-
 function ClassCard({ cls, onEdit, onDelete }) {
+    const { t } = useTranslation('admin');
     const isLecture = cls.classTypeName === "Lecture";
+
+    function formatTime(timeSpan) {
+        if (!timeSpan) return "";
+        const parts = String(timeSpan).split(":");
+        const h = parseInt(parts[0], 10);
+        const m = parts[1] || "00";
+        const ampm = h >= 12 ? t('manageCourseClasses.pm') : t('manageCourseClasses.am');
+        const h12 = h % 12 || 12;
+        return `${h12}:${m} ${ampm}`;
+    }
+
+    function formatSchedule(cls) {
+        const day = cls.dayName || "";
+        const start = formatTime(cls.startTime);
+        const end = formatTime(cls.endTime);
+        if (start && end) return `${day} ${start} – ${end}`;
+        if (start) return `${day} ${start}`;
+        return day || "—";
+    }
     
     // Modernized theme configuration preserving your exact custom design tokens
     const theme = isLecture ? {
@@ -100,14 +103,14 @@ function ClassCard({ cls, onEdit, onDelete }) {
                         <button
                             onClick={() => onEdit(cls)}
                             className="p-1.5 rounded-lg text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark transition-colors"
-                            title="Edit class"
+                            title={t('manageCourseClasses.editClass')}
                         >
                             <FilePenIcon className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => onDelete(cls)}
                             className="p-1.5 rounded-lg text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                            title="Delete class"
+                            title={t('manageCourseClasses.deleteClass')}
                         >
                             <TrashIcon className="w-4 h-4" />
                         </button>
@@ -121,7 +124,7 @@ function ClassCard({ cls, onEdit, onDelete }) {
                     </h4>
                     <div className="flex items-center gap-1.5 mt-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         <LocationDotIcon className="w-3.5 h-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                        <span className="truncate font-medium">{cls.room || "No room details"}</span>
+                        <span className="truncate font-medium">{cls.room || t('manageCourseClasses.noRoom')}</span>
                     </div>
                 </div>
             </div>
@@ -136,17 +139,17 @@ function ClassCard({ cls, onEdit, onDelete }) {
                             {instructorInitial}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[10px] uppercase tracking-wider font-bold text-text-secondary-default-light dark:text-text-secondary-default-dark leading-none mb-0.5">Instructor</p>
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-text-secondary-default-light dark:text-text-secondary-default-dark leading-none mb-0.5">{t('manageCourseClasses.instructor')}</p>
                             <p className="text-xs font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                                {cls.instructorName || "Unassigned"}
+                                {cls.instructorName || t('manageCourseClasses.unassigned')}
                             </p>
                         </div>
                     </div>
 
                     {/* Compact Capacity Counter */}
                     {cls.capacity != null && (
-                        <div className="text-right shrink-0">
-                            <p className="text-[10px] uppercase tracking-wider font-bold text-text-secondary-default-light dark:text-text-secondary-default-dark leading-none mb-0.5">Enrolled</p>
+                        <div className="text-end shrink-0">
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-text-secondary-default-light dark:text-text-secondary-default-dark leading-none mb-0.5">{t('manageCourseClasses.enrolled')}</p>
                             <p className={`text-xs font-bold ${isFull ? 'text-red-500' : 'text-text-primary-default-light dark:text-text-primary-default-dark'}`}>
                                 {cls.enrolledCount ?? 0} <span className="text-neutral-400 font-normal">/</span> {cls.capacity}
                             </p>
@@ -156,7 +159,7 @@ function ClassCard({ cls, onEdit, onDelete }) {
 
                 {/* Minimalist Flush Bottom Progress Ribbon */}
                 {cls.capacity != null && (
-                    <div className="absolute -bottom-5 -left-5 -right-5 h-1 bg-neutral-100 dark:bg-neutral-800/40 overflow-hidden">
+                    <div className="absolute -bottom-5 -start-5 -end-5 h-1 bg-neutral-100 dark:bg-neutral-800/40 overflow-hidden">
                         <div
                             className={`h-full transition-all duration-500 ease-out ${isFull ? 'bg-red-500' : theme.bar}`}
                             style={{ width: `${capacityPercentage}%` }}
@@ -168,7 +171,10 @@ function ClassCard({ cls, onEdit, onDelete }) {
     );
 }
 function ClassSection({ icon: Icon, title, classes, onEdit, onDelete, onAdd }) {
+    const { t } = useTranslation('admin');
     const isLecture = title === "Lectures";
+
+    const addLabel = isLecture ? t('manageCourseClasses.addLecture') : t('manageCourseClasses.addSection');
 
     return (
         <Section>
@@ -184,13 +190,13 @@ function ClassSection({ icon: Icon, title, classes, onEdit, onDelete, onAdd }) {
                 <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">
                     ({classes.length})
                 </span>
-                <div className="ml-auto">
+                <div className="ms-auto">
                     <button
                         onClick={onAdd}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark hover:bg-bg-fill-accent-default-light dark:hover:bg-bg-fill-accent-default-dark hover:text-white"
                     >
                         <PlusIcon className="w-3.5 h-3.5" />
-                        Add {isLecture ? "Lecture" : "Section"}
+                        {addLabel}
                     </button>
                 </div>
             </div>
@@ -203,7 +209,7 @@ function ClassSection({ icon: Icon, title, classes, onEdit, onDelete, onAdd }) {
                 </div>
             ) : (
                 <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-6 text-center">
-                    No {title.toLowerCase()} added yet.
+                    {t('manageCourseClasses.noClasses', { type: title.toLowerCase() })}
                 </p>
             )}
         </Section>
@@ -211,6 +217,7 @@ function ClassSection({ icon: Icon, title, classes, onEdit, onDelete, onAdd }) {
 }
 
 export default function ManageCourseClasses() {
+    const { t, i18n } = useTranslation('admin');
     const { courseId } = useParams();
     const navigate = useNavigate();
 
@@ -336,7 +343,7 @@ export default function ManageCourseClasses() {
     if (isLoading) {
         return (
             <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                Loading course...
+                {t('manageCourseClasses.loading')}
             </p>
         );
     }
@@ -349,25 +356,26 @@ export default function ManageCourseClasses() {
                     <button
                         onClick={() => navigate("/admin/courses")}
                         className="shrink-0 w-10 h-10 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors"
+                        title={t('manageCourseClasses.backToCourses')}
                     >
-                        <ArrowRightIcon className="w-5 h-5 rotate-180 text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+                        <ArrowRightIcon className="w-5 h-5 rotate-180 rtl:scale-x-[-1] text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                     </button>
                     <div className="min-w-0">
                         <h1 className="text-xl md:text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark truncate">
-                            {course?.courseName || "Course"}
+                            {getLocalizedField(course, 'courseName', i18n.language) || t('manageCourseClasses.course')}
                         </h1>
                         <p className="text-text-secondary-active-light dark:text-text-secondary-active-dark text-xs md:text-sm truncate">
-                            {course?.courseCode || ""}{course?.courseCode && course?.departmentName ? " • " : ""}{course?.departmentName || ""}{course?.creditHours ? ` • ${course.creditHours} Credit Hours` : ""}
+                            {getLocalizedField(course, 'courseCode', i18n.language) || ""}{course?.courseCode && course?.departmentName ? t('manageCourseClasses.separator') : ""}{course?.departmentName || ""}{course?.creditHours ? `${t('manageCourseClasses.separator')} ${t('manageCourseClasses.creditHoursLabel', { hours: course.creditHours })}` : ""}
                         </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     <Button variant="secondary" size="sm" onClick={handleOpenEdit}>
                         <FilePenIcon className="w-4 h-4" />
-                        <span className="hidden sm:inline"> Edit</span>
+                        <span className="hidden sm:inline"> {t('manageCourseClasses.editCourse')}</span>
                     </Button>
                     <Button variant="warning" size="sm" onClick={() => setIsDeactivateOpen(true)}>
-                        <span className="hidden sm:inline">Deactivate</span>
+                        <span className="hidden sm:inline">{t('manageCourseClasses.deactivate')}</span>
                         <span className="sm:hidden">X</span>
                     </Button>
                 </div>
@@ -385,7 +393,7 @@ export default function ManageCourseClasses() {
                                 : "border-transparent text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark"
                         }`}
                     >
-                        {tab.label}
+                        {tab.key === "classes" ? t('manageCourseClasses.tabClasses') : tab.key === "students" ? t('manageCourseClasses.tabStudents') : t('manageCourseClasses.tabGrades')}
                     </button>
                 ))}
             </div>
@@ -395,18 +403,18 @@ export default function ManageCourseClasses() {
                 <div className="space-y-6">
                     <div className="flex items-center gap-3 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark rounded-xl px-4 py-3 border border-border-primary-default-light dark:border-border-primary-default-dark">
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">Manage Class Sessions</p>
-                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Create individual lectures/sections or bulk-import from a file.</p>
+                            <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageCourseClasses.manageSessions')}</p>
+                            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageCourseClasses.manageSessionsHint')}</p>
                         </div>
                         <Button variant="secondary" size="sm" onClick={() => setIsImportOpen(true)}>
                             <ImportIcon size={18} />
-                            <span className="hidden sm:inline"> Import</span>
+                            <span className="hidden sm:inline"> {t('manageCourseClasses.import')}</span>
                         </Button>
                     </div>
 
                     <ClassSection
                         icon={AngleDownIcon}
-                        title="Lectures"
+                        title={t('manageCourseClasses.lectures')}
                         classes={lectures}
                         onEdit={handleEditClick}
                         onDelete={setDeleteTarget}
@@ -415,7 +423,7 @@ export default function ManageCourseClasses() {
 
                     <ClassSection
                         icon={AngleDownIcon}
-                        title="Sections"
+                        title={t('manageCourseClasses.sections')}
                         classes={sections}
                         onEdit={handleEditClick}
                         onDelete={setDeleteTarget}
@@ -431,7 +439,7 @@ export default function ManageCourseClasses() {
 
             {/* ─── Tab: Upload Final Grades ─── */}
             {activeTab === "grades" && (
-                <ManageCourseGradesTab courseId={courseId} courseName={course?.courseName} />
+                <ManageCourseGradesTab courseId={courseId} courseName={getLocalizedField(course, 'courseName', i18n.language)} />
             )}
 
             {/* Add Class Form */}
@@ -469,8 +477,8 @@ export default function ManageCourseClasses() {
             {/* Import Dialog */}
             {isImportOpen && (
                 <ImportDialog
-                    title="Import Classes"
-                    subtitle="Upload a file to bulk-import classes for this course."
+                    title={t('manageCourseClasses.importTitle')}
+                    subtitle={t('manageCourseClasses.importSubtitle')}
                     onClose={() => setIsImportOpen(false)}
                     onImport={async (file) => {
                         try {
@@ -488,33 +496,32 @@ export default function ManageCourseClasses() {
             <Dialog
                 isOpen={deleteTarget !== null}
                 variant="error"
-                title="Delete Class"
+                title={t('manageCourseClasses.deleteTitle')}
                 onClose={() => setDeleteTarget(null)}
                 onConfirm={() => { handleDeleteConfirm(); return true; }}
-                confirmText="Delete"
-                cancelText="Cancel"
+                confirmText={t('manageCourseClasses.delete')}
+                cancelText={t('manageCourseClasses.cancel')}
                 showCloseButton={true}
             >
-                Are you sure you want to delete this{" "}
-                <strong>{deleteTarget?.classTypeName}</strong> (#{deleteTarget?.classId})
-                {deleteTarget?.instructorName ? ` taught by ${deleteTarget.instructorName}` : ""}?
-                This action cannot be undone.
+                {t('manageCourseClasses.deleteConfirm', {
+                    type: deleteTarget?.classTypeName,
+                    id: deleteTarget?.classId,
+                    taughtBy: deleteTarget?.instructorName ? t('manageCourseClasses.taughtBy', { name: deleteTarget.instructorName }) : ''
+                })}
             </Dialog>
 
             {/* Deactivate Confirmation */}
             <Dialog
                 isOpen={isDeactivateOpen}
                 variant="warning"
-                title="Deactivate Course"
+                title={t('manageCourseClasses.deactivateTitle')}
                 onClose={() => setIsDeactivateOpen(false)}
                 onConfirm={() => { handleDeactivate(); return true; }}
-                confirmText="Deactivate"
-                cancelText="Cancel"
+                confirmText={t('manageCourseClasses.deactivate')}
+                cancelText={t('manageCourseClasses.cancel')}
                 showCloseButton={true}
             >
-                Are you sure you want to deactivate{" "}
-                <strong>{course?.courseName}</strong> ({course?.courseCode})?
-                This will make the course unavailable to students.
+                {t('manageCourseClasses.deactivateConfirm', { name: getLocalizedField(course, 'courseName', i18n.language), code: getLocalizedField(course, 'courseCode', i18n.language) })}
             </Dialog>
         </div>
     );

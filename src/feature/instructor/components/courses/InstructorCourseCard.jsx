@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import useArabicDigits from "../../../../hooks/useArabicDigits";
 import {
   BookIcon,
   FilePenIcon,
@@ -13,20 +15,6 @@ import {
   LocationDotIcon,
 } from "../../../../components/ui/icons";
 
-const typeStyles = {
-  elective: {
-    label: "ELECTIVE",
-    avatar: "bg-bg-surface-purple-default-light text-text-purple-default-light dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark",
-    badge: "bg-bg-surface-purple-default-light text-text-purple-default-light border-purple-300 dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark dark:border-purple-800",
-    classroom: "bg-purple-600 hover:bg-purple-700 text-white",
-  },
-  core: {
-    label: "CORE",
-    avatar: "bg-bg-surface-blue-default-light text-text-blue-default-light dark:bg-bg-surface-blue-default-dark dark:text-text-blue-default-dark",
-    badge: "bg-bg-surface-blue-default-light text-text-blue-default-light border-blue-300 dark:bg-bg-surface-blue-default-dark dark:text-text-blue-default-dark dark:border-blue-800",
-    classroom: "bg-blue-600 hover:bg-blue-700 text-white",
-  },
-};
 
 export default function InstructorCourseCard({
   courseId,
@@ -39,19 +27,41 @@ export default function InstructorCourseCard({
   totalStudents,
   onEnterClassroom,
 }) {
+  const { t } = useTranslation('instructor');
+  const { convert: ar } = useArabicDigits();
   const navigate = useNavigate();
+
+  const typeStyles = {
+    elective: {
+      label: t('courses.elective'),
+      avatar: "bg-bg-surface-purple-default-light text-text-purple-default-light dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark",
+      badge: "bg-bg-surface-purple-default-light text-text-purple-default-light border-purple-300 dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark dark:border-purple-800",
+      classroom: "bg-purple-600 hover:bg-purple-700 text-white",
+    },
+    core: {
+      label: t('courses.core'),
+      avatar: "bg-bg-surface-blue-default-light text-text-blue-default-light dark:bg-bg-surface-blue-default-dark dark:text-text-blue-default-dark",
+      badge: "bg-bg-surface-blue-default-light text-text-blue-default-light border-blue-300 dark:bg-bg-surface-blue-default-dark dark:text-text-blue-default-dark dark:border-blue-800",
+      classroom: "bg-blue-600 hover:bg-blue-700 text-white",
+    },
+  };
+
   const typeAccent = typeStyles[type] || typeStyles.elective;
 
   const quickLinks = [
-    { label: "Analytics", icon: ChartLineIcon, path: `/instructor/courses/${courseId}/analytics` },
-    { label: "Materials", icon: BookIcon, path: `/instructor/courses/${courseId}/materials` },
-    { label: "Assignments", icon: FilePenIcon, path: `/instructor/courses/${courseId}/assignments` },
-    { label: "Quizzes", icon: ClipboardCheckIcon, path: `/instructor/courses/${courseId}/quizzes` },
-    { label: "Attendance", icon: UserCheckIcon, path: `/instructor/courses/${courseId}/attendance` },
-    { label: "Grades", icon: ChartBarIcon, path: `/instructor/courses/${courseId}/grades` },
-    { label: "Study Group", icon: UsersPlusIcon, path: `/instructor/courses/${courseId}/community` },
-    { label: "Meeting", icon: VideoIcon, path: `/instructor/courses/${courseId}/meeting` },
+    { label: t('courses.analytics'), icon: ChartLineIcon, path: `/instructor/courses/${courseId}/analytics` },
+    { label: t('courses.materials'), icon: BookIcon, path: `/instructor/courses/${courseId}/materials` },
+    { label: t('courses.assignments'), icon: FilePenIcon, path: `/instructor/courses/${courseId}/assignments` },
+    { label: t('courses.quizzes'), icon: ClipboardCheckIcon, path: `/instructor/courses/${courseId}/quizzes` },
+    { label: t('courses.attendance'), icon: UserCheckIcon, path: `/instructor/courses/${courseId}/attendance` },
+    { label: t('courses.grades'), icon: ChartBarIcon, path: `/instructor/courses/${courseId}/grades` },
+    { label: t('courses.studyGroup'), icon: UsersPlusIcon, path: `/instructor/courses/${courseId}/community` },
+    { label: t('courses.meeting'), icon: VideoIcon, path: `/instructor/courses/${courseId}/meeting` },
   ];
+
+  const studentCountText = totalStudents != null
+    ? ar(t('courses.studentCount', { count: totalStudents }))
+    : null;
 
   return (
     <div className="group w-full rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark shadow-md shadow-shadow-light/40 dark:shadow-shadow-dark/20 hover:shadow-lg hover:shadow-shadow-light/50 dark:hover:shadow-shadow-dark/30 transition-shadow duration-300 overflow-hidden">
@@ -77,7 +87,7 @@ export default function InstructorCourseCard({
               </span>
               {semester && (
                 <span className="text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-xs">
-                  {semester}
+                  {ar(semester)}
                 </span>
               )}
             </div>
@@ -98,7 +108,7 @@ export default function InstructorCourseCard({
               {totalStudents != null && (
                 <div className="flex items-center gap-1.5">
                   <UsersIcon className="w-3.5 h-3.5" />
-                  <span>{totalStudents} Student{totalStudents !== 1 ? "s" : ""}</span>
+                  <span>{studentCountText}</span>
                 </div>
               )}
             </div>
@@ -111,7 +121,7 @@ export default function InstructorCourseCard({
             className={`hidden sm:flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all active:scale-[0.98] ${typeAccent.classroom}`}
           >
             <DoorOpenIcon className="w-4 h-4" />
-            Classroom
+            {t('courses.classroom')}
           </button>
         </div>
 
@@ -142,7 +152,7 @@ export default function InstructorCourseCard({
             className={`w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl transition-all active:scale-[0.98] ${typeAccent.classroom}`}
           >
             <DoorOpenIcon className="w-4 h-4" />
-            Enter Classroom
+            {t('courses.enterClassroom')}
           </button>
         </div>
       </div>

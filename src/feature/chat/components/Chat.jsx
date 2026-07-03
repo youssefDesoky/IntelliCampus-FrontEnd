@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import Section from "../../../components/ui/Section";
 import Dialog from "../../../components/ui/Dialog";
 import ChatUsers from "./ChatUsers";
@@ -26,8 +27,12 @@ import {
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
 import { setChatState } from '../../../utils/notificationHandler';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { useToast } from '../../../contexts/ToastContext.jsx';
+import { setChatState } from '../../../utils/notificationHandler';
 
 export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPanel, defaultUser }) {
+  const { t, i18n } = useTranslation('chat');
   const { showError } = useError();
   const { showToast } = useToast();
   const { isPhone } = useSidebar();
@@ -445,8 +450,8 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
         name:
           msg.senderName ||
           (isOwn
-            ? currentUser?.fullName
-            : chatPartner?.fullName || "Unknown"),
+            ? getLocalizedField(currentUser, 'fullName', i18n.language)
+            : getLocalizedField(chatPartner, 'fullName', i18n.language) || "Unknown"),
         avatar: isOwn ? (currentUser?.avatar || null) : (chatPartner?.avatar || null),
         isOwnMessage: isOwn,
       },
@@ -459,7 +464,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
 
   const friendsList = friends.map((f) => ({
     id: f.userId,
-    name: f.fullName,
+    name: getLocalizedField(f, 'fullName', i18n.language),
   }));
 
   const handleSendInvite = async () => {
@@ -586,14 +591,14 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   return (
     <>
       {isChatOpen && (
-        <Section className={`fixed z-50 ${isPhone ? 'inset-0 rounded-none p-0 h-dvh' : 'bottom-4 right-6 w-full max-w-[750px]'} bg-bg-surface-default-light dark:bg-bg-surface-default-dark shadow-lg ${isPhone ? 'p-0' : 'p-4'}`}>
+        <Section className={`fixed z-50 ${isPhone ? 'inset-0 rounded-none p-0 h-dvh' : 'bottom-4 end-6 w-full max-w-[750px]'} bg-bg-surface-default-light dark:bg-bg-surface-default-dark shadow-lg ${isPhone ? 'p-0' : 'p-4'}`}>
           <div className={`bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col ${isPhone ? 'w-full h-full' : 'w-full max-w-[750px] h-[600px] min-h-[600px]'}`}>
             {/* Top bar with close button */}
             <div className="flex items-center justify-end px-3 py-2 border-b border-gray-100 dark:border-gray-700 shrink-0 bg-white dark:bg-gray-800">
               <button
                 onClick={() => setIsChatOpen(false)}
                 className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-red-400 transition-all active:scale-90"
-                aria-label="Close chat"
+                aria-label={t('closeChat')}
               >
                 <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 4l8 8M12 4l-8 8" />
@@ -679,14 +684,14 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
           <Dialog
             isOpen={!!pendingPinMessageId}
             variant="warning"
-            title="Pin Message"
+            title={t('pin.title')}
             onClose={handleCancelPin}
             onConfirm={handleConfirmPin}
-            confirmText="Pin"
-            cancelText="Cancel"
+            confirmText={t('pin.confirm')}
+            cancelText={t('pin.cancel')}
           >
             <p>
-              There is already a pinned message in this chat. Only one message can be pinned at a time. The current pinned message will be unpinned.
+              {t('pin.warning')}
             </p>
           </Dialog>
         </Section>

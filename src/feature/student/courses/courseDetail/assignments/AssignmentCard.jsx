@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Button from "../../../../../components/ui/Button";
 import ModelOverlay from "../../../../../components/ui/ModelOverlay";
 import MaterialPreview from "../../../../../components/ui/MaterialPreview";
@@ -12,8 +13,11 @@ import {
     ChartBarIcon,
     XIcon
 } from "../../../../../components/ui/icons";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, score, totalPoints, attachments, onSubmitAssignment, onViewInstructions, onViewSubmission, onViewGrade }) => {
+    const { t } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
     const { showError } = useError();
     const [previewAttachment, setPreviewAttachment] = useState(null);
     const downloadAttachment = async (attachment) => {
@@ -30,7 +34,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
         } catch {
-            showError("Failed to download attachment.");
+            showError(t('assignmentCard.downloadFailed'));
         }
     };
 
@@ -72,9 +76,9 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                     )}
                 </div>
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 ${statusColors[status] || statusColors.pending}`}>
-                    {status === "pending" && (isUrgent ? "Due Soon" : "Pending")}
-                    {status === "submitted" && "Submitted"}
-                    {status === "graded" && "Graded"}
+                    {status === "pending" && (isUrgent ? t('assignmentCard.dueSoon') : t('assignments.pending'))}
+                    {status === "submitted" && t('assignments.submitted')}
+                    {status === "graded" && t('assignments.graded')}
                 </span>
             </div>
 
@@ -82,17 +86,17 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                 <div className="flex items-center gap-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">
                     <ClockIcon size={16} />
                     <span className={isUrgent && status === "pending" ? "font-semibold text-red-600 dark:text-red-400" : ""}>
-                        {isUrgent && status === "pending" ? `Due in ${daysLeft}d (Urgent)` : `Due in ${daysLeft}d`}
+                        {isUrgent && status === "pending" ? t('assignmentCard.dueUrgent', { daysLeft: ar(daysLeft) }) : t('assignmentCard.dueIn', { daysLeft: ar(daysLeft) })}
                     </span>
                 </div>
                 {totalPoints && (
                     <div className="flex items-center gap-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        <span className="font-medium">{totalPoints} points</span>
+                        <span className="font-medium">{t('assignmentCard.points', { totalPoints: ar(totalPoints) })}</span>
                     </div>
                 )}
                 {score !== undefined && score !== null && totalPoints && (
                     <div className="flex items-center gap-1 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        <span className="font-semibold text-green-600 dark:text-green-400">{score}/{totalPoints} pts</span>
+                        <span className="font-semibold text-green-600 dark:text-green-400">{t('assignmentCard.score', { score: ar(score), totalPoints: ar(totalPoints) })}</span>
                     </div>
                 )}
             </div>
@@ -103,7 +107,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                     <div className="flex items-center gap-2 mb-2">
                         <FileIcon size={16} className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                         <h4 className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase">
-                            Attachments ({attachments.length})
+                            {t('assignmentCard.attachments', { count: attachments.length })}
                         </h4>
                     </div>
                     <div className="space-y-2">
@@ -123,16 +127,16 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                                 <button
                                     type="button"
                                     onClick={() => setPreviewAttachment(attachment)}
-                                    className="ml-2 p-1 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark rounded transition-colors shrink-0"
-                                    title="View file"
+                                    className="ms-2 p-1 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark rounded transition-colors shrink-0"
+                                    title={t('assignmentCard.viewFile')}
                                 >
                                     <EyeIcon size={14} className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => downloadAttachment(attachment)}
-                                    className="ml-1 p-1 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark rounded transition-colors shrink-0"
-                                    title="Download file"
+                                    className="ms-1 p-1 hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark rounded transition-colors shrink-0"
+                                    title={t('assignmentCard.downloadFile')}
                                 >
                                     <DownloadIcon size={14} className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
                                 </button>
@@ -150,7 +154,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                             startIcon={<CheckIcon size={16} />}
                             onClick={() => onSubmitAssignment && onSubmitAssignment({ id, title, dueDate, status })}
                         >
-                            Submit Assignment
+                            {t('assignments.submitAssignment')}
                         </Button>
                         <Button 
                             variant="secondary"
@@ -158,7 +162,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                             startIcon={<EyeIcon size={16} />}
                             onClick={() => onViewInstructions && onViewInstructions({ title, description, dueDate, daysLeft, status, attachments })}
                         >
-                            View Instructions
+                            {t('assignments.viewInstructions')}
                         </Button>
                     </>
                 )}
@@ -170,7 +174,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                                 startIcon={<CheckIcon size={16} />}
                                 onClick={() => onSubmitAssignment && onSubmitAssignment({ id, title, dueDate, status })}
                             >
-                                Resubmit Assignment
+                                {t('assignmentCard.resubmitAssignment')}
                             </Button>
                         ) : null}
                         <Button
@@ -179,7 +183,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                             startIcon={<EyeIcon size={16} />}
                             onClick={() => onViewSubmission && onViewSubmission({ title, description, dueDate, daysLeft, status, score, attachments })}
                         >
-                            View Submission
+                            {t('assignmentCard.viewSubmission')}
                         </Button>
                     </>
                 )}
@@ -190,7 +194,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                             startIcon={<ChartBarIcon size={16} />}
                             onClick={() => onViewGrade && onViewGrade({ title, description, dueDate, daysLeft, status, score, totalPoints, attachments })}
                         >
-                            View Grade ({score}/{totalPoints} pts)
+                            {t('assignmentCard.viewGrade', { score: ar(score), totalPoints: ar(totalPoints) })}
                         </Button>
                         <Button
                             className="w-full sm:flex-1"
@@ -198,7 +202,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                             startIcon={<EyeIcon size={16} />}
                             onClick={() => onViewSubmission && onViewSubmission({ title, description, dueDate, daysLeft, status, score, attachments })}
                         >
-                            View Submission
+                            {t('assignmentCard.viewSubmission')}
                         </Button>
                     </>
                 )}
@@ -214,7 +218,7 @@ const AssignmentCard = ({ id, title, description, dueDate, daysLeft, status, sco
                                 </div>
                                 <div className="min-w-0">
                                     <h2 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">{previewAttachment.name}</h2>
-                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Preview</p>
+                                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('assignmentCard.preview')}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">

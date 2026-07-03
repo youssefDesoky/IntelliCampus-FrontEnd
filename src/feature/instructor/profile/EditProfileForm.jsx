@@ -1,11 +1,14 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import InputItem from "../../../components/form/InputItem";
 import TextArea from "../../../components/ui/TextArea";
 import { useError } from "../../../contexts/ErrorContext.jsx";
 import { updateProfile } from "../services/profileApi";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
+    const { t, i18n } = useTranslation('instructor');
     const { showError } = useError();
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
@@ -26,13 +29,13 @@ export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
         const egyptianPhoneRegex = /^01[0125]\d{8}$/;
 
         const newErrors = {};
-        if (!fullName.trim()) newErrors.fullName = "English name is required.";
+        if (!fullName.trim()) newErrors.fullName = t('profile.errorNameRequired');
         if (!phoneNumber.trim()) {
-            newErrors.phoneNumber = "Phone number is required.";
+            newErrors.phoneNumber = t('profile.errorPhoneRequired');
         } else if (!egyptianPhoneRegex.test(phoneNumber.trim())) {
-            newErrors.phoneNumber = "Enter a valid Egyptian phone number (e.g. 010XXXXXXXX).";
+            newErrors.phoneNumber = t('profile.errorPhoneInvalid');
         }
-        if (!address.trim()) newErrors.address = "Address is required.";
+        if (!address.trim()) newErrors.address = t('profile.errorAddressRequired');
 
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) return;
@@ -48,7 +51,7 @@ export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
             onSaved?.();
             handleClose();
         } catch (err) {
-            showError(err?.message || "Failed to update profile.");
+            showError(err?.message || t('profile.errorUpdateFailed'));
         } finally {
             setSubmitting(false);
         }
@@ -57,37 +60,37 @@ export default function EditProfileForm({ isOpen, onClose, user, onSaved }) {
     return (
         <BaseFormComponent
             isOpen={isOpen}
-            title="Edit Profile"
-            description="Update your personal details below."
+            title={t('profile.edit')}
+            description={t('profile.editDesc')}
             onClose={handleClose}
             onSubmit={handleSubmit}
-            submitText="Save Changes"
+            submitText={t('profile.saveChanges')}
             submitDisabled={submitting}
             submitLoading={submitting}
             maxWidth="max-w-md"
         >
             <div className="space-y-5">
                 <InputItem
-                    label="Full Name (English)"
+                    label={t('profile.fullNameEn')}
                     type="text"
                     name="fullName"
-                    placeholder="Enter English name"
-                    defaultValue={user?.name || user?.fullName || ""}
+                    placeholder={t('profile.fullNameEnPlaceholder')}
+                    defaultValue={user?.name || getLocalizedField(user, 'fullName', i18n.language) || ""}
                     errorMessage={errors.fullName}
                 />
                 <InputItem
-                    label="Phone Number"
+                    label={t('profile.phoneNumber')}
                     type="tel"
                     name="phoneNumber"
-                    placeholder="Enter phone number"
+                    placeholder={t('profile.phonePlaceholder')}
                     defaultValue={user?.phone || user?.phoneNumber || ""}
                     errorMessage={errors.phoneNumber}
                 />
                 <div>
-                    <label htmlFor="address" className="block mb-2 font-bold text-sm text-text-primary-default-light dark:text-text-primary-default-dark">Address</label>
+                    <label htmlFor="address" className="block mb-2 font-bold text-sm text-text-primary-default-light dark:text-text-primary-default-dark">{t('profile.address')}</label>
                     <TextArea
                         name="address"
-                        placeholder="Enter address"
+                        placeholder={t('profile.addressPlaceholder')}
                         defaultValue={user?.address || ""}
                         className="w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark"
                     />

@@ -1,7 +1,10 @@
-import ScheduleLegend from "./schedule/ScheduleLegend";
-import WeeklyScheduleHeader from "./schedule/WeeklyScheduleHeader";
-import WeeklyScheduleDayRow from "./schedule/WeeklyScheduleDayRow";
-import WeeklyScheduleAgenda from "./schedule/WeeklyScheduleAgenda";
+import { useTranslation } from "react-i18next";
+import ScheduleLegend from "./ScheduleLegend";
+import WeeklyScheduleHeader from "./WeeklyScheduleHeader";
+import WeeklyScheduleDayRow from "./WeeklyScheduleDayRow";
+import WeeklyScheduleAgenda from "./WeeklyScheduleAgenda.phone";
+import useArabicDigits from "../../hooks/useArabicDigits";
+import { getLocalizedField } from "../../utils/getLocalizedField";
 
 const timeSlots = [
     "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
@@ -17,6 +20,11 @@ const days = [
     { key: "thu", label: "Thursday", short: "Thu" },
     // { key: "fri", label: "Friday", short: "Fri" },
 ];
+
+function getDayLabel(t, key, short = false) {
+    const suffix = short ? "Short" : "";
+    return t(`days.${key}${suffix}`);
+}
 
 function parseHour(timeStr) {
     const [hourStr, period] = timeStr.split(" ");
@@ -66,6 +74,8 @@ function buildExamGrid(schedule, examDays) {
 // WeeklyScheduleAgenda is rendered in `md:hidden` above it. Pure CSS switch —
 // no JS device detection, so there's no layout flash on load/resize.
 function ExamScheduleView({ schedule, onEventClick, examDays }) {
+    const { t, i18n } = useTranslation("common");
+    const { localizeTime } = useArabicDigits();
     const { sortedSlots, sortedDays, grid } = buildExamGrid(schedule, examDays);
 
     if (sortedSlots.length === 0) return null;
@@ -87,12 +97,12 @@ function ExamScheduleView({ schedule, onEventClick, examDays }) {
                         className="grid border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/95 dark:bg-bg-surface-secondary-default-dark/95"
                         style={{ gridTemplateColumns: `120px repeat(${sortedSlots.length}, 1fr)` }}
                     >
-                        <div className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                            Date
+                        <div className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-e border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                            {t("schedule.dateHeader")}
                         </div>
                         {sortedSlots.map(slot => (
-                            <div key={slot.label} className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-r last:border-r-0 border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                                {slot.label}
+                            <div key={slot.label} className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-e last:border-e-0 border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                                {localizeTime(slot.label)}
                             </div>
                         ))}
                     </div>
@@ -103,22 +113,22 @@ function ExamScheduleView({ schedule, onEventClick, examDays }) {
                             className={`grid ${rowIndex < sortedDays.length - 1 ? "border-b border-border-primary-default-light dark:border-border-primary-default-dark" : ""}`}
                             style={{ gridTemplateColumns: `120px repeat(${sortedSlots.length}, 1fr)` }}
                         >
-                            <div className="p-3 flex items-center justify-center border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                            <div className="p-3 flex items-center justify-center border-e border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                 <span className="text-xs md:text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark whitespace-nowrap">
-                                    {day.label}
+                                    {getDayLabel(t, day.key)}
                                 </span>
                             </div>
                             {sortedSlots.map(slot => {
                                 const events = grid[slot.label]?.[day.key] || [];
                                 return (
-                                    <div key={slot.label} className="p-1.5 min-h-[4rem] flex flex-col gap-1 border-r last:border-r-0 border-border-primary-default-light dark:border-border-primary-default-dark">
+                                    <div key={slot.label} className="p-1.5 min-h-[4rem] flex flex-col gap-1 border-e last:border-e-0 border-border-primary-default-light dark:border-border-primary-default-dark">
                                         {events.length > 0 ? events.map(ev => (
                                             <div
                                                 key={ev.id}
                                                 onClick={() => onEventClick?.(ev)}
-                                                className="rounded-md border-l-2 border-border-blue-default-light dark:border-border-blue-default-dark bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark px-2 py-1 text-xs font-medium text-text-blue-default-light dark:text-text-blue-default-dark cursor-pointer hover:brightness-110 transition-all leading-tight"
+                                                className="rounded-md border-s-2 border-border-blue-default-light dark:border-border-blue-default-dark bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark px-2 py-1 text-xs font-medium text-text-blue-default-light dark:text-text-blue-default-dark cursor-pointer hover:brightness-110 transition-all leading-tight"
                                             >
-                                                {ev.title}
+                                                {getLocalizedField(ev, 'title', i18n.language)}
                                             </div>
                                         )) : (
                                             <div className="flex-1 flex items-center justify-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-xs">
@@ -140,7 +150,12 @@ function ExamScheduleView({ schedule, onEventClick, examDays }) {
 // agenda and grid is now a pure `md:` breakpoint, so there's nothing to wire
 // up from a device-detection hook anymore.
 export default function WeeklySchedule({ schedule = [], variant, onEventClick, examDays }) {
+    const { t } = useTranslation("common");
+    const { convert: ar } = useArabicDigits();
     const activeDays = new Set(schedule.map((item) => item.day)).size;
+
+    const itemsText = ar(t("schedule.itemCount", { count: schedule.length }));
+    const daysText = ar(t("schedule.dayCount", { count: activeDays || 0 }));
 
     return (
         <div className="w-full overflow-x-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-sm shadow-shadow-light dark:shadow-shadow-dark">
@@ -148,23 +163,23 @@ export default function WeeklySchedule({ schedule = [], variant, onEventClick, e
                 <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div className="space-y-1">
                         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                            {variant === "exam" ? "Exam timetable" : "Weekly timeline"}
+                            {variant === "exam" ? t("schedule.examTimetable") : t("schedule.weeklyTimeline")}
                         </p>
                         <h2 className="text-xl md:text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
-                            {variant === "exam" ? "Exam schedule" : "Your class plan for the week"}
+                            {variant === "exam" ? t("schedule.examScheduleTitle") : t("schedule.classPlanTitle")}
                         </h2>
                         <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                            {schedule.length} scheduled item{schedule.length === 1 ? "" : "s"} across {activeDays || 0} active day{activeDays === 1 ? "" : "s"}
+                            {t("schedule.scheduledItems", { itemsText, daysText })}
                         </p>
                     </div>
 
                     {variant !== "exam" && (
                         <div className="flex flex-wrap gap-2 text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">
                             <span className="rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light/80 dark:bg-bg-surface-primary-default-dark/80 px-3 py-1.5">
-                                Drag-free view
+                                {t("schedule.dragFreeView")}
                             </span>
                             <span className="rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light/80 dark:bg-bg-surface-primary-default-dark/80 px-3 py-1.5">
-                                Tap an event for details
+                                {t("schedule.tapEventForDetails")}
                             </span>
                         </div>
                     )}
@@ -191,9 +206,9 @@ export default function WeeklySchedule({ schedule = [], variant, onEventClick, e
             {/* Legend */}
             {variant !== "exam" && (
                 <ScheduleLegend legendItems={[
-                    { color: "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark", label: "Lecture" },
-                    { color: "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark", label: "Section" },
-                    { color: "bg-bg-surface-green-default-light dark:bg-bg-surface-green-default-dark", label: "Activity" }
+                    { color: "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark", label: t("schedule.typeLecture") },
+                    { color: "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark", label: t("schedule.typeSection") },
+                    { color: "bg-bg-surface-green-default-light dark:bg-bg-surface-green-default-dark", label: t("schedule.typeActivity") }
                 ]} />
             )}
         </div>

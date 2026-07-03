@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
 import IdentityCard from "../../../feature/student/profile/IdentityCard";
@@ -5,13 +6,18 @@ import AccountControlsCard from "../../../feature/student/profile/AccountControl
 import AcademicInfoCard from "../../../feature/student/profile/AcademicInfoCard";
 import PerformanceCard from "../../../feature/student/profile/PerformanceCard";
 import { fetchStudentProfile } from "../../../api/studentProfile";
-function mapBackendToUserData(student) {
-    return {
-        name: student.fullName,
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+export default function Profile() {
+    const { t, i18n } = useTranslation('student');
+    const authUser = useRouteLoaderData("root");
+    const studentId = authUser?.roles?.some((r) => r.toLowerCase().startsWith("student")) ? authUser?.userId : null;
+
+    const mapBackendToUserData = (student) => ({
+        name: getLocalizedField(student, 'fullName', i18n.language),
         avatar: student.profileImage || "",
-        specialization: student.specializationName || "",
-        department: student.departmentName || "",
-        faculty: student.facultyName || "",
+        specialization: getLocalizedField(student, 'specializationName', i18n.language) || "",
+        department: getLocalizedField(student, 'departmentName', i18n.language) || "",
+        faculty: getLocalizedField(student, 'facultyName', i18n.language) || "",
         studentSince: student.enrollmentDate || "",
         email: student.email || "",
         phone: student.phoneNumber || "",
@@ -19,40 +25,36 @@ function mapBackendToUserData(student) {
         studentCode: student.studentCode || "",
         level: student.level,
         studentType: student.studentType || "",
-        bylaw: student.bylawName || "",
+        bylaw: getLocalizedField(student, 'bylawName', i18n.language) || "",
         gpa: student.gpa,
         courses: student.courses || [],
         qrCode: "",
         fullNameAr: student.fullNameAr || "",
-    };
-}
+    });
 
-function mapAuthToUserData(auth) {
-    if (!auth) return null;
-    return {
-        name: auth.fullName || auth.name || "",
-        avatar: auth.profileImage || "",
-        email: auth.email || "",
-        phone: auth.phoneNumber || auth.phone || "",
-        address: auth.address || "",
-        specialization: auth.specialization || "",
-        department: auth.departmentName || auth.department || "",
-        faculty: auth.facultyName || auth.faculty || "",
-        studentSince: auth.enrollmentDate || "",
-        studentCode: auth.studentCode || "",
-        level: auth.level,
-        studentType: auth.studentType || "",
-        bylaw: auth.bylawName || "",
-        gpa: auth.gpa,
-        courses: auth.courses || [],
-        qrCode: "",
-        fullNameAr: auth.fullNameAr || "",
+    const mapAuthToUserData = (auth) => {
+        if (!auth) return null;
+        return {
+            name: getLocalizedField(auth, 'fullName', i18n.language) || auth.name || "",
+            avatar: auth.profileImage || "",
+            email: auth.email || "",
+            phone: auth.phoneNumber || auth.phone || "",
+            address: auth.address || "",
+            specialization: getLocalizedField(auth, 'specializationName', i18n.language) || auth.specialization || "",
+            department: getLocalizedField(auth, 'departmentName', i18n.language) || auth.department || "",
+            faculty: getLocalizedField(auth, 'facultyName', i18n.language) || auth.facultyName || auth.faculty || "",
+            studentSince: auth.enrollmentDate || "",
+            studentCode: auth.studentCode || "",
+            level: auth.level,
+            studentType: auth.studentType || "",
+            bylaw: getLocalizedField(auth, 'bylawName', i18n.language) || auth.bylawName || "",
+            gpa: auth.gpa,
+            courses: auth.courses || [],
+            qrCode: "",
+            fullNameAr: auth.fullNameAr || "",
+        };
     };
-}
 
-export default function Profile() {
-    const authUser = useRouteLoaderData("root");
-    const studentId = authUser?.roles?.some((r) => r.toLowerCase().startsWith("student")) ? authUser?.userId : null;
     const initialData = mapAuthToUserData(authUser);
 
     const { data: userData = null, isLoading: detailedLoading, refetch, error } = useQuery({
@@ -69,7 +71,7 @@ export default function Profile() {
     if (!userData && !studentId) {
         return (
             <div className="flex items-center justify-center py-20">
-                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">Unable to load profile.</p>
+                <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('profile.unableToLoad')}</p>
             </div>
         );
     }

@@ -1,4 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { BookIcon, BrainIcon, CheckIcon, FilePenIcon, Grid2ColIcon, XIcon } from "../../../../../components/ui/icons";
+import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
 function StatRow({ icon, label, value, percent, barColor }) {
 	return (
@@ -37,18 +39,20 @@ export default function QuizSummary({
 	reviewMode,
 	questionResultsMap = {},
 }) {
+	const { t } = useTranslation('student');
+	const { convert: ar } = useArabicDigits();
 	return (
 		<div className="space-y-4 xl:sticky xl:top-40 xl:self-start">
 			{backendResult && (
 				<div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-900/10 p-5 text-center">
 					<p className="text-[10px] uppercase tracking-widest font-bold text-emerald-700 dark:text-emerald-300 mb-2">
-						Your Score
+						{t('quizzes.yourScore')}
 					</p>
 					<p className="text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
-						{backendResult.percentage}%
+						{ar(backendResult.percentage)}%
 					</p>
 					<p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 mt-1">
-						{backendResult.score} <span className="text-emerald-500">/ {backendResult.maxScore}</span> points
+						{ar(backendResult.score)} <span className="text-emerald-500">/ {ar(backendResult.maxScore)}</span> {t('quizzes.points')}
 					</p>
 					<div className="mt-3 h-2 w-full rounded-full bg-emerald-200/50 dark:bg-emerald-800/50 overflow-hidden">
 						<div
@@ -63,10 +67,10 @@ export default function QuizSummary({
 				<div className="flex items-center justify-between p-4 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
 					<h3 className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark flex items-center gap-2">
 						<Grid2ColIcon size={15} />
-						Question Navigator
+						{t('quizzes.questionNavigator')}
 					</h3>
 					<span className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">
-						{questions.length} questions
+						{ar(questions.length)} {t('quizzes.questions')}
 					</span>
 				</div>
 				<div className="p-4">
@@ -105,11 +109,11 @@ export default function QuizSummary({
 									key={q.id}
 									onClick={() => onNavigate && onNavigate(Math.ceil(qNum / pageSize))}
 									className={btnClass}
-									title={`Question ${qNum}`}
+									title={t('quizzes.question', { num: qNum })}
 								>
-									{qNum}
+									{ar(qNum)}
 									{reviewMode && result && (
-										<span className="absolute -top-1 -right-1">
+										<span className="absolute -top-1 -end-1">
 											{result.isCorrect ? (
 												<CheckIcon size={8} className="text-green-500" />
 											) : (
@@ -124,21 +128,21 @@ export default function QuizSummary({
 					<div className="mt-4 flex flex-wrap items-center gap-3 text-[11px] text-text-secondary-default-light dark:text-text-secondary-default-dark">
 						<span className="flex items-center gap-1.5">
 							<span className="w-2.5 h-2.5 rounded-sm bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark" />
-							Answered
+							{t('quizzes.legendAnswered')}
 						</span>
 						<span className="flex items-center gap-1.5">
 							<span className="w-2.5 h-2.5 rounded-sm bg-bg-surface-secondary-default-light border border-border-primary-default-light dark:bg-bg-surface-secondary-default-dark dark:border-border-primary-default-dark" />
-							Unanswered
+							{t('quizzes.unanswered')}
 						</span>
 						{reviewMode && (
 							<>
 								<span className="flex items-center gap-1.5">
 									<span className="w-2.5 h-2.5 rounded-sm bg-green-100 border border-green-200 dark:bg-green-900/30 dark:border-green-800" />
-									Correct
+									{t('quizzes.correct')}
 								</span>
 								<span className="flex items-center gap-1.5">
 									<span className="w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-200 dark:bg-red-900/30 dark:border-red-800" />
-									Incorrect
+									{t('quizzes.incorrect')}
 								</span>
 							</>
 						)}
@@ -149,33 +153,33 @@ export default function QuizSummary({
 			<div className="rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-sm p-4 space-y-3.5">
 				<h3 className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark flex items-center gap-2">
 					<BookIcon size={15} />
-					Summary
+					{t('quizzes.summary')}
 				</h3>
 				<StatRow
 					icon={<BookIcon size={14} />}
-					label="Total Questions"
-					value={`${totalCount}`}
+					label={t('quizzes.totalQuestions')}
+					value={`${ar(totalCount)}`}
 					percent={progressPercent}
 					barColor="bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark"
 				/>
 				<StatRow
 					icon={<CheckIcon size={14} />}
-					label="True / False"
-					value={`${tfSummary.answered}/${tfSummary.total}`}
+					label={t('quizzes.trueFalse')}
+					value={`${ar(tfSummary.answered)}/${ar(tfSummary.total)}`}
 					percent={tfPercent}
 					barColor="bg-sky-500"
 				/>
 				<StatRow
 					icon={<BrainIcon size={14} />}
-					label="Multiple Choice"
-					value={`${mcqSummary.answered}/${mcqSummary.total}`}
+					label={t('quizzes.multipleChoice')}
+					value={`${ar(mcqSummary.answered)}/${ar(mcqSummary.total)}`}
 					percent={mcqPercent}
 					barColor="bg-violet-500"
 				/>
 				<StatRow
 					icon={<FilePenIcon size={14} />}
-					label="Written"
-					value={`${writtenSummary.answered}/${writtenSummary.total}`}
+					label={t('quizzes.written')}
+					value={`${ar(writtenSummary.answered)}/${ar(writtenSummary.total)}`}
 					percent={writtenPercent}
 					barColor="bg-emerald-500"
 				/>

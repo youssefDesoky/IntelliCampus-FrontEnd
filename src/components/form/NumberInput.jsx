@@ -40,6 +40,7 @@ export default function NumberInput({
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     className="w-full px-3 py-2 outline-none text-text-primary-active-light dark:text-text-primary-active-dark bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    dir="auto"
                     {...props}
                 />
             </div>

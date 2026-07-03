@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import MessageControls from "./MessageControls";
 import { EllipsisVerticalIcon } from "../../../components/ui/icons";
 
 export default function Message({ sender, message, sendTime, isGrouped, showSenderInfo, messageId, deleteMessage, editMessage, pinMessage, unpinMessage, isEdited, isPinned }) {
+  const { t, i18n } = useTranslation('chat');
+  const isRtl = i18n.dir() === 'rtl';
   const [showControls, setShowControls] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message);
@@ -124,7 +127,10 @@ export default function Message({ sender, message, sendTime, isGrouped, showSend
                 : "bg-white/6 border border-white/8 text-[var(--text-primary)]"
               }
               ${!isGrouped
-                ? (isOwn ? "rounded-[18px] rounded-tr-md" : "rounded-[18px] rounded-tl-md")
+                ? (isOwn
+                    ? (isRtl ? "rounded-[18px] rounded-tl-md" : "rounded-[18px] rounded-tr-md")
+                    : (isRtl ? "rounded-[18px] rounded-tr-md" : "rounded-[18px] rounded-tl-md")
+                  )
                 : "rounded-[18px]"
               }
             `}
@@ -137,14 +143,15 @@ export default function Message({ sender, message, sendTime, isGrouped, showSend
                 onChange={(e) => setEditText(e.target.value)}
                 onKeyDown={handleEditKeyDown}
                 onBlur={handleSubmitEdit}
+                dir={isRtl ? 'rtl' : 'ltr'}
                 className="w-full bg-transparent outline-none border-b border-current"
               />
             ) : (
-              <div className="pr-5">
+              <div className="pe-5">
                 {message}
                 {isEdited && (
-                  <span className={`text-[10px] ml-1.5 ${isOwn ? "text-blue-200" : "text-gray-400"}`}>
-                    (edited)
+                  <span className={`text-[10px] ms-1.5 ${isOwn ? "text-blue-200" : "text-gray-400"}`}>
+                    {t('edited')}
                   </span>
                 )}
               </div>
@@ -153,9 +160,9 @@ export default function Message({ sender, message, sendTime, isGrouped, showSend
             {/* 3-dots button */}
             {!isEditing && (
               <button
-                className="absolute top-1.5 right-1.5 p-1 rounded-full hover:bg-white/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                className="absolute top-1.5 end-1.5 p-1 rounded-full hover:bg-white/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 onClick={() => setShowControls((v) => !v)}
-                aria-label="Show message controls"
+                aria-label={t('showMessageControls')}
               >
                 <EllipsisVerticalIcon size={16} />
               </button>
@@ -170,7 +177,7 @@ export default function Message({ sender, message, sendTime, isGrouped, showSend
           {showControls && (
             <div
               ref={controlsRef}
-              className="absolute z-20 top-8 right-0"
+              className="absolute z-20 top-8 end-0"
             >
                 <MessageControls
                   isOwn={isOwn}

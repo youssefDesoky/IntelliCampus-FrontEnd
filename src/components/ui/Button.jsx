@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 export default function Button({
     variant = "primary",
     size = "md",
@@ -11,6 +13,8 @@ export default function Button({
     className = "",
     ...props
 }) {
+    const { i18n } = useTranslation();
+    const isRTL = i18n.language === 'ar';
     const base = "rounded-md font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap shrink-0";
     const loadingDot = "mx-1 bg-current rounded-full inline-block w-1.5 h-1.5";
     
@@ -44,11 +48,19 @@ export default function Button({
                     <span className={`${loadingDot} animate-bounce`} style={{ animationDelay: "400ms" }}></span>
                     <span className={`${loadingDot} animate-bounce`} style={{ animationDelay: "600ms" }}></span>
                 </div> : 
-                <>
-                    {startIcon}
-                    {children}
-                    {endIcon}
-                </>
+                isRTL ? (
+                    <>
+                        {startIcon}
+                        {children}
+                        {endIcon}
+                    </>
+                ) : (
+                    <>
+                        {children}
+                        {startIcon}
+                        {endIcon}
+                    </>
+                )
             }
         </button>
     );

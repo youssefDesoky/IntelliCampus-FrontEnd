@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { DownloadIcon, EyeIcon, FileLinesIcon, PlayIcon, VoiceIcon, ImageIcon, FileIcon, XIcon } from "../../../../../components/ui/icons";
 import ModelOverlay from "../../../../../components/ui/ModelOverlay";
 import MaterialPreview from "../../../../../components/ui/MaterialPreview";
@@ -6,10 +7,10 @@ import { getMaterialDownloadUrl } from "../../../../course/services/materialsApi
 
 // Normalise the material type coming from the backend (could be a string or number)
 function getMaterialType(material) {
-    const t = material.type ?? material.materialType;
-    if (typeof t === "number") return t;
-    if (typeof t === "string") {
-        const lower = t.toLowerCase();
+    const typeVal = material.type ?? material.materialType;
+    if (typeof typeVal === "number") return typeVal;
+    if (typeof typeVal === "string") {
+        const lower = typeVal.toLowerCase();
         if (lower === "document" || lower === "pdf" || lower === "doc") return 0;
         if (lower === "video") return 1;
         if (lower === "audio") return 2;
@@ -18,11 +19,8 @@ function getMaterialType(material) {
     return 4; // Other
 }
 
-function getTypeLabel(type) {
-    return type === 0 ? "Document" : type === 1 ? "Video" : type === 2 ? "Audio" : type === 3 ? "Image" : "Other";
-}
-
 export default function CourseWeekMaterialContent({ material, isFirst, highlighted = false }) {
+    const { t } = useTranslation('student');
     const [showViewer, setShowViewer] = useState(false);
     const type = getMaterialType(material);
     const downloadUrl = material.materialId ? getMaterialDownloadUrl(material.materialId) : "#";
@@ -61,16 +59,17 @@ export default function CourseWeekMaterialContent({ material, isFirst, highlight
                 </div>
                 <div className="flex-1 min-w-0">
                     <h4 className="text-[16px] font-semibold truncate text-text-primary-default-light dark:text-text-primary-default-dark group-hover:text-text-accent-default-light dark:group-hover:text-text-accent-default-dark transition-colors">
+                        {/* TODO: i18n - backend returns English only */}
                         {material.title}
                     </h4>
                     <div className="flex items-center justify-between mt-1">
                         <div className="flex items-center gap-3">
                             <span className="text-sm font-medium px-2 py-1 rounded bg-bg-surface-tertiary-default-light dark:bg-bg-surface-tertiary-default-dark text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                                {getTypeLabel(type)}
+                                {type === 0 ? t('courseMaterials.typeDocument') : type === 1 ? t('courseMaterials.typeVideo') : type === 2 ? t('courseMaterials.typeAudio') : type === 3 ? t('courseMaterials.typeImage') : t('courseMaterials.typeOther')}
                             </span>
                         </div>
                         <div className="flex items-center gap-2 md:hidden">
-                            <button onClick={() => setShowViewer(true)} className="p-2 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
+                            <button onClick={() => setShowViewer(true)} className="p-2 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? t('courseMaterials.playVideo') : type === 2 ? t('courseMaterials.playAudio') : t('courseMaterials.viewDocument')}>
                                 {
                                     type === 1 ? (
                                         <PlayIcon size={18} />
@@ -85,7 +84,7 @@ export default function CourseWeekMaterialContent({ material, isFirst, highlight
                                     )
                                 }
                             </button>
-                            <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
+                            <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label={t('courseMaterials.download')}>
                                 <DownloadIcon size={18} />
                             </a>
                         </div>
@@ -93,8 +92,8 @@ export default function CourseWeekMaterialContent({ material, isFirst, highlight
                 </div>
             </div>
 
-            <div className="hidden md:flex items-center gap-2 md:ml-4">
-                <button onClick={() => setShowViewer(true)} className="p-3 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
+            <div className="hidden md:flex items-center gap-2 md:ms-4">
+                <button onClick={() => setShowViewer(true)} className="p-3 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? t('courseMaterials.playVideo') : type === 2 ? t('courseMaterials.playAudio') : t('courseMaterials.viewDocument')}>
                     {
                         type === 1 ? (
                             <PlayIcon size={20} />
@@ -109,7 +108,7 @@ export default function CourseWeekMaterialContent({ material, isFirst, highlight
                         )
                     }
                 </button>
-                <a href={downloadUrl} download className="p-3 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
+                <a href={downloadUrl} download className="p-3 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label={t('courseMaterials.download')}>
                     <DownloadIcon size={20} />
                 </a>
             </div>
@@ -120,17 +119,19 @@ export default function CourseWeekMaterialContent({ material, isFirst, highlight
             <ModelOverlay onClose={() => setShowViewer(false)} maxWidth="max-w-5xl">
                 <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
                     <div className="flex items-center justify-between p-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                        <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate pr-4">{material.title}</h3>
+                        {/* TODO: i18n - backend returns English only */}
+                        <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate pe-4">{material.title}</h3>
                         <div className="flex items-center gap-2 shrink-0">
-                            <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
+                            <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label={t('courseMaterials.download')}>
                                 <DownloadIcon size={20} />
                             </a>
-                            <button onClick={() => setShowViewer(false)} className="p-2 rounded-lg hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 transition-all duration-200" aria-label="Close">
+                            <button onClick={() => setShowViewer(false)} className="p-2 rounded-lg hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 transition-all duration-200" aria-label={t('courseMaterials.close')}>
                                 <XIcon size={20} />
                             </button>
                         </div>
                     </div>
                     <div className="flex-1 min-h-0 p-1">
+                        {/* TODO: i18n - backend returns English only */}
                         <MaterialPreview type={type} title={material.title} viewUrl={viewUrl} downloadUrl={downloadUrl} />
                     </div>
                 </div>

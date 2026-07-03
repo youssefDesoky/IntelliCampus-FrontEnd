@@ -1,16 +1,18 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrashIcon } from '../icons';
 import Button from '../../ui/Button';
 import SearchBar from '../../ui/SearchBar';
 import Dialog from '../../ui/Dialog';
 
 export default function TableHeaderActions({ role, roleLabel, selectedRows, onDeleteSelected, minimal = false }) {
+    const { t } = useTranslation('common');
     const [DeleteSelected, setDeleteSelected] = useState(false);
 
-    const label = roleLabel || (role === 'student' ? 'Students' : role === 'admin' ? 'Admins' : 'Instructors');
+    const label = roleLabel || (role === 'student' ? t('labels.students', 'Students') : role === 'admin' ? t('labels.admins', 'Admins') : t('labels.instructors', 'Instructors'));
     const singularLabel = roleLabel
         ? roleLabel.replace(/s$/i, '').toLowerCase()
-        : (role === 'student' ? 'student' : role === 'admin' ? 'admin' : 'instructor');
+        : (role === 'student' ? t('labels.student', 'student') : role === 'admin' ? t('labels.admin', 'admin') : t('labels.instructor', 'instructor'));
 
     if (minimal && selectedRows.length === 0) return null;
 
@@ -18,7 +20,7 @@ export default function TableHeaderActions({ role, roleLabel, selectedRows, onDe
         <div className={`flex items-center ${minimal ? 'justify-end' : 'justify-between gap-8'} mb-4`}>
             {!minimal && <h2 className="text-xl font-semibold">{label}</h2>}
             <div className="flex items-center gap-2">
-                {!minimal && <SearchBar placeholder={`Search ${label}...`} />}
+                {!minimal && <SearchBar placeholder={`${t('search', 'Search')} ${label}...`} />}
                 
                 {selectedRows.length > 0 && (
                     <Button 
@@ -26,7 +28,7 @@ export default function TableHeaderActions({ role, roleLabel, selectedRows, onDe
                         onClick={() => setDeleteSelected(true)}
                     >
                         <TrashIcon size={20} />
-                        Delete ({selectedRows.length})
+                        {t('delete')} ({selectedRows.length})
                     </Button>
                 )}
             </div>
@@ -34,8 +36,8 @@ export default function TableHeaderActions({ role, roleLabel, selectedRows, onDe
             <Dialog 
                 isOpen={DeleteSelected} 
                 variant="warning"
-                confirmText="Yes, Delete"
-                cancelText="No, Keep"
+                confirmText={t('confirm.yesDelete', 'Yes, Delete')}
+                cancelText={t('confirm.noKeep', 'No, Keep')}
                 onConfirm={() => {
                     if (onDeleteSelected) {
                         onDeleteSelected(selectedRows);
@@ -44,10 +46,7 @@ export default function TableHeaderActions({ role, roleLabel, selectedRows, onDe
                 }}
                 onClose={() => setDeleteSelected(false)}
             >
-                Are you sure you want to delete {selectedRows.length} selected {
-                    selectedRows.length > 1 ? `${singularLabel}s` : singularLabel
-                }
-                ? This action cannot be undone.
+                {t('confirm.bulkDeleteMessage', 'Are you sure you want to delete {{count}} selected {{entity}}? This action cannot be undone.', { count: selectedRows.length, entity: singularLabel })}
             </Dialog>
         </div>
     );

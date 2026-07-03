@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Link } from "react-router-dom";
 import AuthLayout from "../../layout/AuthLayout";
 import InputItem from "../../components/form/InputItem";
@@ -7,6 +8,7 @@ import Turnstile from "../../components/ui/Turnstile";
 import { forgotPassword } from "../../api/auth";
 
 export default function ForgetPassword() {
+    const { t } = useTranslation('auth');
     const [email, setEmail] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState(null);
@@ -16,7 +18,7 @@ export default function ForgetPassword() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!email.trim()) {
-            setError("Email is required");
+            setError(t('validation.required', { ns: 'common', field: t('forgotPassword.emailLabel') }));
             return;
         }
         setError("");
@@ -25,7 +27,7 @@ export default function ForgetPassword() {
             await forgotPassword({ email, turnstileToken });
             setSent(true);
         } catch (err) {
-            setError(err?.detail || err?.message || "Request failed. Please try again.");
+            setError(err?.detail || err?.message || t('forgotPassword.requestFailed'));
         } finally {
             setSubmitting(false);
         }
@@ -33,19 +35,19 @@ export default function ForgetPassword() {
 
     return (
         <AuthLayout
-            title="Forgot Password"
-            subtitle="Enter your account email to reset your password"
+            title={t('forgotPassword.title')}
+            subtitle={t('forgotPassword.subtitle')}
             bgImageName="FrontLibNoPepole"
         >
             {sent ? (
                 <div className="space-y-6 text-center">
                     <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-6">
                         <p className="text-green-700 dark:text-green-300">
-                            If the email exists, a reset link has been sent to your recovery email.
+                            {t('forgotPassword.successMessage')}
                         </p>
                     </div>
                     <Link to="/login" className="text-blue-500 hover:text-blue-600 text-md block">
-                        Back to Login
+                        {t('forgotPassword.backToLogin')}
                     </Link>
                 </div>
             ) : (
@@ -54,10 +56,10 @@ export default function ForgetPassword() {
                         <div className="bg-red-100 text-red-700 p-3 rounded-md text-center">{error}</div>
                     )}
                     <InputItem
-                        label="Account Email"
+                        label={t('forgotPassword.emailLabel')}
                         type="email"
                         name="email"
-                        placeholder="student@intellicampus.online"
+                        placeholder={t('forgotPassword.emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
@@ -67,17 +69,17 @@ export default function ForgetPassword() {
                         <Turnstile onVerify={setTurnstileToken} />
                     </div>
                     <Button type="submit" width="w-full" disabled={submitting} loading={submitting}>
-                        Send Reset Link
+                        {t('forgotPassword.submit')}
                     </Button>
                 </form>
             )}
 
             <div className="text-center space-y-2">
                 <Link to="/login" className="text-blue-500 hover:text-blue-600 text-md block">
-                    Remembered your password? Login
+                    {t('forgotPassword.rememberedPassword')}
                 </Link>
                 <Link to="/get-credentials" className="text-gray-500 hover:text-gray-600 text-sm block">
-                    Don't know your email? Get Credentials
+                    {t('forgotPassword.dontKnowEmail')}
                 </Link>
             </div>
         </AuthLayout>

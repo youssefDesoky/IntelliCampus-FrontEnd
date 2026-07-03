@@ -25,7 +25,7 @@ export function ChatUsersSectionSkeleton() {
       <div className="flex items-center gap-2 px-2 mb-1">
         <SkeletonBar className="w-4 h-4 rounded" />
         <SkeletonBar className="h-3 w-20" />
-        <div className="ml-auto">
+        <div className="ms-auto">
           <SkeletonBar className="w-3 h-3" />
         </div>
       </div>
@@ -41,7 +41,7 @@ export function ChatUsersSectionSkeleton() {
 
 export function ChatUsersSkeleton() {
   return (
-    <div className="col-span-1 sm:border-r sm:border-white/8 sm:pr-4 flex flex-col min-h-0 h-full">
+    <div className="col-span-1 sm:border-e sm:border-white/8 sm:pe-4 flex flex-col min-h-0 h-full">
       <div className="flex flex-col gap-4 mb-5">
         <div className="flex items-center justify-between">
           <SkeletonBar className="h-4 w-20" />
@@ -161,11 +161,15 @@ export function CreateGroupPanelSkeleton() {
 }
 
 export function MessageSkeleton({ isOwn = false }) {
+  const isRtl = document.dir === 'rtl';
   return (
     <div className={`flex items-start gap-3 px-2 mt-3 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
       <div className={`flex flex-col min-w-0 max-w-[75%] ${isOwn ? "items-end" : "items-start"}`}>
         <div className={`flex items-end gap-1.5 ${isOwn ? "flex-row-reverse" : ""}`}>
-          <SkeletonBar className={`h-9 w-48 rounded-[18px] ${isOwn ? "rounded-tr-md" : "rounded-tl-md"}`} />
+          <SkeletonBar className={`h-9 w-48 rounded-[18px] ${isOwn
+            ? (isRtl ? "rounded-tl-md" : "rounded-tr-md")
+            : (isRtl ? "rounded-tr-md" : "rounded-tl-md")
+          }`} />
         </div>
       </div>
     </div>

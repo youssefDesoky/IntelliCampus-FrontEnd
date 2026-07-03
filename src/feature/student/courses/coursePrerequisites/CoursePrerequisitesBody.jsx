@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import { useQuery } from "@tanstack/react-query";
 import { FileSlashIcon } from "../../../../components/ui/icons";
 import Section from "../../../../components/ui/Section";
 import CoursePrerequisitesCard from "./CoursePrerequisitesCard";
 import { PrereqPageSkeleton } from "./SkeletonLoader";
 import { fetchCoursePrerequisites } from "../../services/profileApi";
+import { getLocalizedField } from '../../../../utils/getLocalizedField';
 
 export default function CoursePrerequisitesBody({ search = "" }) {
+    const { t, i18n } = useTranslation('student');
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
     useEffect(() => {
@@ -22,12 +25,12 @@ export default function CoursePrerequisitesBody({ search = "" }) {
             const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
             return list.map((course) => ({
                 id: course.courseId,
-                title: course.courseName || "",
-                code: course.courseCode || "",
+                title: getLocalizedField(course, 'courseName', i18n.language) || "",
+                code: getLocalizedField(course, 'courseCode', i18n.language) || course.courseCode || "",
                 creditHours: course.creditHours || "",
                 prerequisites: (course.prerequisites || []).map((p) => ({
-                    id: p.code || "",
-                    title: p.title || "",
+                    id: getLocalizedField(p, 'code', i18n.language) || p.code || "",
+                    title: getLocalizedField(p, 'title', i18n.language) || p.title || "",
                 })),
             }));
         },
@@ -53,7 +56,7 @@ export default function CoursePrerequisitesBody({ search = "" }) {
             {courseData.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                     <FileSlashIcon className="w-12 h-12 mb-4 opacity-40" />
-                    <p className="text-sm">{search.trim() ? "No courses match your search." : "No prerequisite data available."}</p>
+                    <p className="text-sm">{search.trim() ? t('prerequisites.noSearchMatch') : t('prerequisites.noData')}</p>
                 </div>
             )}
         </Section>

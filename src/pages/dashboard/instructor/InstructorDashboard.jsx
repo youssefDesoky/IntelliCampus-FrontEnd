@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { formatDistanceToNow, format } from "date-fns";
+import { ar } from 'date-fns/locale';
 import BoxData from "../../../components/ui/BoxData";
 import Section from "../../../components/ui/Section";
 import {
@@ -28,6 +30,7 @@ const statIconStyles = {
 };
 
 export default function InstructorDashboard() {
+  const { t, i18n } = useTranslation('instructor');
   const {
     data: dashboard,
     isLoading: dashLoading,
@@ -52,21 +55,21 @@ export default function InstructorDashboard() {
   const statsData = [
     {
       id: 1,
-      title: "Active Courses",
+      title: t('dashboard.activeCourses'),
       value: stats.activeCourses ?? 0,
       icon: statIcons.activeCourses,
       iconStyle: statIconStyles.activeCourses,
     },
     {
       id: 2,
-      title: "Total Students",
+      title: t('dashboard.totalStudents'),
       value: stats.totalStudents ?? 0,
       icon: statIcons.totalStudents,
       iconStyle: statIconStyles.totalStudents,
     },
     {
       id: 3,
-      title: "Average Attendance",
+      title: t('dashboard.averageAttendance'),
       value: `${stats.averageAttendance ?? 0}%`,
       icon: statIcons.averageAttendance,
       iconStyle: statIconStyles.averageAttendance,
@@ -80,7 +83,7 @@ export default function InstructorDashboard() {
   if (dashError) {
     return (
       <div className="flex items-center justify-center h-64 text-text-error-default-light dark:text-text-error-default-dark">
-        Failed to load dashboard. Please try again later.
+        {t('dashboard.error')}
       </div>
     );
   }
@@ -102,7 +105,7 @@ export default function InstructorDashboard() {
       <Section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Latest News</h2>
+            <h2 className="text-2xl font-bold">{t('dashboard.latestNews')}</h2>
             <BullHornIcon className="w-6 h-6" />
           </div>
 
@@ -118,16 +121,16 @@ export default function InstructorDashboard() {
                   <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                     {item.date
                       ? (item.updatedAt && new Date(item.updatedAt).getTime() !== new Date(item.date).getTime()
-                        ? `Edited ${formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}`
-                        : `Posted ${formatDistanceToNow(new Date(item.date), { addSuffix: true })}`)
-                      : "Posted recently"}
+                        ? t('dashboard.editedTime', { time: formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) })
+                        : t('dashboard.postedTime', { time: formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) }))
+                      : t('dashboard.postedRecently')}
                   </p>
                 </li>
               ))
             ) : (
               <li className="p-4 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-center text-text-tertiary-default-light dark:text-text-tertiary-default-dark flex flex-col items-center justify-center gap-2">
                 <NewspaperSlashIcon className="w-12 h-12 opacity-40" />
-                <p className="text-sm">No news available</p>
+                <p className="text-sm">{t('dashboard.noNews')}</p>
               </li>
             )}
           </menu>
@@ -136,7 +139,7 @@ export default function InstructorDashboard() {
         <div className="lg:col-span-4 flex flex-col">
           <div className="p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col flex-1">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Today's Reminders</h2>
+              <h2 className="text-2xl font-bold">{t('dashboard.todayReminders')}</h2>
               <BellIconDark className="w-6 h-6" />
             </div>
 
@@ -144,12 +147,12 @@ export default function InstructorDashboard() {
               {remindersLoading ? (
                 <div className="flex flex-col items-center justify-center h-full p-6 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                   <BellIconDark className="w-12 h-12 mb-4" />
-                  <p className="text-center">Loading reminders...</p>
+                  <p className="text-center">{t('dashboard.loadingReminders')}</p>
                 </div>
               ) : reminders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full p-6 text-text-tertiary-default-light dark:text-text-tertiary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
                   <BellIconDark className="w-12 h-12 mb-4" />
-                  <p className="text-center">No reminders for today</p>
+                  <p className="text-center">{t('dashboard.noReminders')}</p>
                 </div>
               ) : (
                 reminders.map((reminder) => {
@@ -157,10 +160,10 @@ export default function InstructorDashboard() {
                   return (
                   <li
                     key={reminder.id}
-                    className={`p-4 border border-l-8 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out ${
+                    className={`p-4 border border-s-8 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out ${
                       completed
-                        ? "border-green-300 dark:border-green-700 border-l-green-500 dark:border-l-green-400 bg-green-50 dark:bg-green-950/40"
-                        : "border-border-primary-default-light dark:border-border-primary-default-dark border-l-border-accent-default-light dark:border-l-border-accent-default-dark"
+                        ? "border-green-300 dark:border-green-700 border-s-green-500 dark:border-s-green-400 bg-green-50 dark:bg-green-950/40"
+                        : "border-border-primary-default-light dark:border-border-primary-default-dark border-s-border-accent-default-light dark:border-s-border-accent-default-dark"
                     }`}
                   >
                     <div className="mb-2 flex justify-between items-center">
@@ -168,7 +171,7 @@ export default function InstructorDashboard() {
                       <div className="flex items-center gap-2">
                         {completed && (
                           <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300">
-                            Finished
+                            {t('dashboard.finished')}
                           </span>
                         )}
                         <p className="text-xs font-medium text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{reminder.priority}</p>
@@ -186,8 +189,8 @@ export default function InstructorDashboard() {
             </menu>
 
             <NavLink to="/instructor/reminders" className="text-text-accent-default-light dark:text-text-accent-default-dark hover:underline flex items-center gap-2 justify-center font-medium shrink-0">
-              View All Reminders
-              <ArrowRightIcon className="w-4 h-4" />
+              {t('dashboard.viewAllReminders')}
+              <ArrowRightIcon className="w-4 h-4 rtl:scale-x-[-1]" />
             </NavLink>
           </div>
         </div>
@@ -196,10 +199,10 @@ export default function InstructorDashboard() {
       <Section>
         <div className="flex items-center gap-3 mb-6">
           <ChartBarIcon className="w-7 h-7 text-text-accent-default-light dark:text-text-accent-default-dark" />
-          <h2 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">Analytics</h2>
+          <h2 className="text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">{t('dashboard.analytics')}</h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" dir="ltr">
           <AttendanceTrendChart data={dashboard.attendanceTrend ?? []} />
           <CompetencyRadarChart data={dashboard.radarData ?? []} />
         </div>
