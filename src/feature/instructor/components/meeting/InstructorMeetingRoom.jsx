@@ -361,7 +361,6 @@ export default function MeetingRoom() {
         { label: t('meeting.upcoming'), value: upcomingMeetings.length, icon: <ClockIcon size={20} />, color: "text-blue-600 dark:text-blue-400" },
         { label: t('meeting.past'), value: pastMeetings.length, icon: <CheckIcon size={20} />, color: "text-text-tertiary-default-light dark:text-text-tertiary-default-dark" },
     ];
-    ];
 
     const formatDateTime = (dateStr) => {
         const d = new Date(dateStr);

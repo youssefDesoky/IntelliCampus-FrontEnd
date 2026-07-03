@@ -162,8 +162,6 @@ export default function ManageCourses() {
           onClick: () => onDelete(item),
           className: "text-text-danger-default-light dark:text-text-danger-default-dark",
         }] : []),
-          className: "text-text-danger-default-light dark:text-text-danger-default-dark",
-        }] : []),
       ]}
       renderBeforeTable={({ selectedRowIds, rawItems, loadItems }) => {
         if (selectedRowIds.length === 0) return null;

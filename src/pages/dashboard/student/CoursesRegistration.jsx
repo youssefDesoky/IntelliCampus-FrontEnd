@@ -396,8 +396,6 @@ export default function CoursesRegistration() {
                 }
             }
         }
-            }
-        }
 
         const registeredCourses = selectedCourses.filter((c) => c.isRegistered);
         for (const course of registeredCourses) {

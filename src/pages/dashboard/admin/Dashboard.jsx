@@ -678,6 +678,13 @@ export default function Dashboard() {
                               {item.course}
                             </p>
                           )}
+                          <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+                            {item.date
+                              ? (item.updatedAt && new Date(item.updatedAt).getTime() !== new Date(item.date).getTime()
+                                ? t('dashboard.editedTime', { time: formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) })
+                                : t('dashboard.postedTime', { time: formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) }))
+                              : t('dashboard.postedRecently')}
+                          </p>
                         </>
                       )}
                     </div>
@@ -706,14 +713,10 @@ export default function Dashboard() {
                         </button>
                       </div>
                     )}
-                    <p className="text-xs mt-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                      {item.date
-                        ? t('dashboard.postedTime', { time: formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) })
-                        : t('dashboard.postedRecently')}
-                    </p>
                   </div>
                 </li>
-              )) (- Localization For Student & Instructor)
+              );
+            })
             ) : (
               <li className="py-10 text-center">
                 <BullHornIcon className="w-10 h-10 mx-auto mb-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark opacity-25" />
