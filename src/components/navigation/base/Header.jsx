@@ -106,7 +106,7 @@ export default function Header({ avatar, notifications: initialNotifications, is
                     seenNotificationIds.current.add(notification.userNotificationId);
 
                     const chatInfo = parseChatUrl(notification.clickUrl);
-                    if (chatInfo && activeChatStateRef.current.isChatOpen && activeChatStateRef.current.activeChatUserId === chatInfo.userId) {
+                    if (chatInfo && chatInfo.userId && activeChatStateRef.current.isChatOpen && activeChatStateRef.current.activeChatUserId === chatInfo.userId) {
                         return;
                     }
 

@@ -38,7 +38,9 @@ export default function AppLayout() {
     const [searchParams] = useSearchParams();
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [chatDefaultPanel, setChatDefaultPanel] = useState(null);
+    const [chatDefaultPanelTrigger, setChatDefaultPanelTrigger] = useState(0);
     const [chatDefaultUserId, setChatDefaultUserId] = useState(null);
+    const [chatDefaultGroupName, setChatDefaultGroupName] = useState(null);
 
     const availableViews = getAvailableViews(user?.roles);
     const [activeView, setActiveView] = useState(() => {
@@ -59,12 +61,14 @@ export default function AppLayout() {
         if (openChatParam === "addFriend") {
           setChatDefaultPanel("addFriend");
           setChatDefaultUserId(null);
+          setChatDefaultPanelTrigger(prev => prev + 1);
           setIsChatOpen(true);
         } else {
           const userId = searchParams.get("userId");
           const userName = searchParams.get("userName");
           setChatDefaultPanel("messaging");
           setChatDefaultUserId(userId ? { id: userId, name: userName || "User" } : null);
+          setChatDefaultPanelTrigger(prev => prev + 1);
           setIsChatOpen(true);
         }
 
@@ -87,10 +91,20 @@ export default function AppLayout() {
             if (type === 'addFriend') {
                 setChatDefaultPanel("addFriend");
                 setChatDefaultUserId(null);
+                setChatDefaultGroupName(null);
+                setChatDefaultPanelTrigger(prev => prev + 1);
                 setIsChatOpen(true);
-            } else if (type === 'message') {
+            } else if (type === 'message' || type === 'user') {
                 setChatDefaultPanel("messaging");
                 setChatDefaultUserId(userId ? { id: userId, name: userName || "User" } : null);
+                setChatDefaultGroupName(null);
+                setChatDefaultPanelTrigger(prev => prev + 1);
+                setIsChatOpen(true);
+            } else if (type === 'group') {
+                setChatDefaultPanel("messaging");
+                setChatDefaultUserId(null);
+                setChatDefaultGroupName(userId);
+                setChatDefaultPanelTrigger(prev => prev + 1);
                 setIsChatOpen(true);
             }
         });
@@ -119,7 +133,7 @@ export default function AppLayout() {
                     </main>
 
                     {/* Chatting interface - outside main to overlay everything */}
-                    <Chat isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} currentUser={user} defaultPanel={chatDefaultPanel} defaultUser={chatDefaultUserId} />
+                    <Chat isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} currentUser={user} defaultPanel={chatDefaultPanel} defaultPanelTrigger={chatDefaultPanelTrigger} defaultUser={chatDefaultUserId} defaultGroupName={chatDefaultGroupName} />
 
                     {!isChatOpen && (
                         isMobile ? getBottomBar(activeView, {

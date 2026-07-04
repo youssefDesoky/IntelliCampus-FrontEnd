@@ -15,7 +15,7 @@ export default function ChatUsers({ chatPartner, friends = [], groups = [], onli
   const q = searchMembers.toLowerCase().trim();
 
   const mapFriend = (f) => ({ id: f.userId, name: f.fullName, avatar: f.profileImage || null, status: onlineUsers.has(String(f.userId)) ? "online" : null, unread: unreadCounts[String(f.userId)] || 0 });
-  const mapGroup = (g) => ({ id: g.groupId, name: g.title, avatar: g.profileImage || null, status: null, unread: 0 });
+  const mapGroup = (g) => ({ id: g.groupId, name: g.title, avatar: g.profileImage || null, status: null, unread: unreadCounts[`group_${g.groupId}`] || 0 });
 
   const filterFn = (u) => !q || u.name.toLowerCase().includes(q);
 
