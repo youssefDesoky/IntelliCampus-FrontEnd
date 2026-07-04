@@ -237,9 +237,9 @@ export default function CreateGroupPanel({
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium ring-1 ring-blue-200 dark:ring-blue-800"
                 >
                   <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold">
-{getLocalizedField(friend, "name", i18n.language)?.[0]?.toUpperCase() ?? "?"}
+{name?.[0]?.toUpperCase() ?? "?"}
 </span>
-{getLocalizedField(friend, "name", i18n.language)}
+{name}
                   <button
                     onClick={() => handleRemoveSelected(id)}
                     className="ms-0.5 text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"

@@ -13,7 +13,11 @@ export default function Messaging({ messages, sendMessage, onInputChange, partne
   const [showMembers, setShowMembers] = useState(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (Object.keys(messages).length === 0) return;
+    const raf = requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+    });
+    return () => cancelAnimationFrame(raf);
   }, [messages, partnerTyping]);
 
   if (!chatPartner) return null;
