@@ -400,7 +400,6 @@ export default function CreateGroupPanel({
   >
     {getLocalizedField(user, "fullName", i18n.language)}
   </p>
-                    </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {user.studentCode ? `Code: ${user.studentCode}` : `ID: ${user.userId}`}
                     </p>

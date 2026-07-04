@@ -172,31 +172,16 @@ export default function Message({ sender, message, sendTime, isGrouped, showSend
               </div>
             )}
 
-{/* 3-dots button */}
-{!isEditing && (
-  <button
-    className="absolute top-1.5 end-1.5 p-1 rounded-full hover:bg-white/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-    onClick={() => setShowControls((v) => !v)}
-    aria-label={t("showMessageControls")}
-  >
-    <EllipsisVerticalIcon size={16} />
-  </button>
-)}
-</div>
-
-{/* Time */}
-<span className="text-[10px] text-[var(--text-tertiary)] opacity-0 group-hover:opacity-60 transition-opacity whitespace-nowrap pb-1">
-  {sendTime}
-</span>
-
-{showControls && (
-  <div
-    ref={controlsRef}
-    className="absolute z-20 top-8 end-0"
-            >
-              <EllipsisVerticalIcon size={16} />
-            </button>
-          )}
+        {/* 3-dots button */}
+        {!isEditing && (
+          <button
+            className="absolute top-1.5 end-1.5 p-1 rounded-full hover:bg-white/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+            onClick={() => setShowControls((v) => !v)}
+            aria-label={t("showMessageControls")}
+          >
+            <EllipsisVerticalIcon size={16} />
+          </button>
+        )}
         </div>
 
         {/* Time */}
