@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 
-export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQuery, onSearchChange, isPhone, onBack, onDeleteFriend }) {
-  const { t, i18n } = useTranslation('chat');
+export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQuery, onSearchChange, isPhone, onBack, onDeleteFriend, onLeaveGroup, showMembers, onShowMembers }) {
+    const { t, i18n } = useTranslation('chat');
   const isRTL = i18n.language === 'ar';
   const inputRef = useRef(null);
   const [isSearching, setIsSearching] = React.useState(false);
@@ -34,7 +34,7 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
   const role = rawRole || t('member');
 
   return (
-    <div className={`flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700/80 bg-white dark:bg-gray-800 shrink-0 shadow-sm z-10 transition-colors duration-200 px-6'}`}>
+    <div className={`flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700/80 bg-white dark:bg-gray-800 shrink-0 shadow-sm z-10 transition-colors duration-200 px-6`}>
 
       {/* Left side: Back button + Avatar and User Info */}
       <div className="flex items-center gap-2 min-w-0">
@@ -51,7 +51,13 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
         )}
         <div className="flex items-center gap-3.5 min-w-0">
           <div className="relative shrink-0">
-          {avatar ? (
+          {chatPartner?.type === "group" ? (
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ring-2 ring-blue-100 dark:ring-blue-900/50 shadow-sm">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+          ) : avatar ? (
             <img
               className="w-10 h-10 rounded-xl object-cover ring-2 ring-gray-100 dark:ring-gray-700/50"
               src={avatar}
@@ -121,14 +127,32 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
             <button
               className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-gray-500 hover:text-red-500"
               aria-label="Remove friend"
-              onClick={() => {
-                if (window.confirm(`Remove ${chatPartner.fullName} from your friends?`)) {
-                  onDeleteFriend(Number(chatPartner.userId));
-                }
-              }}
+              onClick={() => onDeleteFriend(Number(chatPartner.userId))}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6h8m1-7l3 3m0 0l3-3m-3 3V9" />
+              </svg>
+            </button>
+          )}
+          {chatPartner?.type === "group" && onShowMembers && (
+            <button
+              className={`p-2 rounded-lg transition-colors ${showMembers ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'hover:bg-gray-50 dark:hover:bg-gray-700/60 text-gray-500'}`}
+              aria-label="Show members"
+              onClick={() => onShowMembers()}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </button>
+          )}
+          {chatPartner?.type === "group" && onLeaveGroup && (
+            <button
+              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-gray-500 hover:text-red-500"
+              aria-label="Leave group"
+              onClick={() => onLeaveGroup()}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </button>
           )}

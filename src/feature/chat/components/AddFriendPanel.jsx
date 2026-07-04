@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 import BasePanel from "./BasePanel";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
@@ -11,10 +12,62 @@ export default function AddFriendPanel({
   onBack,
   onAcceptRequest,
   onDeclineRequest,
+  searchUsers,
 }) {
   const { t, i18n } = useTranslation('chat');
   const isRTL = i18n.language === 'ar';
   const pendingCount = friendRequests.length;
+  const [searchQuery, setSearchQuery] = useState(friendId || "");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchUsers(searchQuery.trim());
+        setSearchResults(results || []);
+        setShowDropdown(true);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchUsers]);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+    setFriendId(String(user.userId));
+    setSearchQuery(`${user.fullName} (${user.email || user.nationalId || user.userId})`);
+    setShowDropdown(false);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedUser(null);
+    setFriendId("");
+    setSearchQuery("");
+    setSearchResults([]);
+  };
 
   const divider = (label, count) => (
     <div className="flex items-center gap-3">
@@ -46,7 +99,7 @@ export default function AddFriendPanel({
           <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">
             {t('friends.sendInvitation')}
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2" ref={searchRef}>
             <div className="relative flex-1">
               <span className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400">
                 <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -56,13 +109,66 @@ export default function AddFriendPanel({
               </span>
               <input
                 type="text"
-                dir={isRTL ? 'rtl' : 'ltr'}
-                className="w-full ps-9 pe-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all"
-                placeholder={t('friends.placeholder')}
-                value={friendId}
-                onChange={(e) => setFriendId(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && onInvite()}
+dir={isRTL ? "rtl" : "ltr"}
+className="w-full ps-9 pe-8 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-400 dark:focus:border-blue-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none transition-all"
+placeholder={t("friends.placeholder")}
+value={searchQuery}
+onChange={(e) => {
+  setSearchQuery(e.target.value);
+  if (selectedUser) handleClearSelection();
+}}
+onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+onKeyDown={(e) => e.key === "Enter" && selectedUser && onInvite()}
               />
+              {searchQuery && !selectedUser && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {isSearching ? (
+                    <svg className="animate-spin text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+                    </svg>
+                  ) : null}
+                </span>
+              )}
+              {selectedUser && (
+                <button
+                  onClick={handleClearSelection}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M4 4l8 8M12 4l-8 8" />
+                  </svg>
+                </button>
+              )}
+              {showDropdown && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
+                  {searchResults.map((user) => (
+                    <button
+                      key={user.userId}
+                      onClick={() => handleSelectUser(user)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors first:rounded-t-xl last:rounded-b-xl"
+                    >
+                      {user.profileImage ? (
+                        <img className="w-8 h-8 rounded-lg object-cover shrink-0" src={user.profileImage} alt="" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                            {user.fullName?.[0]?.toUpperCase() ?? "?"}
+                          </span>
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-800 dark:text-gray-100 truncate">{user.fullName}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user.email || user.nationalId || `ID: ${user.userId}`}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showDropdown && searchResults.length === 0 && searchQuery.trim().length >= 2 && !isSearching && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg z-50 py-4 text-center">
+                  <p className="text-sm text-gray-400 dark:text-gray-500">No users found</p>
+                </div>
+              )}
             </div>
             <button
               onClick={onInvite}
