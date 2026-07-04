@@ -16,7 +16,6 @@ import VolumeIcon from "../../../../components/ui/icons/VolumeIcon";
 import VolumeXIcon from "../../../../components/ui/icons/VolumeXIcon";
 import PhoneSlashIcon from "../../../../components/ui/icons/PhoneSlashIcon";
 import HandIcon from "../../../../components/ui/icons/HandIcon";
-import RecordIcon from "../../../../components/ui/icons/RecordIcon";
 import CalendarDaysIcon from "../../../../components/ui/icons/CalendarDaysIcon";
 import CalendarCheckIcon from "../../../../components/ui/icons/CalendarCheckIcon";
 import ClockIcon from "../../../../components/ui/icons/ClockIcon";
@@ -62,7 +61,6 @@ export default function MeetingRoom() {
     const [activeMeeting, setActiveMeeting] = useState(null);
     const [isAudioMuted, setIsAudioMuted] = useState(true);
     const [isVideoMuted, setIsVideoMuted] = useState(true);
-    const [isRecording, setIsRecording] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
     const [isHandRaised, setIsHandRaised] = useState(false);
@@ -159,14 +157,8 @@ export default function MeetingRoom() {
                 endMeeting(activeMeeting.meetingId).catch(() => {});
             }
             setActiveMeeting(null);
-            setIsRecording(false);
             setIsChatOpen(false);
         });
-        if (isInstructor) {
-            apiRef.current.addEventListener("recordingStatusChanged", (event) => {
-                setIsRecording(event.on);
-            });
-        }
     };
 
     useEffect(() => {
@@ -240,13 +232,6 @@ export default function MeetingRoom() {
         apiRef.current?.executeCommand("toggleChat");
         setIsChatOpen((prev) => !prev);
     };
-    const handleRecording = () => {
-        if (isRecording) {
-            apiRef.current?.executeCommand("stopRecording");
-        } else {
-            apiRef.current?.executeCommand("startRecording", { mode: "file" });
-        }
-    };
     const handleSpeaker = () => {
         setIsSpeakerMuted((prev) => !prev);
         apiRef.current?.executeCommand("toggleAudio");
@@ -268,12 +253,6 @@ export default function MeetingRoom() {
                         <span className="text-white/40 text-xs hidden sm:inline">|</span>
                         <span className="text-white/50 text-xs hidden sm:inline">{getLocalizedField(user, 'fullName', i18n.language) || (isInstructor ? t('meeting.instructor') : t('meeting.student'))}</span>
                     </div>
-                    {isRecording && (
-                        <div className="flex items-center gap-2 bg-red-600/20 border border-red-500/30 rounded-full px-3 py-1">
-                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                            <span className="text-red-400 text-xs font-medium">{t('meeting.rec')}</span>
-                        </div>
-                    )}
                 </div>
                 <div className="flex-1 relative bg-black">
                     <div ref={containerRef} className="w-full h-full" />
@@ -315,18 +294,7 @@ export default function MeetingRoom() {
                         >
                             <CommentDotsIcon size={20} />
                         </ControlButton>
-                        {isInstructor ? (
-                            <>
-                                <ControlDivider />
-                                <ControlButton
-                                    active={isRecording}
-                                    onClick={handleRecording}
-                                    label={isRecording ? t('meeting.stopRecording') : t('meeting.record')}
-                                >
-                                    <RecordIcon size={20} />
-                                </ControlButton>
-                            </>
-                        ) : (
+                        {!isInstructor && (
                             <ControlButton
                                 active={isHandRaised}
                                 onClick={handleRaiseHand}

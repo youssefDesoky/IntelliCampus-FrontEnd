@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from 'react-i18next';
@@ -91,7 +91,15 @@ export default function MyCourses() {
     });
     const [filterStatus, setFilterStatus] = useState([]);
     const [filterType, setFilterType] = useState([]);
+    const [searchInput, setSearchInput] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSearchQuery(searchInput);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
 
     const backendStatus =
         filterStatus.length === 1
@@ -118,7 +126,7 @@ export default function MyCourses() {
     }, [viewMode]);
 
     // Apply filters
-    const filteredCourses = courses.filter(c => {
+    const filteredCourses = useMemo(() => courses.filter(c => {
         if (filterStatus.length > 0 && !filterStatus.includes(c.status)) return false;
         if (filterType.length > 0 && !filterType.includes(c.type)) return false;
         if (searchQuery) {
@@ -130,12 +138,12 @@ export default function MyCourses() {
             if (!match) return false;
         }
         return true;
-    });
+    }), [courses, filterStatus, filterType, searchQuery]);
 
-    // Reset page when filters or search change
+    // Reset page when filters change
     useEffect(() => {
         setPage(1);
-    }, [filterStatus, filterType, searchQuery]);
+    }, [filterStatus, filterType]);
 
     const totalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
     const from = (page - 1) * PAGE_SIZE + 1;
@@ -172,8 +180,8 @@ export default function MyCourses() {
                 setFilterStatus={setFilterStatus}
                 filterType={filterType}
                 setFilterType={setFilterType}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
+                searchQuery={searchInput}
+                setSearchQuery={setSearchInput}
                 hasCourses={courses.length > 0}
             />
 

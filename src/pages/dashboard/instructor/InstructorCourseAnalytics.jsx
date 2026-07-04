@@ -5,7 +5,8 @@ import {
     LineChart, Line, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { CheckIcon, UserCheckIcon } from "../../../components/ui/icons";
+import Button from "../../../components/ui/Button";
+import { CheckIcon, UserCheckIcon, DownloadIcon } from "../../../components/ui/icons";
 import { ChartCard } from "../../../components/charts";
 import PerformanceOverTimeChart from "../../../feature/instructor/dashboard/charts/PerformanceOverTimeChart";
 import StudentScoreHeatmap from "../../../feature/instructor/dashboard/charts/StudentScoreHeatmap";
@@ -38,6 +39,12 @@ export default function InstructorCourseAnalytics() {
         return () => { cancelled = true; };
     }, [courseId]);
 
+
+    const handleDownloadAll = () => {
+        downloadBlob(downloadUrl, `analytics-${courseId}.json`);
+    };
+
+    const downloadUrl = `${import.meta.env.VITE_API_URL ?? ""}/api/courses/${courseId}/analytics/export`;
 
     const { submissionRate, weeklyAttendance, assessmentPerformance } = data;
     // backend supplies AssessmentPerformance; PerformanceOverTimeChart expects minScore (optional, defaults to 0)
