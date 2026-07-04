@@ -185,21 +185,6 @@ export default function Message({ sender, message, sendTime, isGrouped, showSend
 </div>
 
 {/* Time */}
-<span className="text-[10px] text-[var(--text-tertiary)] opacity-0 group-hover:opacity-60 transition-opacity whitespace-nowrap pb-1">
-  {sendTime}
-</span>
-
-{showControls && (
-  <div
-    ref={controlsRef}
-    className="absolute z-20 top-8 end-0"
-            >
-              <EllipsisVerticalIcon size={16} />
-            </button>
-          )}
-        </div>
-
-        {/* Time */}
         <span className="text-[10px] text-[var(--text-tertiary)] opacity-0 group-hover:opacity-60 transition-opacity whitespace-nowrap pb-1">
           {sendTime}
         </span>

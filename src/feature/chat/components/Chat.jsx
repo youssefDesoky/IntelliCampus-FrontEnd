@@ -46,6 +46,15 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   }, [defaultPanel, defaultPanelTrigger]);
   useEffect(() => {
     if (defaultUser) {
+      setUnreadCounts((prev) => {
+        const id = String(defaultUser.id);
+        if (prev[id] > 0) {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        }
+        return prev;
+      });
       setMessages([]);
       setPinnedMessage(null);
       setChatPartner({
@@ -57,7 +66,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       });
       setActivePanel("messaging");
     }
-  }, [defaultUser]);
+  }, [defaultUser, defaultPanelTrigger]);
   useEffect(() => {
     if (defaultGroupName) {
       openGroupChat(defaultGroupName);
@@ -395,6 +404,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
 
   const loadHistory = useCallback(async (conn, partner) => {
     try {
+      if (!currentUser?.userId && partner.type !== "group") return;
       const history = partner.type === "group"
         ? await fetchGroupChatHistory(partner.groupName)
         : await fetchChatHistory(currentUser.userId, partner.userId);
@@ -402,8 +412,8 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       const pinned = history.find(m => m.isPinned);
       setPinnedMessage(pinned ? pinned.content : null);
       history.forEach((m) => msgIdsRef.current.add(m.messageId));
-    } catch {
-      // no history yet
+    } catch (err) {
+      console.warn("[ChatHub] Failed to load history:", err);
     }
   }, [currentUser]);
 
@@ -675,7 +685,6 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   };
 
   const handleAttachFile = async (file, type) => {
-    if (type !== "media") return;
     try {
       const result = await uploadFile(file);
       const url = result.url;
