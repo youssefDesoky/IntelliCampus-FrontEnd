@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRevalidator } from "react-router-dom";
 import {
     BookIcon,
@@ -12,10 +13,13 @@ import {
 } from "../../../components/ui/icons";
 import Button from "../../../components/ui/Button";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import useArabicDigits from '../../../hooks/useArabicDigits.js';
 import { updateProfileImage } from "../services/profileApi";
 import EditProfileForm from "./EditProfileForm";
 
 export default function InstructorIdentityCard({ user = {}, className = "", onProfileUpdate }) {
+    const { t } = useTranslation('instructor');
+    const { convert: ar } = useArabicDigits();
     const { revalidate } = useRevalidator();
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
@@ -41,7 +45,7 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
             onProfileUpdate?.();
             revalidate();
         } catch (err) {
-            showError(err?.message || "Failed to update profile image");
+            showError(err?.message || t('profile.errorUpdateImage'));
             setAvatarPreview(user?.avatar || "");
         } finally {
             setUploadingAvatar(false);
@@ -53,8 +57,8 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
             <div className={`rounded-3xl border border-border-primary-default-light/70 dark:border-border-primary-default-dark/70 bg-bg-surface-primary-default-light/80 dark:bg-bg-surface-primary-default-dark/80 backdrop-blur-xl overflow-hidden shadow-2xl flex flex-col ${className}`}>
                 <div className="relative h-32 shrink-0 overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-bg-fill-accent-default-light via-bg-fill-accent-active-light to-blue-950 transition-transform duration-500 group-hover:scale-105" />
-                    <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
-                    <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-blue-400/20 blur-3xl" />
+                    <div className="absolute -top-10 -end-10 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
+                    <div className="absolute -bottom-12 -start-12 w-40 h-40 rounded-full bg-blue-400/20 blur-3xl" />
                 </div>
 
                 <div className="relative -mt-14 px-6 z-10">
@@ -66,7 +70,7 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
                             >
                                 <div className="relative w-full h-full rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                     {avatarPreview ? (
-                                        <img src={avatarPreview} alt={`${user.name}'s profile avatar`} className="w-full h-full object-cover" />
+                                        <img src={avatarPreview} alt={t('profile.avatarAlt', { name: user.name })} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">
                                             <UserIcon size={30} className="text-text-secondary-default-light dark:text-text-secondary-default-dark" />
@@ -78,8 +82,8 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
                                 </div>
                             </div>
                             {uploadingAvatar && (
-                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap">
-                                    Uploading...
+                                <div className="absolute -bottom-1 start-1/2 -translate-x-1/2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap">
+                                    {t('profile.uploading')}
                                 </div>
                             )}
                             <input
@@ -97,7 +101,7 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
                             <div className="flex items-center gap-1.5 mt-1">
                                 <UserTieIcon size={12} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
                                 <p className="text-xs font-semibold truncate text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    {user.specialization || user.department || "Instructor"}
+                                    {user.specialization || user.department || t('profile.instructor')}
                                 </p>
                             </div>
                         </div>
@@ -111,7 +115,7 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
                     </div>
                     <div className="flex items-center gap-2.5 text-sm">
                         <PhoneIcon size={14} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
-                        <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">{user.phone}</span>
+                        <span className="text-text-secondary-default-light dark:text-text-secondary-default-dark">{ar(user.phone)}</span>
                     </div>
                     <div className="flex items-center gap-2.5 text-sm">
                         <LocationDotIcon size={14} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
@@ -127,7 +131,7 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
                         className="rounded-xl h-10 text-xs font-bold shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                     >
                         <PenSquareIcon size={13} />
-                        Edit Profile Details
+                        {t('profile.editDetails')}
                     </Button>
                 </div>
             </div>

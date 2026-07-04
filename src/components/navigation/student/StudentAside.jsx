@@ -14,7 +14,7 @@ export default function StudentAside({height}) {
     const popupRef = useRef(null);
     const buttonRef = useRef(null);
     const { linkCls, isCompact } = useSidebar();
-    const { t } = useTranslation('student/aside');
+    const { t, i18n } = useTranslation('student');
     const user = useRouteLoaderData("root");
     const userRoles = user?.roles || [];
     const [isCoursesOpen, setIsCoursesOpen] = useState(false);
@@ -39,7 +39,7 @@ export default function StudentAside({height}) {
 
     return (
         <Aside height={height} links={getNavigationLinks(t, userRoles)}>
-            <div className={`${isCoursesOpen ? `${!isCompact ? "pl-2 border-l-4 border-border-accent-default-light dark:border-border-accent-default-dark" : ""}` : "border-transparent"}`}>
+            <div className={`${isCoursesOpen ? `${!isCompact ? "ps-2 border-s-4 border-border-accent-default-light dark:border-border-accent-default-dark" : ""}` : "border-transparent"}`}>
                 <div className="relative">
                     <button
                         ref={buttonRef}
@@ -50,7 +50,7 @@ export default function StudentAside({height}) {
                         {!isCompact && (
                             <>
                                 <span className="text-base font-semibold whitespace-nowrap">{t('courses')}</span>
-                                <AngleDownIcon className={`w-4 h-4 ml-auto shrink-0 ${isCoursesOpen ? "rotate-0" : "-rotate-90"}`} />
+                                <AngleDownIcon className={`w-4 h-4 ms-auto shrink-0 transition-transform duration-200 ${isCoursesOpen ? "rotate-0" : (i18n.language === 'ar' ? "rotate-90" : "-rotate-90")}`} />
                             </>
                         )}
                     </button>
@@ -91,7 +91,7 @@ export default function StudentAside({height}) {
                 </div>
               
                 {!isCompact && 
-                    <menu className={`${isCoursesOpen ? "flex" : "hidden"} flex-col ml-2 mt-2 mb-2 gap-2 w-[85%] text-sm`}>
+                    <menu className={`${isCoursesOpen ? "flex" : "hidden"} flex-col ms-2 mt-2 mb-2 gap-2 w-[85%] text-sm`}>
                         <li>
                             <NavLink to="/courses" end className={({ isActive }) => linkCls(isActive)}>
                                 <span className="text-base font-semibold whitespace-nowrap">{t('allCourses')}</span>

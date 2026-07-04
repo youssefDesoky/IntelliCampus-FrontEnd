@@ -8,6 +8,7 @@ import SmartNotesBody from "../../../feature/student/smartNotes/SmartNotesBody";
 import { SmartNotesPageSkeleton } from "../../../feature/student/smartNotes/SkeletonLoader";
 import { fromBackendLinkedLecture } from "../../../feature/student/smartNotes/notesApi";
 import { fetchStudentNotes } from "../../../feature/student/services/profileApi";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 
 export default function SmartNotes() {
@@ -34,7 +35,7 @@ export default function SmartNotes() {
             return courses.flatMap((course) =>
                 (course?.notes || []).map((note) => ({
                     ...note,
-                    course: course?.title || course?.courseName || "",
+                    course: course?.title || getLocalizedField(course, 'courseName', i18n.language) || "",
                     linkedLecture: fromBackendLinkedLecture(note?.linkedLecture),
                 }))
             );

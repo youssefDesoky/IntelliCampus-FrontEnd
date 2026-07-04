@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useDeviceType from "../../../hooks/useDeviceType";
 import WeeklySchedule from "../../../components/ui/WeeklySchedule";
@@ -9,6 +10,7 @@ import TimeInput from "../../../components/form/TimeInput";
 import { CalendarIcon } from "../../../components/ui/icons";
 import { autoSchedule, getAvailableSlots, updateExam, fetchExams, deleteExam } from "../services/adminSchedulingApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 function to12Hour(t) {
   const [h, m] = t.split(":").map(Number);
@@ -22,8 +24,8 @@ function parseMin(t) {
   return h * 60 + m;
 }
 
-function fmtLabel(slot) {
-  if (!slot.startTime || !slot.endTime) return "No time set";
+function fmtLabel(slot, t) {
+  if (!slot.startTime || !slot.endTime) return t ? t('examScheduler.noTimeSet') : "No time set";
   return `${to12Hour(slot.startTime)} - ${to12Hour(slot.endTime)}`;
 }
 
@@ -49,6 +51,7 @@ function getDayKey(dateStr) {
 }
 
 function AutoScheduleDialog({ onClose, onConfirm }) {
+  const { t } = useTranslation('admin');
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [examType, setExamType] = useState(0);
@@ -60,14 +63,14 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
     const errs = {};
     for (const s of defs) {
       if (parseMin(s.startTime) >= parseMin(s.endTime)) {
-        errs[s.id] = "Start must be before end";
+        errs[s.id] = t('examScheduler.errorStartBeforeEnd');
       }
     }
     for (let i = 0; i < defs.length; i++) {
       for (let j = i + 1; j < defs.length; j++) {
         if (overlaps(defs[i], defs[j])) {
-          errs[defs[i].id] = errs[defs[i].id] || "Overlaps with another slot";
-          errs[defs[j].id] = errs[defs[j].id] || "Overlaps with another slot";
+          errs[defs[i].id] = errs[defs[i].id] || t('examScheduler.errorOverlap');
+          errs[defs[j].id] = errs[defs[j].id] || t('examScheduler.errorOverlap');
         }
       }
     }
@@ -117,11 +120,11 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
   };
 
   return (
-    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-2xl shadow-2xl max-w-2xl w-full mx-auto overflow-hidden">
+      <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-2xl shadow-2xl max-w-2xl w-full mx-auto overflow-hidden">
       <div className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark px-6 py-4 flex items-center justify-between">
         <div>
-          <p className="text-[11px] text-indigo-400 font-semibold uppercase tracking-wider">Auto Schedule</p>
-          <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mt-0.5">Configure Exam Schedule</h3>
+          <p className="text-[11px] text-indigo-400 font-semibold uppercase tracking-wider">{t('manageExams.autoSchedule')}</p>
+          <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mt-0.5">{t('examScheduler.configureSchedule')}</h3>
         </div>
         <button onClick={onClose} className="bg-transparent border-none text-text-secondary-default-light dark:text-text-secondary-default-dark cursor-pointer text-lg p-1 hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark">✕</button>
       </div>
@@ -129,12 +132,12 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
       <div className="p-6 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DateInput
-            label="Start Date"
+            label={t('examScheduler.startDate')}
             value={startDate}
             onChange={e => setStartDate(e.target.value)}
           />
           <DateInput
-            label="End Date"
+            label={t('examScheduler.endDate')}
             value={endDate}
             minDate={startDate}
             onChange={e => setEndDate(e.target.value)}
@@ -142,28 +145,28 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
         </div>
 
         <div>
-          <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2 block">Exam Type</label>
+          <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark mb-2 block">{t('examScheduler.examType')}</label>
           <select
             value={examType}
             onChange={e => setExamType(Number(e.target.value))}
             className="w-full rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark px-3 py-2 bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-sm"
           >
-            <option value={0}>Midterm</option>
-            <option value={1}>Final</option>
+            <option value={0}>{t('manageExams.midterm')}</option>
+            <option value={1}>{t('manageExams.final')}</option>
           </select>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">Time Slots</label>
+            <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('examScheduler.timeSlots')}</label>
             {slotDefs.length >= 5 ? (
-              <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">Max time slots reached</span>
+              <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('examScheduler.maxSlotsReached')}</span>
             ) : (
               <button
                 onClick={handleAdd}
                 className="text-xs font-semibold cursor-pointer bg-transparent border border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark px-3 py-1 rounded-lg hover:bg-bg-fill-secondary-default-light dark:hover:bg-bg-fill-secondary-default-dark transition-colors"
               >
-                + Add Slot
+                {t('manageExams.addSlot')}
               </button>
             )}
           </div>
@@ -175,13 +178,13 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
                   onChange={e => handleChange(s.id, "startTime", e.target.value)}
                   className="flex-1"
                 />
-                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">to</span>
+                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('examScheduler.to')}</span>
                 <TimeInput
                   value={s.endTime}
                   onChange={e => handleChange(s.id, "endTime", e.target.value)}
                   className="flex-1"
                 />
-                <span className="text-[11px] text-text-secondary-default-light dark:text-text-secondary-default-dark w-28 text-left whitespace-nowrap">{fmtLabel(s)}</span>
+                <span className="text-[11px] text-text-secondary-default-light dark:text-text-secondary-default-dark w-28 text-start whitespace-nowrap">{fmtLabel(s, t)}</span>
                 <button
                   onClick={() => handleRemove(s.id)}
                   className="bg-transparent border-none text-red-400 cursor-pointer text-base p-1 hover:text-red-300"
@@ -199,7 +202,7 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
                 const s = slotDefs.find(x => x.id === id);
                 return (
                   <p key={id} className="text-[11px] text-red-400 m-0">
-                    {fmtLabel(s)}: {msg}
+                    {fmtLabel(s, t)}: {msg}
                   </p>
                 );
               })}
@@ -209,16 +212,16 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
 
         <div className="flex items-center justify-between pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
           <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-            {startDate && endDate ? `${validDailySlots.length} slot${validDailySlots.length !== 1 ? "s" : ""}` : "Select start and end date"}
+            {startDate && endDate ? t('examScheduler.slotCount', { count: validDailySlots.length }) : t('examScheduler.selectDates')}
           </p>
           <div className="flex gap-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-secondary-active-light dark:hover:bg-bg-fill-secondary-active-dark transition-colors">Cancel</button>
+            <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-secondary-active-light dark:hover:bg-bg-fill-secondary-active-dark transition-colors">{t('manageExams.cancel')}</button>
             <button
               onClick={handleSchedule}
               disabled={!startDate || !endDate || validDailySlots.length === 0 || hasErrors || loading}
               className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {loading ? "Scheduling..." : "Schedule"}
+              {loading ? t('examScheduler.scheduling') : t('examScheduler.schedule')}
             </button>
           </div>
         </div>
@@ -230,6 +233,7 @@ function AutoScheduleDialog({ onClose, onConfirm }) {
 const ROWS_PER_PAGE = 8;
 
 function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose }) {
+  const { t, i18n } = useTranslation('admin');
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [moving, setMoving] = useState(false);
   const [page, setPage] = useState(0);
@@ -266,7 +270,7 @@ function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose
   if (loading) {
     return (
       <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-2xl shadow-2xl max-w-3xl w-full mx-auto overflow-hidden p-12 text-center text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-        Loading available slots...
+        {t('examScheduler.loadingSlots')}
       </div>
     );
   }
@@ -296,12 +300,12 @@ function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose
     <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-2xl shadow-2xl max-w-3xl w-full mx-auto overflow-hidden max-h-[90vh] flex flex-col">
       <div className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark px-6 py-4 flex items-center justify-between shrink-0">
         <div>
-          <p className="text-[11px] text-indigo-400 font-semibold uppercase tracking-wider">Move Exam</p>
+          <p className="text-[11px] text-indigo-400 font-semibold uppercase tracking-wider">{t('examScheduler.moveExam')}</p>
           <h3 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mt-0.5">
-            {exam.courseName} <span className="font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs">({exam.courseCode})</span>
+            {getLocalizedField(exam, 'courseName', i18n.language)} <span className="font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark text-xs">({getLocalizedField(exam, 'courseCode', i18n.language)})</span>
           </h3>
           <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mt-0.5">
-            Current: {exam.date} · {to12Hour(exam.startTime.substring(0, 5))} - {to12Hour(exam.endTime.substring(0, 5))}
+            {t('examScheduler.currentLabel')} {exam.date} · {to12Hour(exam.startTime.substring(0, 5))} - {to12Hour(exam.endTime.substring(0, 5))}
           </p>
         </div>
         <button onClick={onClose} className="bg-transparent border-none text-text-secondary-default-light dark:text-text-secondary-default-dark cursor-pointer text-lg p-1 hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark">✕</button>
@@ -331,15 +335,15 @@ function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose
                     let cellStyle, label, labelColor;
                     if (isSelected) {
                       cellStyle = "bg-indigo-500/20 border-2 border-indigo-400 cursor-pointer";
-                      label = "Click to confirm";
+                      label = t('examScheduler.clickToConfirm');
                       labelColor = "text-indigo-300";
                     } else if (!isAvailable) {
                       cellStyle = "bg-red-500/10 border border-red-500/40 cursor-not-allowed";
-                      label = `✗ ${conflicts.length} conflict${conflicts.length > 1 ? "s" : ""}`;
+                      label = t('examScheduler.conflictCount', { count: conflicts.length });
                       labelColor = "text-red-400";
                     } else {
                       cellStyle = "bg-emerald-500/5 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/10";
-                      label = "✓ Available";
+                      label = t('examScheduler.available');
                       labelColor = "text-emerald-400";
                     }
 
@@ -367,7 +371,7 @@ function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose
               disabled={page === 0}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-secondary-active-light dark:hover:bg-bg-fill-secondary-active-dark transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              ← Prev
+              {t('examScheduler.prev')}
             </button>
             {Array.from({ length: totalPages }, (_, i) => (
               <button
@@ -387,7 +391,7 @@ function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose
               disabled={page === totalPages - 1}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-secondary-active-light dark:hover:bg-bg-fill-secondary-active-dark transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              Next →
+              {t('examScheduler.next')}
             </button>
           </div>
         )}
@@ -399,10 +403,10 @@ function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose
               disabled={moving}
               className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {moving ? "Moving..." : "Confirm Move"}
+              {moving ? t('examScheduler.moving') : t('examScheduler.confirmMove')}
             </button>
           )}
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-secondary-active-light dark:hover:bg-bg-fill-secondary-active-dark transition-colors">Cancel</button>
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-secondary-active-light dark:hover:bg-bg-fill-secondary-active-dark transition-colors">{t('manageExams.cancel')}</button>
         </div>
       </div>
     </div>
@@ -431,6 +435,7 @@ function deriveConfigFromExams(scheduled) {
 }
 
 const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, ref) {
+  const { t } = useTranslation('admin');
   const { isMobile } = useDeviceType();
   const { showError } = useError();
   const queryClient = useQueryClient();
@@ -612,16 +617,16 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
       {loading && (
         <div className="flex flex-col items-center justify-center py-24 gap-3 text-text-secondary-default-light dark:text-text-secondary-default-dark">
           <span className="text-5xl"><CalendarIcon size={64} /></span>
-          <p className="text-sm m-0">Generating schedule...</p>
-          <p className="text-xs m-0">The backend is computing a conflict-free timetable</p>
+          <p className="text-sm m-0">{t('examScheduler.generating')}</p>
+          <p className="text-xs m-0">{t('examScheduler.generatingSub')}</p>
         </div>
       )}
 
       {!loading && !ready && (
         <div className="flex flex-col items-center justify-center py-24 gap-3 text-text-secondary-default-light dark:text-text-secondary-default-dark">
           <span className="text-5xl"><CalendarIcon size={64} /></span>
-          <p className="text-sm m-0">No schedule yet</p>
-          <p className="text-xs m-0">Click "Auto Schedule" to configure and generate the exam timetable</p>
+          <p className="text-sm m-0">{t('examScheduler.noSchedule')}</p>
+          <p className="text-xs m-0">{t('examScheduler.noScheduleHint')}</p>
         </div>
       )}
 

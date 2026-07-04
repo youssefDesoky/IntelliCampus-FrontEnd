@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import InputItem from "../../../components/form/InputItem";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import SelectBox from "../../../components/ui/SelectBox";
@@ -6,6 +7,7 @@ import TextArea from "../../../components/ui/TextArea";
 import { fetchDepartments } from "../services/adminDepartmentsApi";
 
 export default function CourseForm({ onClose, method = "post", onSubmit, initialData = {}, isOpen = true }) {
+    const { t } = useTranslation('admin');
     const isEdit = method === "put";
 
     const [departments, setDepartments] = useState([]);
@@ -29,7 +31,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             .catch(console.error);
     }, [initialData.departmentId, initialData.departmentName]);
 
-    const [formData, setFormData] = useState({ title: "", titleArabic: "", id: "", courseCodeAr: "", creditHours: "", description: "", descriptionAr: "" });
+    const [formData, setFormData] = useState({ title: "", titleArabic: "", id: "", courseCodeAr: "", creditHours: "", description: "", descriptionAr: "", isProject: false });
 
     useEffect(() => {
         setFormData({
@@ -40,8 +42,9 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             creditHours: initialData.creditHours?.toString() || "",
             description: initialData.description || "",
             descriptionAr: initialData.descriptionAr || "",
+            isProject: initialData.isProject ?? false,
         });
-    }, [initialData.courseName, initialData.title, initialData.courseNameAr, initialData.titleArabic, initialData.courseCode, initialData.id, initialData.courseCodeAr, initialData.creditHours, initialData.description, initialData.descriptionAr]);
+    }, [initialData.courseName, initialData.title, initialData.courseNameAr, initialData.titleArabic, initialData.courseCode, initialData.id, initialData.courseCodeAr, initialData.creditHours, initialData.description, initialData.descriptionAr, initialData.isProject]);
 
     const handleChange = (field) => (e) => {
         setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -59,6 +62,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
             creditHours: parseInt(formData.creditHours, 10) || 0,
             description: formData.description,
             descriptionAr: formData.descriptionAr || undefined,
+            isProject: formData.isProject,
         };
 
         if (onSubmit) onSubmit(courseData);
@@ -67,19 +71,19 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
     return (
         <BaseFormComponent
             isOpen={isOpen}
-            title={`${isEdit ? "Edit" : "Create New"} Course`}
-            description={isEdit ? "Update the details below to edit this course." : "Fill in the details below to add a new course to the system."}
+            title={t(isEdit ? 'courseForm.title.edit' : 'courseForm.title.create')}
+            description={t(isEdit ? 'courseForm.description.edit' : 'courseForm.description.create')}
             onClose={onClose}
             onSubmit={handleSubmit}
-            submitText={isEdit ? "Update Course" : "Create Course"}
+            submitText={t(isEdit ? 'courseForm.submit.edit' : 'courseForm.submit.create')}
         >
             <div className="space-y-6 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem
-                        label="Course Title"
+                        label={t('courseForm.title')}
                         type="text"
                         name="title"
-                        placeholder="e.g. Introduction to Computer Science"
+                        placeholder={t('courseForm.titlePlaceholder')}
                         value={formData.title}
                         onChange={handleChange("title")}
                         required
@@ -87,10 +91,10 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
 
                     <div dir="rtl">
                         <InputItem
-                            label="اسم المادة"
+                            label={t('courseForm.titleAr')}
                             type="text"
                             name="titleArabic"
-                            placeholder="مقدمة في علوم الحاسوب"
+                            placeholder={t('courseForm.titleArPlaceholder')}
                             value={formData.titleArabic}
                             onChange={handleChange("titleArabic")}
                             required
@@ -100,10 +104,10 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem
-                        label="Course Code"
+                        label={t('courseForm.code')}
                         type="text"
                         name="id"
-                        placeholder="e.g. CS-100"
+                        placeholder={t('courseForm.codePlaceholder')}
                         value={formData.id}
                         onChange={handleChange("id")}
                         isDisabled={isEdit}
@@ -112,10 +116,10 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
 
                     <div dir="rtl">
                         <InputItem
-                            label="رمز المادة"
+                            label={t('courseForm.codeAr')}
                             type="text"
                             name="courseCodeAr"
-                            placeholder="حاس-100"
+                            placeholder={t('courseForm.codeArPlaceholder')}
                             value={formData.courseCodeAr}
                             onChange={handleChange("courseCodeAr")}
                         />
@@ -124,7 +128,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
 
                 <SelectBox
                     className="w-full"
-                    label="Department"
+                    label={t('courseForm.department')}
                     name="department"
                     labelDirection="flex-col"
                     options={departments}
@@ -145,13 +149,29 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                     />
                 </div>
 
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                        type="checkbox"
+                        name="isProject"
+                        checked={formData.isProject}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isProject: e.target.checked }))}
+                        className="w-4 h-4 rounded border-border-primary-default-light dark:border-border-primary-default-dark text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark focus:ring-bg-fill-accent-default-light dark:focus:ring-bg-fill-accent-default-dark"
+                    />
+                    <span className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
+                        Project Course
+                    </span>
+                    <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                        (hides section selection during registration)
+                    </span>
+                </label>
+
                 <div>
                     <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1">
-                        Description
+                        {t('courseForm.description')}
                     </label>
                     <TextArea
                         name="description"
-                        placeholder="Enter course description..."
+                        placeholder={t('courseForm.descriptionPlaceholder')}
                         value={formData.description}
                         onChange={handleChange("description")}
                         className="w-full px-3 py-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark resize-none"
@@ -160,11 +180,11 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
 
                 <div dir="rtl">
                     <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1">
-                        وصف المادة
+                        {t('courseForm.descriptionAr')}
                     </label>
                     <TextArea
                         name="descriptionAr"
-                        placeholder="أدخل وصف المادة..."
+                        placeholder={t('courseForm.descriptionArPlaceholder')}
                         value={formData.descriptionAr}
                         onChange={handleChange("descriptionAr")}
                         className="w-full px-3 py-2 rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark resize-none"

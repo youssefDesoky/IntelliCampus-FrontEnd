@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from 'react-i18next';
 import useDeviceType from "../../../hooks/useDeviceType";
 
 import WeeklySchedule, { days } from "../../../components/ui/WeeklySchedule";
@@ -11,11 +12,14 @@ import { fetchMySchedule, exportSchedulePdf } from "../../../feature/student/sch
 import { ScheduleSkeleton, ExamScheduleSkeleton } from "../../../feature/student/schedule/SkeletonLoader";
 import { fetchMyExams, exportExamSchedulePdf } from "../../../feature/student/schedule/examScheduleApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import useArabicDigits from "../../../hooks/useArabicDigits";
+import { getLocalizedField } from "../../../utils/getLocalizedField";
 
 const scheduleStorageKey = "studentCurrSchedule";
 const allowedTypeFilters = ["lecture", "section", "activity"];
 
 export default function Schedule() {
+    const { t, i18n } = useTranslation('student');
     const [currSchedule, setCurrSchedule] = useState(localStorage.getItem(scheduleStorageKey) || "weekly");
     const [selectedTypes, setSelectedTypes] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState(null);
@@ -70,7 +74,7 @@ export default function Schedule() {
                 await exportExamSchedulePdf();
             }
         } catch {
-            showError("Failed to export PDF. Please try again.");
+            showError(t('schedule.exportFailed'));
         }
     };
 
@@ -124,7 +128,18 @@ export default function Schedule() {
 }
 
 function EventDetailModal({ event, onClose }) {
+    const { t, i18n } = useTranslation("common");
+    const { localizeTime } = useArabicDigits();
+    const localizedTitle = getLocalizedField(event, 'title', i18n.language);
     const type = event.type?.toLowerCase();
+
+    const getTypeLabel = (type) => {
+        if (type === "lecture") return t("schedule.typeLecture");
+        if (type === "section") return t("schedule.typeSection");
+        if (type === "activity") return t("schedule.typeActivity");
+        return type?.toUpperCase() || "";
+    };
+
     const accentGradient = type === "lecture"
         ? "bg-linear-to-r from-bg-fill-accent-default-light to-text-blue-accent-light"
         : type === "section"
@@ -143,7 +158,7 @@ function EventDetailModal({ event, onClose }) {
         ? "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark text-text-purple-accent-light dark:text-text-purple-accent-dark"
         : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark";
 
-    const dayName = days.find(d => d.key === event.day)?.label || event.day || "";
+    const dayName = event.day ? t(`days.${event.day}`) : "";
 
     return (
         <ModelOverlay onClose={onClose}>
@@ -155,22 +170,22 @@ function EventDetailModal({ event, onClose }) {
                         <div className="flex items-center gap-3">
                             <div className={`w-12 h-12 flex items-center justify-center rounded-xl ${bgColorClass}`}>
                                 <span className="text-2xl font-bold uppercase">
-                                    {event.title?.[0] || "?"}
+                                    {localizedTitle?.[0] || "?"}
                                 </span>
                             </div>
                             <div>
                                 <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeClass}`}>
-                                    {(event.type || "class").toUpperCase()}
+                                    {getTypeLabel(event.type).toUpperCase()}
                                 </span>
                                 <h3 className="text-xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark mt-1">
-                                    {event.title}
+                                    {localizedTitle}
                                 </h3>
                             </div>
                         </div>
                         <button
                             className="p-2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg transition"
                             onClick={onClose}
-                            aria-label="Close"
+                            aria-label={t('schedule.close')}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -186,16 +201,16 @@ function EventDetailModal({ event, onClose }) {
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">Date & Time</p>
+                                <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">{t('labels.dateAndTime')}</p>
                                 <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">
-                                    {dayName} &bull; {event.startTime} - {event.endTime}
+                                    {dayName} &bull; {localizeTime(event.startTime)} - {localizeTime(event.endTime)}
                                 </p>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid gap-4 mb-6">
-                        {event.location && (
+                        {getLocalizedField(event, 'location', i18n.language) && (
                             <div className="flex items-center gap-3 p-3 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg transition">
                                 <div className="p-2 bg-bg-surface-success-disabled-light dark:bg-bg-surface-success-default-dark text-text-success-default-light dark:text-text-success-default-dark rounded-lg">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -204,13 +219,13 @@ function EventDetailModal({ event, onClose }) {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">Location</p>
-                                    <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">{event.location}</p>
+                                    <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">{t('labels.location')}</p>
+                                    <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">{getLocalizedField(event, 'location', i18n.language)}</p>
                                 </div>
                             </div>
                         )}
 
-                        {event.instructor && (
+                        {getLocalizedField(event, 'instructor', i18n.language) && (
                             <div className="flex items-center gap-3 p-3 hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark rounded-lg transition">
                                 <div className="p-2 bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark text-text-purple-accent-light dark:text-text-purple-accent-dark rounded-lg">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -218,8 +233,8 @@ function EventDetailModal({ event, onClose }) {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">Instructor</p>
-                                    <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">{event.instructor}</p>
+                                    <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">{t('schedule.instructor')}</p>
+                                    <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">{getLocalizedField(event, 'instructor', i18n.language)}</p>
                                 </div>
                             </div>
                         )}

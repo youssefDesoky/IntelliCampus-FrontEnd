@@ -1,4 +1,7 @@
+import { useTranslation } from "react-i18next";
+
 export default function TableHeader({ headerData, selectAll, setSelectAll, showSelectionColumn = true, showActionsColumn = true, headerClassNames }) {
+    const { t } = useTranslation("common");
     return (
         <thead className="bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
             <tr>
@@ -18,7 +21,7 @@ export default function TableHeader({ headerData, selectAll, setSelectAll, showS
                     </th>
                 ))}
 
-                {showActionsColumn && <th className="p-3">Actions</th>}
+                {showActionsColumn && <th className="p-3">{t('labels.actions', 'Actions')}</th>}
             </tr>
         </thead>
     );

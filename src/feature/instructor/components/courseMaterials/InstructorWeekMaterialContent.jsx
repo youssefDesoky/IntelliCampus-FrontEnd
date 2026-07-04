@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { DownloadIcon, EyeIcon, FileLinesIcon, PlayIcon, TrashIcon, VoiceIcon, ImageIcon, FileIcon, XIcon } from "../../../../components/ui/icons";
 import Dialog from "../../../../components/ui/Dialog";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
@@ -19,11 +20,12 @@ function getMaterialType(material) {
     return 4;
 }
 
-function getTypeLabel(type) {
-    return type === 0 ? "Document" : type === 1 ? "Video" : type === 2 ? "Audio" : type === 3 ? "Image" : "Other";
+function getTypeLabel(type, t) {
+    return type === 0 ? t('materials.typeDocument') : type === 1 ? t('materials.typeVideo') : type === 2 ? t('materials.typeAudio') : type === 3 ? t('materials.typeImage') : t('materials.typeOther');
 }
 
 export default function InstructorWeekMaterialContent({ material, isFirst, onDelete, isInactive }) {
+    const { t } = useTranslation('instructor');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showViewer, setShowViewer] = useState(false);
     const type = getMaterialType(material);
@@ -64,12 +66,13 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                     </div>
                     <div className="flex-1 min-w-0">
                         <h4 className="text-[16px] font-semibold truncate text-text-primary-default-light dark:text-text-primary-default-dark group-hover:text-text-accent-default-light dark:group-hover:text-text-accent-default-dark transition-colors">
+                            {/* TODO: i18n - backend returns English only */}
                             {material.title}
                         </h4>
                         <div className="flex items-center justify-between mt-1">
                             <div className="flex items-center gap-3">
                                 <span className="text-sm font-medium px-2 py-1 rounded bg-bg-surface-tertiary-default-light dark:bg-bg-surface-tertiary-default-dark text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                                    {getTypeLabel(type)}
+                                    {getTypeLabel(type, t)}
                                 </span>
                                 {material.fileSize != null && (
                                     <p className="text-sm font-medium text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
@@ -79,7 +82,7 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                             </div>
                             {/* Mobile action buttons */}
                             <div className="flex items-center gap-1 md:hidden">
-                                <button onClick={() => setShowViewer(true)} className="p-2 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
+                                <button onClick={() => setShowViewer(true)} className="p-2 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? t('materials.playVideo') : type === 2 ? t('materials.playAudio') : t('materials.viewDocument')}>
                                     {
                                         type === 1 ? (
                                             <PlayIcon size={18} />
@@ -94,14 +97,14 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                                         )
                                     }
                                 </button>
-                                <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
+                                <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label={t('materials.download')}>
                                     <DownloadIcon size={18} />
                                 </a>
                                 {!isInactive && (
                                     <button 
                                         onClick={() => setShowDeleteDialog(true)}
                                         className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 dark:hover:text-red-400 transition-all duration-200" 
-                                        aria-label="Delete"
+                                        aria-label={t('materials.delete')}
                                     >
                                         <TrashIcon size={18} />
                                     </button>
@@ -112,8 +115,8 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                 </div>
 
                 {/* Desktop action buttons */}
-                <div className="hidden md:flex items-center gap-2 md:ml-4">
-                    <button onClick={() => setShowViewer(true)} className="p-3 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? "Play video" : type === 2 ? "Play audio" : "View document"}>
+                <div className="hidden md:flex items-center gap-2 md:ms-4">
+                    <button onClick={() => setShowViewer(true)} className="p-3 rounded-lg hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark transition-all duration-200" aria-label={type === 1 ? t('materials.playVideo') : type === 2 ? t('materials.playAudio') : t('materials.viewDocument')}>
                         {
                             type === 1 ? (
                                 <PlayIcon size={20} />
@@ -128,14 +131,14 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                             )
                         }
                     </button>
-                    <a href={downloadUrl} download className="p-3 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
+                    <a href={downloadUrl} download className="p-3 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label={t('materials.download')}>
                         <DownloadIcon size={20} />
                     </a>
                     {!isInactive && (
                         <button 
                             onClick={() => setShowDeleteDialog(true)}
                             className="p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 dark:hover:text-red-400 transition-all duration-200" 
-                            aria-label="Delete"
+                            aria-label={t('materials.delete')}
                         >
                             <TrashIcon size={20} />
                         </button>
@@ -148,17 +151,19 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
                 <ModelOverlay onClose={() => setShowViewer(false)} maxWidth="max-w-5xl">
                     <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                            <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate pr-4">{material.title}</h3>
+                            {/* TODO: i18n - backend returns English only */}
+                            <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate pe-4">{material.title}</h3>
                             <div className="flex items-center gap-2 shrink-0">
-                                <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label="Download">
+                                <a href={downloadUrl} download className="p-2 rounded-lg hover:bg-bg-surface-success-hover-light dark:hover:bg-bg-surface-success-hover-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-icon-success-default-light dark:hover:text-icon-success-default-dark transition-all duration-200" aria-label={t('materials.download')}>
                                     <DownloadIcon size={20} />
                                 </a>
-                                <button onClick={() => setShowViewer(false)} className="p-2 rounded-lg hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 transition-all duration-200" aria-label="Close">
+                                <button onClick={() => setShowViewer(false)} className="p-2 rounded-lg hover:bg-bg-surface-danger-default-light dark:hover:bg-bg-surface-danger-default-dark text-icon-primary-default-light dark:text-icon-primary-default-dark hover:text-red-500 transition-all duration-200" aria-label={t('materials.close')}>
                                     <XIcon size={20} />
                                 </button>
                             </div>
                         </div>
                         <div className="flex-1 min-h-0 p-1">
+                            {/* TODO: i18n - backend returns English only */}
                             <MaterialPreview type={type} title={material.title} viewUrl={viewUrl} downloadUrl={downloadUrl} />
                         </div>
                     </div>
@@ -169,16 +174,16 @@ export default function InstructorWeekMaterialContent({ material, isFirst, onDel
             <Dialog
                 isOpen={showDeleteDialog}
                 variant="warning"
-                title="Delete Material"
+                title={t('materials.deleteMaterial')}
                 onClose={() => setShowDeleteDialog(false)}
                 onConfirm={() => {
                     onDelete(material.materialId);
                     setShowDeleteDialog(false);
                 }}
-                confirmText="Delete"
-                cancelText="Cancel"
+                confirmText={t('materials.delete')}
+                cancelText={t('materials.cancel')}
             >
-                Are you sure you want to delete &ldquo;{material.title}&rdquo;? This action cannot be undone.
+                {t('materials.deleteConfirm', { title: material.title })}
             </Dialog>
         </>
     );

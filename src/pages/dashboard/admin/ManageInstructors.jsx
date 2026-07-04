@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate, useRouteLoaderData } from "react-router-dom";
+import { useTranslation, Trans } from 'react-i18next';
 import ManageEntity from "../../../components/ui/ManageEntity";
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 import AssignRoleModal from "../../../feature/admin/components/AssignRoleModal";
@@ -11,8 +12,10 @@ import useDeviceType from "../../../hooks/useDeviceType";
 import { fetchInstructors, createInstructor, updateInstructor, deleteInstructor } from "../../../feature/admin/services/adminInstructorsApi";
 import { importInstructors } from "../../../feature/admin/services/adminImportsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 export default function ManageInstructors() {
+  const { t, i18n } = useTranslation('admin');
   const { isDesktop, isTablet } = useDeviceType();
   const navigate = useNavigate();
   const user = useRouteLoaderData("root");
@@ -26,15 +29,15 @@ export default function ManageInstructors() {
   const [isImportOpen, setIsImportOpen] = useState(false);
 
   const instructorTableHeaders = useMemo(() => {
-    if (isDesktop) return ["Instructor ID", "Instructor", "Department", "Specialization", "Role"];
-    if (isTablet) return ["Instructor ID", "Instructor", "Department"];
-    return ["Instructor"];
-  }, [isDesktop, isTablet]);
+    if (isDesktop) return [t('manageInstructors.instructorId'), t('manageInstructors.instructor'), t('manageInstructors.department'), t('manageInstructors.specialization'), t('manageInstructors.role')];
+    if (isTablet) return [t('manageInstructors.instructorId'), t('manageInstructors.instructor'), t('manageInstructors.department')];
+    return [t('manageInstructors.instructor')];
+  }, [isDesktop, isTablet, t]);
 
   const instructorColumnAlignments = useMemo(() => {
-    if (isDesktop) return ['text-center', 'text-left', 'text-left', 'text-left', 'text-center'];
-    if (isTablet) return ['text-center', 'text-left', 'text-left'];
-    return ['text-left'];
+    if (isDesktop) return ['text-center', 'text-start', 'text-start', 'text-start', 'text-center'];
+    if (isTablet) return ['text-center', 'text-start', 'text-start'];
+    return ['text-start'];
   }, [isDesktop, isTablet]);
 
   const searchFilter = useCallback((instructor, q) => {
@@ -56,10 +59,10 @@ export default function ManageInstructors() {
     row.instructor = (
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-10 h-10 rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center text-sm font-bold text-text-accent-active-light dark:text-text-accent-active-dark overflow-hidden shrink-0">
-          {instructor.profileImage ? <img src={instructor.profileImage} alt={instructor.fullName} className="w-full h-full object-cover" /> : <UserIcon className="w-5 h-5 text-text-secondary-default-light dark:text-text-secondary-default-dark" />}
+          {instructor.profileImage ? <img src={instructor.profileImage} alt={getLocalizedField(instructor, 'fullName', i18n.language)} className="w-full h-full object-cover" /> : <UserIcon className="w-5 h-5 text-text-secondary-default-light dark:text-text-secondary-default-dark" />}
         </div>
-        <div className="flex flex-col text-left min-w-0 max-w-40">
-          <p className="truncate">{instructor.fullName}</p>
+        <div className="flex flex-col text-start min-w-0 max-w-40">
+          <p className="truncate">{getLocalizedField(instructor, 'fullName', i18n.language)}</p>
           <p className="text-xs truncate text-text-secondary-default-light dark:text-text-secondary-default-dark">{instructor.email}</p>
         </div>
       </div>
@@ -71,33 +74,33 @@ export default function ManageInstructors() {
 
   return (
     <ManageEntity
-      entityName="Instructor"
-      entityNamePlural="Instructors"
+      entityName={t('manageInstructors.entityName')}
+      entityNamePlural={t('manageInstructors.entityNamePlural')}
       entityIdField="userId"
       fetchItems={fetchInstructors}
       createItem={createInstructor}
       updateItem={updateInstructor}
       deleteItem={deleteInstructor}
-      headerTitle="Manage Instructors"
-      headerSubtitle="Administer instructor records, departments and information"
-      headerAddLabel="Add Instructor"
+      headerTitle={t('manageInstructors.title')}
+      headerSubtitle={t('manageInstructors.subtitle')}
+      headerAddLabel={t('manageInstructors.addLabel')}
       renderHeaderActions={({ openForm }) => (
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
             <ImportIcon size={24} />
-            <span className="hidden sm:inline"> Import</span>
+            <span className="hidden sm:inline">{t('manageInstructors.importBtn')}</span>
           </Button>
           <Button variant="secondary" onClick={() => setIsLoanFormOpen(true)}>
             <UserTieIcon size={24} />
-            <span className="hidden sm:inline"> Loan Instructor</span>
+            <span className="hidden sm:inline">{t('manageInstructors.loanBtn')}</span>
           </Button>
           <Button variant="primary" onClick={() => openForm(null)}>
             <PlusIcon size={24} />
-            <span className="hidden sm:inline"> Add Instructor</span>
+            <span className="hidden sm:inline">{t('manageInstructors.addBtn')}</span>
           </Button>
         </div>
       )}
-      searchPlaceholder="Search Instructors..."
+      searchPlaceholder={t('manageInstructors.search')}
       searchFilter={searchFilter}
       tableRole="instructor"
       tableHeaders={instructorTableHeaders}
@@ -107,17 +110,19 @@ export default function ManageInstructors() {
       rowActions={(item, { onEdit, onDelete }) => {
         const isTargetSuperAdmin = item.roles?.some(r => r.toLowerCase() === 'superadmin');
         const items = [
-          { label: 'View Details', onClick: () => navigate(`/admin/instructors/${item.userId || item._id || item.instructorId}`) },
-          { label: 'Edit', onClick: () => onEdit(item) },
-          { label: 'Delete', className: 'text-text-danger-default-light dark:text-text-danger-default-dark', onClick: () => onDelete(item) },
+          { label: t('manageInstructors.viewDetails'), onClick: () => navigate(`/admin/instructors/${item.userId || item._id || item.instructorId}`) },
+          { label: t('manageInstructors.editAction'), onClick: () => onEdit(item) },
+          { label: t('manageInstructors.deleteAction'), className: 'text-text-danger-default-light dark:text-text-danger-default-dark', onClick: () => onDelete(item) },
         ];
         if (isSuperAdmin && !isTargetSuperAdmin) {
-          items.push({ label: 'Assign Role', onClick: () => setAssignRoleTarget(item) });
+          items.push({ label: t('manageInstructors.assignRole'), onClick: () => setAssignRoleTarget(item) });
         }
         return items;
       }}
       getDeleteMessage={(item) => (
-        <>Are you sure you want to delete <strong>{item?.fullName}</strong> ({item?.instructorId})? This action cannot be undone.</>
+        <Trans i18nKey="manageInstructors.deleteConfirm" ns="admin" values={{ name: getLocalizedField(item, 'fullName', i18n.language), id: item?.instructorId }}>
+          Are you sure you want to delete <strong>{{ name }}</strong> ({{ id }})? This action cannot be undone.
+        </Trans>
       )}
       renderFilters={({ rawItems, setCurrentPage }) => {
         const departments = [...new Set(rawItems.map(i => i.departmentName).filter(Boolean))].sort();
@@ -125,13 +130,13 @@ export default function ManageInstructors() {
         return (
           <>
             <FilterDropdown
-              label="Department"
+              label={t('manageInstructors.filterDepartment')}
               options={departments.map(d => ({ value: d, label: d }))}
               selectedValues={filterDepartment}
               onChange={(v) => { setFilterDepartment(v); setCurrentPage(1); }}
             />
             <FilterDropdown
-              label="Type"
+              label={t('manageInstructors.filterType')}
               options={instructorTypes.map(t => ({ value: t, label: t }))}
               selectedValues={filterType}
               onChange={(v) => { setFilterType(v); setCurrentPage(1); }}
@@ -151,7 +156,7 @@ export default function ManageInstructors() {
           {assignRoleTarget && (
             <AssignRoleModal
               userId={assignRoleTarget.userId}
-              userName={assignRoleTarget.fullName}
+              userName={getLocalizedField(assignRoleTarget, 'fullName', i18n.language)}
               onClose={() => setAssignRoleTarget(null)}
               onRolesUpdated={loadItems}
             />
@@ -173,8 +178,8 @@ export default function ManageInstructors() {
           )}
           {isImportOpen && (
             <ImportDialog
-              title="Import Instructors"
-              subtitle="Upload a file to bulk-import instructor records."
+              title={t('manageInstructors.importDialogTitle')}
+              subtitle={t('manageInstructors.importDialogSubtitle')}
               onClose={() => setIsImportOpen(false)}
               onImport={async (file) => {
                 try {

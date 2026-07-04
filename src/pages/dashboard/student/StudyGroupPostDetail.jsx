@@ -1,15 +1,22 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from "react";
 import { useParams, useOutletContext, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { ar } from 'date-fns/locale';
 import { fetchSinglePost, addComment, toggleUpvote } from "../../../feature/student/courses/courseDetail/community/communityService";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import ArrowUpIcon from "../../../components/ui/icons/ArrowUpIcon";
 import CommentIcon from "../../../components/ui/icons/CommentIcon";
 import { StudyGroupPostDetailSkeleton } from "../../../feature/student/studyGroup/SkeletonLoader";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import useArabicDigits from '../../../hooks/useArabicDigits';
+import CommentInput from "../../../components/ui/CommentInput";
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
 export default function StudyGroupPostDetail() {
+    const { t, i18n } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
     const { courseId, postId } = useParams();
     const { course } = useOutletContext();
     const navigate = useNavigate();
@@ -22,7 +29,7 @@ export default function StudyGroupPostDetail() {
     function mapPost(raw) {
         return {
             id: raw.postId,
-            sender: raw.authorName,
+            sender: getLocalizedField(raw, 'authorName', i18n.language) || raw.authorName,
             senderAvatar: raw.authorProfileImage || raw.authorAvatar || null,
             content: raw.content,
             createdAt: raw.createdAt,
@@ -30,7 +37,7 @@ export default function StudyGroupPostDetail() {
             hasUpvoted: raw.isUpvoted || raw.hasUpvoted || false,
             comments: (raw.comments || []).map(c => ({
                 commentId: c.commentId,
-                authorName: c.authorName,
+                authorName: getLocalizedField(c, 'authorName', i18n.language) || c.authorName,
                 authorAvatar: c.authorProfileImage || c.authorAvatar || null,
                 content: c.content,
                 createdAt: c.createdAt,
@@ -95,7 +102,7 @@ export default function StudyGroupPostDetail() {
     if (!post) {
         return (
             <div className="py-10 text-center">
-                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Post not found.</p>
+                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studyGroup.postNotFound')}</p>
             </div>
         );
     }
@@ -106,7 +113,7 @@ export default function StudyGroupPostDetail() {
                 onClick={() => navigate(-1)}
                 className="text-sm font-medium text-text-accent-default-light dark:text-text-accent-default-dark hover:underline"
             >
-                &larr; Back
+                &larr; {t('studyGroup.back')}
             </button>
 
             <div className="rounded-2xl p-5 sm:p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark">
@@ -132,7 +139,7 @@ export default function StudyGroupPostDetail() {
                             {post.sender}
                         </h3>
                         <span className="text-[13px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                            {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : ""}
+                            {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: i18n.language === 'ar' ? ar : undefined }) : ""}
                         </span>
                     </div>
                 </div>
@@ -152,20 +159,20 @@ export default function StudyGroupPostDetail() {
                         }`}
                     >
                         <ArrowUpIcon className="w-4 h-4" />
-                        <span>{post.likes}</span>
+                        <span>{ar(post.likes)}</span>
                     </button>
                     <button
                         className="px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark"
                     >
                         <CommentIcon className="w-4 h-4" />
-                        <span>{post.comments.length}</span>
+                        <span>{ar(post.comments.length)}</span>
                     </button>
                 </div>
             </div>
 
             <div className="rounded-2xl p-5 sm:p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark">
                 <h4 className="font-semibold text-sm text-text-primary-default-light dark:text-text-primary-default-dark mb-4">
-                    Comments ({post.comments.length})
+                    {t('studyGroup.comments')} ({ar(post.comments.length)})
                 </h4>
 
                 {post.comments.length > 0 ? (
@@ -188,14 +195,14 @@ export default function StudyGroupPostDetail() {
                                         />
                                     )}
                                 </div>
-                                <div className="flex flex-col gap-0.5 rounded-2xl rounded-tl-sm bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 max-w-[85%]">
+                                <div className="flex flex-col gap-0.5 rounded-2xl rounded-ss-sm bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-3 py-2 max-w-[85%]">
                                     <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                                         <span className="text-[13px] font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                            {comment.authorName || "Unknown"}
+                                            {comment.authorName || t('studyGroup.unknown')}
                                         </span>
                                         {comment.isRecommended && (
                                             <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-tight bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                                                Recommended #{comment.recommendationRank}
+                                                {t('studyGroup.recommendedRank', { rank: comment.recommendationRank })}
                                             </span>
                                         )}
                                         {comment.instructorRole && (
@@ -213,29 +220,18 @@ export default function StudyGroupPostDetail() {
                     </ul>
                 ) : (
                     <p className="text-[13px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-center py-2 mb-4">
-                        No comments yet — start the conversation.
+                        {t('studyGroup.noComments')}
                     </p>
                 )}
 
-                <div className="flex items-center gap-2">
-                    <input
-                        type="text"
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
-                        placeholder="Write a comment..."
-                        className="flex-1 px-4 py-2 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark placeholder:text-text-tertiary-default-light dark:placeholder:text-text-tertiary-default-dark focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark transition-colors duration-150"
-                    />
-                    <button
-                        onClick={handleAddComment}
-                        disabled={!commentText.trim()}
-                        className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-white hover:bg-bg-surface-accent-hover-light dark:hover:bg-bg-surface-accent-hover-dark disabled:opacity-40 transition-colors duration-150"
-                    >
-                        <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" aria-hidden="true">
-                            <path d="M3 11l18-8-8 18-2-8-8-2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    </button>
-                </div>
+                <CommentInput
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddComment(); } }}
+                    onPost={handleAddComment}
+                    disabled={false}
+                    placeholder={t('studyGroup.writeComment')}
+                />
             </div>
         </div>
     );

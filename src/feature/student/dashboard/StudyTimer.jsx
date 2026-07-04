@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import Button from "../../../components/ui/Button";
 import { ClockIcon, SandClockIcon, CheckIcon, PenSquareIcon, XIcon } from "../../../components/ui/icons";
@@ -8,6 +9,15 @@ const MINUTE = 60;
 const PRESETS = [5, 10, 15, 25, 30, 45, 60];
 
 export default function StudyTimer({className}) {
+    const { t, i18n } = useTranslation('student');
+    const toArabicDigits = (str) => {
+        if (i18n.language !== 'ar') return str;
+        return str.replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+    };
+    const toEnglishDigits = (str) => {
+        return str.replace(/[٠١٢٣٤٥٦٧٨٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    };
+    const minuteSuffix = i18n.language === 'ar' ? 'د' : 'm';
     const [studyDuration, setStudyDuration] = useState(25 * MINUTE);
     const [breakDuration, setBreakDuration] = useState(5 * MINUTE);
     const [mode, setMode] = useState('focus');
@@ -86,13 +96,13 @@ export default function StudyTimer({className}) {
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+        return toArabicDigits(`${mins}:${secs.toString().padStart(2, '0')}`);
     };
 
     return (
         <div className={`p-6 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg flex flex-col justify-between ${className}`}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Study Timer</h2>
+            <h2 className="text-2xl font-bold">{t("dashboard.studyTimer")}</h2>
           </div>
           {isMenuOpen && (
             <div
@@ -101,7 +111,7 @@ export default function StudyTimer({className}) {
             >
               <div className="w-full max-w-sm rounded-xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-2xl p-4">
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">Timer Settings</h3>
+                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t("dashboard.timerSettings")}</h3>
                   <button
                     onClick={() => setIsMenuOpen(false)}
                     className="p-1 rounded-md hover:bg-bg-fill-tertiary-hover-light dark:hover:bg-bg-fill-tertiary-hover-dark transition-colors"
@@ -114,7 +124,7 @@ export default function StudyTimer({className}) {
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <ClockIcon className="w-4 h-4 text-text-accent-default-light dark:text-text-accent-default-dark" />
-                      <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary-default-light dark:text-text-secondary-default-dark">Study Time</span>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary-default-light dark:text-text-secondary-default-dark">{t("dashboard.studyTime")}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -124,11 +134,15 @@ export default function StudyTimer({className}) {
                         –
                       </button>
                       <input
-                        type="number"
-                        min="1"
-                        value={editStudy}
-                        onChange={e => setEditStudy(Math.max(1, Number(e.target.value)))}
-                        className="flex-1 text-center px-2 py-1.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        type="text"
+                        inputMode="numeric"
+                        value={toArabicDigits(String(editStudy))}
+                        onChange={e => {
+                            const english = toEnglishDigits(e.target.value);
+                            setEditStudy(Math.max(1, Number(english) || 1));
+                        }}
+                        dir="ltr"
+                        className="flex-1 text-center px-2 py-1.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm font-medium"
                       />
                       <button
                         onClick={() => setEditStudy(prev => prev + 1)}
@@ -148,7 +162,7 @@ export default function StudyTimer({className}) {
                               : 'border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-tertiary-hover-light dark:hover:bg-bg-fill-tertiary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark'
                           }`}
                         >
-                          {p}m
+                          {toArabicDigits(`${p}`)}{minuteSuffix}
                         </button>
                       ))}
                     </div>
@@ -157,7 +171,7 @@ export default function StudyTimer({className}) {
                   <div className="border-t border-border-primary-default-light dark:border-border-primary-default-dark pt-3">
                     <div className="flex items-center gap-2 mb-2">
                       <SandClockIcon className="w-4 h-4 text-text-accent-default-light dark:text-text-accent-default-dark" />
-                      <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary-default-light dark:text-text-secondary-default-dark">Break Time</span>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary-default-light dark:text-text-secondary-default-dark">{t("dashboard.breakTime")}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -167,11 +181,15 @@ export default function StudyTimer({className}) {
                         –
                       </button>
                       <input
-                        type="number"
-                        min="1"
-                        value={editBreak}
-                        onChange={e => setEditBreak(Math.max(1, Number(e.target.value)))}
-                        className="flex-1 text-center px-2 py-1.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        type="text"
+                        inputMode="numeric"
+                        value={toArabicDigits(String(editBreak))}
+                        onChange={e => {
+                            const english = toEnglishDigits(e.target.value);
+                            setEditBreak(Math.max(1, Number(english) || 1));
+                        }}
+                        dir="ltr"
+                        className="flex-1 text-center px-2 py-1.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm font-medium"
                       />
                       <button
                         onClick={() => setEditBreak(prev => prev + 1)}
@@ -191,7 +209,7 @@ export default function StudyTimer({className}) {
                               : 'border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-tertiary-hover-light dark:hover:bg-bg-fill-tertiary-hover-dark text-text-secondary-default-light dark:text-text-secondary-default-dark'
                           }`}
                         >
-                          {p}m
+                          {toArabicDigits(`${p}`)}{minuteSuffix}
                         </button>
                       ))}
                     </div>
@@ -202,7 +220,7 @@ export default function StudyTimer({className}) {
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark text-sm font-semibold hover:bg-bg-surface-accent-hover-light dark:hover:bg-bg-surface-accent-hover-dark transition-colors"
                   >
                     <CheckIcon className="w-4 h-4" />
-                    Apply
+                    {t("dashboard.apply")}
                   </button>
                 </div>
               </div>
@@ -217,7 +235,7 @@ export default function StudyTimer({className}) {
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <p className="text-5xl font-bold">{formatTime(currTime)}</p>
               <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                {mode === 'focus' ? 'Focus Mode' : 'Break Mode'}
+                {mode === 'focus' ? t("dashboard.focusMode") : t("dashboard.breakMode")}
               </p>
             </div>
           </div>
@@ -228,13 +246,13 @@ export default function StudyTimer({className}) {
               onClick={openMenu}
             >
               <PenSquareIcon className="w-4 h-4" />
-              Edit
+              {t("dashboard.edit")}
             </Button>
             <Button 
               className="bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark px-4 py-2 flex-1 rounded-lg hover:bg-bg-surface-accent-hover-light dark:hover:bg-bg-surface-accent-hover-dark transition duration-200"
               onClick={handleStart}
             >
-              {isRunning ? 'Pause' : 'Start'}
+              {isRunning ? t("dashboard.pause") : t("dashboard.start")}
             </Button>
           </div>
         </div>

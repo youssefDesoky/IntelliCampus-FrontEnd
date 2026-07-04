@@ -10,6 +10,7 @@ import Table from "./Table";
 import { TrashIcon, PlusIcon } from "./icons";
 import useDeviceType from "../../hooks/useDeviceType";
 import { useError } from '../../contexts/ErrorContext.jsx';
+import { useTranslation } from 'react-i18next';
 
 export default function ManageEntity({
   entityName,
@@ -48,6 +49,9 @@ export default function ManageEntity({
   defaultPageSize = 10,
 }) {
   const { isDesktop, isTablet, isPhone } = useDeviceType();
+  const { t, i18n } = useTranslation('admin');
+  const isRTL = i18n.language === 'ar';
+  const toArabicDigits = (str) => isRTL ? String(str).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) : str;
   const { showError } = useError();
   const isSm = !isPhone;
   const queryClient = useQueryClient();
@@ -306,7 +310,7 @@ export default function ManageEntity({
         <PageHeader title={headerTitle} subtitle={headerSubtitle}>
           <Button variant="primary" onClick={() => openForm(null)}>
             <PlusIcon size={24} />
-            {headerAddLabel || `Add ${entityName}`}
+            {headerAddLabel || t('entity.add', { entity: entityName })}
           </Button>
         </PageHeader>
       )}
@@ -314,7 +318,7 @@ export default function ManageEntity({
 
       {isLoading ? (
         <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-          Loading {pluralLower}...
+          {t('entity.loading', { entity: entityNamePlural })}
         </p>
       ) : (
         <Section className={isFetching ? "opacity-60 transition-opacity" : ""}>
@@ -324,12 +328,12 @@ export default function ManageEntity({
                 <h2 className="text-xl font-semibold whitespace-nowrap shrink-0">
                   {entityNamePlural}{" "}
                   <span className="text-sm font-normal text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    ({totalItemsCount})
+                    ({toArabicDigits(totalItemsCount)})
                   </span>
                 </h2>
                 <div className="flex-1 min-w-0 sm:hidden">
                   <SearchBar
-                    placeholder={searchPlaceholder || `Search ${pluralLower}...`}
+                    placeholder={searchPlaceholder || t('entity.search', { entity: entityNamePlural })}
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                   />
@@ -338,7 +342,7 @@ export default function ManageEntity({
               <div className="flex flex-wrap items-center gap-3">
                 <div className="hidden sm:block sm:w-auto sm:flex-1">
                   <SearchBar
-                    placeholder={searchPlaceholder || `Search ${pluralLower}...`}
+                    placeholder={searchPlaceholder || t('entity.search', { entity: entityNamePlural })}
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                   />
@@ -347,7 +351,7 @@ export default function ManageEntity({
                 {selectedRowIds.length > 0 && (
                   <Button variant="danger" onClick={() => setIsDeleteSelectedOpen(true)} className="px-2 sm:px-4" size="sm">
                     <TrashIcon size={18} />
-                    <span className="hidden sm:inline">Delete ({selectedRowIds.length})</span>
+                    <span className="hidden sm:inline">{t('entity.deleteSelected', { count: selectedRowIds.length })}</span>
                   </Button>
                 )}
               </div>
@@ -357,17 +361,16 @@ export default function ManageEntity({
           <Dialog
             isOpen={isDeleteSelectedOpen}
             variant="warning"
-            title={getDeleteSelectedTitle || `Delete Selected ${entityNamePlural}`}
+            title={getDeleteSelectedTitle || t('entity.deleteSelectedTitle', { entity: entityNamePlural })}
             onClose={() => setIsDeleteSelectedOpen(false)}
             onConfirm={() => { handleDeleteSelected(); return true; }}
-            confirmText="Yes, Delete"
-            cancelText="No, Keep"
+            confirmText={t('entity.yesDelete')}
+            cancelText={t('entity.noKeep')}
             showCloseButton={true}
           >
             {getDeleteSelectedMessage
               ? getDeleteSelectedMessage(selectedRowIds.length)
-              : `Are you sure you want to delete ${selectedRowIds.length} selected ${entityName.toLowerCase()}${selectedRowIds.length > 1 ? "s" : ""}? This action cannot be undone.`
-            }
+              : t('entity.bulkDeleteConfirm', { count: selectedRowIds.length, entity: entityName })}
           </Dialog>
 
           {renderBeforeTable?.(filterHelpers)}
@@ -409,7 +412,7 @@ export default function ManageEntity({
             </div>
           ) : (
             <p className="text-center py-12 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-              No {pluralLower} found.
+              {t('entity.noResults', { entity: entityNamePlural })}
             </p>
           )}
 
@@ -421,17 +424,16 @@ export default function ManageEntity({
       <Dialog
         isOpen={deleteTarget !== null}
         variant="warning"
-        title={`Delete ${entityName}`}
+        title={t('entity.deleteTitle', { entity: entityName })}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => { handleDeleteConfirm(); return true; }}
-        confirmText="Delete"
-        cancelText="Cancel"
+        confirmText={t('entity.deleteAction')}
+        cancelText={t('entity.cancelAction')}
         showCloseButton={true}
       >
         {getDeleteMessage
           ? getDeleteMessage(deleteTarget)
-          : `Are you sure you want to delete this ${entityName.toLowerCase()}? This action cannot be undone.`
-        }
+          : t('entity.deleteConfirm', { entity: entityName })}
       </Dialog>
 
       {renderExtraDialogs?.(dialogHelpers)}

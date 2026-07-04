@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useError } from "../../../../../contexts/ErrorContext.jsx";
@@ -14,6 +15,7 @@ import { CourseQuizPracticeSkeleton } from "./SkeletonLoader";
 const PAGE_SIZE = 3;
 
 export default function CourseQuizPractice() {
+	const { t } = useTranslation('student');
 	const { course } = useOutletContext();
 	const courseId = course?.id;
 	const isReadOnly = course?.isReadOnly;
@@ -41,7 +43,7 @@ export default function CourseQuizPractice() {
 			const data = await fetchPracticeQuiz(courseId, selectedQuizId);
 			setPracticeQuizData(data);
 		} catch (err) {
-			showError(err.message || "Failed to load quiz");
+			showError(err.message || t('quizzes.loadFailed'));
 		} finally {
 			setIsQuizLoading(false);
 		}
@@ -58,7 +60,7 @@ export default function CourseQuizPractice() {
 	}, [practiceQuizData?.durationSeconds]);
 
 	const quizQuestions = practiceQuizData?.questions || [];
-	const quizTitle = practiceQuizData?.title || "Practice Quiz";
+	const quizTitle = practiceQuizData?.title || t('quizzes.practiceTitle');
 	const courseName = practiceQuizData?.courseName || course?.title || course?.name;
 	const isBackendSubmitted = Boolean(practiceQuizData?.previousSubmission) || Boolean(reviewMode);
 	const quizSummary = practiceQuizData?.questionsSummary || { total: 0, tf: 0, mcq: 0, written: 0 };
@@ -200,10 +202,10 @@ export default function CourseQuizPractice() {
 								scoreState={reviewMode && result ? (
 									<div className="flex items-center gap-2">
 										<span className={"inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold " + (result.isCorrect ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300")}>
-											{result.isCorrect ? "Correct" : "Incorrect"}
+											{result.isCorrect ? t('quizzes.correct') : t('quizzes.incorrect')}
 										</span>
 										<span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-											{result.earnedPoints}/{result.points} pts
+											{t('quizzes.scorePts', { earned: result.earnedPoints, total: result.points })}
 										</span>
 									</div>
 								) : (
@@ -247,8 +249,8 @@ export default function CourseQuizPractice() {
 			{/* Mobile floating nav toggle button */}
 			<button
 				onClick={() => setSidebarOpen(true)}
-				className="xl:hidden fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
-				aria-label="Open question navigator"
+				className="xl:hidden fixed bottom-6 end-6 z-30 flex items-center gap-2 px-4 py-3 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
+				aria-label={t('quizzes.navigatorAria')}
 			>
 				<Grid2ColIcon size={18} />
 				<span className="text-sm font-semibold">{answeredCount}/{quizSummary.total}</span>
@@ -261,10 +263,10 @@ export default function CourseQuizPractice() {
 						className="absolute inset-0 bg-black/40 backdrop-blur-sm"
 						onClick={() => setSidebarOpen(false)}
 					/>
-					<div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-2xl overflow-y-auto">
+					<div className="absolute end-0 top-0 bottom-0 w-full max-w-sm bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-2xl overflow-y-auto">
 						<div className="flex items-center justify-between p-4 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
 							<h2 className="text-sm font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
-								Quiz Navigator
+								{t('quizzes.navigatorTitle')}
 							</h2>
 							<button
 								onClick={() => setSidebarOpen(false)}

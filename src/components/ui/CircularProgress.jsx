@@ -1,3 +1,5 @@
+import useArabicDigits from "../../hooks/useArabicDigits";
+
 export default function CircularProgress({ 
     size = 192, 
     progress = 0, 
@@ -8,6 +10,7 @@ export default function CircularProgress({
     children
 }) 
 {    
+    const { convert: ar } = useArabicDigits();
     const center = 50;
     const radius = 50 - (strokeWidth / 2);
     const circumference = 2 * Math.PI * radius;
@@ -58,7 +61,7 @@ export default function CircularProgress({
                         className="font-bold" 
                         style={{ fontSize: size * 0.25 }}
                     >
-                        {Math.round(normalizedProgress)}%
+                        {ar(Math.round(normalizedProgress))}%
                     </span>
                 )}
             </div>

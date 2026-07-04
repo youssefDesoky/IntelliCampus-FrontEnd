@@ -1,11 +1,16 @@
+import { useTranslation } from 'react-i18next';
 import { useQuery } from "@tanstack/react-query";
 import Section from "../../../components/ui/Section";
 import PageHeader from "../../../components/ui/PageHeader";
 import { ChartBarIcon, ClipboardCheckIcon } from "../../../components/ui/icons";
 import { fetchAcademicProgress } from "../../../feature/student/services/gradeApi";
 import { AcademicProgressSkeleton } from "../../../feature/student/courses/academicProgress/SkeletonLoader";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
+import useArabicDigits from '../../../hooks/useArabicDigits';
 
 function BucketCourseRow({ course }) {
+  const { i18n } = useTranslation('student');
+  const { convert: ar } = useArabicDigits();
   return (
     <div className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-bg-fill-secondary-default-light dark:hover:bg-bg-fill-secondary-default-dark transition-colors">
       <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
@@ -20,19 +25,21 @@ function BucketCourseRow({ course }) {
         )}
       </div>
       <span className="text-xs font-mono text-text-secondary-active-light dark:text-text-secondary-active-dark w-20 shrink-0">
-        {course.courseCode}
+        {getLocalizedField(course, 'courseCode', i18n.language) || course.courseCode}
       </span>
       <span className="flex-1 text-sm text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-        {course.courseName}
+        {getLocalizedField(course, 'courseName', i18n.language)}
       </span>
-      <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark shrink-0 w-8 text-right">
-        {course.creditHours}
+      <span className="text-xs font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark shrink-0 w-8 text-end">
+        {ar(course.creditHours)}
       </span>
     </div>
   );
 }
 
 export default function AcademicProgress() {
+  const { t, i18n } = useTranslation('student');
+  const { convert: ar } = useArabicDigits();
   const { data, isLoading } = useQuery({
     queryKey: ["academicProgress"],
     queryFn: fetchAcademicProgress,
@@ -48,8 +55,8 @@ export default function AcademicProgress() {
   return (
     <div className="flex flex-col min-h-[calc(100vh-160px)]">
       <PageHeader
-        title="Academic Progress"
-        subtitle="Track your degree completion by requirement category"
+        title={t('academicProgress.title')}
+        subtitle={t('academicProgress.subtitle')}
       />
 
       {isLoading && <AcademicProgressSkeleton />}
@@ -60,16 +67,16 @@ export default function AcademicProgress() {
             <div className="p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                 <h2 className="text-xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark">
-                  Completed: {totalCompleted} / {totalGraduationHours} hrs
+                  {ar(t('academicProgress.completed', { completed: totalCompleted, total: totalGraduationHours }))}
                 </h2>
                 <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">GPA </span>
-                    <span className="text-lg font-bold text-text-primary-active-light dark:text-text-primary-active-dark">{gpa.toFixed(2)}</span>
+                  <div className="text-end">
+                    <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('academicProgress.gpa')} </span>
+                    <span className="text-lg font-bold text-text-primary-active-light dark:text-text-primary-active-dark">{ar(gpa.toFixed(2))}</span>
                   </div>
-                  <div className="text-right">
-                    <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Progress </span>
-                    <span className="text-lg font-bold text-text-primary-active-light dark:text-text-primary-active-dark">{overallPercent}%</span>
+                  <div className="text-end">
+                    <span className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('academicProgress.progress')} </span>
+                    <span className="text-lg font-bold text-text-primary-active-light dark:text-text-primary-active-dark">{ar(overallPercent)}%</span>
                   </div>
                 </div>
               </div>
@@ -100,11 +107,11 @@ export default function AcademicProgress() {
                   <div className="p-5">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="text-base font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-                        {bucket.bucketName}
+                        {getLocalizedField(bucket, 'bucketName', i18n.language)}
                       </h3>
-                      <span className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        {bucket.completedHours} / {bucket.requiredHours} hrs
-                      </span>
+                        <span className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                            {ar(bucket.completedHours)} / {ar(bucket.requiredHours)} {t('academicProgress.hrs')}
+                        </span>
                     </div>
                     <div className="w-full h-1.5 bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark rounded-full overflow-hidden mb-4">
                       <div
@@ -128,7 +135,7 @@ export default function AcademicProgress() {
                       ) : (
                         <div className="flex flex-col items-center justify-center py-8 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                           <ClipboardCheckIcon className="w-10 h-10 mb-3 opacity-40" />
-                          <p className="text-sm">No courses in this category yet</p>
+                          <p className="text-sm">{t('academicProgress.noCourses')}</p>
                         </div>
                       )}
                     </div>
@@ -145,10 +152,10 @@ export default function AcademicProgress() {
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <ChartBarIcon className="w-12 h-12 mb-4 opacity-40 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
             <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-              No progress data available
+              {t('academicProgress.noData')}
             </h3>
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
-              Your academic progress information could not be loaded.
+              {t('academicProgress.noDataDesc')}
             </p>
           </div>
         </Section>

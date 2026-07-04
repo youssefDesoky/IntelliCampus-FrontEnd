@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { BookIcon } from "../../../components/ui/icons";
 import Section from "../../../components/ui/Section";
@@ -12,32 +13,34 @@ import InstructorCourseCard from "../../../feature/instructor/components/courses
 import InstructorCoursesHeader from "../../../feature/instructor/components/courses/InstructorCoursesHeader";
 import { fetchMyTeachingCourses } from "../../../feature/course/services/coursesApi";
 import { InstructorCoursesSkeleton } from "../../../feature/instructor/SkeletonLoader";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
-
-function mapCourseToCardProps(course) {
-    const initials = (course.departmentName || course.courseCode || "")
-        .split(" ")
-        .map(w => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2) || "CS";
-
-    return {
-        courseId: course.courseId,
-        initials,
-        code: course.courseCode || "",
-        semester: course.semester || "",
-        type: course.isElective ? "elective" : "core",
-        title: course.courseName || "",
-        room: course.room || "",
-        totalStudents: course.totalStudents,
-        creditHours: course.creditHours,
-    };
-}
 
 export default function InstructorCourses() {
+    const { t, i18n } = useTranslation('instructor');
     const { isMobile } = useDeviceType();
     const navigate = useNavigate();
+
+    const mapCourseToCardProps = (course) => {
+        const initials = (getLocalizedField(course, 'departmentName', i18n.language) || getLocalizedField(course, 'courseCode', i18n.language) || course.courseCode || "")
+            .split(" ")
+            .map(w => w[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2) || "CS";
+
+        return {
+            courseId: course.courseId,
+            initials,
+            code: getLocalizedField(course, 'courseCode', i18n.language) || course.courseCode || "",
+            semester: getLocalizedField(course, 'semester', i18n.language) || course.semester || "",
+            type: course.isElective ? "elective" : "core",
+            title: getLocalizedField(course, 'courseName', i18n.language) || "",
+            room: getLocalizedField(course, 'room', i18n.language) || course.roomAr || course.room || "",
+            totalStudents: course.totalStudents,
+            creditHours: course.creditHours,
+        };
+    };
 
     const PAGE_SIZE = 6;
     const [page, setPage] = useState(1);
@@ -91,9 +94,9 @@ export default function InstructorCourses() {
     }, [navigate]);
 
     const stats = [
-        { label: "Assigned Courses", value: courses.length },
-        { label: "Total Hours", value: totalHours },
-        { label: "Total Students", value: totalStudents },
+        { label: t('courses.assignedCourses'), value: courses.length },
+        { label: t('courses.totalHours'), value: totalHours },
+        { label: t('courses.totalStudents'), value: totalStudents },
     ];
 
     return (
@@ -111,7 +114,7 @@ export default function InstructorCourses() {
                 {courses.length > 0 && (
                     <Section className="hidden md:grid grid-cols-3 gap-6 mb-6">
                         <DataBanner
-                            title="Course Statistics"
+                            title={t('courses.statistics')}
                             data={stats}
                         />
                     </Section>
@@ -123,10 +126,10 @@ export default function InstructorCourses() {
                     <div className="flex flex-col items-center justify-center flex-1 text-center">
                         <BookIcon className="w-12 h-12 mb-4 opacity-40 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
                         <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                            No courses assigned
+                            {t('courses.empty')}
                         </h3>
                         <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
-                            You are not currently assigned to any courses.
+                            {t('courses.emptyDesc')}
                         </p>
                     </div>
                 )}

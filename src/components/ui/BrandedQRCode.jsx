@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QRCode } from 'react-qrcode-logo';
 
 function calcSize() {
@@ -8,6 +9,7 @@ function calcSize() {
 
 const BrandedQRCode = ({ token }) => {
   const [size, setSize] = useState(calcSize);
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     const onResize = () => setSize(calcSize());
@@ -15,14 +17,14 @@ const BrandedQRCode = ({ token }) => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  if (!token) return <p>Loading QR Code...</p>;
+  if (!token) return <p>{t('labels.loadingQRCode', 'Loading QR Code...')}</p>;
 
   return (
     <div style={styles.qrContainer}>
       <QRCode
         value={token}
         size={size}
-        logoImage="/images/IntelliCampusLogo.png"
+        logoImage="/static/images/IntelliCampusLogo.png"
         logoWidth={Math.floor(size * 0.16)}
         logoHeight={Math.floor(size * 0.16)}
         removeQrCodeBehindLogo={true}

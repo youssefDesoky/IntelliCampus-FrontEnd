@@ -7,7 +7,7 @@ import { BookIcon, ClipboardCheckIcon, FilePenIcon, ChartBarIcon, FileLinesIcon 
 
 
 export default function StudentBottomBar({ visible, floatingAction }) {
-    const { t } = useTranslation('student/aside');
+    const { t } = useTranslation('student');
     const user = useRouteLoaderData("root");
     const userRoles = user?.roles || [];
     const allLinks = getNavigationLinks(t, userRoles);

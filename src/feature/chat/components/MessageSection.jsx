@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import Message from "./Message";
 
 const toIsoDate = (d) => d.toISOString().slice(0, 10);
@@ -13,6 +14,7 @@ const formatDisplayDate = (isoDate) => {
 };
 
 export default function MessageSection({ date, messages, showSenderInfo, deleteMessage, editMessage, pinMessage, unpinMessage }) {
+  const { t } = useTranslation('chat');
   const todayIso = toIsoDate(new Date());
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -20,9 +22,9 @@ export default function MessageSection({ date, messages, showSenderInfo, deleteM
 
   const label =
     date === todayIso
-      ? "Today"
+      ? t('today')
       : date === yesterdayIso
-      ? "Yesterday"
+      ? t('yesterday')
       : formatDisplayDate(date);
 
   return (

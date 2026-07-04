@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
@@ -6,6 +7,7 @@ import DateInput from "../../../components/form/DateInput";
 import { XIcon, FloppyDiskIcon } from "../../../components/ui/icons";
 import { fetchDepartments } from "../services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 const levelOptions = [
   { value: 1, label: "Level 1" },
@@ -16,6 +18,7 @@ const levelOptions = [
 ];
 
 export default function CourseRegistrationSettings({ onClose, onSave }) {
+  const { t, i18n } = useTranslation('admin');
   const { showError } = useError();
 
   const [regStartDate, setRegStartDate] = useState("");
@@ -72,10 +75,10 @@ export default function CourseRegistrationSettings({ onClose, onSave }) {
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
           <div>
             <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-              Course Registration Settings
+              {t('courseRegSettings.title')}
             </h2>
             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark mt-0.5">
-              Applied to all active courses
+              {t('courseRegSettings.description')}
             </p>
           </div>
           <button
@@ -93,7 +96,7 @@ export default function CourseRegistrationSettings({ onClose, onSave }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-                Registration Start Date
+                {t('courseRegSettings.startDate')}
               </label>
               <DateInput
                 name="regStartDate"
@@ -103,7 +106,7 @@ export default function CourseRegistrationSettings({ onClose, onSave }) {
             </div>
             <div>
               <label className="block text-sm font-semibold mb-1.5 text-text-primary-default-light dark:text-text-primary-default-dark">
-                Registration End Date
+                {t('courseRegSettings.endDate')}
               </label>
               <DateInput
                 name="regEndDate"
@@ -116,10 +119,10 @@ export default function CourseRegistrationSettings({ onClose, onSave }) {
           {/* Allowed Levels */}
           <div>
             <label className="block text-sm font-semibold mb-2 text-text-primary-default-light dark:text-text-primary-default-dark">
-              Allowed Levels
+              {t('courseRegSettings.allowedLevels')}
             </label>
             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-3">
-              Select which academic levels can register. Leave empty to allow all levels.
+              {t('courseRegSettings.allowedLevelsDesc')}
             </p>
             <div className="flex flex-wrap gap-2">
               {levelOptions.map(level => (
@@ -146,13 +149,13 @@ export default function CourseRegistrationSettings({ onClose, onSave }) {
           {/* Allowed Departments */}
           <div>
             <label className="block text-sm font-semibold mb-2 text-text-primary-default-light dark:text-text-primary-default-dark">
-              Allowed Departments
+              {t('courseRegSettings.allowedDepartments')}
             </label>
             <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-3">
-              Select which departments can register. Leave empty to allow all departments.
+              {t('courseRegSettings.allowedDepartmentsDesc')}
             </p>
             {departments.length === 0 ? (
-              <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">Loading departments...</p>
+              <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('courseRegSettings.loadingDepartments')}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {departments.map(dept => (
@@ -170,7 +173,7 @@ export default function CourseRegistrationSettings({ onClose, onSave }) {
                       onChange={() => toggleDepartment(dept.departmentId || dept.id)}
                       className="sr-only"
                     />
-                    {dept.departmentName || dept.name}
+                    {getLocalizedField(dept, 'departmentName', i18n.language) || dept.name}
                   </label>
                 ))}
               </div>
@@ -180,11 +183,11 @@ export default function CourseRegistrationSettings({ onClose, onSave }) {
 
         <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('manageExams.cancel')}
           </Button>
           <Button variant="primary" onClick={handleSave} disabled={saving}>
             <FloppyDiskIcon size={16} />
-            {saving ? "Saving..." : "Save Settings"}
+            {saving ? t('roomForm.saving') : t('courseRegSettings.saveSettings')}
           </Button>
         </div>
       </div>

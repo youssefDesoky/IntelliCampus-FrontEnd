@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import BaseFormComponent from "./BaseFormComponent";
 import { CloudUploadIcon, FileIcon, TrashIcon, CheckIcon } from "./icons";
 import { useError } from '../../contexts/ErrorContext.jsx';
@@ -19,13 +20,15 @@ const EXT_COLORS = {
 };
 
 export default function ImportDialog({
-    title = "Import Data",
+    title,
     subtitle,
     acceptedFormats = ACCEPTED_EXTENSIONS,
     onClose,
     onImport,
     children,
 }) {
+    const { t } = useTranslation('common');
+    const resolvedTitle = title ?? t('labels.importData', 'Import Data');
     const [file, setFile] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
     const { showError } = useError();
@@ -38,7 +41,7 @@ export default function ImportDialog({
     const validateFile = useCallback((f) => {
         const ext = `.${f.name.split(".").pop().toLowerCase()}`;
         if (!acceptedFormats.includes(ext)) {
-            showError(`Unsupported format. Accepted: ${acceptedFormats.join(", ")}`);
+            showError(t('fileUpload.formatError', 'Unsupported format. Accepted: {{formats}}', { formats: acceptedFormats.join(", ") }));
             return false;
         }
         return true;
@@ -73,11 +76,11 @@ export default function ImportDialog({
     return (
         <BaseFormComponent
             isOpen
-            title={title}
-            description={subtitle || "Upload a file to import records into the system."}
+            title={resolvedTitle}
+            description={subtitle || t('labels.importDescription', 'Upload a file to import records into the system.')}
             onClose={onClose}
             onSubmit={handleSubmit}
-            submitText="Import"
+            submitText={t('labels.import', 'Import')}
             submitDisabled={!file}
             maxWidth="max-w-4xl"
             contentClassName="py-2"
@@ -133,10 +136,10 @@ export default function ImportDialog({
 
                                 <div className="space-y-1 text-center">
                                     <p className="text-[14px] font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
-                                        {isDragging ? "Drop to upload" : "Drop your file here"}
+                                        {isDragging ? t('fileUpload.dropToUpload', 'Drop to upload') : t('fileUpload.dropHere', 'Drop your file here')}
                                     </p>
                                     <p className="text-[13px] text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                        or <span className="font-medium text-text-accent-active-light underline underline-offset-2 transition-opacity hover:opacity-80 dark:text-text-accent-active-dark">browse files</span>
+                                        <span className="font-medium text-text-accent-active-light underline underline-offset-2 transition-opacity hover:opacity-80 dark:text-text-accent-active-dark">{t('fileUpload.clickBrowse', 'or click to browse')}</span>
                                     </p>
                                 </div>
 
@@ -174,7 +177,7 @@ export default function ImportDialog({
                                         <span className="h-0.75 w-0.75 rounded-full bg-text-secondary-default-light opacity-30 dark:bg-text-secondary-default-dark" />
                                         <span className="ic-check-pop flex items-center gap-1 text-[12px] font-medium text-text-success-default-light dark:text-text-success-default-dark">
                                             <CheckIcon className="h-3 w-3" />
-                                            Ready
+                                            {t('fileUpload.ready', 'Ready')}
                                         </span>
                                     </div>
                                 </div>
@@ -182,7 +185,7 @@ export default function ImportDialog({
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); handleRemoveFile(); }}
-                                    aria-label="Remove file"
+                                    aria-label={t('fileUpload.remove', 'Remove file')}
                                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-secondary-default-light transition-colors hover:bg-red-50 hover:text-text-danger-default-light dark:text-text-secondary-default-dark dark:hover:bg-red-950/30 dark:hover:text-text-danger-default-dark"
                                 >
                                     <TrashIcon className="h-4 w-4" />

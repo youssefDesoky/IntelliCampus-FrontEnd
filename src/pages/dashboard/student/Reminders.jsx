@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { addDays, subDays, isSameDay, startOfDay, format } from "date-fns";
+import { ar } from 'date-fns/locale';
 
 import Categories from "../../../feature/student/reminders/Categories";
 import RemindersHeader from "../../../feature/student/reminders/RemindersHeader";
@@ -11,15 +13,15 @@ import { RemindersSkeleton } from "../../../feature/student/reminders/SkeletonLo
 import { fetchRemindersByDay, createReminder as createReminderApi, updateReminder as updateReminderApi, deleteReminder as deleteReminderApi } from "../../../feature/student/remindersApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 
-const categoryOptions = [
-    { value: "all", label: "All Categories" },
-    { value: "classes", label: "Classes" },
-    { value: "exams", label: "Exams" },
-    { value: "assignments", label: "Assignments" },
-    { value: "personal", label: "Personal" },
-];
+export default function Reminders() {
+    const { t } = useTranslation('student');
+    const { showError } = useError();
 
 const MobileDateStrip = ({ selectedDate, onDateSelect }) => {
+    const { i18n } = useTranslation('student');
+    const isRTL = i18n.language === 'ar';
+    const locale = isRTL ? ar : undefined;
+    const toArabicDigits = (str) => isRTL ? str.replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) : str;
     const containerRef = useRef(null);
     const selectedRef = useRef(null);
     const dates = Array.from({ length: 22 }).map((_, i) => addDays(subDays(selectedDate, 7), i));
@@ -52,8 +54,8 @@ const MobileDateStrip = ({ selectedDate, onDateSelect }) => {
                                 : 'bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark'
                         }`}
                     >
-                        <span className="text-2xl font-semibold leading-none mb-1">{format(date, 'd')}</span>
-                        <span className="text-sm font-medium">{format(date, 'EEE')}</span>
+                        <span className="text-2xl font-semibold leading-none mb-1">{toArabicDigits(format(date, 'd', { locale }))}</span>
+                        <span className="text-sm font-medium">{toArabicDigits(format(date, 'EEE', { locale }))}</span>
                     </button>
                 );
             })}
@@ -61,8 +63,13 @@ const MobileDateStrip = ({ selectedDate, onDateSelect }) => {
     );
 };
 
-export default function Reminders() {
-    const { showError } = useError();
+const categoryOptions = [
+    { value: "all", label: t ? t('reminders.allCategories') : "All Categories" },
+    { value: "classes", label: t ? t('reminders.categoryClasses') : "Classes" },
+    { value: "exams", label: t ? t('reminders.categoryExams') : "Exams" },
+    { value: "assignments", label: t ? t('reminders.categoryAssignments') : "Assignments" },
+    { value: "personal", label: t ? t('reminders.categoryPersonal') : "Personal" },
+];
     const queryClient = useQueryClient();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { FilterIcon, AngleDownIcon } from "./icons";
 
 export default function FilterDropdown({
@@ -7,11 +8,14 @@ export default function FilterDropdown({
     selectedValues = [],
     onChange,
     disabled = false,
-    hint = "Select any options you want. Leave all unselected to show everything.",
+    hint,
     className = "",
     headerLabel,
     dropdownAlign = "left",
 }) {
+    const { t, i18n } = useTranslation("ui");
+    const isRTL = i18n.language === 'ar';
+    const toArabicDigits = (str) => isRTL ? String(str).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) : str;
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef(null);
 
@@ -39,7 +43,7 @@ export default function FilterDropdown({
     const clear = () => onChange([]);
 
     return (
-        <div ref={ref} className={`relative ${className}`}>
+        <div ref={ref} className={`relative ${className}`} dir={isRTL ? 'rtl' : 'ltr'}>
             <button
                 type="button"
                 onClick={() => setIsOpen((p) => !p)}
@@ -49,7 +53,7 @@ export default function FilterDropdown({
                 className="inline-flex w-full gap-2 items-center rounded-md border border-border-primary-default-light bg-bg-surface-primary-default-light p-2 text-sm font-medium text-text-secondary-active-light transition-colors hover:bg-bg-fill-primary-hover-light disabled:opacity-60 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-secondary-active-dark dark:hover:bg-bg-fill-primary-hover-dark"
             >
                 <FilterIcon size={18} className="shrink-0" />
-                <span className="flex-1 text-center">{label}{selectedValues.length > 0 ? ` (${selectedValues.length})` : ""}</span>
+                <span className="flex-1 text-center">{label}{selectedValues.length > 0 ? ` (${toArabicDigits(selectedValues.length)})` : ""}</span>
                 <AngleDownIcon size={18} className={`shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
@@ -58,11 +62,11 @@ export default function FilterDropdown({
                     role="menu"
                     className={`absolute ${dropdownAlign === "right" ? "right-0 left-auto" : "left-0 right-auto"} sm:left-1/2 sm:right-auto translate-x-0 sm:-translate-x-1/2 top-[calc(100%+8px)] z-20 w-56 rounded-xl border border-border-primary-default-light bg-bg-surface-primary-default-light p-3 shadow-lg dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark`}
                 >
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                        {headerLabel || `Filter by ${label.toLowerCase()}`}
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-text-tertiary-default-light dark:text-text-tertiary-default-dark" dir={isRTL ? 'rtl' : 'ltr'}>
+                        {headerLabel || t("filter.title", { name: label?.toLowerCase() })}
                     </p>
 
-                    <div className="space-y-1">
+                    <div className="space-y-1" dir={isRTL ? 'rtl' : 'ltr'}>
                         {options.map((option) => {
                             const isActive = selectedValues.includes(option.value);
                             return (
@@ -79,7 +83,7 @@ export default function FilterDropdown({
                                     }`}
                                 >
                                     <span>{option.label}</span>
-                                    <span className="text-xs">{isActive ? "Selected" : ""}</span>
+                                    <span className="text-xs">{isActive ? t("filter.selected") : ""}</span>
                                 </button>
                             );
                         })}
@@ -92,12 +96,12 @@ export default function FilterDropdown({
                             disabled={selectedValues.length === 0}
                             className="rounded-md border border-border-primary-default-light px-3 py-1.5 text-xs font-medium text-text-secondary-active-light transition-colors hover:bg-bg-fill-primary-hover-light disabled:opacity-50 dark:border-border-primary-default-dark dark:text-text-secondary-active-dark dark:hover:bg-bg-fill-primary-hover-dark"
                         >
-                            Clear filters
+                            {t("filter.clear")}
                         </button>
                     </div>
 
-                    <p className="mt-2 text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                        {hint}
+                    <p className="mt-2 text-[11px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark" dir={isRTL ? 'rtl' : 'ltr'}>
+                        {hint ?? t("filter.hint")}
                     </p>
                 </div>
             )}

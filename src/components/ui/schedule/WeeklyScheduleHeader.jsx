@@ -10,7 +10,12 @@ const getTimeIndex = (time) => {
     return (hour - 8) + (minutes / 60);
 };
 
+import { useTranslation } from "react-i18next";
+import useArabicDigits from "../../../hooks/useArabicDigits";
+
 export default function WeeklyScheduleHeader({ slots }) {
+    const { t } = useTranslation("common");
+    const { localizeTime } = useArabicDigits();
     const totalSlots = slots.length;
     const firstSlotIndex = slots.length > 0 ? getTimeIndex(slots[0]) : 0;
     const slotStep = slots.length > 1 ? getTimeIndex(slots[1]) - firstSlotIndex : 1;
@@ -23,8 +28,8 @@ export default function WeeklyScheduleHeader({ slots }) {
             className="sticky top-0 z-10 grid border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/95 dark:bg-bg-surface-secondary-default-dark/95 backdrop-blur"
             style={{ gridTemplateColumns: "100px 1fr" }}
         >
-            <div className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-r border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
-                Day
+            <div className="p-2.5 md:p-3 text-center text-xs md:text-sm font-semibold uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark border-e border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+                {t("schedule.dayHeader")}
             </div>
 
             <div className="relative h-full min-h-12">
@@ -60,7 +65,7 @@ export default function WeeklyScheduleHeader({ slots }) {
                             className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap"
                             style={{ left: `${centerPercent}%` }}
                         >
-                            {time}
+                            {localizeTime(time)}
                         </span>
                     );
                 })}

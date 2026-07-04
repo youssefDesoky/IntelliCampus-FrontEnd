@@ -1,17 +1,19 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import useArabicDigits from "../../../hooks/useArabicDigits";
 
 import CourseNavBar from "./CourseNavBar";
 
 import Section from "../../../components/ui/Section";
-import { 
-    BullHornIcon, 
-    UsersIcon, 
-    FolderOpenIconDark, 
-    UserCheckIcon, 
-    ChartBarIcon, 
-    FilePenIcon, 
+import {
+    BullHornIcon,
+    UsersIcon,
+    FolderOpenIconDark,
+    UserCheckIcon,
+    ChartBarIcon,
+    FilePenIcon,
     BrainIcon,
     StickyNoteIcon,
     VideoIcon,
@@ -24,19 +26,19 @@ import {
 import { CourseShellSkeleton } from "./SkeletonLoader";
 import { fetchCourseMaterialsOrganized, fetchCourseFolders } from "../services/materialsApi";
 import { fetchCourseById } from "../services/coursesApi";
+import { getLocalizedField } from '../../../utils/getLocalizedField';
 
-
-const links = [
-    { to: "", end: true, icon: <BullHornIcon className="w-5 h-5" />, label: "Announcements" },
-    { to: "analytics", icon: <ChartLineIcon className="w-5 h-5" />, label: "Analytics" },
-    { to: "materials", icon: <FolderOpenIconDark className="w-5 h-5" />, label: "Materials" },
-    { to: "assignments", icon: <FilePenIcon className="w-5 h-5" />, label: "Assignments" },
-    { to: "quizzes", icon: <BrainIcon className="w-5 h-5" />, label: "Quizzes" },
-    { to: "attendance", icon: <UserCheckIcon className="w-5 h-5" />, label: "Attendance" },
-    { to: "grades", icon: <ChartBarIcon className="w-5 h-5" />, label: "Grades" },
-    { to: "community", icon: <UsersIcon className="w-5 h-5" />, label: "Study Group" },
-    { to: "smart-notes", icon: <StickyNoteIcon className="w-5 h-5" />, label: "Smart Notes" },
-    { to: "meeting", icon: <VideoIcon className="w-5 h-5" />, label: "Meeting" },
+const linkDefs = [
+    { to: "", end: true, icon: <BullHornIcon className="w-5 h-5" />, studentKey: "courseDetail.announcements", instructorKey: "courses.announcements" },
+    { to: "analytics", icon: <ChartLineIcon className="w-5 h-5" />, studentKey: "courseDetail.analytics", instructorKey: "courses.analytics" },
+    { to: "materials", icon: <FolderOpenIconDark className="w-5 h-5" />, studentKey: "courseDetail.materials", instructorKey: "courses.materials" },
+    { to: "assignments", icon: <FilePenIcon className="w-5 h-5" />, studentKey: "courseDetail.assignments", instructorKey: "courses.assignments" },
+    { to: "quizzes", icon: <BrainIcon className="w-5 h-5" />, studentKey: "courseDetail.quizzes", instructorKey: "courses.quizzes" },
+    { to: "attendance", icon: <UserCheckIcon className="w-5 h-5" />, studentKey: "courseDetail.attendance", instructorKey: "courses.attendance" },
+    { to: "grades", icon: <ChartBarIcon className="w-5 h-5" />, studentKey: "courseDetail.grades", instructorKey: "courses.grades" },
+    { to: "community", icon: <UsersIcon className="w-5 h-5" />, studentKey: "courseDetail.studyGroup", instructorKey: "courses.studyGroup" },
+    { to: "smart-notes", icon: <StickyNoteIcon className="w-5 h-5" />, studentKey: "courseDetail.smartNotes", instructorKey: "courses.smartNotes" },
+    { to: "meeting", icon: <VideoIcon className="w-5 h-5" />, studentKey: "courseDetail.meeting", instructorKey: "courses.meeting" },
 ];
 
 const INSTRUCTOR_HIDE = new Set(["smart-notes"]);
@@ -48,6 +50,9 @@ export default function CourseShell() {
     const { pathname } = location;
     const navigate = useNavigate();
     const isInstructor = pathname.startsWith("/instructor");
+    const ns = isInstructor ? "instructor" : "student";
+    const { t, i18n } = useTranslation(["student", "instructor"]);
+    const { convert: ar } = useArabicDigits();
 
     const queryClient = useQueryClient();
     const searchParams = new URLSearchParams(location.search);
@@ -79,6 +84,7 @@ export default function CourseShell() {
     const refreshMaterials = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ["courseMaterials", courseId] });
         queryClient.invalidateQueries({ queryKey: ["courseById", courseId] });
+        queryClient.invalidateQueries({ queryKey: ["courseFolders", courseId] });
     }, [queryClient, courseId]);
 
     const isInactive = courseData?.status === "Inactive";
@@ -88,12 +94,13 @@ export default function CourseShell() {
     // Build the course object for the header and child routes
     const course = {
         id: courseId,
-        title: courseData?.courseName || courseData?.title || materialsData?.courseName || `Course ${courseId}`,
-        semester: courseData?.semester || "",
-        professor: courseData?.professorName || courseData?.instructorName || "",
+        title: getLocalizedField(courseData, 'courseName', i18n.language) || courseData?.title || materialsData?.courseName || `Course ${courseId}`,
+        semester: getLocalizedField(courseData, 'semester', i18n.language) || "",
+        professor: getLocalizedField(courseData, 'professorName', i18n.language) || getLocalizedField(courseData, 'instructorName', i18n.language) || "",
+        room: getLocalizedField(courseData, 'room', i18n.language) || courseData?.roomAr || "",
         progress: materialsData?.progress ?? 0,
         folders: foldersData || [],
-        courseCode: courseData?.courseCode || `CS ${courseId}`,
+        courseCode: getLocalizedField(courseData, 'courseCode', i18n.language) || courseData?.courseCode || `CS ${courseId}`,
         creditHours: courseData?.creditHours,
         status: courseData?.status,
         studentCourseStatusName: courseData?.studentCourseStatusName,
@@ -101,9 +108,19 @@ export default function CourseShell() {
         isReadOnly,
     };
 
+    const creditHourText = ar(t("courseDetail.creditHour", { count: course.creditHours }));
+
+    const links = useMemo(
+        () => linkDefs.map((l) => ({
+            ...l,
+            label: t(isInstructor ? l.instructorKey : l.studentKey, { ns: isInstructor ? "instructor" : "student" }),
+        })),
+        [isInstructor, t]
+    );
+
     const visibleLinks = useMemo(
         () => links.filter((l) => isInstructor ? !INSTRUCTOR_HIDE.has(l.to) : !STUDENT_HIDE.has(l.to)),
-        [isInstructor]
+        [isInstructor, links]
     );
 
     if (isLoading) {
@@ -126,8 +143,8 @@ export default function CourseShell() {
                     onClick={() => navigate(isInstructor ? "/instructor/courses" : "/courses")}
                     className="flex items-center gap-2 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark transition-colors mb-4"
                 >
-                    <ArrowRightIcon size={14} className="rotate-180" />
-                    All courses
+                    <ArrowRightIcon size={14} className="rotate-180 rtl:scale-x-[-1]" />
+                    {t("courseDetail.allCourses")}
                 </button>
 
                 {/* Course Header Card */}
@@ -149,14 +166,14 @@ export default function CourseShell() {
                                     </span>
                                 </div>
                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isReadOnly ? "bg-bg-surface-yellow-default-light text-text-yellow-default-light dark:bg-bg-surface-yellow-default-dark dark:text-text-yellow-default-dark" : "bg-bg-surface-green-default-light text-text-green-default-light dark:bg-bg-surface-green-default-dark dark:text-text-green-default-dark"}`}>
-                                    {isReadOnly ? (isInactive ? "Inactive" : "Completed") : "Active"}
+                                    {isReadOnly ? (isInactive ? t("courseDetail.inactive", "Inactive") : t("courseDetail.completed", "Completed")) : t("courseDetail.active", "Active")}
                                 </span>
                             </div>
                             <div className="flex flex-nowrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 {course.semester && (
                                     <span className="flex items-center gap-1">
                                         <CalendarDaysIcon className="w-3.5 h-3.5" />
-                                        {course.semester}
+                                        {ar(course.semester)}
                                     </span>
                                 )}
                                 {course.professor && (
@@ -168,7 +185,7 @@ export default function CourseShell() {
                                 {course.creditHours != null && (
                                     <span className="hidden sm:inline-flex items-center gap-1">
                                         <ClockIcon className="w-3.5 h-3.5" />
-                                        {course.creditHours} credit hour{course.creditHours !== 1 ? "s" : ""}
+                                        {creditHourText}
                                     </span>
                                 )}
                             </div>

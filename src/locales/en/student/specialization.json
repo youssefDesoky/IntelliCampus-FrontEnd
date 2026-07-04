@@ -1,0 +1,52 @@
+{
+  "specializationPreference.title": "Specialization Preference",
+  "specializationPreference.subtitle_specializations": "Rank and order your preferred specializations",
+  "specializationPreference.subtitle_departments": "Rank and order your preferred departments",
+
+  "specializationPreference.targetLabel.departments": "departments",
+  "specializationPreference.targetLabel.specializations": "specializations",
+
+  "specializationPreference.eligibility.eligible": "You're eligible to submit your preferences",
+  "specializationPreference.eligibility.notEligible": "Not eligible yet",
+  "specializationPreference.eligibility.metRequirement": "You've met the credit hour requirement — rank your {{targetLabel}} below.",
+  "specializationPreference.eligibility.needMoreHours_one": "You'll need {{remaining}} more credit hour before you can submit.",
+  "specializationPreference.eligibility.needMoreHours_other": "You'll need {{remaining}} more credit hours before you can submit.",
+  "specializationPreference.eligibility.hrsCompleted": "{{hours}} hrs completed",
+  "specializationPreference.eligibility.hrsRequired": "{{hours}} hrs required",
+
+  "specializationPreference.saveSuccess.title": "Preferences saved successfully!",
+  "specializationPreference.saveSuccess.description": "Your ranked preferences have been submitted.",
+
+  "specializationPreference.clearAll": "Clear all",
+
+  "specializationPreference.status.noPreferences": "No preferences yet",
+  "specializationPreference.status.preferencesRanked_zero": "0 preferences ranked",
+  "specializationPreference.status.preferencesRanked_one": "{{count}} preference ranked",
+  "specializationPreference.status.preferencesRanked_other": "{{count}} preferences ranked",
+  "specializationPreference.status.addToSave_specialization": "Add at least one specialization to save.",
+  "specializationPreference.status.addToSave_department": "Add at least one department to save.",
+  "specializationPreference.status.dragToReorder": "Drag to reorder or use the arrow buttons.",
+
+  "specializationPreference.saveButton": "Save Preferences",
+
+  "specializationPreference.available.specializations": "Available Specializations",
+  "specializationPreference.available.departments": "Available Departments",
+
+  "specializationPreference.search.specializations": "Search specializations...",
+  "specializationPreference.search.departments": "Search departments...",
+
+  "specializationPreference.empty.noMatches": "No matches for \"{{query}}\"",
+  "specializationPreference.empty.allAdded_specializations": "All specializations have been added to your ranking",
+  "specializationPreference.empty.allAdded_departments": "All departments have been added to your ranking",
+  "specializationPreference.empty.tryDifferentSearch": "Try a different search term.",
+  "specializationPreference.empty.addMoreItems": "Add more items from the left panel.",
+
+  "specializationPreference.ranking.title": "Your Ranking",
+  "specializationPreference.ranking.empty.title": "No preferences ranked yet",
+  "specializationPreference.ranking.empty.description_specializations": "Add specializations from the left panel to start ranking.",
+  "specializationPreference.ranking.empty.description_departments": "Add departments from the left panel to start ranking.",
+
+  "specializationPreference.actions.moveUp": "Move up",
+  "specializationPreference.actions.moveDown": "Move down",
+  "specializationPreference.actions.remove": "Remove"
+}

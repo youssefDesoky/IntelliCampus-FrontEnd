@@ -34,8 +34,7 @@ export default function usePushNotifications(enabled = true) {
                     }
                 }
 
-                const swReg = await navigator.serviceWorker.register('/push-sw.js');
-                await navigator.serviceWorker.ready;
+                const swReg = await navigator.serviceWorker.ready;
 
                 const existingSub = await swReg.pushManager.getSubscription();
                 if (existingSub) {

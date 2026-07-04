@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Outlet, useRouteLoaderData, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSidebar, useDeviceType } from '../hooks';
 import usePushNotifications from '../hooks/usePushNotifications';
@@ -9,6 +10,7 @@ import CommentsIcon from '../components/ui/icons/CommentsIcon';
 import { setOpenChatHandler } from '../utils/notificationHandler';
 
 const VIEW_TYPES = ['student', 'instructor', 'admin'];
+const VIEW_DASHBOARD_MAP = { student: '/', instructor: '/instructor', admin: '/admin' };
 
 function resolvePrimaryRole(roles) {
     const r = (roles || []).map(r => r.toLowerCase());
@@ -29,6 +31,7 @@ function getAvailableViews(roles) {
 }
 
 export default function AppLayout() {
+    const { t } = useTranslation('common');
     const ASIDEHEIGHT = 80;
     const { width } = useSidebar();
     const { isMobile, isPhone } = useDeviceType();
@@ -53,6 +56,10 @@ export default function AppLayout() {
     const handleViewChange = (view) => {
         setActiveView(view);
         localStorage.setItem('activeView', view);
+        const target = VIEW_DASHBOARD_MAP[view];
+        if (target && window.location.pathname !== target) {
+            navigate(target, { replace: true });
+        }
     };
 
     useEffect(() => {
@@ -125,7 +132,7 @@ export default function AppLayout() {
                     <main 
                         className="container mx-auto mt-0 pt-4 md:pt-6 pb-16 lg:pb-2 px-4 md:px-6 xl:px-8" 
                         style={{
-                            marginLeft: !isMobile ? `${width}%` : '0',
+                            marginInlineStart: !isMobile ? `${width}%` : '0',
                             maxWidth: !isMobile ? `calc(100% - ${width}%)` : '100%'
                         }}
                     >
@@ -151,7 +158,7 @@ export default function AppLayout() {
                             <button
                                 onClick={() => setIsChatOpen(true)}
                                 className="fixed bottom-4 right-6 z-50 flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
-                                aria-label="Open chat"
+                                aria-label={t('openChat')}
                             >
                                 <CommentsIcon size={22} />
                             </button>

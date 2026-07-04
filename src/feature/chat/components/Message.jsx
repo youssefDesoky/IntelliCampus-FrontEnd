@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import MessageControls from "./MessageControls";
 import { EllipsisVerticalIcon } from "../../../components/ui/icons";
 
@@ -7,6 +8,8 @@ const isImageUrl = (str) =>
   str.startsWith("/uploads/");
 
 export default function Message({ sender, message, sendTime, isGrouped, showSenderInfo, messageId, deleteMessage, editMessage, pinMessage, unpinMessage, isEdited, isPinned, isSystemMessage }) {
+    const { t, i18n } = useTranslation('chat');
+  const isRtl = i18n.dir() === 'rtl';
   const [showControls, setShowControls] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message);
@@ -115,57 +118,81 @@ export default function Message({ sender, message, sendTime, isGrouped, showSend
         </div>
       )}
 
-      <div className={`flex items-end gap-1.5 relative ${isOwn ? "flex-row-reverse" : ""}`}>
-        {/* Message bubble */}
-        <div
-          className={`relative px-4 py-2.5 text-sm leading-relaxed break-words max-w-md
-            ${isOwn
-              ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(59,130,246,0.25)]"
-              : "bg-white/6 border border-white/8 text-[var(--text-primary)] shadow-sm"
-            }
-            ${!isGrouped
-              ? (isOwn ? "rounded-[18px] rounded-tr-md" : "rounded-[18px] rounded-tl-md")
-              : "rounded-[18px]"
-            }
-          `}
-        >
-          {isEditing ? (
-            <input
-              ref={editInputRef}
-              type="text"
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              onKeyDown={handleEditKeyDown}
-              onBlur={handleSubmitEdit}
-              className="w-full bg-transparent outline-none border-b border-current"
-            />
-            ) : isImageUrl(message) ? (
-              <div className="pr-5">
-                <img
-                  src={message}
-                  alt="Shared image"
-                  className="max-w-full rounded-lg cursor-pointer"
-                  style={{ maxHeight: "300px" }}
-                  onClick={() => window.open(message, "_blank")}
-                />
-              </div>
+<div className={`flex items-end gap-1.5 relative ${isOwn ? "flex-row-reverse" : ""}`}>
+  {/* Message bubble */}
+  <div
+    className={`relative px-4 py-2.5 text-sm leading-relaxed break-words max-w-md
+      ${
+        isOwn
+          ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(59,130,246,0.25)]"
+          : "bg-white/6 border border-white/8 text-[var(--text-primary)] shadow-sm"
+      }
+      ${
+        !isGrouped
+          ? isOwn
+            ? isRtl
+              ? "rounded-[18px] rounded-tl-md"
+              : "rounded-[18px] rounded-tr-md"
+            : isRtl
+              ? "rounded-[18px] rounded-tr-md"
+              : "rounded-[18px] rounded-tl-md"
+          : "rounded-[18px]"
+      }
+    `}
+  >
+    {isEditing ? (
+      <input
+        ref={editInputRef}
+        type="text"
+        value={editText}
+        onChange={(e) => setEditText(e.target.value)}
+        onKeyDown={handleEditKeyDown}
+        onBlur={handleSubmitEdit}
+        dir={isRtl ? "rtl" : "ltr"}
+        className="w-full bg-transparent outline-none border-b border-current"
+      />
+    ) : isImageUrl(message) ? (
+      <div className="pr-5">
+        <img
+          src={message}
+          alt="Shared image"
+          className="max-w-full rounded-lg cursor-pointer"
+          style={{ maxHeight: "300px" }}
+          onClick={() => window.open(message, "_blank")}
+        />
+      </div>
             ) : (
-              <div className="pr-5">
+              <div className="pe-5">
                 {message}
                 {isEdited && (
-                  <span className={`text-[10px] ml-1.5 ${isOwn ? "text-blue-200" : "text-gray-400"}`}>
-                    (edited)
+                  <span className={`text-[10px] ms-1.5 ${isOwn ? "text-blue-200" : "text-gray-400"}`}>
+                    {t('edited')}
                   </span>
                 )}
               </div>
             )}
 
-          {/* 3-dots button */}
-          {!isEditing && (
-            <button
-              className="absolute top-1.5 right-1.5 p-1 rounded-full hover:bg-white/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-              onClick={() => setShowControls((v) => !v)}
-              aria-label="Show message controls"
+{/* 3-dots button */}
+{!isEditing && (
+  <button
+    className="absolute top-1.5 end-1.5 p-1 rounded-full hover:bg-white/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+    onClick={() => setShowControls((v) => !v)}
+    aria-label={t("showMessageControls")}
+  >
+    <EllipsisVerticalIcon size={16} />
+  </button>
+)}
+</div>
+
+{/* Time */}
+<span className="text-[10px] text-[var(--text-tertiary)] opacity-0 group-hover:opacity-60 transition-opacity whitespace-nowrap pb-1">
+  {sendTime}
+</span>
+
+{showControls && (
+  <div
+    ref={controlsRef}
+    className="absolute z-20 top-8 end-0"
             >
               <EllipsisVerticalIcon size={16} />
             </button>

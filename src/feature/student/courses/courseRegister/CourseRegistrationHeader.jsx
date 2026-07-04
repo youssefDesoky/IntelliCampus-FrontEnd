@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { useTranslation } from 'react-i18next';
+import useArabicDigits from "../../../../hooks/useArabicDigits";
 import useMediaQuery from "../../../../hooks/useMediaQuery";
 import SearchBar from "../../../../components/ui/SearchBar";
 import PageHeader from "../../../../components/ui/PageHeader";
@@ -15,12 +17,6 @@ import {
 } from "../../../../components/ui/icons";
 
 const DEFAULT_MAX_CREDITS = 18;
-
-const filterOptions = [
-    { value: "all", label: "All Courses", icon: FilterIcon },
-    { value: "required", label: "Required Courses", icon: StarIcon },
-    { value: "elective", label: "Elective Courses", icon: BookIcon },
-];
 
 function StatCard({ icon, value, label, colorClass, delay = 0 }) {
     const Icon = icon;
@@ -52,6 +48,8 @@ export default function CourseRegistrationHeader({
     onSearchChange,
     registrationSettings = null,
 }) {
+    const { t } = useTranslation('student');
+    const { convert: ar } = useArabicDigits();
     const isSmall = useMediaQuery('(max-width: 639px)');
 
     const maxCredits = registrationSettings?.effectiveMaxCreditHours ?? DEFAULT_MAX_CREDITS;
@@ -59,6 +57,12 @@ export default function CourseRegistrationHeader({
     const isOnProbation = registrationSettings?.isOnProbation ?? false;
     const currentGpa = registrationSettings?.currentGpa ?? 0;
     const isSummer = (registrationSettings?.semester ?? "").toLowerCase().startsWith("summer");
+
+    const filterOptions = [
+        { value: "all", label: t('registration.filterAll'), icon: FilterIcon },
+        { value: "required", label: t('registration.filterRequired'), icon: StarIcon },
+        { value: "elective", label: t('registration.filterElective'), icon: BookIcon },
+    ];
 
     const selectedCredits = selectedCourses.reduce(
         (sum, c) => sum + (typeof c.creditHours === "number" ? c.creditHours : 0),
@@ -76,8 +80,8 @@ export default function CourseRegistrationHeader({
 
     return (
         <PageHeader
-            title="Course Registration"
-            subtitle={registrationSettings?.semester ?? "Spring 2026"}
+            title={t('registration.title')}
+            subtitle={registrationSettings?.semester ?? t('registration.subtitle')}
             headerDir="col"
         >
             <div className="flex flex-col gap-5 w-full">
@@ -96,15 +100,15 @@ export default function CourseRegistrationHeader({
                             >
                                 <div className="flex flex-col items-center">
                                     <span className="text-xl sm:text-2xl font-bold tabular-nums">
-                                        {selectedCredits}
+                                        {ar(selectedCredits)}
                                     </span>
                                     <span className="text-[10px] text-text-secondary-active-light dark:text-text-secondary-active-dark font-medium">
-                                        / {maxCredits}
+                                        / {ar(maxCredits)}
                                     </span>
                                 </div>
                             </CircularProgress>
                             <span className="text-xs font-semibold text-text-secondary-active-light dark:text-text-secondary-active-dark uppercase tracking-wider">
-                                Credits
+                                {t('registration.credits')}
                             </span>
                         </div>
 
@@ -115,15 +119,15 @@ export default function CourseRegistrationHeader({
                         <div className="flex-1 grid grid-cols-3 gap-3 w-full">
                             <StatCard
                                 icon={ChartBarIcon}
-                                value={selectedCredits}
-                                label="Selected"
+                                value={ar(selectedCredits)}
+                                label={t('registration.selected')}
                                 colorClass="bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark"
                                 delay={0}
                             />
                             <StatCard
                                 icon={SandClockIcon}
-                                value={remainingCredits}
-                                label="Remaining"
+                                value={ar(remainingCredits)}
+                                label={t('registration.remaining')}
                                 colorClass={
                                     remainingCredits <= 3
                                         ? "bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark"
@@ -133,8 +137,8 @@ export default function CourseRegistrationHeader({
                             />
                             <StatCard
                                 icon={ChartLineIcon}
-                                value={maxCredits}
-                                label="Maximum"
+                                value={ar(maxCredits)}
+                                label={t('registration.maximum')}
                                 colorClass="bg-bg-fill-secondary-active-light dark:bg-bg-fill-secondary-active-dark"
                                 delay={200}
                             />
@@ -209,7 +213,7 @@ export default function CourseRegistrationHeader({
                     </div>
 
                     <SearchBar
-                        placeholder="Search course by name or code..."
+                        placeholder={t('registration.searchPlaceholder')}
                         value={searchValue}
                         onChange={(e) => onSearchChange(e.target.value)}
                         className="bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark w-full md:max-w-md rounded-xl border-border-primary-default-light dark:border-border-primary-default-dark focus-within:ring-2 focus-within:ring-border-primary-focus-light dark:focus-within:ring-border-primary-focus-dark transition-shadow"

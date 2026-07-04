@@ -1,5 +1,6 @@
 import ModelOverlay from "./ModelOverlay";
 import Button from "./Button";
+import { useTranslation } from 'react-i18next';
 
 export default function BaseFormComponent({
     isOpen,
@@ -7,19 +8,22 @@ export default function BaseFormComponent({
     description,
     onClose,
     onSubmit,
-    submitText = "Submit",
-    cancelText = "Cancel",
+    submitText,
+    cancelText,
     children,
     maxWidth = "max-w-5xl",
     className = "",
     contentClassName = "",
-    maxHeight = "max-h-[75vh] sm:max-h-none",
+    maxHeight = "max-h-[85vh]",
     footerClassName = "",
     submitDisabled = false,
     submitLoading = false,
     submitVariant = "primary",
     cancelVariant = "secondary",
 }) {
+    const { t } = useTranslation('common');
+    const displaySubmitText = submitText ?? t('submit', 'Submit');
+    const displayCancelText = cancelText ?? t('cancel', 'Cancel');
     if (!isOpen) return null;
 
     const handleSubmit = (event) => {
@@ -45,7 +49,7 @@ export default function BaseFormComponent({
                         type="button"
                         onClick={onClose}
                         className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
-                        aria-label="Close form"
+                        aria-label={t('closeForm')}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
                             <path d="M18.3 5.71 12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z" />
@@ -53,11 +57,11 @@ export default function BaseFormComponent({
                     </button>
                 </div>
 
-                <div className={`flex-1 p-6 overflow-y-auto no-scrollbar flex flex-col justify-center ${contentClassName}`}>{children}</div>
+                <div className={`flex-1 p-6 overflow-y-auto no-scrollbar flex flex-col justify-start ${contentClassName}`}>{children}</div>
 
                 <div className={`shrink-0 flex gap-3 border-t border-border-primary-default-light px-3 sm:px-6 py-4 sm:justify-end dark:border-border-primary-default-dark ${footerClassName}`}>
                     <Button variant={cancelVariant} type="button" onClick={onClose} width="flex-1 sm:w-auto">
-                        {cancelText}
+                        {displayCancelText}
                     </Button>
                     <Button
                         variant={submitVariant}
@@ -66,7 +70,7 @@ export default function BaseFormComponent({
                         disabled={submitDisabled}
                         loading={submitLoading}
                     >
-                        {submitText}
+                        {displaySubmitText}
                     </Button>
                 </div>
             </form>

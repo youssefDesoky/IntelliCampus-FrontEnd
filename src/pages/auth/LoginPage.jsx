@@ -5,6 +5,7 @@ import {
     useNavigate, 
     useNavigation 
 } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 import { useEffect, useState, useRef } from "react";
 
@@ -15,6 +16,7 @@ import InputItem from "../../components/form/InputItem";
 import { LockIconLight , MailIconLight } from "../../components/ui/icons";
 
 export default function LoginPage() {
+    const { t } = useTranslation('auth');
     // const emailRef = useRef(null);
     // const passwordRef = useRef(null);
 
@@ -58,14 +60,12 @@ export default function LoginPage() {
 
     return (
         <AuthLayout 
-            title="Welcome Back" 
-            subtitle="Sign in to access your academic dashboard" 
-            fahimImgSrc="/images/fahimLogin.png"
+            title={t('login.title')}
+            subtitle={t('login.subtitle')}
         >
             <Form
                 method="post"
                 className="space-y-5 mb-12"
-                // onSubmit={handelOnSubmit}
             >
                 {data?.message && (
                     <div className="bg-red-100 text-red-700 p-3 rounded-md text-center">
@@ -73,29 +73,20 @@ export default function LoginPage() {
                     </div>
                 )}
 
-                {/* {emptyFields.length > 0 && (
-                    <ul className="bg-red-100 text-red-700 p-3 rounded-md text-sm list-disc list-inside space-y-1">
-                        {emptyFields.includes("email") && <li>Email is required</li>}
-                        {emptyFields.includes("password") && <li>Password is required</li>}
-                    </ul>
-                )} */}
-
                 <InputItem
-                    // ref={emailRef}
-                    label="Email"
+                    label={t('login.emailLabel')}
                     type="email"
                     name="email"
-                    placeholder="student@university.edu"
+                    placeholder={t('login.emailPlaceholder')}
                 >
                     <MailIconLight className="w-5 h-5 text-gray-400" />
                 </InputItem>
 
                 <InputItem
-                    // ref={passwordRef}
-                    label="Password"
+                    label={t('login.passwordLabel')}
                     type="password"
                     name="password"
-                    placeholder="Enter your password"
+                    placeholder={t('login.passwordPlaceholder')}
                 >
                     <LockIconLight className="w-5 h-5 text-gray-400" />
                 </InputItem>
@@ -106,18 +97,18 @@ export default function LoginPage() {
                     disabled={isSubmitting}
                     loading={isSubmitting}
                 >
-                    Login
+                    {t('login.submit')}
                 </Button>
             </Form>
 
             <div className="text-center space-y-2">
                 <Link to="/forgot-password" className="text-blue-500 hover:text-blue-600 text-md block">
-                    Forgot password?
+                    {t('login.forgotPassword')}
                 </Link>
                 <Link to="/get-credentials" className="text-blue-500 hover:text-blue-600 text-md block">
-                    Get Credentials
+                    {t('login.getCredentials')}
                 </Link>
-                <p className="text-gray-400 text-sm">Accounts are created by administration</p>
+                <p className="text-gray-400 text-sm">{t('login.adminNote')}</p>
             </div>
         </AuthLayout>
     );
