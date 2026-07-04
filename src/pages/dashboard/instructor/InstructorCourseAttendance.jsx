@@ -398,8 +398,8 @@ export default function InstructorCourseAttendance() {
 
                 {isAttendanceOpen && (
                     <ModelOverlay onClose={() => { setIsAttendanceOpen(false); stopScanner(); setManualId(''); setRecentScans([]); }} maxWidth="max-w-2xl">
-                        <div className="relative w-full overflow-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
-                            <div className="flex items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-5 dark:border-border-primary-default-dark">
+                        <div className="relative flex w-full max-h-[90vh] flex-col overflow-hidden rounded-3xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]">
+                            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border-primary-default-light px-6 py-5 dark:border-border-primary-default-dark">
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark">
@@ -421,7 +421,7 @@ export default function InstructorCourseAttendance() {
                                 </button>
                             </div>
 
-                            <div className="px-6 py-6">
+                            <div className="flex-1 overflow-y-auto px-6 py-6">
                                 <div className="mb-6 flex border-b border-border-primary-default-light dark:border-border-primary-default-dark">
                                     <button
                                         type="button"
