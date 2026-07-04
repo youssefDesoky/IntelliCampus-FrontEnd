@@ -46,6 +46,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   }, [defaultPanel, defaultPanelTrigger]);
   useEffect(() => {
     if (defaultUser) {
+      console.log("[Chat] defaultUser effect firing", { userId: defaultUser.id, trigger: defaultPanelTrigger });
       setMessages([]);
       setPinnedMessage(null);
       setChatPartner({
@@ -57,12 +58,12 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       });
       setActivePanel("messaging");
     }
-  }, [defaultUser]);
+  }, [defaultUser, defaultPanelTrigger]);
   useEffect(() => {
     if (defaultGroupName) {
       openGroupChat(defaultGroupName);
     }
-  }, [defaultGroupName]);
+  }, [defaultGroupName, defaultPanelTrigger]);
   const isChatOpenRef = useRef(isChatOpen);
   useEffect(() => { isChatOpenRef.current = isChatOpen; }, [isChatOpen]);
   const [friendId, setFriendId] = useState("");
@@ -371,19 +372,45 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     });
   }
 
+  const loadHistory = useCallback(async (conn, partner) => {
+    try {
+      const start = Date.now();
+      const history = partner.type === "group"
+        ? await fetchGroupChatHistory(partner.groupName)
+        : await fetchChatHistory(currentUser.userId, partner.userId);
+      console.log("[Chat] loadHistory success", { count: history?.length, took: Date.now() - start });
+      setMessages(history.reverse());
+      const pinned = history.find(m => m.isPinned);
+      setPinnedMessage(pinned ? pinned.content : null);
+      history.forEach((m) => msgIdsRef.current.add(m.messageId));
+    } catch (err) {
+      console.warn("[Chat] loadHistory failed:", err);
+    }
+  }, [currentUser]);
+
   // Load history & join group when partner changes
   useEffect(() => {
     const conn = connectionRef.current;
+    console.log("[Chat] chatPartner effect running", { chatPartner: chatPartner?.userId || chatPartner?.groupName, hasConn: !!conn });
     if (!chatPartner || !conn) return;
 
+    let cancelled = false;
+
     const load = async () => {
+      if (cancelled) { console.log("[Chat] load cancelled"); return; }
       if (chatPartner.type === "group") {
+        console.log("[Chat] joining group", chatPartner.groupName);
         await conn.invoke("JoinGroup", chatPartner.groupName);
       }
+      if (cancelled) { console.log("[Chat] load cancelled after join"); return; }
+      console.log("[Chat] calling loadHistory for", chatPartner.userId || chatPartner.groupName);
       await loadHistory(conn, chatPartner);
+      console.log("[Chat] loadHistory completed");
     };
     load();
-  }, [chatPartner]);
+
+    return () => { console.log("[Chat] chatPartner effect cleanup"); cancelled = true; };
+  }, [chatPartner, loadHistory]);
 
   useEffect(() => {
     return () => {
@@ -392,20 +419,6 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       }
     };
   }, []);
-
-  const loadHistory = useCallback(async (conn, partner) => {
-    try {
-      const history = partner.type === "group"
-        ? await fetchGroupChatHistory(partner.groupName)
-        : await fetchChatHistory(currentUser.userId, partner.userId);
-      setMessages(history.reverse());
-      const pinned = history.find(m => m.isPinned);
-      setPinnedMessage(pinned ? pinned.content : null);
-      history.forEach((m) => msgIdsRef.current.add(m.messageId));
-    } catch {
-      // no history yet
-    }
-  }, [currentUser]);
 
   const handleInputChange = useCallback(() => {
     const conn = connectionRef.current;
@@ -675,7 +688,6 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   };
 
   const handleAttachFile = async (file, type) => {
-    if (type !== "media") return;
     try {
       const result = await uploadFile(file);
       const url = result.url;
