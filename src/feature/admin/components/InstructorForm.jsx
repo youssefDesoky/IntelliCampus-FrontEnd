@@ -103,7 +103,8 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
 
     useEffect(() => {
         fetchDepartments()
-            .then(data => {
+            .then(result => {
+                const data = Array.isArray(result) ? result : (result?.data ?? []);
                 const options = data.map(d => ({ value: d.departmentId, label: d.departmentName }));
                 setDepartments(options);
                 if (initialData.department) {
@@ -171,7 +172,9 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
 
     useEffect(() => {
         Promise.all([fetchRooms(), fetchInstructors()])
-            .then(([rooms, instructors]) => {
+            .then(([roomResult, instructorResult]) => {
+                const rooms = Array.isArray(roomResult) ? roomResult : (roomResult?.data ?? []);
+                const instructors = Array.isArray(instructorResult) ? instructorResult : (instructorResult?.data ?? []);
                 const occupied = new Set(
                     (instructors || [])
                         .map(i => i.officeHoursRoomId)

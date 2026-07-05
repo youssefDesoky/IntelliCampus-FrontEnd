@@ -103,7 +103,7 @@ export default function ManageStudents() {
       headerType="user"
       headerRole="student"
       searchPlaceholder={t('manageStudents.search')}
-      searchFilter={searchFilter}
+      serverSidePagination={true}
       tableRole="student"
       tableHeaders={studentTableHeaders}
       columnAlignments={studentColumnAlignments}

@@ -2,10 +2,12 @@ import apiClient from "../../../api/apiClient";
 
 // ─── Bylaws ─────────────────────────────────────────────────
 
-export async function fetchBylaws(type) {
-    const params = type ? `?Type=${type}&PageSize=50` : '?PageSize=50';
-    const result = await apiClient(`/api/Bylaw${params}`);
-    return result?.data ?? result ?? [];
+export async function fetchBylaws({ pageIndex = 1, pageSize = 50, searchQuery = '', type } = {}) {
+    const params = new URLSearchParams({ PageIndex: pageIndex, PageSize: pageSize });
+    if (type) params.set('Type', type);
+    if (searchQuery) params.set('Search', searchQuery);
+    const result = await apiClient(`/api/Bylaw?${params}`);
+    return { data: result?.data ?? result ?? [], totalCount: result?.totalCount ?? 0 };
 }
 
 export async function fetchBylawById(id) {

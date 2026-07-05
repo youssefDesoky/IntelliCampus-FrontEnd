@@ -1,8 +1,10 @@
 import apiClient from "../../../api/apiClient";
 
-export async function fetchInstructors() {
-    const result = await apiClient('/api/instructors?PageSize=50');
-    return result?.data ?? result ?? [];
+export async function fetchInstructors({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) {
+    const params = new URLSearchParams({ PageIndex: pageIndex, PageSize: pageSize });
+    if (searchQuery) params.set('Search', searchQuery);
+    const result = await apiClient(`/api/instructors?${params}`);
+    return { data: result?.data ?? result ?? [], totalCount: result?.totalCount ?? 0 };
 }
 
 export async function fetchInstructorById(id) {

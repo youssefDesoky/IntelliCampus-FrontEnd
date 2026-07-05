@@ -96,7 +96,7 @@ export default function ManageAdmins() {
       headerType="user"
       headerRole="admin"
       searchPlaceholder={t('manageAdmins.search')}
-      searchFilter={searchFilter}
+      serverSidePagination={true}
       tableRole="admin"
       tableHeaders={adminTableHeaders}
       columnAlignments={adminColumnAlignments}
