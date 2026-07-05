@@ -24,13 +24,18 @@ import {
   fetchMyGroups,
   deleteFriend,
   FAHIM_USER_ID,
+  leaveGroup,
+  uploadFile,
+  fetchGroupById,
+  addGroupMember,
+  searchUsers,
 } from "../services/chatService";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
 import { setChatState } from '../../../utils/notificationHandler';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
 
-export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPanel, defaultUser }) {
+export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPanel, defaultPanelTrigger, defaultUser, defaultGroupName }) {
   const { t, i18n } = useTranslation('chat');
   const { showError } = useError();
   const { showToast } = useToast();
@@ -39,9 +44,10 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   const [activePanel, setActivePanel] = useState(defaultPanel || "default");
   useEffect(() => {
     if (defaultPanel) setActivePanel(defaultPanel);
-  }, [defaultPanel]);
+  }, [defaultPanel, defaultPanelTrigger]);
   useEffect(() => {
     if (defaultUser) {
+      console.log("[Chat] defaultUser effect firing", { userId: defaultUser.id, trigger: defaultPanelTrigger });
       setMessages([]);
       setPinnedMessage(null);
       setChatPartner({
@@ -53,7 +59,12 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       });
       setActivePanel("messaging");
     }
-  }, [defaultUser]);
+  }, [defaultUser, defaultPanelTrigger]);
+  useEffect(() => {
+    if (defaultGroupName) {
+      openGroupChat(defaultGroupName);
+    }
+  }, [defaultGroupName, defaultPanelTrigger]);
   const isChatOpenRef = useRef(isChatOpen);
   useEffect(() => { isChatOpenRef.current = isChatOpen; }, [isChatOpen]);
   const [friendId, setFriendId] = useState("");
@@ -65,10 +76,14 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   const [chatPartner, setChatPartner] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [groupDetails, setGroupDetails] = useState(null);
   const [isAlreadyTyping, setIsAlreadyTyping] = useState(false);
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [pinnedMessage, setPinnedMessage] = useState(null);
   const [pendingPinMessageId, setPendingPinMessageId] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMembers, setSearchMembers] = useState("");
   const isSendingRef = useRef(false);
@@ -77,6 +92,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   const msgIdsRef = useRef(new Set());
   const typingTimeoutRef = useRef(null);
   const pinnedMessageRef = useRef(null);
+  const leavingGroupRef = useRef(null);
 
   // Keep refs in sync with state so SignalR handlers always have latest value
   useEffect(() => { chatPartnerRef.current = chatPartner; }, [chatPartner]);
@@ -121,9 +137,10 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     const loadGroups = async () => {
       try {
         const data = await fetchMyGroups();
+        console.log("[Chat] loadGroups returned:", data);
         setGroups(data);
-      } catch {
-        // not critical
+      } catch (err) {
+        console.error("[Chat] loadGroups failed:", err);
       }
     };
 
@@ -150,11 +167,6 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
           recipientName: req.recipientName,
         },
       ]);
-      showToast({
-        type: "info",
-        title: "Friend Request",
-        message: `${req.senderName} sent you a friend request.`,
-      });
     });
 
     conn.on("FriendRequestAccepted", async (req) => {
@@ -163,11 +175,6 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
         const data = await fetchFriends();
         setFriends(data);
       } catch {}
-      showToast({
-        type: "success",
-        title: "Friend Request Accepted",
-        message: `${req.recipientName} accepted your friend request.`,
-      });
     });
 
     conn.on("ReceivePrivateMessage", (msg) => {
@@ -190,15 +197,17 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     });
 
     conn.on("ReceiveGroupMessage", (msg) => {
-      if (!isChatOpenRef.current) return;
       const partner = chatPartnerRef.current;
-      if (!partner || partner.type !== "group" || partner.groupName !== msg.groupName) return;
-
-      msgIdsRef.current.add(msg.messageId);
-      setMessages((prev) => {
-        const exists = prev.some((m) => m.messageId === msg.messageId);
-        return exists ? prev : [...prev, msg];
-      });
+      const isActiveGroup = partner && partner.type === "group" && partner.groupName === msg.groupName && isChatOpenRef.current;
+      if (isActiveGroup) {
+        msgIdsRef.current.add(msg.messageId);
+        setMessages((prev) => {
+          const exists = prev.some((m) => m.messageId === msg.messageId);
+          return exists ? prev : [...prev, msg];
+        });
+      } else {
+        setUnreadCounts((prev) => ({ ...prev, [msg.groupName]: (prev[msg.groupName] || 0) + 1 }));
+      }
     });
 
     conn.on("UserOnline", (userId) => {
@@ -245,16 +254,39 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       );
     });
 
+    conn.on("GroupMembersUpdated", (data) => {
+      const partner = chatPartnerRef.current;
+      const isViewingThisGroup = partner?.type === "group" && partner.groupName === data.groupName;
+      if (isViewingThisGroup && leavingGroupRef.current !== data.groupName) {
+        setMessages((prev) => [...prev, {
+          messageId: `sys_${Date.now()}`,
+          content: data.content,
+          timestamp: data.timestamp,
+          senderId: "0",
+          senderName: "System",
+          isSystemMessage: true,
+        }]);
+        const gid = partner.groupName.replace("group_", "");
+        fetchGroupById(gid).then((details) => { setGroupDetails(details); setGroupMembers(details.members || []); }).catch(() => {});
+      } else if (!isViewingThisGroup) {
+        showToast({ type: "info", title: "Group Update", message: data.content });
+      }
+    });
+
+    conn.on("GroupCreated", async () => {
+      try {
+        const data = await fetchMyGroups();
+        setGroups(data);
+      } catch {}
+    });
+
     conn.onreconnecting((error) => {
       console.warn("[ChatHub] Reconnecting...", error);
     });
 
     conn.onreconnected(async () => {
       console.info("[ChatHub] Reconnected.");
-      const partner = chatPartnerRef.current;
-      if (partner && partner.type === "group") {
-        await conn.invoke("JoinGroup", partner.groupName);
-      }
+      await joinAllGroups(conn);
     });
 
     conn.onclose((error) => {
@@ -264,8 +296,9 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     let disposed = false;
     conn
       .start()
-      .then(() => {
-        if (disposed) conn.stop();
+      .then(async () => {
+        if (disposed) { conn.stop(); return; }
+        await joinAllGroups(conn);
       })
       .catch((err) => {
         if (disposed) return;
@@ -286,26 +319,99 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     };
   }, [currentUser]);
 
+  // Track chat state for notification system
+  useEffect(() => {
+    setChatState({ isChatOpen, activeChatUserId: chatPartner?.userId || chatPartner?.groupName || null });
+  }, [isChatOpen, chatPartner]);
+
+  async function joinAllGroups(conn) {
+    try {
+      const groups = await fetchMyGroups();
+      for (const g of groups) {
+        await conn.invoke("JoinGroup", `group_${g.groupId}`);
+      }
+    } catch (err) {
+      console.warn("[ChatHub] Failed to join groups:", err);
+    }
+  }
+
+  function openPrivateChat(senderId, senderName, senderAvatar) {
+    setMessages([]);
+    setPinnedMessage(null);
+    setUnreadCounts((prev) => ({ ...prev, [senderId]: 0 }));
+    setChatPartner({
+      type: "user",
+      userId: senderId,
+      fullName: senderName,
+      role: "",
+      avatar: senderAvatar || null,
+    });
+    setActivePanel("messaging");
+    setIsChatOpen(true);
+  }
+
+  function openGroupChat(groupName, groupTitle) {
+    const groupId = Number(groupName.replace("group_", ""));
+    setMessages([]);
+    setPinnedMessage(null);
+    setUnreadCounts((prev) => ({ ...prev, [groupName]: 0 }));
+    setChatPartner({
+      type: "group",
+      groupName,
+      fullName: groupTitle || groupName.replace("group_", "Group "),
+      role: "Group",
+      avatar: null,
+    });
+    setActivePanel("messaging");
+    setIsChatOpen(true);
+    fetchGroupById(groupId).then((details) => {
+      setGroupDetails(details);
+      setGroupMembers(details.members || []);
+    }).catch(() => {
+      setGroupDetails(null);
+      setGroupMembers([]);
+    });
+  }
+
+  const loadHistory = useCallback(async (conn, partner) => {
+    try {
+      const start = Date.now();
+      const history = partner.type === "group"
+        ? await fetchGroupChatHistory(partner.groupName)
+        : await fetchChatHistory(currentUser.userId, partner.userId);
+      console.log("[Chat] loadHistory success", { count: history?.length, took: Date.now() - start });
+      setMessages(history.reverse());
+      const pinned = history.find(m => m.isPinned);
+      setPinnedMessage(pinned ? pinned.content : null);
+      history.forEach((m) => msgIdsRef.current.add(m.messageId));
+    } catch (err) {
+      console.warn("[Chat] loadHistory failed:", err);
+    }
+  }, [currentUser]);
+
   // Load history & join group when partner changes
   useEffect(() => {
     const conn = connectionRef.current;
+    console.log("[Chat] chatPartner effect running", { chatPartner: chatPartner?.userId || chatPartner?.groupName, hasConn: !!conn });
     if (!chatPartner || !conn) return;
 
+    let cancelled = false;
+
     const load = async () => {
+      if (cancelled) { console.log("[Chat] load cancelled"); return; }
       if (chatPartner.type === "group") {
+        console.log("[Chat] joining group", chatPartner.groupName);
         await conn.invoke("JoinGroup", chatPartner.groupName);
       }
+      if (cancelled) { console.log("[Chat] load cancelled after join"); return; }
+      console.log("[Chat] calling loadHistory for", chatPartner.userId || chatPartner.groupName);
       await loadHistory(conn, chatPartner);
+      console.log("[Chat] loadHistory completed");
     };
     load();
 
-    // Leave previous group on cleanup (track via ref)
-    return () => {
-      if (chatPartner.type === "group") {
-        conn.invoke("LeaveGroup", chatPartner.groupName).catch(() => {});
-      }
-    };
-  }, [chatPartner]);
+    return () => { console.log("[Chat] chatPartner effect cleanup"); cancelled = true; };
+  }, [chatPartner, loadHistory]);
 
   useEffect(() => {
     return () => {
@@ -314,20 +420,6 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       }
     };
   }, []);
-
-  const loadHistory = useCallback(async (conn, partner) => {
-    try {
-      const history = partner.type === "group"
-        ? await fetchGroupChatHistory(partner.groupName)
-        : await fetchChatHistory(currentUser.userId, partner.userId);
-      setMessages(history.reverse());
-      const pinned = history.find(m => m.isPinned);
-      setPinnedMessage(pinned ? pinned.content : null);
-      history.forEach((m) => msgIdsRef.current.add(m.messageId));
-    } catch {
-      // no history yet
-    }
-  }, [currentUser]);
 
   const handleInputChange = useCallback(() => {
     const conn = connectionRef.current;
@@ -482,6 +574,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       isEdited: msg.isEdited,
       isPinned: msg.isPinned,
       isAi: !isOwn && (String(chatPartner?.userId) === FAHIM_USER_ID || String(msg.senderId) === FAHIM_USER_ID),
+      isSystemMessage: msg.isSystemMessage,
     });
   }
 
@@ -549,10 +642,10 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
 
   const handleCreateGroup = async ({ title, description, members, profileImage }) => {
     try {
-      await createGroup(title, description, members, profileImage);
-      const data = await fetchMyGroups();
-      setGroups(data);
+      const newGroup = await createGroup(title, description, members, profileImage);
+      setGroups((prev) => [...prev, newGroup]);
       setActivePanel("default");
+      showToast({ type: "success", title: "Group Created", message: `"${title}" has been created successfully.` });
     } catch (err) {
       showError(err.message);
     }
@@ -561,6 +654,8 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   const handleSelectUser = (user) => {
     setMessages([]);
     setPinnedMessage(null);
+    setGroupDetails(null);
+    setGroupMembers([]);
     setUnreadCounts((prev) => ({ ...prev, [String(user.id)]: 0 }));
     setChatPartner({
       type: "user",
@@ -572,17 +667,39 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     setActivePanel("messaging");
   };
 
-  const handleSelectGroup = (group) => {
+  const handleSelectGroup = async (group) => {
     setMessages([]);
     setPinnedMessage(null);
+    const groupName = `group_${group.id}`;
+    setUnreadCounts((prev) => ({ ...prev, [groupName]: 0 }));
     setChatPartner({
       type: "group",
-      groupName: `group_${group.id}`,
+      groupName: groupName,
       fullName: group.name,
       role: "Group",
-      avatar: null,
+      avatar: group.profileImage || null,
     });
     setActivePanel("messaging");
+    try {
+      const details = await fetchGroupById(group.id);
+      setGroupDetails(details);
+      setGroupMembers(details.members || []);
+    } catch {
+      setGroupDetails(null);
+      setGroupMembers([]);
+    }
+  };
+
+  const handleAddGroupMember = async (userId) => {
+    if (!groupDetails) return;
+    try {
+      await addGroupMember(groupDetails.groupId, userId);
+      const details = await fetchGroupById(groupDetails.groupId);
+      setGroupDetails(details);
+      setGroupMembers(details.members || []);
+    } catch (err) {
+      showError(err.message);
+    }
   };
 
   const handleBackToUsers = () => {
@@ -590,10 +707,12 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     setChatPartner(null);
     setMessages([]);
     setPinnedMessage(null);
+    setGroupDetails(null);
+    setGroupMembers([]);
     setSearchQuery("");
   };
 
-  const handleAttachFile = (file, type) => {
+  const handleAttachFile = async (file, type) => {
     console.log("[Chat] Attach file:", { name: file.name, type, size: file.size });
     // TODO: wire up file upload / send as message
   };
@@ -601,15 +720,84 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   const handleDeleteFriend = async (friendId) => {
     if (String(chatPartner?.userId) === FAHIM_USER_ID) return;
     try {
-      await deleteFriend(friendId);
-      setFriends((prev) => prev.filter((f) => f.userId !== friendId));
-      setChatPartner(null);
-      setActivePanel("default");
-      setMessages([]);
-      showToast({ type: "info", title: "Removed", message: "Friend removed successfully." });
+      const result = await uploadFile(file);
+      const url = result.url;
+      const conn = connectionRef.current;
+      if (!conn || !chatPartner) return;
+      if (chatPartner.type === "group") {
+        await conn.invoke("SendGroupMessage", chatPartner.groupName, url);
+      } else {
+        await conn.invoke("SendPrivateMessage", chatPartner.userId, url);
+      }
     } catch (err) {
       showError(err.message);
     }
+  };
+
+  const executeConfirmAction = () => {
+    if (confirmDialog.onConfirm) {
+      confirmDialog.onConfirm();
+    }
+    setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleDeleteFriend = (friendId) => {
+    const name = chatPartner?.fullName || "this user";
+    setConfirmDialog({
+      isOpen: true,
+      title: "Remove Friend",
+      message: (
+        <>
+          <p className="mb-2">Are you sure you want to remove <strong>{name}</strong> from your friends?</p>
+          <p className="text-xs opacity-70">This will unfriend you and remove them from your contacts. They won't be able to send you messages unless you become friends again.</p>
+        </>
+      ),
+      onConfirm: async () => {
+        try {
+          await deleteFriend(friendId);
+          setFriends((prev) => prev.filter((f) => f.userId !== friendId));
+          setChatPartner(null);
+          setActivePanel("default");
+          setMessages([]);
+          showToast({ type: "info", title: "Removed", message: "Friend removed successfully." });
+        } catch (err) {
+          showError(err.message);
+        }
+      },
+    });
+  };
+
+  const handleLeaveGroup = () => {
+    if (!chatPartner || chatPartner.type !== "group") return;
+    const name = chatPartner.fullName || "this group";
+    setConfirmDialog({
+      isOpen: true,
+      title: "Leave Group",
+      message: (
+        <>
+          <p className="mb-2">Are you sure you want to leave <strong>"{name}"</strong>?</p>
+          <p className="text-xs opacity-70">You will no longer receive messages from this group. You can only rejoin if a group member adds you back.</p>
+        </>
+      ),
+      onConfirm: async () => {
+        const groupId = Number(chatPartner.groupName?.replace("group_", ""));
+        if (!groupId) return;
+        leavingGroupRef.current = `group_${groupId}`;
+        try {
+          await leaveGroup(groupId);
+          setGroups((prev) => prev.filter((g) => g.groupId !== groupId));
+          setChatPartner(null);
+          setActivePanel("default");
+          setMessages([]);
+          setGroupMembers([]);
+          leavingGroupRef.current = null;
+          showToast({ type: "info", title: "Left", message: "You left the group." });
+        } catch (err) {
+          leavingGroupRef.current = null;
+          showError(err.message);
+        }
+      },
+    });
   };
 
   return (
@@ -678,6 +866,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
                       onBack={() => setActivePanel("default")}
                       onAcceptRequest={handleAcceptRequest}
                       onDeclineRequest={handleDeclineRequest}
+                      searchUsers={searchUsers}
                     />
                   ) : (
                     <Messaging
@@ -699,6 +888,11 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
                     onAttachFile={handleAttachFile}
                     onDeleteFriend={handleDeleteFriend}
                     onSendCourseQuestion={sendCourseQuestion}
+                    onLeaveGroup={handleLeaveGroup}
+                    groupMembers={groupMembers}
+                    groupDetails={groupDetails}
+                    onAddGroupMember={handleAddGroupMember}
+                    currentUser={currentUser}
                   />
                   )}
                 </div>
@@ -718,6 +912,18 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
             <p>
               {t('pin.warning')}
             </p>
+          </Dialog>
+
+          <Dialog
+            isOpen={confirmDialog.isOpen}
+            variant="warning"
+            title={confirmDialog.title}
+            onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+            onConfirm={executeConfirmAction}
+            confirmText={confirmDialog.title === "Remove Friend" ? "Remove" : "Leave"}
+            cancelText="Cancel"
+          >
+            {confirmDialog.message}
           </Dialog>
         </Section>
       )}

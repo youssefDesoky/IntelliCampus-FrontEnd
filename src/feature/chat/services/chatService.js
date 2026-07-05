@@ -56,6 +56,12 @@ export async function fetchGroupChatHistory(groupName) {
   return apiClient(`/api/chat/group/${encodeURIComponent(groupName)}`);
 }
 
+// --- User Search API ---
+
+export async function searchUsers(query, limit = 20) {
+  return apiClient(`/api/users/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+}
+
 // --- Group API ---
 
 export async function createGroup(title, description, memberIds, profileImage) {
@@ -69,8 +75,26 @@ export async function fetchMyGroups() {
   return apiClient("/api/groups");
 }
 
+export async function leaveGroup(groupId) {
+  return apiClient(`/api/groups/${groupId}/leave`, { method: "DELETE" });
+}
+
+export async function fetchGroupById(groupId) {
+  return apiClient(`/api/groups/${groupId}`);
+}
+
+export async function addGroupMember(groupId, userId) {
+  return apiClient(`/api/groups/${groupId}/members/${userId}`, { method: "POST" });
+}
+
 export async function deleteFriend(friendId) {
   return apiClient(`/api/friends/${friendId}`, { method: "DELETE" });
+}
+
+export async function uploadFile(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiClient("/api/chat/upload", { method: "POST", body: formData });
 }
 
 export function formatTime(timestamp) {

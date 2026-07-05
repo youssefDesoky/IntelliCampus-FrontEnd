@@ -17,6 +17,7 @@
   "studentDetails.address": "Address",
   "studentDetails.gender": "Gender",
   "studentDetails.dateOfBirth": "Date of Birth",
+  "studentDetails.edit": "Edit",
   "studentDetails.sendEmail": "Send Email",
   "studentDetails.unregisterCourse": "Unregister Course",
   "studentDetails.changeSection": "Change Section",
@@ -68,5 +69,6 @@
   "studentDetails.grade": "Grade",
   "studentDetails.loadingCompleted": "Loading completed courses...",
   "studentDetails.noCompleted": "No completed courses found.",
-  "studentDetails.sectionLabel": "Section {{id}}"
+  "studentDetails.sectionLabel": "Section {{id}}",
+  "studentDetails.probation": "Probation"
 }

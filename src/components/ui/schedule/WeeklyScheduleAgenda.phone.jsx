@@ -17,10 +17,6 @@ const dotColor = {
     default: "bg-border-primary-default-light dark:bg-border-primary-default-dark",
 };
 
-function getDayLabel(t, key) {
-    return t(`days.${key}`);
-}
-
 function getEventTypeLabel(t, type) {
     if (type === "lecture") return t("schedule.typeLecture");
     if (type === "section") return t("schedule.typeSection");
@@ -62,7 +58,7 @@ export default function WeeklyScheduleAgenda({ days, schedule = [], variant = "d
                     >
                         <div className="flex items-center justify-between px-4 py-2.5 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
                             <span className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                {getDayLabel(t, day.key)}
+                                {day.label}
                             </span>
                             <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
                                 {ar(t(variant === "exam" ? "schedule.examCount" : "schedule.classCount", { count: events.length }))}

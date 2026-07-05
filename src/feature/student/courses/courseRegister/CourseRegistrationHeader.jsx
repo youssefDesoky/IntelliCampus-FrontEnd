@@ -42,6 +42,7 @@ function StatCard({ icon, value, label, colorClass, delay = 0 }) {
 
 export default function CourseRegistrationHeader({
     selectedCourses = [],
+    pendingRemovalIds = new Set(),
     activeFilter = "all",
     onFilterChange,
     searchValue = "",
@@ -64,10 +65,12 @@ export default function CourseRegistrationHeader({
         { value: "elective", label: t('registration.filterElective'), icon: BookIcon },
     ];
 
-    const selectedCredits = selectedCourses.reduce(
-        (sum, c) => sum + (typeof c.creditHours === "number" ? c.creditHours : 0),
-        0
-    );
+    const selectedCredits = selectedCourses
+        .filter(c => !pendingRemovalIds.has(c.courseId))
+        .reduce(
+            (sum, c) => sum + (typeof c.creditHours === "number" ? c.creditHours : 0),
+            0
+        );
     const remainingCredits = Math.max(0, maxCredits - selectedCredits);
     const progressPercent = Math.min(100, (selectedCredits / maxCredits) * 100);
 
@@ -145,7 +148,7 @@ export default function CourseRegistrationHeader({
                         </div>
                     </div>
 
-                    {isOnProbation && (
+                    {isOnProbation && !isSummer && (
                         <div className="mt-3 flex items-center gap-2 p-3 rounded-lg bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
                             <WarningIcon className="w-5 h-5 text-text-warning-default-light dark:text-text-warning-default-dark shrink-0" />
                             <p className="text-xs font-medium text-text-warning-default-light dark:text-text-warning-default-dark">

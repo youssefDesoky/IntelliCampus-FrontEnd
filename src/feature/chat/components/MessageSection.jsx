@@ -60,6 +60,7 @@ export default function MessageSection({ date, messages, showSenderInfo, deleteM
             isEdited={msg.isEdited}
             isPinned={msg.isPinned}
             isAi={msg.isAi}
+            isSystemMessage={msg.isSystemMessage}
           />
         );
       })}

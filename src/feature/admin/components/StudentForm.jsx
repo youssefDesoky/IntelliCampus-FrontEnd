@@ -103,8 +103,9 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
 
     useEffect(() => {
         const type = selectedStudentType?.value ? bylawTypeMap[selectedStudentType.value] : undefined;
-        fetchBylaws(type)
-            .then(data => {
+        fetchBylaws({ type })
+            .then(result => {
+                const data = Array.isArray(result) ? result : (result?.data ?? []);
                 const options = data.map(b => ({ value: b.bylawId, label: b.name }));
                 setBylaws(options);
                 setSelectedBylaw(null);
@@ -118,7 +119,8 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
 
     useEffect(() => {
         fetchDepartments()
-            .then(data => {
+            .then(result => {
+                const data = Array.isArray(result) ? result : (result?.data ?? []);
                 const options = data.map(d => ({ value: d.departmentId, label: d.departmentName }));
                 setDepartments(options);
                 if (initialData.departmentId) {

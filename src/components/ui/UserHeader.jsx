@@ -24,7 +24,8 @@ export default function UserHeader({ role, setIsUserFormOpen, onImportComplete }
         if (role === "student") {
             setIsLoadingBylaws(true);
             fetchBylaws()
-                .then(data => {
+                .then(result => {
+                    const data = Array.isArray(result) ? result : (result?.data ?? []);
                     const options = data.map(b => ({ value: b.bylawId, label: b.name }));
                     setBylaws(options);
                 })

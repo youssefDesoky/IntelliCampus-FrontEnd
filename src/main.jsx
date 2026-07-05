@@ -20,6 +20,7 @@ export const queryClient = new QueryClient({
   },
 })
 
+
 window.__updateSW = null
 window.__deferredPrompt = null
 

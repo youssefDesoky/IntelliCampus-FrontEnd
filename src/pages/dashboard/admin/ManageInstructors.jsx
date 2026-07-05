@@ -101,9 +101,9 @@ export default function ManageInstructors() {
           </Button>
         </div>
       )}
-      searchPlaceholder={t('manageInstructors.search')}
-      searchFilter={searchFilter}
-      tableRole="instructor"
+  searchPlaceholder={t('manageInstructors.search')}
+  serverSidePagination={true}
+  tableRole="instructor"
       tableHeaders={instructorTableHeaders}
       columnAlignments={instructorColumnAlignments}
       buildRow={buildInstructorRow}
@@ -120,11 +120,15 @@ export default function ManageInstructors() {
         }
         return items;
       }}
-      getDeleteMessage={(item) => (
-        <Trans i18nKey="manageInstructors.deleteConfirm" ns="admin" values={{ name: getLocalizedField(item, 'fullName', i18n.language), id: item?.instructorId }}>
-          Are you sure you want to delete <strong>{{ name }}</strong> ({{ id }})? This action cannot be undone.
-        </Trans>
-      )}
+      getDeleteMessage={(item) => {
+        const name = getLocalizedField(item, 'fullName', i18n.language);
+        const id = item?.instructorId;
+        return (
+          <Trans i18nKey="manageInstructors.deleteConfirm" ns="admin" values={{ name, id }}>
+            Are you sure you want to delete <strong>{{ name }}</strong> ({{ id }})? This action cannot be undone.
+          </Trans>
+        );
+      }}
       renderFilters={({ rawItems, setCurrentPage }) => {
         const departments = [...new Set(rawItems.map(i => i.departmentName).filter(Boolean))].sort();
         const instructorTypes = [...new Set(rawItems.map(i => i.instructorRole).filter(Boolean))].sort();

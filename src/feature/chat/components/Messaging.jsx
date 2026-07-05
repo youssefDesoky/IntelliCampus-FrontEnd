@@ -3,26 +3,35 @@ import MessageSection from "./MessageSection";
 import PinnedMessage from "./PinnedMessage";
 import ChatControls from "./ChatControls";
 import ChatPartnerHeader from "./ChatPartnerHeader";
-import { useRef, useEffect } from "react";
-import Message from "./Message";
+import GroupMembersPanel from "./GroupMembersPanel";
+import { useRef, useEffect, useState } from "react";
 import TypingIndicator from "./TypingIndicator";
 
-export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping, chatPartner, deleteMessage, editMessage, pinMessage, unpinMessage, pinnedMessage, showSenderInfo, searchQuery, onSearchChange, isPhone, onBack, onAttachFile, onDeleteFriend, onSendCourseQuestion }) {
+export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping, chatPartner, deleteMessage, editMessage, pinMessage, unpinMessage, pinnedMessage, showSenderInfo, searchQuery, onSearchChange, isPhone, onBack, onAttachFile, onDeleteFriend, onLeaveGroup, groupMembers, groupDetails, onAddGroupMember, currentUser, onSendCourseQuestion }) {
   const { t } = useTranslation('chat');
   const bottomRef = useRef(null);
+  const [showMembers, setShowMembers] = useState(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (Object.keys(messages).length === 0) return;
+    const raf = requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+    });
+    return () => cancelAnimationFrame(raf);
   }, [messages, partnerTyping]);
-
-  const isEmpty = Object.keys(messages).length === 0;
 
   if (!chatPartner) return null;
 
+  const isEmpty = Object.keys(messages).length === 0;
+
   return (
     <div className={`${isPhone ? '' : 'col-span-2'} flex flex-col h-full min-h-0 gap-0`}>
-      <ChatPartnerHeader chatPartner={chatPartner} partnerTyping={partnerTyping} searchQuery={searchQuery} onSearchChange={onSearchChange} isPhone={isPhone} onBack={onBack} onDeleteFriend={onDeleteFriend} />
+      <ChatPartnerHeader chatPartner={chatPartner} partnerTyping={partnerTyping} searchQuery={searchQuery} onSearchChange={onSearchChange} isPhone={isPhone} onBack={onBack} onDeleteFriend={onDeleteFriend} onLeaveGroup={onLeaveGroup} showMembers={showMembers} onShowMembers={() => setShowMembers((s) => !s)} />
       {pinnedMessage && <PinnedMessage message={pinnedMessage} />}
+
+      {showMembers && groupMembers.length > 0 && (
+        <GroupMembersPanel members={groupMembers} onClose={() => setShowMembers(false)} groupDetails={groupDetails} onAddGroupMember={onAddGroupMember} currentUser={currentUser} />
+      )}
 
       {/* Messages area */}
       <div className="flex-1 min-h-0 overflow-y-auto pe-1 no-scrollbar mt-2">

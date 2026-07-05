@@ -98,6 +98,7 @@ export default function ManageEntity({
   const { data: fetchResult, isLoading, isFetching, error, refetch } = useQuery({
     queryKey,
     queryFn,
+    placeholderData: keepPreviousData,
   });
 
   const rawItems = fetchResult?.data ?? fetchResult ?? [];

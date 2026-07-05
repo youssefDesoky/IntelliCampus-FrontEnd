@@ -49,11 +49,7 @@ export default function ManageRooms() {
       headerSubtitle={t('manageRooms.subtitle')}
       headerAddLabel={t('manageRooms.addRoom')}
       searchPlaceholder={t('manageRooms.search')}
-      searchFilter={(item, q) =>
-        (item.name || item.roomName || "").toLowerCase().includes(q) ||
-        (item.type && item.type.toLowerCase().includes(q)) ||
-        (item.location && item.location.toLowerCase().includes(q))
-      }
+      serverSidePagination={true}
       tableRole="room"
       tableHeaders={tableHeaders}
       columnAlignments={columnAlignments}

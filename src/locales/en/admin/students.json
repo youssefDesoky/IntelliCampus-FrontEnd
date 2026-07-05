@@ -20,6 +20,7 @@
   "manageStudents.deleteConfirm": "Are you sure you want to delete <1>{{name}}</1> ({{id}})? This action cannot be undone.",
   "manageStudents.entityName": "Student",
   "manageStudents.entityNamePlural": "Students",
+  "manageStudents.nonProbation": "Non-Probation",
 
   "studentForm.title.edit": "Edit Student",
   "studentForm.title.create": "Create New Student",

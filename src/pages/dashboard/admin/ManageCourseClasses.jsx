@@ -30,6 +30,8 @@ import {
   deleteClassFromCourse,
   updateCourse,
   fetchCourses,
+  deactivateCourse,
+  reactivateCourse,
 } from "../../../feature/admin/services/adminCoursesApi";
 import { importClasses } from "../../../feature/admin/services/adminImportsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
@@ -124,7 +126,7 @@ function ClassCard({ cls, onEdit, onDelete }) {
                     </h4>
                     <div className="flex items-center gap-1.5 mt-2 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         <LocationDotIcon className="w-3.5 h-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                        <span className="truncate font-medium">{cls.room || t('manageCourseClasses.noRoom')}</span>
+                        <span className="truncate font-medium">{cls.roomName || t('manageCourseClasses.noRoom')}</span>
                     </div>
                 </div>
             </div>
@@ -236,6 +238,7 @@ export default function ManageCourseClasses() {
 
     const [isEditCourseOpen, setIsEditCourseOpen] = useState(false);
     const [allCourses, setAllCourses] = useState([]);
+    const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
 
     const loadData = useCallback(async () => {
         try {
@@ -278,7 +281,7 @@ export default function ManageCourseClasses() {
             instructor: cls.instructorName,
             instructorId: cls.instructorId,
             schedule: scheduleStr,
-            room: cls.room,
+            room: cls.roomName,
             roomId: cls.roomId,
             capacity: cls.capacity,
         });
@@ -326,6 +329,25 @@ export default function ManageCourseClasses() {
         setIsEditCourseOpen(true);
     };
 
+    const handleDeactivate = async () => {
+        try {
+            await deactivateCourse(courseId);
+            setIsDeactivateOpen(false);
+            await loadData();
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
+    const handleReactivate = async () => {
+        try {
+            await reactivateCourse(courseId);
+            await loadData();
+        } catch (err) {
+            showError(err.message);
+        }
+    };
+
     const lectures = classes.filter((c) => c.classTypeName === "Lecture");
     const sections = classes.filter((c) => c.classTypeName === "Section");
 
@@ -359,7 +381,15 @@ export default function ManageCourseClasses() {
                         <FilePenIcon className="w-4 h-4" />
                         <span className="hidden sm:inline"> {t('manageCourseClasses.editCourse')}</span>
                     </Button>
-
+                    {course?.isActive ? (
+                        <Button variant="warning" size="sm" onClick={() => setIsDeactivateOpen(true)}>
+                            <span className="hidden sm:inline"> {t('manageCourseClasses.deactivate')}</span>
+                        </Button>
+                    ) : (
+                        <Button variant="success" size="sm" onClick={handleReactivate}>
+                            <span className="hidden sm:inline"> {t('manageCourseClasses.reactivate')}</span>
+                        </Button>
+                    )}
                 </div>
             </div>
 

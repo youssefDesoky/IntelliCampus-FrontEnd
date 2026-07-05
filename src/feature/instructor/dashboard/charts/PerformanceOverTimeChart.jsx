@@ -12,13 +12,13 @@ const tooltipStyle = {
 };
 
 export default function PerformanceOverTimeChart({ className = "", data = [], downloadUrl }) {
+  const { t, i18n } = useTranslation('instructor');
   const chartData = data.map((d) => ({
     name: getLocalizedField(d, 'name', i18n.language),
     average: Number(d.average ?? 0),
     maxScore: Number(d.maxScore ?? 0),
     minScore: Number(d.minScore ?? 0),
   }));
-  const { t, i18n } = useTranslation('instructor');
 
   return (
     <ChartCard title={t('chart.performanceOverTime')} icon={<ChartLineIcon size={20} />} className={className} downloadUrl={downloadUrl}

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import { BookIcon } from "../../../components/ui/icons";
@@ -61,6 +61,7 @@ export default function InstructorCourses() {
             return (Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []).map(mapCourseToCardProps);
         },
         staleTime: 5 * 60 * 1000,
+        placeholderData: keepPreviousData,
     });
 
     const [viewMode, setViewMode] = useState(() => {

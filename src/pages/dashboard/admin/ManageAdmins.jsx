@@ -97,7 +97,7 @@ export default function ManageAdmins() {
       headerType="user"
       headerRole="admin"
       searchPlaceholder={t('manageAdmins.search')}
-      searchFilter={searchFilter}
+      serverSidePagination={true}
       tableRole="admin"
       tableHeaders={adminTableHeaders}
       columnAlignments={adminColumnAlignments}
@@ -115,11 +115,15 @@ export default function ManageAdmins() {
         }
         return items;
       }}
-      getDeleteMessage={(item) => (
-        <Trans i18nKey="manageAdmins.deleteConfirm" ns="admin" values={{ name: getLocalizedField(item, 'fullName', i18n.language), id: item?.adminId }}>
-          Are you sure you want to delete <strong>{{ name }}</strong> ({{ id }})? This action cannot be undone.
-        </Trans>
-      )}
+      getDeleteMessage={(item) => {
+        const name = getLocalizedField(item, 'fullName', i18n.language);
+        const id = item?.adminId;
+        return (
+          <Trans i18nKey="manageAdmins.deleteConfirm" ns="admin" values={{ name, id }}>
+            Are you sure you want to delete <strong>{{ name }}</strong> ({{ id }})? This action cannot be undone.
+          </Trans>
+        );
+      }}
       renderForm={({ isFormOpen, editingItem, closeForm, handleCreate, handleFormSubmit }) => {
         if (!isFormOpen) return null;
         if (editingItem) {

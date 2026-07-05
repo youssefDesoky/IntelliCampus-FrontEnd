@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ManageEntity from "../../../components/ui/ManageEntity";
 import Button from "../../../components/ui/Button";
@@ -15,7 +15,7 @@ import {
   CalendarIcon,
 } from "../../../components/ui/icons";
 import {
-  fetchCourses,
+  fetchCoursesPaginated,
   createCourse,
   updateCourse,
   deleteCourse,
@@ -24,6 +24,7 @@ import {
   reactivateCourse,
   updateCourseRegistrationSettings,
 } from "../../../feature/admin/services/adminCoursesApi";
+import { fetchDepartments } from "../../../feature/admin/services/adminDepartmentsApi";
 import { importCourses } from "../../../feature/admin/services/adminImportsApi";
 import CourseRegistrationSettings from "../../../feature/admin/components/CourseRegistrationSettings";
 import { useError } from '../../../contexts/ErrorContext.jsx';
@@ -60,6 +61,14 @@ export default function ManageCourses() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [filterDepartment, setFilterDepartment] = useState([]);
   const [isRegSettingsOpen, setIsRegSettingsOpen] = useState(false);
+  const [allDepartments, setAllDepartments] = useState([]);
+
+  useEffect(() => {
+    fetchDepartments().then(result => {
+      const depts = Array.isArray(result) ? result : (result?.data ?? []);
+      setAllDepartments(depts);
+    }).catch(() => {});
+  }, []);
 
   const courseTableHeaders = useMemo(() => {
     if (isDesktop) return [t('manageCourses.courseCode'), t('manageCourses.course'), t('manageCourses.department'), t('manageCourses.creditHours'), t('manageCourses.status')];
@@ -73,16 +82,24 @@ export default function ManageCourses() {
     return ["text-start", "text-center"];
   }, [isDesktop, isTablet]);
 
-  const fetchCoursesMapped = useCallback(async () => {
-    const data = await fetchCourses();
-    return (Array.isArray(data) ? data : []).map((c) => ({
+  const departmentNameToId = useMemo(() => {
+    const map = {};
+    allDepartments.forEach(d => { map[d.departmentName] = d.departmentId; });
+    return map;
+  }, [allDepartments]);
+
+  const fetchCoursesWrapped = useCallback(async ({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) => {
+    const departmentId = filterDepartment.length === 1 ? departmentNameToId[filterDepartment[0]] : undefined;
+    const result = await fetchCoursesPaginated({ pageIndex, pageSize, searchQuery, departmentId });
+    const mappedData = (result?.data ?? []).map((c) => ({
       ...c,
       isActive:
         c.statusName?.toLowerCase() === "active" ||
         (typeof c.status === "string" && c.status.toLowerCase() === "active") ||
         c.status === 0,
     }));
-  }, []);
+    return { data: mappedData, totalCount: result?.totalCount ?? 0 };
+  }, [filterDepartment, departmentNameToId]);
 
   const buildCourseRow = useCallback((course, { isDesktop, isTablet }) => {
     const row = {};
@@ -104,7 +121,7 @@ export default function ManageCourses() {
       entityName={t('manageCourses.entityName')}
       entityNamePlural={t('manageCourses.entityNamePlural')}
       entityIdField="courseId"
-      fetchItems={fetchCoursesMapped}
+      fetchItems={fetchCoursesWrapped}
       createItem={createCourse}
       updateItem={updateCourse}
       deleteItem={deleteCourse}
@@ -112,17 +129,7 @@ export default function ManageCourses() {
       headerSubtitle={t('manageCourses.subtitle')}
       onPreview={(course) => setViewingCourse(course)}
       searchPlaceholder={t('manageCourses.search')}
-      searchFilter={(item, q) => {
-        if (q) {
-          if (!(item.courseName?.toLowerCase().includes(q) ||
-            String(item.courseId)?.toLowerCase().includes(q) ||
-            item.courseCode?.toLowerCase().includes(q) ||
-            item.departmentName?.toLowerCase().includes(q) ||
-            item.professor?.toLowerCase().includes(q))) return false;
-        }
-        if (filterDepartment.length > 0 && !filterDepartment.includes(item.departmentName)) return false;
-        return true;
-      }}
+      serverSidePagination={true}
       tableRole="course"
       tableRoleLabel="Courses"
       tableHeaders={courseTableHeaders}
@@ -210,14 +217,17 @@ export default function ManageCourses() {
           </>
         );
       }}
-      getDeleteMessage={(item) => (
-        <Trans t={t} i18nKey="manageCourses.deleteConfirm" values={{ name: getLocalizedField(item, 'courseName', i18n.language), code: getLocalizedField(item, 'courseCode', i18n.language) || item?.courseId }}>
-          Are you sure you want to delete <strong>{{name}}</strong> ({{code}})? This action cannot be undone.
-        </Trans>
-      )}
-      extraDeps={[filterDepartment]}
-      renderFilters={({ rawItems, setCurrentPage }) => {
-        const departments = [...new Set(rawItems.map(c => c.departmentName).filter(Boolean))].sort();
+      getDeleteMessage={(item) => {
+        const name = getLocalizedField(item, 'courseName', i18n.language);
+        const code = getLocalizedField(item, 'courseCode', i18n.language) || item?.courseId;
+        return (
+          <Trans t={t} i18nKey="manageCourses.deleteConfirm" ns="admin" values={{ name, code }}>
+            Are you sure you want to delete <strong>{{ name }}</strong> ({{ code }})? This action cannot be undone.
+          </Trans>
+        );
+      }}
+      renderFilters={({ setCurrentPage }) => {
+        const departments = [...new Set(allDepartments.map(d => d.departmentName).filter(Boolean))].sort();
         return (
           <FilterDropdown
             label={t('manageCourses.department')}

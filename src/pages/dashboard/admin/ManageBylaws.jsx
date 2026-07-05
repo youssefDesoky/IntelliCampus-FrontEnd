@@ -92,17 +92,13 @@ export default function ManageBylaws() {
       headerSubtitle={t('manageBylaws.subtitle')}
       headerAddLabel={t('manageBylaws.create')}
       searchPlaceholder={t('manageBylaws.searchPlaceholder')}
-      searchFilter={(item, q) =>
-        item.name?.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q) ||
-        item.fileName?.toLowerCase().includes(q)
-      }
+      serverSidePagination={true}
       tableRole="bylaw"
       tableHeaders={tableHeaders}
       columnAlignments={["text-start", "text-start", "text-center", "text-center", "text-center", "text-center"]}
       buildRow={(item) => buildBylawRow(item)}
       rowActions={(item, { onEdit, onDelete, loadItems }) => [
-        { label: t('common:labels.edit'), onClick: () => onEdit(item) },
+        { label: t('common:edit'), onClick: () => onEdit(item) },
         {
           label: t('manageBylaws.manage'),
           onClick: () => navigate(`/admin/bylaws/${item.bylawId}`),
@@ -118,13 +114,16 @@ export default function ManageBylaws() {
             }
           },
         },
-        { label: t('common:labels.delete'), onClick: () => onDelete(item) },
+        { label: t('common:delete'), onClick: () => onDelete(item) },
       ]}
-      getDeleteMessage={(item) => (
-        <Trans t={t} i18nKey="manageBylaws.deleteConfirm" values={{ name: item?.name }}>
-          Are you sure you want to delete <strong>{{ name }}</strong>? Students assigned to this bylaw will have their bylaw reference removed.
-        </Trans>
-      )}
+      getDeleteMessage={(item) => {
+        const name = item?.name;
+        return (
+          <Trans t={t} i18nKey="manageBylaws.deleteConfirm" values={{ name }}>
+            Are you sure you want to delete <strong>{{ name }}</strong>? Students assigned to this bylaw will have their bylaw reference removed.
+          </Trans>
+        );
+      }}
       getDeleteSelectedMessage={(count) =>
         t('manageBylaws.deleteSelectedConfirm', { count })
       }

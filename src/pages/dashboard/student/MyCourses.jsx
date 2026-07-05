@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useTranslation } from 'react-i18next';
 import Section from "../../../components/ui/Section";
 
@@ -91,7 +91,15 @@ export default function MyCourses() {
     });
     const [filterStatus, setFilterStatus] = useState([]);
     const [filterType, setFilterType] = useState([]);
+    const [searchInput, setSearchInput] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSearchQuery(searchInput);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
 
     const backendStatus =
         filterStatus.length === 1
@@ -103,14 +111,16 @@ export default function MyCourses() {
     const {
         data: courses = [],
         isLoading: loading,
+        isFetching,
     } = useQuery({
-        queryKey: ["myCourses", backendStatus],
+        queryKey: ["myCourses", backendStatus, searchQuery],
         queryFn: async () => {
-            const result = await fetchMyStudentCourses(backendStatus, 1, 100);
+            const result = await fetchMyStudentCourses(backendStatus, 1, 100, searchQuery);
             const raw = result?.data ?? (Array.isArray(result) ? result : []);
             return raw.map(mapCourseToMyCourseProps);
         },
         staleTime: 2 * 60 * 1000,
+        placeholderData: keepPreviousData,
     });
 
     useEffect(() => {
@@ -118,21 +128,13 @@ export default function MyCourses() {
     }, [viewMode]);
 
     // Apply filters
-    const filteredCourses = courses.filter(c => {
+    const filteredCourses = useMemo(() => courses.filter(c => {
         if (filterStatus.length > 0 && !filterStatus.includes(c.status)) return false;
         if (filterType.length > 0 && !filterType.includes(c.type)) return false;
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            const match =
-                c.title.toLowerCase().includes(q) ||
-                c.code.toLowerCase().includes(q) ||
-                c.instructor.toLowerCase().includes(q);
-            if (!match) return false;
-        }
         return true;
-    });
+    }), [courses, filterStatus, filterType]);
 
-    // Reset page when filters or search change
+    // Reset page when filters change
     useEffect(() => {
         setPage(1);
     }, [filterStatus, filterType, searchQuery]);
@@ -172,8 +174,8 @@ export default function MyCourses() {
                 setFilterStatus={setFilterStatus}
                 filterType={filterType}
                 setFilterType={setFilterType}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
+                searchQuery={searchInput}
+                setSearchQuery={setSearchInput}
                 hasCourses={courses.length > 0}
             />
 
