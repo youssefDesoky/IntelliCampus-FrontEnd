@@ -2,9 +2,11 @@ import apiClient from "../../../api/apiClient";
 
 // ─── Rooms ──────────────────────────────────────────────────
 
-export async function fetchRooms() {
-    const result = await apiClient('/api/rooms?PageSize=50');
-    return result?.data ?? result ?? [];
+export async function fetchRooms({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) {
+    const params = new URLSearchParams({ PageIndex: pageIndex, PageSize: pageSize });
+    if (searchQuery) params.set('Search', searchQuery);
+    const result = await apiClient(`/api/rooms?${params}`);
+    return { data: result?.data ?? result ?? [], totalCount: result?.totalCount ?? 0 };
 }
 
 export async function fetchRoomTypes() {

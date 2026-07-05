@@ -26,13 +26,14 @@ export default function ManageDepartments() {
     [instructors]
   );
 
-  const fetchAll = useCallback(async () => {
-    const [departmentData, instructorData] = await Promise.all([
-      fetchDepartments(),
+  const fetchAll = useCallback(async ({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) => {
+    const [departmentResult, instructorResult] = await Promise.all([
+      fetchDepartments({ pageIndex, pageSize, searchQuery }),
       fetchInstructors(),
     ]);
-    setInstructors(Array.isArray(instructorData) ? instructorData : []);
-    return departmentData;
+    const instructorData = Array.isArray(instructorResult) ? instructorResult : (instructorResult?.data ?? []);
+    setInstructors(instructorData);
+    return departmentResult;
   }, []);
 
   const buildDepartmentRow = useCallback((department) => {
@@ -88,7 +89,7 @@ export default function ManageDepartments() {
         </div>
       )}
       searchPlaceholder={t('manageDepartments.search')}
-      searchFilter={searchFilter}
+      serverSidePagination={true}
       tableRole="department"
       tableHeaders={[t('manageDepartments.departmentName'), t('manageDepartments.headInstructor'), t('manageDepartments.courses'), t('manageDepartments.description')]}
       columnAlignments={["text-start", "text-start", "text-center", "text-start"]}

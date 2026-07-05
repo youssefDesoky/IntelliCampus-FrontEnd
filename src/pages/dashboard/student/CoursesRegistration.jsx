@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 
 import useDeviceType from "../../../hooks/useDeviceType";
 import useArabicDigits from "../../../hooks/useArabicDigits";
@@ -179,6 +179,7 @@ export default function CoursesRegistration() {
             return { registrations, courses };
         },
         staleTime: 0,
+        placeholderData: keepPreviousData,
     });
 
     const { data: scheduleData = [], isLoading: schedulePreviewLoading } = useQuery({

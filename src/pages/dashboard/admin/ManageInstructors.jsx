@@ -100,9 +100,9 @@ export default function ManageInstructors() {
           </Button>
         </div>
       )}
-      searchPlaceholder={t('manageInstructors.search')}
-      searchFilter={searchFilter}
-      tableRole="instructor"
+  searchPlaceholder={t('manageInstructors.search')}
+  serverSidePagination={true}
+  tableRole="instructor"
       tableHeaders={instructorTableHeaders}
       columnAlignments={instructorColumnAlignments}
       buildRow={buildInstructorRow}

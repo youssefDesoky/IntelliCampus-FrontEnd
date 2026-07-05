@@ -91,11 +91,7 @@ export default function ManageBylaws() {
       headerSubtitle={t('manageBylaws.subtitle')}
       headerAddLabel={t('manageBylaws.create')}
       searchPlaceholder={t('manageBylaws.searchPlaceholder')}
-      searchFilter={(item, q) =>
-        item.name?.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q) ||
-        item.fileName?.toLowerCase().includes(q)
-      }
+      serverSidePagination={true}
       tableRole="bylaw"
       tableHeaders={tableHeaders}
       columnAlignments={["text-start", "text-start", "text-center", "text-center", "text-center", "text-center"]}

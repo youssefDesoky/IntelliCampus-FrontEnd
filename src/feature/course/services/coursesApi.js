@@ -13,9 +13,10 @@ export async function fetchMyTeachingCourses(params = {}) {
   return apiClient(`/api/courses/my-teaching${qs ? `?${qs}` : ''}`);
 }
 
-export async function fetchMyStudentCourses(status = null, pageIndex = 1, pageSize = 100) {
+export async function fetchMyStudentCourses(status = null, pageIndex = 1, pageSize = 100, search = "") {
   const params = new URLSearchParams();
   if (status) params.set('status', status);
+  if (search) params.set('search', search);
   params.set('pageIndex', pageIndex);
   params.set('pageSize', pageSize);
   const query = params.toString();

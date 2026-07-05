@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { FileSlashIcon } from "../../../../components/ui/icons";
 import Section from "../../../../components/ui/Section";
 import CoursePrerequisitesCard from "./CoursePrerequisitesCard";
@@ -35,6 +35,7 @@ export default function CoursePrerequisitesBody({ search = "" }) {
             }));
         },
         staleTime: 10 * 60 * 1000,
+        placeholderData: keepPreviousData,
     });
 
     if (loading) {

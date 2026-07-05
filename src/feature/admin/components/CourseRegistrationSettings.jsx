@@ -31,8 +31,8 @@ export default function CourseRegistrationSettings({ onClose, onSave }) {
     queryKey: ["departments"],
     queryFn: async () => {
       try {
-        const data = await fetchDepartments();
-        return Array.isArray(data) ? data : [];
+        const result = await fetchDepartments();
+        return Array.isArray(result) ? result : (result?.data ?? []);
       } catch {
         return [];
       }

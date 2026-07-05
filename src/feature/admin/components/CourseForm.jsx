@@ -15,7 +15,8 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
 
     useEffect(() => {
         fetchDepartments()
-            .then(data => {
+            .then(result => {
+                const data = Array.isArray(result) ? result : (result?.data ?? []);
                 const options = data.map(d => ({ value: d.departmentId, label: d.departmentName }));
                 setDepartments(options);
                 if (initialData.departmentId) {
