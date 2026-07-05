@@ -9,6 +9,7 @@ import { UserIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
 import { fetchStudents, createStudent, updateStudent, deleteStudent } from "../../../feature/admin/services/adminStudentsApi";
 import useArabicDigits from "../../../hooks/useArabicDigits";
+import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 export default function ManageStudents() {
   const { t } = useTranslation('admin');
@@ -140,6 +141,7 @@ export default function ManageStudents() {
         }
         return <StudentForm method="post" onClose={closeForm} onSubmit={handleCreate} isSuperAdmin={isSuperAdmin} defaultStudentType={defaultStudentType} />;
       }}
+      renderLoading={() => <ManageContentSkeleton />}
       renderExtraDialogs={({ loadItems, deleteTarget, setDeleteTarget }) => (
         assignRoleTarget && (
           <AssignRoleModal

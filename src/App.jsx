@@ -8,9 +8,8 @@ import { RoleGuard } from "./routes/guards";
 import { rootAuthLoader } from "./routes/loaders";
 import { authAction, logoutAction } from "./routes/actions";
 
-import CustomCursor from "./components/ui/CustomCursor";
+// import CustomCursor from "./components/ui/CustomCursor";
 import { ContextMenuProvider } from "./components/ui/ContextMenu";
-import InstallPrompt from "./components/ui/InstallPrompt";
 import UpdateBanner from "./components/ui/UpdateBanner";
 import SidebarProvider from "./contexts/SidebarProvider";
 import CourseShell from "./feature/course/component/CourseShell";
@@ -33,6 +32,7 @@ import {
     StudyGroup as StudentStudyGroup, 
     StudyGroupPostDetail as StudentStudyGroupPostDetail,
     SmartNotes as StudentSmartNotes, 
+    SmartNoteDetail as StudentSmartNoteDetail, 
     CourseMaterials as StudentCourseMaterials, 
     CoursePrerequisites as StudentCoursePrerequisites, 
     CoursesRegistration as StudentCoursesRegistration,
@@ -97,7 +97,6 @@ export default function App() {
                 element: <RoleGuard allow={["student_bachelor", "student_masters", "student_phd", "student_diploma", "student"]} />,
                 children: [
                     { index: true, element: <StudentDashboard /> },
-                    { path: "fahim", element: <div>Fahim AI Content</div> },
                     { path: "courses", element: <StudentCourses /> },
 
                     {
@@ -114,6 +113,7 @@ export default function App() {
                             { path: "community", element: <StudentStudyGroup /> },
                             { path: "community/questions/:postId", element: <StudentStudyGroupPostDetail /> },
                             { path: "smart-notes", element: <StudentSmartNotes /> },
+                            { path: "smart-notes/:noteId", element: <StudentSmartNoteDetail /> },
                             { path: "meeting", element: <InstructorMeetingRoom /> },
                         ],
                     },
@@ -124,6 +124,7 @@ export default function App() {
                     { path: "courses/academic-progress", element: <StudentAcademicProgress /> },
                     { path: "reminders", element: <StudentReminders /> },
                     { path: "smart-notes", element: <StudentSmartNotes /> },
+                    { path: "smart-notes/:noteId", element: <StudentSmartNoteDetail /> },
                     { path: "schedule", element: <StudentSchedule /> },
                     {
                         path: "specialization-preference",
@@ -241,11 +242,10 @@ export default function App() {
 
     return (
         <ContextMenuProvider blockNative>
-            <CustomCursor />
+            {/* <CustomCursor /> */}
             <SidebarProvider>
                 <RouterProvider router={router} />
             </SidebarProvider>
-            <InstallPrompt />
             <UpdateBanner />
         </ContextMenuProvider>
     );

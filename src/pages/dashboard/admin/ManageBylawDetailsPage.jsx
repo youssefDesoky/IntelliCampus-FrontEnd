@@ -43,6 +43,7 @@ import {
 } from "../../../feature/admin/services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { BylawDetailsSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 const getTabs = (t) => [
   { key: "bylawDetails", label: t('manageBylaws.details') },
@@ -1051,11 +1052,7 @@ export default function ManageBylawDetailsPage() {
   };
 
   if (isLoading) {
-    return (
-      <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-        {t('manageBylaws.loading')}
-      </p>
-    );
+    return <BylawDetailsSkeleton />;
   }
 
   return (

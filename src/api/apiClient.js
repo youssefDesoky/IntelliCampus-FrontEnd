@@ -67,10 +67,8 @@ export default async function apiClient(endpoint, options = {}) {
         emitError({ title, message: detail || 'Resource not found' });
         break;
       case 500:
-        window.location.href = '/internal-server-error';
+        emitError({ title, message: detail || 'Internal server error' });
         break;
-      default:
-        emitError({ title, message: detail });
     }
 
     throw error;

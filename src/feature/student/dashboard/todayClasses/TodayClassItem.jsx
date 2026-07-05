@@ -64,7 +64,7 @@ export default function ClassItem({classInfo}) {
             <div className="ps-5 pe-4 md:ps-6 md:pe-5 py-5 border-b border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/40 dark:bg-bg-surface-secondary-default-dark/40">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                        <p className="text-xs uppercase tracking-wide text-text-tertiary-default-light dark:text-text-tertiary-default-dark">Class Time</p>
+                        <p className="text-xs uppercase tracking-wide text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{t('dashboard.classTime')}</p>
                         <p className="mt-1 text-base md:text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{time}</p>
                     </div>
 
@@ -82,7 +82,7 @@ export default function ClassItem({classInfo}) {
                     </span>
                     <span className="inline-flex w-full items-center gap-1.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark px-2.5 py-1.5 text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         <ClockIcon className="h-4.5 w-4.5 shrink-0" />
-                        <span>Duration: {duration}</span>
+                        <span>{t('dashboard.duration', { duration })}</span>
                     </span>
                 </div>
             </div>
@@ -94,7 +94,7 @@ export default function ClassItem({classInfo}) {
                     className="h-11 w-11 rounded-full object-cover ring-2 ring-bg-surface-blue-default-light dark:ring-bg-surface-blue-default-dark"
                 />
                 <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary-default-light dark:text-text-tertiary-default-dark">Instructor</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{t('dashboard.instructor')}</p>
                     <h4 className="mt-0.5 truncate font-semibold text-text-primary-default-light dark:text-text-primary-default-dark inline-flex items-center gap-2">
                         <UserTieIcon className="h-4 w-4" />
                         {professor}

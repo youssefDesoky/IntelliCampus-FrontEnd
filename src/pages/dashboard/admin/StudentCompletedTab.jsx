@@ -5,6 +5,7 @@ import PaginationButtons from "../../../components/ui/PaginationButtons";
 import useDeviceType from "../../../hooks/useDeviceType";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
 import useArabicDigits from '../../../hooks/useArabicDigits';
+import { TabTableSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 function toGradeLetter(p) {
     if (p === null || p === undefined) return "—";
@@ -58,7 +59,7 @@ export default function StudentCompletedTab({ courses, loading, page, totalPages
     const paginated = courses.slice((page - 1) * 10, page * 10);
 
     if (loading) {
-        return <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.loadingCompleted')}</p>;
+        return <TabTableSkeleton rows={5} />;
     }
 
     if (courses.length === 0) {

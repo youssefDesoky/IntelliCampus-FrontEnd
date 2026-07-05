@@ -10,6 +10,8 @@
   "dashboard.noReminders": "لا توجد تذكيرات اليوم",
   "dashboard.finished": "منتهي",
   "dashboard.posted": "تم النشر",
+  "dashboard.editedTime": "تم التعديل {{time}}",
+  "dashboard.postedTime": "تم النشر {{time}}",
   "dashboard.postedRecently": "تم النشر مؤخراً",
   "dashboard.viewAllReminders": "عرض كل التذكيرات",
   "dashboard.analytics": "التحليلات",

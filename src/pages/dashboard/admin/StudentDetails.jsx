@@ -25,6 +25,7 @@ import StudentInfoTab from "./StudentInfoTab";
 import StudentCompletedTab from "./StudentCompletedTab";
 import StudentRegisteredTab from "./StudentRegisteredTab";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { StudentDetailsSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -142,11 +143,7 @@ export default function StudentDetails() {
     ));
 
     if (loading) {
-        return (
-            <div className="p-6">
-                <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.loading')}</p>
-            </div>
-        );
+        return <StudentDetailsSkeleton />;
     }
 
     if (!student) {

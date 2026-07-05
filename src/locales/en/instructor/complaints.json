@@ -40,5 +40,6 @@
   "excuses.loading": "Loading excuse requests...",
   "excuses.errorLoad": "Failed to load excuse requests.",
   "excuses.errorApprove": "Failed to approve excuse.",
-  "excuses.errorReject": "Failed to reject excuse."
+  "excuses.errorReject": "Failed to reject excuse.",
+  "complaints.errorUpdate": "Failed to update complaint"
 }

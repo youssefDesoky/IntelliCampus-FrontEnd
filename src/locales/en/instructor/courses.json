@@ -25,6 +25,7 @@
   "courses.active": "Active",
   "courses.creditHour": "{{count}} credit hour",
   "courses.creditHour_plural": "{{count}} credit hours",
+  "courseDetail.readOnly": "This course is finalized and read-only. No changes can be made.",
   "courses.studentCount": "{{count}} Student",
   "courses.studentCount_plural": "{{count}} Students",
   "materials.title": "Materials",
@@ -48,6 +49,13 @@
   "materials.noMaterials": "No materials yet",
   "materials.noMaterialsDesc": "Upload lecture notes, slides, videos, or any resources for this week.",
   "materials.dragDropPrompt": "Drag & drop files here",
+  "materials.dropFilesDrag": "Drop files here",
+  "materials.uploading": "Uploading...",
+  "materials.uploadingWait": "Please wait while your files are uploaded",
+  "materials.uploadSuccess": "Upload Complete",
+  "materials.reSyncToAi": "Re-sync to AI",
+  "materials.aiReSynced": "Indexed in AI",
+  "materials.aiReSyncFailed": "AI sync failed",
   "materials.fileCount": "{{count}} file",
   "materials.fileCount_plural": "{{count}} files",
   "materials.delete": "Delete",
@@ -83,5 +91,6 @@
   "announcements.noAnnouncementsDesc": "Create your first announcement to get started.",
   "announcements.errorEmpty": "Please enter announcement content",
   "announcements.errorFailedCreate": "Failed to create announcement: {{message}}",
-  "announcements.errorFailedUpdate": "Failed to update announcement: {{message}}"
+  "announcements.errorFailedUpdate": "Failed to update announcement: {{message}}",
+  "courses.search": "Search courses..."
 }

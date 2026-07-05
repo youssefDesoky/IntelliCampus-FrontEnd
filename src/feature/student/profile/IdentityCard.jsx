@@ -122,7 +122,7 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
                             className="absolute top-4 end-4 z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-xs font-semibold transition-all shadow-sm"
                         >
                             <QRCodeIcon size={14} className={isGeneratingQr ? "animate-spin" : ""} />
-                            <span>{isGeneratingQr ? t("profile.generating") : t("profile.qrCheckIn")}</span>
+                            <span className="hidden sm:inline">{isGeneratingQr ? t("profile.generating") : t("profile.qrCheckIn")}</span>
                         </button>
                     </div>
 
@@ -213,7 +213,7 @@ export default function IdentityCard({ user, className = "", onProfileUpdate }) 
                             className="absolute top-4 end-4 z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark hover:bg-bg-surface-primary-hover-light dark:hover:bg-bg-surface-primary-hover-dark border border-border-primary-default-light dark:border-border-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-xs font-semibold transition-all"
                         >
                             <UserIcon size={14} />
-                            <span>{t("profile.showProfile")}</span>
+                            <span className="hidden sm:inline">{t("profile.showProfile")}</span>
                         </button>
 
                         <div className="text-start mb-2">

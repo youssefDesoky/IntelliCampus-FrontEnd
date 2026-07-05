@@ -54,7 +54,7 @@ export default function AuthLayout({ title, subtitle, bgImageName = "LoginBG", c
                     
                     {/* CHANGED: Toned down mobile padding from p-6 to p-5, kept p-6 for sm, and p-12 for lg */}
                     <div className="relative w-full mx-auto
-                                    bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark
+                                    bg-bg-surface-secondary-default-light/50 dark:bg-bg-surface-secondary-default-dark/50 sm:bg-bg-surface-secondary-default-light dark:sm:bg-bg-surface-secondary-default-dark
                                     border border-border-primary-default-light dark:border-border-primary-default-dark
                                     p-5 sm:p-6 lg:p-12 rounded-2xl shadow-2xl min-h-125 max-w-125
                                     flex flex-col justify-center">

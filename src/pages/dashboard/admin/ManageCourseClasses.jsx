@@ -34,6 +34,7 @@ import {
 import { importClasses } from "../../../feature/admin/services/adminImportsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { CourseClassesSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 const tabs = [
     { key: "classes", label: "Classes" },
@@ -329,11 +330,7 @@ export default function ManageCourseClasses() {
     const sections = classes.filter((c) => c.classTypeName === "Section");
 
     if (isLoading) {
-        return (
-            <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                {t('manageCourseClasses.loading')}
-            </p>
-        );
+        return <CourseClassesSkeleton />;
     }
 
     return (

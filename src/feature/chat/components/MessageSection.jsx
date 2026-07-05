@@ -59,6 +59,7 @@ export default function MessageSection({ date, messages, showSenderInfo, deleteM
             unpinMessage={unpinMessage}
             isEdited={msg.isEdited}
             isPinned={msg.isPinned}
+            isAi={msg.isAi}
           />
         );
       })}

@@ -22,5 +22,16 @@
   "weights.saving": "Saving...",
   "weights.placeholderQuizzes": "e.g., 5",
   "weights.placeholderAssignments": "e.g., 15",
-  "weights.placeholderMidterm": "e.g., 20"
+  "weights.placeholderMidterm": "e.g., 20",
+  "grades.uploading": "Uploading...",
+  "grades.uploadMidterm": "Upload Midterm Grades",
+  "grades.errorLoad": "Failed to load grades",
+  "grades.errorUnexpected": "An unexpected error occurred.",
+  "grades.uploadTitle": "Upload Midterm Grade",
+  "grades.uploadSubtitle": "Upload a CSV or Excel file (.csv, .xlsx, .xls) with the midterm grade.",
+  "grades.uploadNote": "If a grade already exists for this student, uploading again will <1>update</1> it with the new data.",
+  "grades.uploadSuccess": "Grades Uploaded",
+  "grades.uploadSuccessResult": "{{success}} uploaded, {{fail}} failed.",
+  "grades.uploadFailed": "Upload Failed",
+  "grades.ok": "OK"
 }

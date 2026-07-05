@@ -79,7 +79,7 @@ function SaveBadge({ status, t }) {
     )
 }
 
-export default function SmartNoteEditor({ note, onClose, courseFolders = [], courseId = null, studentId = null, onSaveNote }) {
+export default function SmartNoteEditor({ note, onClose, courseFolders = [], courseId = null, studentId = null, onSaveNote, isModal = true }) {
     const { t, i18n } = useTranslation('student');
     const { isRTL } = useArabicDigits();
 
@@ -126,16 +126,21 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
     const { saveStatus, schedule } = useAutosave(note, titleRef, bodyRef)
 
     const handleClose = useCallback(() => {
-        setVisible(false)
-        setTimeout(onClose, 220)
-    }, [onClose])
+        if (isModal) {
+            setVisible(false)
+            setTimeout(onClose, 220)
+        } else {
+            onClose()
+        }
+    }, [onClose, isModal])
 
-    useEffect(() => { requestAnimationFrame(() => setVisible(true)) }, [])
+    useEffect(() => { if (isModal) requestAnimationFrame(() => setVisible(true)) }, [isModal])
     useEffect(() => {
+        if (!isModal) return
         const h = (e) => { if (e.key === "Escape") handleClose() }
         window.addEventListener("keydown", h)
         return () => window.removeEventListener("keydown", h)
-    }, [handleClose])
+    }, [handleClose, isModal])
     function handleTitleChange(e) {
         titleRef.current = e.target.value
         setTitleValue(e.target.value)
@@ -194,16 +199,12 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
         }
     }
 
-    return (
-        <ModelOverlay onClose={handleClose}>
-            <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                    transform: visible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.97)",
-                    opacity: visible ? 1 : 0,
-                }}
-                className="relative z-50 w-full max-w-4xl h-[88vh] rounded-2xl overflow-hidden flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]"
-            >
+    const content = (
+        <div
+            onClick={isModal ? (e) => e.stopPropagation() : undefined}
+            style={isModal ? { transform: visible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.97)", opacity: visible ? 1 : 0 } : undefined}
+            className={`${isModal ? "relative z-50 w-full max-w-4xl h-[88vh] rounded-2xl border shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)]" : "h-full"} overflow-hidden flex flex-col bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border-border-primary-default-light dark:border-border-primary-default-dark`}
+        >
                 {/* ── Top bar ── */}
                 <header className="flex items-center justify-between px-4 py-2.5 border-b border-border-primary-default-light dark:border-border-primary-default-dark shrink-0">
                     <div className="flex items-center gap-2.5">
@@ -347,7 +348,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                 </div>
 
                 {/* ── Tiptap (toolbar + editor body) ── */}
-                <div className="flex-1 overflow-y-auto min-h-0">
+                <div className="flex-1 overflow-y-auto min-h-0 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border-primary-default-light/40 dark:[&::-webkit-scrollbar-thumb]:bg-border-primary-default-dark/40">
                     <Tiptap
                         content={note?.content ?? ""}
                         onChange={handleBodyChange}
@@ -372,8 +373,9 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                     </kbd>
                 </footer>
             </div>
-        </ModelOverlay>
-    )
+    );
+
+    return isModal ? <ModelOverlay onClose={handleClose}>{content}</ModelOverlay> : content;
 }
 
 function NoteIcon() {

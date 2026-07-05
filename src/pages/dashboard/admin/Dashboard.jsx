@@ -37,6 +37,7 @@ import {
   PaperPlaneIcon,
 } from "../../../components/ui/icons";
 import { fetchAdminDashboard, publishNews, updateNews, deleteNews } from "../../../api/dashboard";
+import { DashboardSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 // ─── Stat card config ────────────────────────────────────────────────────────
 
@@ -560,11 +561,7 @@ export default function Dashboard() {
     "w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark";
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64 text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-        {t('dashboard.loading')}
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {

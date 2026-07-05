@@ -58,5 +58,6 @@
   "excuses.loading": "جارٍ تحميل طلبات الأعذار...",
   "excuses.errorLoad": "فشل تحميل طلبات الأعذار.",
   "excuses.errorApprove": "فشل الموافقة على العذر.",
-  "excuses.errorReject": "فشل رفض العذر."
+  "excuses.errorReject": "فشل رفض العذر.",
+  "complaints.errorUpdate": "فشل تحديث الشكوى"
 }

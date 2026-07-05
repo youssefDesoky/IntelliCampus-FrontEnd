@@ -4,5 +4,7 @@ export {
   createNote,
   updateNote,
   deleteNote,
+  fetchNote,
   updateNoteLinkedLecture,
+  enhanceNote,
 } from "../services/notesApi";

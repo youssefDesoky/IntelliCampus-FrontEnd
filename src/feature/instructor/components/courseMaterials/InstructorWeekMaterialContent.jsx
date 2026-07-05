@@ -5,7 +5,6 @@ import Dialog from "../../../../components/ui/Dialog";
 import ModelOverlay from "../../../../components/ui/ModelOverlay";
 import MaterialPreview from "../../../../components/ui/MaterialPreview";
 import { getMaterialDownloadUrl } from "../../../course/services/materialsApi";
-
 // Normalise the material type coming from the backend
 function getMaterialType(material) {
     const t = material.type ?? material.materialType;

@@ -22,6 +22,7 @@ import {
 } from "../../../feature/admin/services/adminBylawsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 export default function ManageBylaws() {
   const { t, i18n } = useTranslation('admin');
@@ -137,6 +138,7 @@ export default function ManageBylaws() {
           />
         )
       }
+      renderLoading={() => <ManageContentSkeleton />}
       renderExtraDialogs={({ loadItems }) => (
         <>
           {documentPreviewTarget && (

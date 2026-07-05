@@ -5,6 +5,7 @@ import { fetchCourseStudents } from "../../../feature/admin/services/adminCourse
 import { SearchIcon, UserIcon } from "../../../components/ui/icons";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
 import useArabicDigits from '../../../hooks/useArabicDigits';
+import { CourseStudentsTabSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 export default function ManageCourseStudentsTab({ courseId }) {
     const { t, i18n } = useTranslation('admin');
@@ -39,11 +40,7 @@ export default function ManageCourseStudentsTab({ courseId }) {
     });
 
     if (loading) {
-        return (
-            <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                {t('manageCourseStudents.loading')}
-            </p>
-        );
+        return <CourseStudentsTabSkeleton />;
     }
 
     return (

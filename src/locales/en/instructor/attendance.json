@@ -93,5 +93,8 @@
   "attendance.csvStudentCode": "Student Code",
   "attendance.csvStudentName": "Student Name",
   "attendance.csvStatus": "Status",
-  "attendance.csvCheckinTime": "Check-in Time"
+  "attendance.csvCheckinTime": "Check-in Time",
+  "attendance.unknown": "Unknown",
+  "attendance.unknownDate": "Unknown Date",
+  "attendance.selectedCourse": "Selected course"
 }

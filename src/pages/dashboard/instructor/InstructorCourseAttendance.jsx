@@ -80,7 +80,7 @@ export default function InstructorCourseAttendance() {
     const authUser = useRouteLoaderData("root");
     const courseId = outlet.courseId || outlet.course?.id || params.courseId;
     const course = outlet.course || null;
-    const courseName = getLocalizedField(course, 'courseName', i18n.language) || course?.name || "Selected course";
+    const courseName = getLocalizedField(course, 'courseName', i18n.language) || course?.name || t('attendance.selectedCourse');
     const currentInstructorId = authUser?.userId || authUser?.id;
 
     const [classes, setClasses] = useState([]);
@@ -415,7 +415,7 @@ export default function InstructorCourseAttendance() {
                                     type="button"
                                     onClick={() => { setIsAttendanceOpen(false); stopScanner(); setManualId(''); setRecentScans([]); }}
                                     className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2.5 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
-                                    aria-label="Close"
+                                    aria-label={t('ui:header.close')}
                                 >
                                     <XIcon className="h-5 w-5" />
                                 </button>
@@ -860,7 +860,7 @@ export default function InstructorCourseAttendance() {
                                 type="button"
                                 onClick={() => { setIsCreateSessionOpen(false); setNewSession({ topic: "", description: "" }); }}
                                 className="rounded-lg border border-border-primary-default-light bg-bg-surface-secondary-default-light p-2.5 text-icon-secondary-default-light transition-colors hover:bg-bg-surface-secondary-hover-light dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-icon-secondary-default-dark dark:hover:bg-bg-surface-secondary-hover-dark"
-                                aria-label="Close"
+                                aria-label={t('ui:header.close')}
                             >
                                 <XIcon className="h-5 w-5" />
                             </button>

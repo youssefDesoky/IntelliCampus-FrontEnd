@@ -24,6 +24,7 @@ import { sendEmail } from "../../../feature/admin/services/adminCommunicationApi
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { InstructorDetailsSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 function InfoField({ label, value }) {
     return (
@@ -132,11 +133,7 @@ export default function InstructorDetails() {
     const isTA = roleNormalized.includes("teachingassistant") || roleNormalized.includes("assistantlecturer");
 
     if (loading) {
-        return (
-            <div className="p-6">
-                <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('instructorDetails.loading')}</p>
-            </div>
-        );
+        return <InstructorDetailsSkeleton />;
     }
 
     if (!instructor) {

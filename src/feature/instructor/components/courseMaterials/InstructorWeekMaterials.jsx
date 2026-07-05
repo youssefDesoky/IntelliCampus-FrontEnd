@@ -26,7 +26,7 @@ import { getLocalizedField } from '../../../../utils/getLocalizedField';
 
 export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMaterial, onDeleteFolder, onEditFolder, isInactive }) {
     const [isDragOver, setIsDragOver] = useState(false);
-    const [isUploading, setIsUploading] = useState(false); // eslint-disable-line no-unused-vars
+    const [isUploading, setIsUploading] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editName, setEditName] = useState("");
@@ -162,19 +162,28 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
-                                onClick={() => fileInputRef.current?.click()}
+                                onClick={() => !isUploading && fileInputRef.current?.click()}
                                 className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-all duration-200 w-full
                                     ${isDragOver
                                         ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-accent-default-light/10 dark:bg-bg-surface-accent-default-dark/10"
-                                        : "border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:border-border-primary-focus-light dark:hover:border-border-primary-focus-dark hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50"
+                                        : isUploading
+                                            ? "border-border-tertiary-default-light dark:border-border-tertiary-default-dark opacity-50"
+                                            : "border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:border-border-primary-focus-light dark:hover:border-border-primary-focus-dark hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50"
                                     }`}
                             >
-                                <CloudUploadIcon size={28} className={`mb-2 ${isDragOver ? "text-text-accent-default-light dark:text-text-accent-default-dark" : "text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark"}`} />
+                                {isUploading ? (
+                                    <svg className="animate-spin h-7 w-7 mb-2 text-icon-accent-default-light dark:text-icon-accent-default-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                ) : (
+                                    <CloudUploadIcon size={28} className={`mb-2 ${isDragOver ? "text-text-accent-default-light dark:text-text-accent-default-dark" : "text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark"}`} />
+                                )}
                                 <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                                    {isDragOver ? t('materials.dropFiles') : t('materials.dragDropPrompt')}
+                                    {isUploading ? t('materials.uploading') : (isDragOver ? t('materials.dropFiles') : t('materials.dragDropPrompt'))}
                                 </p>
                                 <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-1">
-                                    {t('materials.browseFiles')}
+                                    {isUploading ? t('materials.uploadingWait') : t('materials.browseFiles')}
                                 </p>
                             </div>
                         )}
@@ -201,19 +210,28 @@ export default function InstructorWeekMaterials({ folder, onUpload, onDeleteMate
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => !isUploading && fileInputRef.current?.click()}
                         className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-all duration-200
                             ${isDragOver
                                 ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-accent-default-light/10 dark:bg-bg-surface-accent-default-dark/10"
-                                : "border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:border-border-primary-focus-light dark:hover:border-border-primary-focus-dark hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50"
+                                : isUploading
+                                    ? "border-border-tertiary-default-light dark:border-border-tertiary-default-dark opacity-50"
+                                    : "border-border-tertiary-default-light dark:border-border-tertiary-default-dark hover:border-border-primary-focus-light dark:hover:border-border-primary-focus-dark hover:bg-bg-surface-secondary-default-light/50 dark:hover:bg-bg-surface-secondary-default-dark/50"
                             }`}
                     >
-                        <CloudUploadIcon size={28} className={`mb-2 ${isDragOver ? "text-text-accent-default-light dark:text-text-accent-default-dark" : "text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark"}`} />
+                        {isUploading ? (
+                            <svg className="animate-spin h-7 w-7 mb-2 text-icon-accent-default-light dark:text-icon-accent-default-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                        ) : (
+                            <CloudUploadIcon size={28} className={`mb-2 ${isDragOver ? "text-text-accent-default-light dark:text-text-accent-default-dark" : "text-icon-tertiary-default-light dark:text-icon-tertiary-default-dark"}`} />
+                        )}
                         <p className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                            {isDragOver ? t('materials.dropFilesDrag') : t('materials.dropFiles')}
+                            {isUploading ? t('materials.uploading') : (isDragOver ? t('materials.dropFilesDrag') : t('materials.dropFiles'))}
                         </p>
                         <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark mt-1">
-                            {t('materials.browseFiles')}
+                            {isUploading ? t('materials.uploadingWait') : t('materials.browseFiles')}
                         </p>
                     </div>
                 </div>

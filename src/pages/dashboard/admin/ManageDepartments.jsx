@@ -10,6 +10,7 @@ import { fetchInstructors } from "../../../feature/admin/services/adminInstructo
 import { PlusIcon, CalendarIcon } from "../../../components/ui/icons";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 export default function ManageDepartments() {
   const { t, i18n } = useTranslation("admin");
@@ -115,6 +116,7 @@ export default function ManageDepartments() {
         )
       }
       extraDeps={[instructorLookup]}
+      renderLoading={() => <ManageContentSkeleton />}
       renderExtraDialogs={({ loadItems }) => (
         <>
           {specDepartment && (

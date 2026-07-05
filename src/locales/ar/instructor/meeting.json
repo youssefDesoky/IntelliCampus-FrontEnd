@@ -37,5 +37,9 @@
   "meeting.ended": "انتهى",
   "meeting.scheduling": "جارٍ الجدولة",
   "meeting.firstMeetingHint": "استخدم النموذج أعلاه لجدولة أول اجتماع لك",
-  "meeting.errorCreate": "فشل إنشاء الاجتماع. يرجى المحاولة مرة أخرى."
+  "meeting.errorCreate": "فشل إنشاء الاجتماع. يرجى المحاولة مرة أخرى.",
+  "meeting.noPastMeetings": "لا توجد اجتماعات سابقة",
+  "meeting.endedTitle": "انتهى الاجتماع",
+  "meeting.endedMessage": "قام المحاضر بإنهاء الاجتماع.",
+  "meeting.errorEnd": "فشل إنهاء الاجتماع. يرجى المحاولة مرة أخرى."
 }

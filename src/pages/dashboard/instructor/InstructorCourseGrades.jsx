@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useOutletContext, useNavigate, useRouteLoaderData } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { fetchCourseGrades, getCourseWorkWeight, uploadCourseGrades } from "../../../feature/instructor/services/gradesApi";
 import { fetchClassesByCourse } from "../../../feature/instructor/services/attendanceApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
@@ -99,7 +99,7 @@ export default function InstructorCourseGrades() {
     });
 
     useEffect(() => {
-        if (error) showError(error.message || "Failed to load grades");
+        if (error) showError(error.message || t('grades.errorLoad'));
     }, [error, showError]);
 
     const handleUpload = async (file) => {
@@ -121,7 +121,7 @@ export default function InstructorCourseGrades() {
             setIsUploadOpen(false);
             refetchGrades();
         } catch (err) {
-            const detail = err.detail || err.message || "An unexpected error occurred.";
+            const detail = err.detail || err.message || t('grades.errorUnexpected');
             setUploadError(detail);
         } finally {
             setUploading(false);
@@ -289,13 +289,13 @@ export default function InstructorCourseGrades() {
 
             {isUploadOpen && (
                 <ImportDialog
-                    title="Upload Midterm Grade"
-                    subtitle="Upload a CSV or Excel file (.csv, .xlsx, .xls) with the midterm grade."
+                    title={t('grades.uploadTitle')}
+                    subtitle={t('grades.uploadSubtitle')}
                     onClose={() => setIsUploadOpen(false)}
                     onImport={handleUpload}
                 >
                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark bg-bg-surface-accent-default-light/30 dark:bg-bg-surface-accent-default-dark/20 rounded-lg px-4 py-2.5 border border-border-accent-default-light dark:border-border-accent-default-dark">
-                        If a grade already exists for this student, uploading again will <strong>update</strong> it with the new data.
+                        <Trans t={t} i18nKey="grades.uploadNote" components={{ strong: <strong /> }} />
                     </p>
                 </ImportDialog>
             )}
@@ -303,9 +303,9 @@ export default function InstructorCourseGrades() {
             <Dialog
                 isOpen={uploadResult !== null}
                 variant="success"
-                title="Grades Uploaded"
+                title={t('grades.uploadSuccess')}
                 onClose={() => setUploadResult(null)}
-                confirmText="OK"
+                confirmText={t('grades.ok')}
                 showCloseButton={true}
             >
                 <pre className="whitespace-pre-wrap text-sm font-sans">{uploadResult}</pre>
@@ -314,9 +314,9 @@ export default function InstructorCourseGrades() {
             <Dialog
                 isOpen={uploadError !== null}
                 variant="danger"
-                title="Upload Failed"
+                title={t('grades.uploadFailed')}
                 onClose={() => setUploadError(null)}
-                confirmText="OK"
+                confirmText={t('grades.ok')}
                 showCloseButton={true}
             >
                 <pre className="whitespace-pre-wrap text-sm font-sans">{uploadError}</pre>

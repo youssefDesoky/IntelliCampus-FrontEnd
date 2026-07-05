@@ -7,7 +7,7 @@ import { useRef, useEffect } from "react";
 import Message from "./Message";
 import TypingIndicator from "./TypingIndicator";
 
-export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping, chatPartner, deleteMessage, editMessage, pinMessage, unpinMessage, pinnedMessage, showSenderInfo, searchQuery, onSearchChange, isPhone, onBack, onAttachFile, onDeleteFriend }) {
+export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping, chatPartner, deleteMessage, editMessage, pinMessage, unpinMessage, pinnedMessage, showSenderInfo, searchQuery, onSearchChange, isPhone, onBack, onAttachFile, onDeleteFriend, onSendCourseQuestion }) {
   const { t } = useTranslation('chat');
   const bottomRef = useRef(null);
 
@@ -53,7 +53,7 @@ export default function Messaging({ messages, sendMessage, onInputChange, partne
         <div ref={bottomRef} />
       </div>
 
-      <ChatControls sendMessage={sendMessage} onInputChange={onInputChange} onAttachFile={onAttachFile} />
+      <ChatControls sendMessage={sendMessage} onInputChange={onInputChange} onAttachFile={onAttachFile} chatPartner={chatPartner} onSendCourseQuestion={onSendCourseQuestion} />
     </div>
   );
 }

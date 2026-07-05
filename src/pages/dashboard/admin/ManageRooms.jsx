@@ -5,6 +5,7 @@ import RoomForm from "../../../feature/admin/components/RoomForm";
 import useDeviceType from "../../../hooks/useDeviceType";
 import { fetchRooms, createRoom, updateRoom, deleteRoom } from "../../../feature/admin/services/adminFacilitiesApi";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 function buildRoomRow(room, isDesktop, isTablet, i18n) {
   return {
@@ -66,6 +67,7 @@ export default function ManageRooms() {
           Are you sure you want to delete <strong>{{ name: getLocalizedField(item, 'roomName', i18n.language) || getLocalizedField(item, 'name', i18n.language) }}</strong>?
         </Trans>
       )}
+      renderLoading={() => <ManageContentSkeleton />}
       renderForm={({ isFormOpen, editingItem, closeForm, handleFormSubmit, formIsLoading }) =>
         isFormOpen && (
           <RoomForm

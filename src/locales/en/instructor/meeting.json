@@ -37,5 +37,9 @@
   "meeting.ended": "Ended",
   "meeting.scheduling": "Scheduling",
   "meeting.firstMeetingHint": "Use the form above to schedule your first meeting",
-  "meeting.errorCreate": "Failed to create meeting. Please try again."
+  "meeting.errorCreate": "Failed to create meeting. Please try again.",
+  "meeting.noPastMeetings": "No past meetings",
+  "meeting.endedTitle": "Meeting ended",
+  "meeting.endedMessage": "The instructor has ended the meeting.",
+  "meeting.errorEnd": "Failed to end meeting. Please try again."
 }

@@ -10,6 +10,7 @@ import { UserIcon, XIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
 import { fetchAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../feature/admin/services/adminAccountsApi";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 function getAdminRoleDisplay(admin) {
   if (admin.role) return admin.role;
@@ -126,6 +127,7 @@ export default function ManageAdmins() {
         }
         return <AdminForm method="post" onClose={closeForm} onSubmit={handleCreate} />;
       }}
+      renderLoading={() => <ManageContentSkeleton />}
       renderExtraDialogs={({ loadItems, openForm }) => (
         <>
           {previewAdmin && (

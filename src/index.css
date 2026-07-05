@@ -115,26 +115,26 @@
 
   --color-text-primary-default-light: rgb(55 65 81);
   --color-text-primary-default-dark: rgb(209 213 219);
-  --color-text-secondary-default-light: rgb(107 114 128);
+  --color-text-secondary-default-light: rgb(75 85 99);
   --color-text-secondary-default-dark: rgb(156 163 175);
-  --color-text-tertiary-default-light: rgb(156 163 175);
+  --color-text-tertiary-default-light: rgb(107 114 128);
   --color-text-tertiary-default-dark: rgb(107 114 128);
-  --color-text-danger-default-light: rgb(239 68 68);
+  --color-text-danger-default-light: rgb(220 38 38);
   --color-text-danger-default-dark: rgb(248 113 113);
-  --color-text-success-default-light: rgb(34 197 94);
+  --color-text-success-default-light: rgb(21 128 61);
   --color-text-success-default-dark: rgb(74 222 128);
-  --color-text-warning-default-light: rgb(234 179 8);
+  --color-text-warning-default-light: rgb(180 83 9);
   --color-text-warning-default-dark: rgb(250 204 21);
-  --color-text-info-default-light: rgb(14 165 233);
+  --color-text-info-default-light: rgb(3 105 161);
   --color-text-info-default-dark: rgb(56 189 248);
   --color-text-accent-default-light: rgb(59 130 246);
   --color-text-accent-default-dark: rgb(96 165 250);
 
   --color-text-primary-active-light: rgb(17 24 39);
   --color-text-primary-active-dark: rgb(229 231 235);
-  --color-text-secondary-active-light: rgb(107 114 128);
+  --color-text-secondary-active-light: rgb(75 85 99);
   --color-text-secondary-active-dark: rgb(156 163 175);
-  --color-text-tertiary-active-light: rgb(161 166 176);
+  --color-text-tertiary-active-light: rgb(107 114 128);
   --color-text-tertiary-active-dark: rgb(75 85 99);
   --color-text-danger-active-light: rgb(220 38 38);
   --color-text-danger-active-dark: rgb(220 38 38);
@@ -183,11 +183,11 @@
   
 
 
-  --color-border-primary-default-light: rgb(229 231 235);
+  --color-border-primary-default-light: rgb(209 213 219);
   --color-border-primary-default-dark: rgb(31 41 55);
   --color-border-secondary-default-light: rgb(2 6 23);
   --color-border-secondary-default-dark: rgb(2 6 23);
-  --color-border-tertiary-default-light: rgb(209 213 219);
+  --color-border-tertiary-default-light: rgb(229 231 235);
   --color-border-tertiary-default-dark: rgb(55 65 81);
   --color-border-accent-default-light: rgb(74 144 226);
   --color-border-accent-default-dark: rgb(74 144 226);
@@ -222,22 +222,22 @@
   --color-border-danger-default-dark: rgb(127 29 29);
   --color-border-success-default-light: rgb(22 163 74);
   --color-border-success-default-dark: rgb(22 163 74);
-  --color-border-warning-default-light: rgb(245 158 11);
+  --color-border-warning-default-light: rgb(217 119 6);
   --color-border-warning-default-dark: rgb(245 158 11);
 
   
 
   --color-icon-primary-default-light: rgb(75 85 99);
   --color-icon-primary-default-dark: rgb(156 163 175);
-  --color-icon-secondary-default-light: rgb(161 166 176);
+  --color-icon-secondary-default-light: rgb(107 114 128);
   --color-icon-secondary-default-dark: rgb(107 114 128);
-  --color-icon-success-default-light: rgb(34 197 94);
+  --color-icon-success-default-light: rgb(21 128 61);
   --color-icon-success-default-dark: rgb(74 222 128);
-  --color-icon-warning-default-light: rgb(234 179 8);
+  --color-icon-warning-default-light: rgb(180 83 9);
   --color-icon-warning-default-dark: rgb(250 204 21);
-  --color-icon-info-default-light: rgb(14 165 233);
+  --color-icon-info-default-light: rgb(3 105 161);
   --color-icon-info-default-dark: rgb(56 189 248);
-  --color-icon-danger-default-light: rgb(239 68 68);
+  --color-icon-danger-default-light: rgb(220 38 38);
   --color-icon-danger-default-dark: rgb(248 113 113);
   --color-icon-accent-default-light: rgb(59 130 246);
   --color-icon-accent-default-dark: rgb(96 165 250);
@@ -338,8 +338,24 @@
 
 *, *::before, *::after, html, body {
   box-sizing: border-box;
-	cursor: none !important;
+	/* cursor: none !important; */
   transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
+}
+
+/* Restore default interactive cursors (was previously overridden by custom cursor) */
+button:not(:disabled),
+a:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+select:not(:disabled),
+label,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+[role="option"],
+[role="switch"] {
+  cursor: pointer;
 }
 
 /* Utility to completely disable transitions for an element and its children.

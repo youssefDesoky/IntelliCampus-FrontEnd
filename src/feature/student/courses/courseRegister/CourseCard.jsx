@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import SelectBox from "../../../../components/ui/SelectBox";
 
 import { getLocalizedField } from '../../../../utils/getLocalizedField';
@@ -175,7 +175,7 @@ export default function CourseCard({
                     <div className="text-xs text-text-danger-default-light dark:text-text-danger-default-dark">
                         {conflicts.map((c, i) => (
                             <p key={i}>
-                                {c.type} conflicts with <strong>{c.conflictWith}</strong> on <strong>{c.day}</strong> at <strong>{c.time}</strong>
+                                <Trans t={t} i18nKey="registration.conflictsWith" values={{ type: c.type, conflictWith: c.conflictWith, day: c.day, time: c.time }} components={{ strong: <strong /> }} />
                             </p>
                         ))}
                     </div>
