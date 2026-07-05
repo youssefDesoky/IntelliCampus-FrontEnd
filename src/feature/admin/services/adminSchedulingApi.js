@@ -54,10 +54,10 @@ export async function getConflictGraph() {
     return apiClient('/api/ExamScheduling/conflict-graph');
 }
 
-export async function assignHalls(examId, examHallIds) {
+export async function assignHalls(examId, roomIds) {
     return apiClient(`/api/ExamScheduling/assign-halls/${examId}`, {
         method: "POST",
-        body: JSON.stringify({ examId, examHallIds }),
+        body: JSON.stringify({ examId, roomIds }),
     });
 }
 

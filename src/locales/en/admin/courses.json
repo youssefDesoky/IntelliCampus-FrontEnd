@@ -83,6 +83,7 @@
   "manageCourseClasses.taughtBy": " taught by {{name}}",
   "manageCourseClasses.delete": "Delete",
   "manageCourseClasses.cancel": "Cancel",
+  "manageCourseClasses.reactivate": "Reactivate",
   "manageCourseClasses.deactivateTitle": "Deactivate Course",
   "manageCourseClasses.deactivateConfirm": "Are you sure you want to deactivate {{name}} ({{code}})? This will make the course unavailable to students.",
   "manageCourseClasses.course": "Course",

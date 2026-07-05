@@ -32,5 +32,6 @@
   "schedule.filterSchedule": "Filter schedule",
   "schedule.filterByType": "Filter by type",
   "schedule.examTypeMidterm": "Midterm",
-  "schedule.examTypeFinal": "Final"
+  "schedule.examTypeFinal": "Final",
+  "schedule.locationTbd": "Location not assigned yet"
 }

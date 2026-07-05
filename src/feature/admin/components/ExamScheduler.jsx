@@ -38,12 +38,12 @@ function nextSlotId(defs) {
   return `slot_${max + 1}`;
 }
 
-function getDateLabel(dateStr) {
+function getDateLabel(dateStr, locale = "en") {
   const d = new Date(dateStr + "T00:00:00");
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const dayName = days[d.getDay()];
-  const month = d.getMonth() + 1;
-  return `${dayName} ${d.getDate()}/${month}`;
+  const localeMap = { en: "en-US", ar: "ar-SA" };
+  return new Intl.DateTimeFormat(localeMap[locale] || locale, {
+    weekday: "short", day: "numeric", month: "numeric",
+  }).format(d);
 }
 
 function getDayKey(dateStr) {
@@ -290,7 +290,7 @@ function MovePanel({ exam, scheduleFrom, scheduleTo, dailySlots, onMove, onClose
 
   const dateLabels = {};
   slots.forEach(s => {
-    dateLabels[s.date] = getDateLabel(s.date);
+    dateLabels[s.date] = getDateLabel(s.date, i18n.language);
   });
   const uniqueDates = [...new Set(slots.map(s => s.date))].sort();
   const totalPages = Math.ceil(uniqueDates.length / ROWS_PER_PAGE);
@@ -435,7 +435,7 @@ function deriveConfigFromExams(scheduled) {
 }
 
 const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, ref) {
-  const { t } = useTranslation('admin');
+  const { t, i18n } = useTranslation('admin');
   const { isMobile } = useDeviceType();
   const { showError } = useError();
   const queryClient = useQueryClient();
@@ -501,9 +501,9 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
     const dateSet = new Set(scheduleResult.scheduled.map(exam => exam.date));
     return Array.from(dateSet).sort().map(date => ({
       key: getDayKey(date),
-      label: getDateLabel(date),
+      label: getDateLabel(date, i18n.language),
     }));
-  }, [scheduleResult]);
+  }, [scheduleResult, i18n.language]);
 
   const ready = schedule.length > 0;
 

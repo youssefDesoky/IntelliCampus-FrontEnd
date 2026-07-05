@@ -83,6 +83,7 @@
   "manageCourseClasses.taughtBy": " بتدريس {{name}}",
   "manageCourseClasses.delete": "حذف",
   "manageCourseClasses.cancel": "إلغاء",
+  "manageCourseClasses.reactivate": "إعادة التفعيل",
   "manageCourseClasses.deactivateTitle": "إلغاء تفعيل المقرر",
   "manageCourseClasses.deactivateConfirm": "هل أنت متأكد من إلغاء تفعيل {{name}} ({{code}})؟ سيؤدي ذلك إلى جعل المقرر غير متاح للطلاب.",
   "manageCourseClasses.course": "المقرر",

@@ -20,7 +20,7 @@ export default function ManageDepartments() {
 
   const instructorLookup = useMemo(() =>
     instructors.reduce((lookup, instructor) => {
-      lookup[String(instructor.instructorId)] = instructor.name;
+      lookup[String(instructor.instructorId)] = instructor.fullName;
       return lookup;
     }, {}),
     [instructors]

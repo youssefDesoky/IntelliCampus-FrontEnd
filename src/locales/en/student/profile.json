@@ -113,5 +113,6 @@
   "profile.closeBylawPreview": "Close bylaw preview",
   "profile.openBylaw": "Open bylaw",
   "profile.levelFormat": "Level {{level}}",
-  "profile.academicLevel": "Academic Level"
+  "profile.academicLevel": "Academic Level",
+  "profile.probation": "Probation"
 }

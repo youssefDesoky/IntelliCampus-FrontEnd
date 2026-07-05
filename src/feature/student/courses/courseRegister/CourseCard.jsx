@@ -32,6 +32,7 @@ export default function CourseCard({
     selectedSection,
     onSectionChange,
     conflicts = [],
+    isPendingRemoval = false,
 }) {
     const { t, i18n } = useTranslation('student');
 
@@ -43,7 +44,11 @@ export default function CourseCard({
         return String(prereq);
     };
     return(
-        <div className="course-card flex flex-col gap-3 p-4 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg shadow-sm shadow-shadow-light hover:shadow-md dark:shadow-shadow-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
+        <div className={`course-card flex flex-col gap-3 p-4 border rounded-lg shadow-sm shadow-shadow-light hover:shadow-md dark:shadow-shadow-dark transition-opacity ${
+            isPendingRemoval
+                ? 'border-border-danger-default-light dark:border-border-danger-default-dark bg-bg-surface-danger-default-light/10 dark:bg-bg-surface-danger-default-dark/10 opacity-60'
+                : 'border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark'
+        }`}>
             {/* Top row: avatar + course info + credits */}
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 min-w-0">
@@ -75,9 +80,16 @@ export default function CourseCard({
                 </div>
 
                 {/* Credits */}
-                <span className="text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark shrink-0">
-                    {course.creditHours} {t('registration.creditAbbr')}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                    {isPendingRemoval && (
+                        <span className="text-xs font-semibold text-text-danger-default-light dark:text-text-danger-default-dark">
+                            {t('registration.pendingRemoval', { defaultValue: 'Removing' })}
+                        </span>
+                    )}
+                    <span className="text-sm font-medium text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                        {course.creditHours} {t('registration.creditAbbr')}
+                    </span>
+                </div>
             </div>
 
             {/* Middle info: professor, schedule, room */}
@@ -122,10 +134,18 @@ export default function CourseCard({
                         )}
                         <button
                             onClick={onAction}
-                            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-md border border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark hover:text-text-danger-active-light dark:hover:text-text-danger-active-dark transition-colors"
-                            aria-label={t('registration.removeCourse')}
+                            className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-md border transition-colors ${
+                                isPendingRemoval
+                                    ? 'border-text-danger-default-light dark:border-text-danger-default-dark text-text-danger-default-light dark:text-text-danger-default-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark'
+                                    : 'border-border-primary-default-light dark:border-border-primary-default-dark text-text-secondary-active-light dark:text-text-secondary-active-dark hover:bg-bg-surface-secondary-hover-light dark:hover:bg-bg-surface-secondary-hover-dark hover:text-text-danger-active-light dark:hover:text-text-danger-active-dark'
+                            }`}
+                            aria-label={isPendingRemoval ? t('registration.undoRemove') || 'Undo' : t('registration.removeCourse')}
                         >
-                            <XIcon className="w-4 h-4" />
+                            {isPendingRemoval ? (
+                                <span className="text-xs font-bold">&#x21A9;</span>
+                            ) : (
+                                <XIcon className="w-4 h-4" />
+                            )}
                         </button>
                     </>
                 ) : cardType === "available" ? (

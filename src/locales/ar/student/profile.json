@@ -113,5 +113,6 @@
   "profile.closeBylawPreview": "إغلاق معاينة اللائحة",
   "profile.openBylaw": "فتح اللائحة",
   "profile.levelFormat": "المستوى {{level}}",
-  "profile.academicLevel": "المستوى الأكاديمي"
+  "profile.academicLevel": "المستوى الأكاديمي",
+  "profile.probation": "إنذار أكاديمي"
 }

@@ -46,12 +46,19 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
         return capacityOptions[0];
     });
 
+    const [isExamHall, setIsExamHall] = useState(!!initialData.isExamHall);
+
+    useEffect(() => {
+        setIsExamHall(!!initialData.isExamHall);
+    }, [initialData.isExamHall]);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         const form = e.target;
         const formData = Object.fromEntries(new FormData(form));
         formData.type = selectedType?.value || "";
         formData.capacity = parseInt(selectedCapacity.value);
+        formData.isExamHall = isExamHall;
         if (onSubmit) onSubmit(formData);
     };
 
@@ -138,6 +145,19 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                         defaultValue={initialData.locationAr || initialData.roomLocationAr || ""}
                     />
                 </div>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        name="isExamHall"
+                        checked={isExamHall}
+                        onChange={(e) => setIsExamHall(e.target.checked)}
+                        className="w-4 h-4 rounded border-border-primary-default-light dark:border-border-primary-default-dark text-text-accent-active-light dark:text-text-accent-active-dark focus:ring-2 focus:ring-text-accent-active-light/40"
+                    />
+                    <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
+                        {t('roomForm.isExamHall')}
+                    </span>
+                </label>
             </div>
         </BaseFormComponent>
     );

@@ -21,11 +21,6 @@ const days = [
     // { key: "fri", label: "Friday", short: "Fri" },
 ];
 
-function getDayLabel(t, key, short = false) {
-    const suffix = short ? "Short" : "";
-    return t(`days.${key}${suffix}`);
-}
-
 function parseHour(timeStr) {
     const [hourStr, period] = timeStr.split(" ");
     const [h, m] = hourStr.split(":");
@@ -115,7 +110,7 @@ function ExamScheduleView({ schedule, onEventClick, examDays }) {
                         >
                             <div className="p-3 flex items-center justify-center border-e border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                                 <span className="text-xs md:text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark whitespace-nowrap">
-                                    {getDayLabel(t, day.key)}
+                                    {day.label}
                                 </span>
                             </div>
                             {sortedSlots.map(slot => {

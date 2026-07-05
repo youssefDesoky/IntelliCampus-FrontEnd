@@ -17,6 +17,7 @@
   "studentDetails.address": "العنوان",
   "studentDetails.gender": "الجنس",
   "studentDetails.dateOfBirth": "تاريخ الميلاد",
+  "studentDetails.edit": "تعديل",
   "studentDetails.sendEmail": "إرسال بريد",
   "studentDetails.unregisterCourse": "إلغاء تسجيل مقرر",
   "studentDetails.changeSection": "تغيير الشعبة",
@@ -72,5 +73,6 @@
   "studentDetails.grade": "التقدير",
   "studentDetails.loadingCompleted": "جاري تحميل المقررات المكتملة...",
   "studentDetails.noCompleted": "لم يتم العثور على مقررات مكتملة.",
-  "studentDetails.sectionLabel": "شعبة {{id}}"
+  "studentDetails.sectionLabel": "شعبة {{id}}",
+  "studentDetails.probation": "إنذار أكاديمي"
 }

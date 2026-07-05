@@ -21,6 +21,7 @@
   "dashboard.noNews": "لا توجد أخبار متاحة",
   "dashboard.analytics": "التحليلات",
   "dashboard.error": "فشل تحميل لوحة التحكم. يرجى المحاولة مرة أخرى لاحقاً.",
+  "dashboard.editedTime": "عُدل {{time}}",
   "dashboard.postedTime": "نُشر {{time}}",
   "dashboard.postedRecently": "نُشر مؤخراً",
   "dashboard.totalClasses": "إجمالي المحاضرات",

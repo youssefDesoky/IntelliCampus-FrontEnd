@@ -111,7 +111,7 @@ function ExamCard({ exam, daysRemaining }) {
 
                     <span className="flex items-center gap-1.5">
                         <LocationDotIcon className="w-4 h-4" />
-                        {getLocalizedField(exam, 'location', isRTL ? 'ar' : 'en')}
+                        {getLocalizedField(exam, 'location', isRTL ? 'ar' : 'en') || t("schedule.locationTbd")}
                     </span>
                 </div>
             </div>

@@ -20,6 +20,7 @@
   "manageStudents.deleteConfirm": "هل أنت متأكد من حذف <1>{{name}}</1> ({{id}})؟ لا يمكن التراجع عن هذا الإجراء.",
   "manageStudents.entityName": "طالب",
   "manageStudents.entityNamePlural": "طلاب",
+  "manageStudents.nonProbation": "بدون إنذار",
 
   "studentForm.title.edit": "تعديل الطالب",
   "studentForm.title.create": "إنشاء طالب جديد",
