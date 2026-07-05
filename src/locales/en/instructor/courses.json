@@ -22,7 +22,7 @@
   "courses.classroom": "Classroom",
   "courses.enterClassroom": "Enter Classroom",
   "courses.allCourses": "All courses",
-  "courses.search": "Course Search",
+  "courses.search": "Search courses...",
   "courses.active": "Active",
   "courses.creditHour": "{{count}} credit hour",
   "courses.creditHour_plural": "{{count}} credit hours",
@@ -93,7 +93,6 @@
   "announcements.errorEmpty": "Please enter announcement content",
   "announcements.errorFailedCreate": "Failed to create announcement: {{message}}",
   "announcements.errorFailedUpdate": "Failed to update announcement: {{message}}",
-  "courses.search": "Search courses..."
   "announcements.copyLink": "Copy Link",
   "announcements.delete": "Delete",
   "announcements.deleting": "Deleting...",

@@ -717,32 +717,12 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     // TODO: wire up file upload / send as message
   };
 
-  const handleDeleteFriend = async (friendId) => {
-    if (String(chatPartner?.userId) === FAHIM_USER_ID) return;
-    try {
-      const result = await uploadFile(file);
-      const url = result.url;
-      const conn = connectionRef.current;
-      if (!conn || !chatPartner) return;
-      if (chatPartner.type === "group") {
-        await conn.invoke("SendGroupMessage", chatPartner.groupName, url);
-      } else {
-        await conn.invoke("SendPrivateMessage", chatPartner.userId, url);
-      }
-    } catch (err) {
-      showError(err.message);
-    }
-  };
-
-  const executeConfirmAction = () => {
-    if (confirmDialog.onConfirm) {
-      confirmDialog.onConfirm();
-    }
-    setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
-  };
-
   const handleDeleteFriend = (friendId) => {
+    // Prevent removing the AI assistant
+    if (String(chatPartner?.userId) === FAHIM_USER_ID) return;
+
     const name = chatPartner?.fullName || "this user";
+    
     setConfirmDialog({
       isOpen: true,
       title: "Remove Friend",
@@ -765,6 +745,13 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
         }
       },
     });
+  };
+
+  const executeConfirmAction = () => {
+    if (confirmDialog.onConfirm) {
+      confirmDialog.onConfirm();
+    }
+    setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
   };
 
   const handleLeaveGroup = () => {
