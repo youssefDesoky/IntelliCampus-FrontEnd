@@ -209,11 +209,15 @@ export default function ManageCourses() {
           </>
         );
       }}
-      getDeleteMessage={(item) => (
-        <Trans t={t} i18nKey="manageCourses.deleteConfirm" values={{ name: getLocalizedField(item, 'courseName', i18n.language), code: getLocalizedField(item, 'courseCode', i18n.language) || item?.courseId }}>
-          Are you sure you want to delete <strong>{{name}}</strong> ({{code}})? This action cannot be undone.
-        </Trans>
-      )}
+      getDeleteMessage={(item) => {
+        const name = getLocalizedField(item, 'courseName', i18n.language);
+        const code = getLocalizedField(item, 'courseCode', i18n.language) || item?.courseId;
+        return (
+          <Trans t={t} i18nKey="manageCourses.deleteConfirm" ns="admin" values={{ name, code }}>
+            Are you sure you want to delete <strong>{{ name }}</strong> ({{ code }})? This action cannot be undone.
+          </Trans>
+        );
+      }}
       extraDeps={[filterDepartment]}
       renderFilters={({ rawItems, setCurrentPage }) => {
         const departments = [...new Set(rawItems.map(c => c.departmentName).filter(Boolean))].sort();

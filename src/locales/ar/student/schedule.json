@@ -32,5 +32,6 @@
   "schedule.filterSchedule": "تصفية الجدول",
   "schedule.filterByType": "تصفية حسب النوع",
   "schedule.examTypeMidterm": "منتصف الفصل",
-  "schedule.examTypeFinal": "نهائي"
+  "schedule.examTypeFinal": "نهائي",
+  "schedule.locationTbd": "الموقع لم يتم تعيينه بعد"
 }

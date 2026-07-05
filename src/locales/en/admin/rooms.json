@@ -35,5 +35,6 @@
   "roomForm.location": "Location",
   "roomForm.locationPlaceholder": "e.g., Building A, Floor 2",
   "roomForm.locationAr": "الموقع",
-  "roomForm.locationArPlaceholder": "المبنى أ، الطابق 2"
+  "roomForm.locationArPlaceholder": "المبنى أ، الطابق 2",
+  "roomForm.isExamHall": "Use as exam hall"
 }

@@ -1130,7 +1130,7 @@ export default function ManageBylawDetailsPage() {
               </Button>
               <Button variant="primary" type="button" onClick={handleSaveGeneral} disabled={savingGeneral}>
                 <FloppyDiskIcon size={16} />
-                {savingGeneral ? t('common:status.saving') : t('common:labels.save')}
+                {savingGeneral ? t('common:status.saving') : t('common:save')}
               </Button>
             </div>
           </div>
@@ -1235,7 +1235,7 @@ export default function ManageBylawDetailsPage() {
             </span>
             <Button variant="primary" type="button" onClick={handleSaveRegistration} disabled={savingRegistration}>
               <FloppyDiskIcon size={16} />
-              {savingRegistration ? t('common:status.saving') : t('common:labels.save')}
+              {savingRegistration ? t('common:status.saving') : t('common:save')}
             </Button>
           </div>
 
@@ -1389,7 +1389,7 @@ export default function ManageBylawDetailsPage() {
             </span>
             <Button variant="primary" type="button" onClick={handleSaveProbation} disabled={savingProbation}>
               <FloppyDiskIcon size={16} />
-              {savingProbation ? t('common:status.saving') : t('common:labels.save')}
+              {savingProbation ? t('common:status.saving') : t('common:save')}
             </Button>
           </div>
 
@@ -1480,7 +1480,7 @@ export default function ManageBylawDetailsPage() {
             </span>
             <Button variant="primary" type="button" onClick={handleSaveMinHours} disabled={savingMinHours}>
               <FloppyDiskIcon size={16} />
-              {savingMinHours ? t('common:status.saving') : t('common:labels.save')}
+              {savingMinHours ? t('common:status.saving') : t('common:save')}
             </Button>
           </div>
 
@@ -1610,7 +1610,7 @@ export default function ManageBylawDetailsPage() {
             </span>
             <Button variant="primary" type="button" onClick={handleSaveCourseMapping} disabled={savingCourseMapping}>
               <FloppyDiskIcon size={16} />
-              {savingCourseMapping ? t('common:status.saving') : t('common:labels.save')}
+              {savingCourseMapping ? t('common:status.saving') : t('common:save')}
             </Button>
           </div>
 
@@ -2410,7 +2410,7 @@ export default function ManageBylawDetailsPage() {
                 className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!editingBucket.name.trim()}
               >
-                {t('common:labels.save')}
+                {t('common:save')}
               </button>
             </div>
           </div>
@@ -2426,7 +2426,7 @@ export default function ManageBylawDetailsPage() {
             </span>
             <Button variant="primary" type="button" onClick={handleSaveBylawDetails} disabled={savingBylawDetails}>
               <FloppyDiskIcon size={16} />
-              {savingBylawDetails ? t('common:status.saving') : t('common:labels.save')}
+              {savingBylawDetails ? t('common:status.saving') : t('common:save')}
             </Button>
           </div>
 

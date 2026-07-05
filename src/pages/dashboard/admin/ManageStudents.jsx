@@ -23,6 +23,7 @@ export default function ManageStudents() {
   const [assignRoleTarget, setAssignRoleTarget] = useState(null);
   const [filterDepartment, setFilterDepartment] = useState([]);
   const [filterStudentType, setFilterStudentType] = useState([]);
+  const [filterProbation, setFilterProbation] = useState([]);
 
   const studentTableHeaders = useMemo(() => {
     if (isDesktop) return [t('manageStudents.studentId'), t('manageStudents.student'), t('manageStudents.nationalId'), t('manageStudents.department'), t('manageStudents.bylaw'), t('manageStudents.gpa')];
@@ -46,11 +47,20 @@ export default function ManageStudents() {
     }
     if (filterDepartment.length > 0 && !filterDepartment.includes(student.department || student.departmentName || student.faculty)) return false;
     if (filterStudentType.length > 0 && !filterStudentType.includes(student.studentType)) return false;
+    if (filterProbation.length > 0) {
+      const isProbation = student.isOnProbation === true;
+      const wantProbation = filterProbation.includes("true");
+      const wantNonProbation = filterProbation.includes("false");
+      if (wantProbation && wantNonProbation) { /* both selected - show all */ }
+      else if (wantProbation && !isProbation) return false;
+      else if (wantNonProbation && isProbation) return false;
+    }
     return true;
-  }, [filterDepartment, filterStudentType]);
+  }, [filterDepartment, filterStudentType, filterProbation]);
 
   const buildStudentRow = useCallback((student, { isDesktop, isTablet }) => {
     const row = {};
+    const isOnProbation = student.isOnProbation === true;
     if (isDesktop || isTablet) row.studentID = student.studentCode || "—";
     row.student = (
       <div className="flex items-center gap-3 min-w-0">
@@ -58,7 +68,14 @@ export default function ManageStudents() {
           {student.profileImage ? <img src={student.profileImage} alt={student.fullName} className="w-full h-full object-cover" /> : <UserIcon className="w-5 h-5 text-text-secondary-default-light dark:text-text-secondary-default-dark" />}
         </div>
         <div className="flex flex-col text-start min-w-0 max-w-40">
-          <p className="truncate">{student.fullName}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="truncate">{student.fullName}</p>
+            {isOnProbation && (
+              <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-bg-surface-warning-default-light dark:bg-bg-surface-warning-default-dark text-text-warning-default-light dark:text-text-warning-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark">
+                {t('studentDetails.probation')}
+              </span>
+            )}
+          </div>
           <p className="text-xs truncate text-text-secondary-default-light dark:text-text-secondary-default-dark">{student.email}</p>
         </div>
       </div>
@@ -108,11 +125,15 @@ export default function ManageStudents() {
         }
         return items;
       }}
-      getDeleteMessage={(item) => (
-        <Trans i18nKey="manageStudents.deleteConfirm" ns="admin" values={{ name: item?.fullName, id: item?.studentId }}>
-          Are you sure you want to delete <strong>{{ name }}</strong> ({{ id }})? This action cannot be undone.
-        </Trans>
-      )}
+      getDeleteMessage={(item) => {
+        const name = item?.fullName;
+        const id = item?.studentId;
+        return (
+          <Trans i18nKey="manageStudents.deleteConfirm" ns="admin" values={{ name, id }}>
+            Are you sure you want to delete <strong>{{ name }}</strong> ({{ id }})? This action cannot be undone.
+          </Trans>
+        );
+      }}
       renderFilters={({ rawItems, setCurrentPage }) => {
         const departments = [...new Set(rawItems.map(s => s.department || s.departmentName || s.faculty).filter(Boolean))].sort();
         const studentTypes = [...new Set(rawItems.map(s => s.studentType).filter(Boolean))].sort();
@@ -129,6 +150,15 @@ export default function ManageStudents() {
               options={studentTypes.map(t => ({ value: t, label: t }))}
               selectedValues={filterStudentType}
               onChange={(v) => { setFilterStudentType(v); setCurrentPage(1); }}
+            />
+            <FilterDropdown
+              label={t('studentDetails.probation')}
+              options={[
+                { value: "true", label: t('studentDetails.probation') },
+                { value: "false", label: t('manageStudents.nonProbation') },
+              ]}
+              selectedValues={filterProbation}
+              onChange={(v) => { setFilterProbation(v); setCurrentPage(1); }}
             />
           </>
         );

@@ -181,11 +181,11 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
             setScheduleConflict(null);
             return;
         }
-        const conflict = detectInstructorConflict(scheduleSlots, instructorSchedule);
+        const conflict = detectInstructorConflict(scheduleSlots, instructorSchedule, isEdit ? initialData._classId : null);
         setScheduleConflict(conflict);
     }, [scheduleSlots, instructorSchedule, selectedInstructor]);
 
-    function detectInstructorConflict(slots, existingSchedule) {
+    function detectInstructorConflict(slots, existingSchedule, excludeClassId) {
         for (const slot of slots) {
             if (!slot.day || !slot.time) continue;
             const startMinutes = parseTimeToMinutes(slot.time);
@@ -193,6 +193,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
             const slotStart = `${String(Math.floor(startMinutes / 60)).padStart(2, '0')}:${String(startMinutes % 60).padStart(2, '0')}:00`;
             const slotEnd = `${String(Math.floor(endMinutes / 60)).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}:00`;
             for (const event of existingSchedule) {
+                if (excludeClassId != null && event.scheduleId === excludeClassId) continue;
                 if (isOverlapping(
                     { day: slot.day, startTime: slotStart, endTime: slotEnd },
                     { dayName: event.dayName ?? event.day, startTime: event.startTime, endTime: event.endTime }
@@ -219,6 +220,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
 
         const room = selectedRoom?.value || "";
         if (!room) { showError(t('classForm.errorRoomRequired')); return; }
+        if (room && !capacity) { showError(t('classForm.errorCapacityRequired') || 'Capacity is required when a room is selected.'); return; }
         if (!selectedInstructor) { showError(t('classForm.errorInstructorRequired')); return; }
 
         const validSlots = scheduleSlots.filter((s) => s.day && s.time);
@@ -227,7 +229,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
         const payloads = validSlots.map((slot) => {
             const base = {
                 schedule: `${slot.day} ${slot.time.padStart(5, "0") + ":00"}`,
-                room: selectedRoom?.label?.split(" (")[0] || "",
+                roomId: selectedRoom?.value || null,
             };
             if (isEdit) {
                 base.instructorId = selectedInstructor?.value;

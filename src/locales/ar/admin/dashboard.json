@@ -48,6 +48,7 @@
   "dashboard.publish": "نشر",
   "dashboard.noAnnouncements": "لا توجد إعلانات بعد. انشر إعلاناً أعلاه.",
   "dashboard.analyticsSubtitle": "التسجيل والدرجات والنشاط الدراسي",
+  "dashboard.editedTime": "عُدل {{time}}",
   "dashboard.postedTime": "نُشر {{time}}",
   "dashboard.postedRecently": "نُشر مؤخراً",
   "dashboard.students": "الطلاب",
@@ -59,5 +60,12 @@
   "dashboard.coursesPerDepartment": "المقررات حسب القسم",
   "dashboard.attendanceRateOverTime": "نسبة الحضور على مدار الوقت",
   "dashboard.count": "العدد",
-  "dashboard.rate": "النسبة"
+  "dashboard.rate": "النسبة",
+  "dashboard.legend": "دليل الألوان",
+  "dashboard.noData": "لا توجد بيانات متاحة",
+  "dashboard.level": "المستوى",
+  "dashboard.probationCount": "الطلاب تحت المراقبة",
+  "dashboard.probationHeatmap": "خريطة المراقبة الأكاديمية",
+  "dashboard.probationHeatmapSubtitle": "نسبة الطلاب تحت المراقبة حسب القسم والمستوى",
+  "dashboard.heatmapProbationRate": "نسبة المراقبة"
 }

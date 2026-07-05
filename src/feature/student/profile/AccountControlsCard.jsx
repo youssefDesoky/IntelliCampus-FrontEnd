@@ -53,7 +53,6 @@ export default function AccountControlsCard({ className = "" }) {
     };
 
     const preferenceOptions = [
-        { id: "email", label: t("profile.preferenceEmail") },
         { id: "notifications", label: t("profile.preferenceNotifications") },
         { id: "push", label: t("profile.preferencePush") },
     ];

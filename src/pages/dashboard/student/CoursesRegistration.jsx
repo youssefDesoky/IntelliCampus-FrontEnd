@@ -38,7 +38,8 @@ export default function CoursesRegistration() {
     const { convert: ar } = useArabicDigits();
 
     const mapRegistrationToCard = (reg) => {
-        const scheduleParts = [reg.day, reg.startTime && reg.endTime ? `${reg.startTime} - ${reg.endTime}` : ""].filter(Boolean);
+        const fmt = (t) => t && formatTimeOption(t);
+        const scheduleParts = [reg.day, reg.startTime && reg.endTime ? `${fmt(reg.startTime)} - ${fmt(reg.endTime)}` : ""].filter(Boolean);
         return {
             id:          getLocalizedField(reg, 'courseCode', i18n.language) ?? reg.courseCode  ?? reg.code ?? reg.courseId ?? "",
             title:       getLocalizedField(reg, 'courseName', i18n.language)  ?? "",
@@ -88,13 +89,18 @@ export default function CoursesRegistration() {
         }
 
         function normalizeDay(day) {
-            if (!day) return '';
+            if (day === null || day === undefined) return '';
+            if (typeof day === 'number') {
+                const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                return dayNames[day] || '';
+            }
+            if (typeof day !== 'string' || day.length === 0) return '';
             return day.toLowerCase().slice(0, 3);
         }
 
         function isOverlapping(a, b) {
-            const dayA = normalizeDay(a.day ?? a.dayName ?? '');
-            const dayB = normalizeDay(b.day ?? b.dayName ?? '');
+            const dayA = normalizeDay(a.dayName ?? a.day);
+            const dayB = normalizeDay(b.dayName ?? b.day);
             if (dayA !== dayB) return false;
             const sA = parseTimeToMinutes(a.startTime ?? a.start ?? '');
             const eA = parseTimeToMinutes(a.endTime ?? a.end ?? '');
@@ -113,14 +119,18 @@ export default function CoursesRegistration() {
             return `${h12.toString().padStart(2, '0')}:${m} ${ampm}`;
         }
 
-        function detectTimeConflicts(registeredEvents, lecture, selectedSection, courseTitle, courseId) {
+        function detectTimeConflicts(registeredEvents, lectures, selectedSection, courseTitle, courseId) {
             const conflicts = [];
             const candidates = [];
-            if (lecture) candidates.push({ type: 'Lecture', courseId, ...lecture });
+            if (lectures?.length) {
+                for (const lec of lectures)
+                    candidates.push({ type: 'Lecture', courseId, ...lec });
+            }
             if (selectedSection) candidates.push({ type: 'Section', courseId, ...selectedSection });
 
             for (const candidate of candidates) {
                 for (const event of registeredEvents) {
+                    if (event.courseId === courseId) continue;
                     if (isOverlapping(candidate, event)) {
                         conflicts.push({
                             type: candidate.type,
@@ -137,6 +147,7 @@ export default function CoursesRegistration() {
         }
 
     const [locallyAddedCourses, setLocallyAddedCourses] = useState([]);
+    const [pendingRemovalIds, setPendingRemovalIds] = useState(new Set());
     const [sectionOptionsByCourseId, setSectionOptionsByCourseId] = useState({});
     const [selectedSectionByCourseId, setSelectedSectionByCourseId] = useState({});
     const [courseClassesData, setCourseClassesData] = useState({});
@@ -198,6 +209,7 @@ export default function CoursesRegistration() {
         const result = [];
         for (let i = 0; i < events.length; i++) {
             for (let j = i + 1; j < events.length; j++) {
+                if (events[i].courseId && events[i].courseId === events[j].courseId) continue;
                 if (isOverlapping(events[i], events[j])) {
                     result.push({
                         type: events[i].type || 'Event',
@@ -225,7 +237,7 @@ export default function CoursesRegistration() {
             const classes = courseClassesData[courseId];
             if (!classes) continue;
 
-            const lecture = classes.lecture ?? null;
+            const lectures = classes.lectures ?? [];
 
             const selectedSectionOpt = selectedSectionByCourseId[courseId];
             let selectedSection = null;
@@ -242,12 +254,15 @@ export default function CoursesRegistration() {
                 const otherClasses = courseClassesData[otherCourse.courseId];
                 if (!otherClasses) continue;
 
-                if (otherClasses.lecture) {
-                    otherPendingEvents.push({
-                        ...otherClasses.lecture,
-                        title: otherCourse.title,
-                        courseName: otherCourse.title,
-                    });
+                if (otherClasses.lectures?.length) {
+                    for (const lec of otherClasses.lectures) {
+                        otherPendingEvents.push({
+                            ...lec,
+                            title: otherCourse.title,
+                            courseName: otherCourse.title,
+                            courseId: otherCourse.courseId,
+                        });
+                    }
                 }
 
                 const otherSectionOpt = selectedSectionByCourseId[otherCourse.courseId];
@@ -260,6 +275,7 @@ export default function CoursesRegistration() {
                             ...otherSection,
                             title: otherCourse.title,
                             courseName: otherCourse.title,
+                            courseId: otherCourse.courseId,
                         });
                     }
                 }
@@ -267,7 +283,7 @@ export default function CoursesRegistration() {
 
             const courseConflicts = detectTimeConflicts(
                 [...existingScheduleEvents, ...otherPendingEvents],
-                lecture,
+                lectures,
                 selectedSection,
                 course.title,
                 courseId
@@ -318,7 +334,12 @@ export default function CoursesRegistration() {
     const schedulePreview = Array.isArray(scheduleData) ? scheduleData : [];
 
     const mergedSchedulePreview = useMemo(() => {
-        const serverEvents = Array.isArray(scheduleData) ? scheduleData : [];
+        const serverEvents = Array.isArray(scheduleData)
+            ? scheduleData.map(e => ({
+                  ...e,
+                  instructor: e.instructorName ?? e.instructor ?? "",
+              }))
+            : [];
         const pendingEvents = [];
 
         locallyAddedCourses.forEach((course) => {
@@ -335,27 +356,35 @@ export default function CoursesRegistration() {
 
             const formatTime = (time) => {
                 if (!time) return null;
-                if (typeof time === "string") return time;
-                const h = time.hours ?? time.hour ?? 0;
-                const m = time.minutes ?? time.minute ?? 0;
-                const period = h >= 12 ? "PM" : "AM";
-                const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-                return `${hour12.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} ${period}`;
+                if (typeof time === "object") {
+                    const h = time.hours ?? time.hour ?? 0;
+                    const m = time.minutes ?? time.minute ?? 0;
+                    const period = h >= 12 ? "PM" : "AM";
+                    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                    return `${hour12.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} ${period}`;
+                }
+                const parts = String(time).split(':');
+                const h = parseInt(parts[0], 10);
+                const m = parts[1] || '00';
+                const period = h >= 12 ? 'PM' : 'AM';
+                const hour12 = h % 12 || 12;
+                return `${hour12.toString().padStart(2, "0")}:${m} ${period}`;
             };
 
-            if (classes.lecture) {
-                const lec = classes.lecture;
-                const dayKey = toDayKey(lec.dayName ?? lec.day ?? "");
-                if (dayKey) {
-                    pendingEvents.push({
-                        day: dayKey,
-                        startTime: formatTime(lec.startTime),
-                        endTime: formatTime(lec.endTime),
-                        title: course.title,
-                        location: lec.room ?? "",
-                        type: "lecture",
-                        instructor: lec.instructorName ?? "",
-                    });
+            if (classes.lectures?.length) {
+                for (const lec of classes.lectures) {
+                    const dayKey = toDayKey(lec.dayName ?? lec.day ?? "");
+                    if (dayKey) {
+                        pendingEvents.push({
+                            day: dayKey,
+                            startTime: formatTime(lec.startTime),
+                            endTime: formatTime(lec.endTime),
+                            title: course.title,
+                            location: lec.roomName ?? lec.room ?? "",
+                            type: "lecture",
+                            instructor: lec.instructorName ?? "",
+                        });
+                    }
                 }
             }
 
@@ -370,7 +399,7 @@ export default function CoursesRegistration() {
                             startTime: formatTime(sectionClass.startTime),
                             endTime: formatTime(sectionClass.endTime),
                             title: course.title,
-                            location: sectionClass.room ?? "",
+                            location: sectionClass.roomName ?? sectionClass.room ?? "",
                             type: "section",
                             instructor: sectionClass.instructorName ?? "",
                         });
@@ -382,10 +411,12 @@ export default function CoursesRegistration() {
         return [...serverEvents, ...pendingEvents];
     }, [scheduleData, locallyAddedCourses, courseClassesData, selectedSectionByCourseId]);
 
-    const selectedCredits = selectedCourses.reduce(
-        (sum, c) => sum + (typeof c.creditHours === 'number' ? c.creditHours : 0),
-        0
-    );
+    const selectedCredits = selectedCourses
+        .filter(c => !pendingRemovalIds.has(c.courseId))
+        .reduce(
+            (sum, c) => sum + (typeof c.creditHours === 'number' ? c.creditHours : 0),
+            0
+        );
 
     /* ── Load sections & class data for selected courses ── */
     useEffect(() => {
@@ -414,7 +445,7 @@ export default function CoursesRegistration() {
                             const type = (cls.classTypeName ?? cls.classType ?? cls.type ?? "").toString().toLowerCase();
                             return type === "section";
                         });
-                        const lecture = list.find((cls) => {
+                        const lectures = list.filter((cls) => {
                             const type = (cls.classTypeName ?? cls.classType ?? cls.type ?? "").toString().toLowerCase();
                             return type === "lecture";
                         });
@@ -423,7 +454,7 @@ export default function CoursesRegistration() {
                             const day = cls.dayName ?? "";
                             const start = formatTimeOption(cls.startTime);
                             const end = formatTimeOption(cls.endTime);
-                            const room = cls.room ?? "";
+                            const room = cls.roomName ?? cls.room ?? "";
                             const taName = cls.instructorName ?? cls.taName ?? "";
                             const classId = cls.classId ?? cls.id ?? "";
                             const timeStr = start && end ? `${start}–${end}` : "";
@@ -435,7 +466,7 @@ export default function CoursesRegistration() {
                             };
                         });
 
-                        return { courseId, options, lecture, sections, allClasses: list };
+                        return { courseId, options, lectures, sections, allClasses: list };
                     })
                 );
 
@@ -443,9 +474,9 @@ export default function CoursesRegistration() {
 
                 const optionsMap = {};
                 const classesMap = {};
-                results.forEach(({ courseId, options, lecture, sections, allClasses }) => {
+                results.forEach(({ courseId, options, lectures, sections, allClasses }) => {
                     optionsMap[courseId] = options;
-                    classesMap[courseId] = { lecture, sections, allClasses };
+                    classesMap[courseId] = { lectures, sections, allClasses };
                 });
 
                 setSectionOptionsByCourseId(optionsMap);
@@ -512,28 +543,27 @@ export default function CoursesRegistration() {
         }
     };
 
-    const handleUnregister = async (course) => {
-        if (!course.isRegistered) {
-            setLocallyAddedCourses((prev) => prev.filter((c) => c.courseId !== course.courseId));
-            setSelectedSectionByCourseId((prev) => {
-                const next = { ...prev };
-                delete next[course.courseId];
-                return next;
-            });
-            return;
-        }
+    const togglePendingRemoval = (courseId) => {
+        setPendingRemovalIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(courseId)) {
+                next.delete(courseId);
+            } else {
+                next.add(courseId);
+            }
+            return next;
+        });
+    };
 
-        try {
-            await unregisterFromCourse(course.courseId);
-            await queryClient.invalidateQueries({ queryKey: ["coursesRegistration"] });
-        } catch (err) {
-            showError(err.message || t('registration.unregisterError'));
-        }
+    const handleUnregister = (course) => {
+        togglePendingRemoval(course.courseId);
     };
 
     const handleConfirmRegistration = async () => {
-        const pending = selectedCourses.filter((c) => !c.isRegistered);
-        if (pending.length === 0 && selectedCourses.length === 0) return;
+        const activeCourses = selectedCourses.filter((c) => !pendingRemovalIds.has(c.courseId));
+        const pending = activeCourses.filter((c) => !c.isRegistered);
+        const coursesToRemove = selectedCourses.filter((c) => c.isRegistered && pendingRemovalIds.has(c.courseId));
+        if (pending.length === 0 && activeCourses.length === 0 && coursesToRemove.length === 0) return;
 
         for (const course of pending) {
             if (course.isProject) continue;
@@ -544,7 +574,7 @@ export default function CoursesRegistration() {
             }
         }
 
-        if (allConflicts.length > 0) {
+        if (pending.length > 0 && allConflicts.length > 0) {
             setConflictDialogData({
                 message: `Cannot confirm registration due to time conflict${allConflicts.length > 1 ? 's' : ''}.`,
                 conflicts: [...allConflicts],
@@ -555,7 +585,7 @@ export default function CoursesRegistration() {
 
         const settings = registrationSettings;
         if (settings) {
-            const totalCredits = selectedCourses.reduce(
+            const totalCredits = activeCourses.reduce(
                 (sum, c) => sum + (typeof c.creditHours === 'number' ? c.creditHours : 0),
                 0
             );
@@ -590,7 +620,7 @@ export default function CoursesRegistration() {
             }
         }
 
-        const registeredCourses = selectedCourses.filter((c) => c.isRegistered);
+        const registeredCourses = activeCourses.filter((c) => c.isRegistered);
         for (const course of registeredCourses) {
             if (course.isProject) continue;
             const newSection = selectedSectionByCourseId[course.courseId];
@@ -605,7 +635,19 @@ export default function CoursesRegistration() {
             }
         }
 
+        /* ── Process pending removals ── */
+        for (const course of coursesToRemove) {
+            try {
+                await unregisterFromCourse(course.courseId);
+                successMsgs.push(`Removed ${course.title}`);
+            } catch (err) {
+                const msg = err?.message || err?.toString() || "Unknown error";
+                failureMsgs.push(`Failed to remove ${course.title}: ${msg}`);
+            }
+        }
+
         setLocallyAddedCourses([]);
+        setPendingRemovalIds(new Set());
         await queryClient.invalidateQueries({ queryKey: ["coursesRegistration"] });
         await queryClient.invalidateQueries({ queryKey: ["studentSchedule", "registration"] });
 
@@ -704,6 +746,7 @@ export default function CoursesRegistration() {
                                             handleSectionChange(course.courseId, opt)
                                         }
                                         conflicts={allConflicts.filter(c => c.courseId === course.courseId)}
+                                        isPendingRemoval={pendingRemovalIds.has(course.courseId)}
                                     />
                                 ))
                             ) : (

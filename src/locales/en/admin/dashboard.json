@@ -48,6 +48,7 @@
   "dashboard.publish": "Publish",
   "dashboard.noAnnouncements": "No announcements yet. Publish one above.",
   "dashboard.analyticsSubtitle": "Enrollment, grades, and course activity",
+  "dashboard.editedTime": "Edited {{time}}",
   "dashboard.postedTime": "Posted {{time}}",
   "dashboard.postedRecently": "Posted recently",
   "dashboard.students": "Students",
@@ -59,5 +60,12 @@
   "dashboard.coursesPerDepartment": "Courses per Department",
   "dashboard.attendanceRateOverTime": "Attendance Rate Over Time",
   "dashboard.count": "Count",
-  "dashboard.rate": "Rate"
+  "dashboard.rate": "Rate",
+  "dashboard.legend": "Legend",
+  "dashboard.noData": "No data available",
+  "dashboard.level": "Level",
+  "dashboard.probationCount": "Probation Students",
+  "dashboard.probationHeatmap": "Probation Heatmap",
+  "dashboard.probationHeatmapSubtitle": "Probation rate by department and level",
+  "dashboard.heatmapProbationRate": "Probation Rate"
 }

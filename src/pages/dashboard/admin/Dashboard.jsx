@@ -24,7 +24,7 @@ import Section from "../../../components/ui/Section";
 import TextArea from "../../../components/ui/TextArea";
 import Button from "../../../components/ui/Button";
 import Dialog from "../../../components/ui/Dialog";
-import { ChartCard } from "../../../components/charts";
+import { ChartCard, ProbationHeatmapChart } from "../../../components/charts";
 import {
   UsersIcon,
   UserTieIcon,
@@ -393,11 +393,13 @@ function CourseStatusBreakdownChart({ data, t }) {
 
 function AcademicSnapshot({ stats, snapshot, t }) {
   const snap = snapshot ?? {};
+  const totalStudents = stats?.totalStudents ?? 0;
   const metrics = [
     { label: t('dashboard.passRate'),          value: `${(snap.passRate ?? 0).toFixed(0)}%`,      progress: snap.passRate ?? 0, color: "#22c55e" },
     { label: t('dashboard.courseCompletion'),  value: `${(snap.courseCompletion ?? 0).toFixed(0)}%`, progress: snap.courseCompletion ?? 0, color: "#3b82f6" },
     { label: t('dashboard.studentRetention'),  value: `${(snap.studentRetention ?? 0).toFixed(0)}%`, progress: snap.studentRetention ?? 0, color: "#8b5cf6" },
     { label: t('dashboard.averageGpa'),        value: `${(snap.averageGpa ?? 0).toFixed(2)} / 4.0`,progress: ((snap.averageGpa ?? 0) / 4 * 100), color: "#f59e0b" },
+    { label: t('dashboard.probationCount'),    value: `${snap.probationCount ?? 0}`, progress: totalStudents > 0 ? ((snap.probationCount ?? 0) / totalStudents * 100) : 0, color: "#ef4444" },
   ];
 
   return (
@@ -555,6 +557,7 @@ export default function Dashboard() {
   const topCoursesData = dashboard?.charts?.topCourses         ?? [];
   const deptStatusData = dashboard?.charts?.departmentStatus   ?? [];
   const courseStatusData = dashboard?.charts?.courseStatusBreakdown ?? [];
+  const probationHeatmapData = dashboard?.charts?.probationHeatmap ?? [];
 
   const textAreaClasses =
     "w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark";
@@ -756,6 +759,10 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <TopCoursesChart data={topCoursesData} t={t} />
           <CourseStatusChart data={deptStatusData} t={t} />
+        </div>
+
+        <div className="mt-6">
+          <ProbationHeatmapChart data={probationHeatmapData} t={t} />
         </div>
       </Section>
 

@@ -21,6 +21,7 @@
   "dashboard.noNews": "No news available",
   "dashboard.analytics": "Analytics",
   "dashboard.error": "Failed to load dashboard. Please try again later.",
+  "dashboard.editedTime": "Edited {{time}}",
   "dashboard.postedTime": "Posted {{time}}",
   "dashboard.postedRecently": "Posted recently",
   "dashboard.totalClasses": "Total Classes",
