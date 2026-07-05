@@ -52,6 +52,7 @@ export default function CoursesRegistration() {
             courseId:     reg.courseId,
             classId:      reg.classId,
             isProject:    reg.isProject ?? false,
+            isElective:   reg.isElective ?? false,
             isRegistered: true,
         };
     };
@@ -282,8 +283,11 @@ export default function CoursesRegistration() {
                 }
             }
 
+            const filteredExisting = existingScheduleEvents.filter(
+                e => !pendingRemovalIds.has(e.courseId)
+            );
             const courseConflicts = detectTimeConflicts(
-                [...existingScheduleEvents, ...otherPendingEvents],
+                [...filteredExisting, ...otherPendingEvents],
                 lectures,
                 selectedSection,
                 course.title,
@@ -293,7 +297,7 @@ export default function CoursesRegistration() {
         }
 
         setConflicts(found);
-    }, [selectedSectionByCourseId, locallyAddedCourses, courseClassesData, existingScheduleEvents]);
+    }, [selectedSectionByCourseId, locallyAddedCourses, courseClassesData, existingScheduleEvents, pendingRemovalIds]);
 
     const allConflicts = useMemo(() => {
         return [...existingScheduleConflicts, ...conflicts];
@@ -675,6 +679,7 @@ export default function CoursesRegistration() {
             <CourseRegistrationHeader
                 deviceType={isDesktop ? "desktop" : "mobile"}
                 selectedCourses={selectedCourses}
+                pendingRemovalIds={pendingRemovalIds}
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
                 searchValue={searchValue}

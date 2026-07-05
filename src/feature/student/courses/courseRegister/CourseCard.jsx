@@ -65,18 +65,25 @@ export default function CourseCard({
                         </div>
                     )}
 
-                    <div className="flex flex-col min-w-0">
-                        {/* Course code */}
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-semibold text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                                {course.code}
-                            </span>
+                        <div className="flex flex-col min-w-0">
+                            {/* Course code */}
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-sm font-semibold text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                                    {course.code}
+                                </span>
+                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                    course.isElective
+                                        ? 'bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark text-white'
+                                        : 'bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-white'
+                                }`}>
+                                    {course.isElective ? t('registration.elective', 'Elective') : t('registration.required', 'Required')}
+                                </span>
+                            </div>
+                            {/* Course title */}
+                            <h3 className="font-semibold text-base text-text-primary-active-light dark:text-text-primary-active-dark truncate">
+                                {course.title}
+                            </h3>
                         </div>
-                        {/* Course title */}
-                        <h3 className="font-semibold text-base text-text-primary-active-light dark:text-text-primary-active-dark truncate">
-                            {course.title}
-                        </h3>
-                    </div>
                 </div>
 
                 {/* Credits */}
