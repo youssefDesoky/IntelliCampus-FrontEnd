@@ -42,6 +42,7 @@ function StatCard({ icon, value, label, colorClass, delay = 0 }) {
 
 export default function CourseRegistrationHeader({
     selectedCourses = [],
+    pendingRemovalIds = new Set(),
     activeFilter = "all",
     onFilterChange,
     searchValue = "",
@@ -64,10 +65,12 @@ export default function CourseRegistrationHeader({
         { value: "elective", label: t('registration.filterElective'), icon: BookIcon },
     ];
 
-    const selectedCredits = selectedCourses.reduce(
-        (sum, c) => sum + (typeof c.creditHours === "number" ? c.creditHours : 0),
-        0
-    );
+    const selectedCredits = selectedCourses
+        .filter(c => !pendingRemovalIds.has(c.courseId))
+        .reduce(
+            (sum, c) => sum + (typeof c.creditHours === "number" ? c.creditHours : 0),
+            0
+        );
     const remainingCredits = Math.max(0, maxCredits - selectedCredits);
     const progressPercent = Math.min(100, (selectedCredits / maxCredits) * 100);
 

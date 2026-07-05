@@ -1,6 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { ArrowRightIcon, BookIcon, CheckIcon } from "../../../../components/ui/icons";
 
+const typeStyles = {
+  elective: {
+    labelKey: 'myCourses.electiveLabel',
+    badge: "bg-bg-surface-purple-default-light text-text-purple-default-light border-border-purple-default-light dark:bg-bg-surface-purple-default-dark dark:text-text-purple-default-dark dark:border-border-purple-default-dark",
+  },
+  mandatory: {
+    labelKey: 'myCourses.mandatoryLabel',
+    badge: "bg-bg-surface-blue-default-light text-text-blue-default-light border-border-blue-default-light dark:bg-bg-surface-blue-default-dark dark:text-text-blue-default-dark dark:border-border-blue-default-dark",
+  },
+};
+
 export default function CoursePrerequisitesCard({ course = {} }) {
     const { t } = useTranslation('student');
     // Explicit safe fallbacks
@@ -8,8 +19,12 @@ export default function CoursePrerequisitesCard({ course = {} }) {
         code = "TBD",
         creditHours = 0,
         title = t('prerequisites.untitledCourse'),
+        isElective = false,
         prerequisites = []
     } = course;
+
+    const type = isElective ? "elective" : "mandatory";
+    const typeAccent = typeStyles[type];
 
     const safePrerequisites = Array.isArray(prerequisites) ? prerequisites : [];
     const hasPrerequisites = safePrerequisites.length > 0;
@@ -20,9 +35,14 @@ export default function CoursePrerequisitesCard({ course = {} }) {
             {/* Header */}
             <header className="flex items-start justify-between gap-4 px-6 pt-6 pb-5">
                 <div className="min-w-0">
-                    <h2 className="font-mono text-2xl font-black uppercase tracking-tight text-text-primary-default-light dark:text-text-primary-default-dark">
-                        {code}
-                    </h2>
+                    <div className="flex items-center gap-2">
+                        <h2 className="font-mono text-2xl font-black uppercase tracking-tight text-text-primary-default-light dark:text-text-primary-default-dark">
+                            {code}
+                        </h2>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border leading-none ${typeAccent.badge}`}>
+                            {t(typeAccent.labelKey)}
+                        </span>
+                    </div>
                     <h3
                         className="mt-1.5 text-base font-semibold leading-snug text-text-secondary-default-light line-clamp-2 transition-colors group-hover:text-text-accent-active-light dark:text-text-secondary-default-dark dark:group-hover:text-text-accent-active-dark"
                         title={title}

@@ -28,6 +28,7 @@ export default function CoursePrerequisitesBody({ search = "" }) {
                 title: getLocalizedField(course, 'courseName', i18n.language) || "",
                 code: getLocalizedField(course, 'courseCode', i18n.language) || course.courseCode || "",
                 creditHours: course.creditHours || "",
+                isElective: course.isElective ?? false,
                 prerequisites: (course.prerequisites || []).map((p) => ({
                     id: getLocalizedField(p, 'code', i18n.language) || p.code || "",
                     title: getLocalizedField(p, 'title', i18n.language) || p.title || "",
