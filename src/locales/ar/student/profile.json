@@ -114,5 +114,9 @@
   "profile.openBylaw": "فتح اللائحة",
   "profile.levelFormat": "المستوى {{level}}",
   "profile.academicLevel": "المستوى الأكاديمي",
-  "profile.probation": "إنذار أكاديمي"
+  "profile.probation": "تحت المراقبة الأكاديمية",
+  "profile.sendCode": "إرسال رمز التحقق",
+  "profile.resendCode": "إعادة إرسال رمز التحقق",
+  "profile.codeSentTo": "تم إرسال رمز مكون من 6 أرقام إلى <1>{{email}}</1>.",
+  "profile.yourNewEmail": "بريدك الإلكتروني الجديد"
 }

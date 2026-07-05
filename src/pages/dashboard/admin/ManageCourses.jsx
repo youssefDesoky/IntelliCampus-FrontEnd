@@ -30,6 +30,7 @@ import CourseRegistrationSettings from "../../../feature/admin/components/Course
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useTranslation, Trans } from 'react-i18next';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 function StatusBadge({ isActive, displaySemester }) {
   const { t } = useTranslation('admin');
@@ -276,6 +277,7 @@ export default function ManageCourses() {
         }
         return null;
       }}
+      renderLoading={() => <ManageContentSkeleton />}
       renderExtraDialogs={({ loadItems, rawItems }) => (
         <>
           {isImportOpen && (

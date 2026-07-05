@@ -99,7 +99,7 @@ export default function InstructorCourseGrades() {
     });
 
     useEffect(() => {
-        if (error) showError(error.message || "Failed to load grades");
+        if (error) showError(error.message || t('grades.errorLoad'));
     }, [error, showError]);
 
     const handleUpload = async (file) => {
@@ -121,7 +121,7 @@ export default function InstructorCourseGrades() {
             setIsUploadOpen(false);
             refetchGrades();
         } catch (err) {
-            const detail = err.detail || err.message || "An unexpected error occurred.";
+            const detail = err.detail || err.message || t('grades.errorUnexpected');
             setUploadError(detail);
         } finally {
             setUploading(false);
@@ -289,16 +289,13 @@ export default function InstructorCourseGrades() {
 
             {isUploadOpen && (
                 <ImportDialog
-                    title={t('grades.uploadMidtermTitle')}
-                    subtitle={t('grades.uploadMidtermSubtitle')}
+                    title={t('grades.uploadTitle')}
+                    subtitle={t('grades.uploadSubtitle')}
                     onClose={() => setIsUploadOpen(false)}
                     onImport={handleUpload}
                 >
                     <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark bg-bg-surface-accent-default-light/30 dark:bg-bg-surface-accent-default-dark/20 rounded-lg px-4 py-2.5 border border-border-accent-default-light dark:border-border-accent-default-dark">
-                        <Trans
-                            i18nKey="grades.uploadMidtermNote"
-                            components={{ strong: <strong /> }}
-                        />
+                        <Trans t={t} i18nKey="grades.uploadNote" components={{ strong: <strong /> }} />
                     </p>
                 </ImportDialog>
             )}
@@ -306,9 +303,9 @@ export default function InstructorCourseGrades() {
             <Dialog
                 isOpen={uploadResult !== null}
                 variant="success"
-                title={t('grades.uploadSuccessTitle')}
+                title={t('grades.uploadSuccess')}
                 onClose={() => setUploadResult(null)}
-                confirmText={t('ui:dialog.ok')}
+                confirmText={t('grades.ok')}
                 showCloseButton={true}
             >
                 <pre className="whitespace-pre-wrap text-sm font-sans">{uploadResult}</pre>
@@ -317,9 +314,9 @@ export default function InstructorCourseGrades() {
             <Dialog
                 isOpen={uploadError !== null}
                 variant="danger"
-                title={t('grades.uploadErrorTitle')}
+                title={t('grades.uploadFailed')}
                 onClose={() => setUploadError(null)}
-                confirmText={t('ui:dialog.ok')}
+                confirmText={t('grades.ok')}
                 showCloseButton={true}
             >
                 <pre className="whitespace-pre-wrap text-sm font-sans">{uploadError}</pre>

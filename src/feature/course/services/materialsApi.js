@@ -25,6 +25,10 @@ export async function deleteMaterial(materialId) {
   return true;
 }
 
+export async function resyncMaterialToAi(materialId) {
+  return apiClient(`/api/materials/${materialId}/resync-ai`, { method: 'POST' });
+}
+
 export function getMaterialDownloadUrl(materialId) {
   return `/api/materials/${materialId}/download`;
 }

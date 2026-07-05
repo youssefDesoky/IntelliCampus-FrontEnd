@@ -30,5 +30,11 @@
   "smartNotes.clickToSelect": "انقر لاختيار محاضرة",
   "smartNotes.chooseLecture": "اختر محاضرة",
   "smartNotes.done": "تم",
-  "smartNotes.aiEnhance": "تحسين بالذكاء الاصطناعي"
+  "smartNotes.aiEnhance": "تحسين بالذكاء الاصطناعي",
+  "smartNotes.aiEnhancing": "جارٍ التحسين…",
+  "smartNotes.aiSummary": "ملخص الذكاء الاصطناعي",
+  "smartNotes.aiError": "فشل تحسين الملاحظة. حاول مرة أخرى.",
+  "smartNotes.aiRetry": "إعادة المحاولة",
+  "smartNotes.enhanced": "تم التحسين",
+  "smartNotes.backToNotes": "جميع الملاحظات"
 }

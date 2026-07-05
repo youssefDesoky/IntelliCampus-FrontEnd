@@ -30,5 +30,11 @@
   "smartNotes.clickToSelect": "Click to select a lecture",
   "smartNotes.chooseLecture": "Choose Lecture",
   "smartNotes.done": "Done",
-  "smartNotes.aiEnhance": "AI Enhance"
+  "smartNotes.aiEnhance": "AI Enhance",
+  "smartNotes.aiEnhancing": "Enhancing…",
+  "smartNotes.aiSummary": "AI Summary",
+  "smartNotes.aiError": "Failed to enhance note. Please try again.",
+  "smartNotes.aiRetry": "Retry",
+  "smartNotes.enhanced": "Enhanced",
+  "smartNotes.backToNotes": "All Notes"
 }

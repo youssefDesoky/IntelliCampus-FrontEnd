@@ -74,5 +74,10 @@
   "instructors": "المدرسون",
   "students": "الطلاب",
   "groups": "المجموعات",
-  "group.photoAlt": "صورة المجموعة"
+  "group.photoAlt": "صورة المجموعة",
+  "mode.academicAdvisor": "المستشار الأكاديمي",
+  "mode.courseQa": "أسئلة المقرر",
+  "mode.selectCourse": "اختر مقرراً...",
+  "mode.loadingCourses": "جاري تحميل المقررات...",
+  "mode.noCourses": "لا توجد مقررات متاحة"
 }

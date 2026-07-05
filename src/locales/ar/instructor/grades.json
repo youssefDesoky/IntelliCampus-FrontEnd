@@ -38,5 +38,16 @@
   "weights.saving": "جارٍ الحفظ...",
   "weights.placeholderQuizzes": "مثال: 5",
   "weights.placeholderAssignments": "مثال: 15",
-  "weights.placeholderMidterm": "مثال: 20"
+  "weights.placeholderMidterm": "مثال: 20",
+  "grades.uploading": "جارٍ الرفع...",
+  "grades.uploadMidterm": "رفع درجات منتصف الفصل",
+  "grades.errorLoad": "فشل تحميل الدرجات",
+  "grades.errorUnexpected": "حدث خطأ غير متوقع.",
+  "grades.uploadTitle": "رفع درجات منتصف الفصل",
+  "grades.uploadSubtitle": "رفع ملف CSV أو Excel (.csv, .xlsx, .xls) بدرجات منتصف الفصل.",
+  "grades.uploadNote": "إذا كانت الدرجة موجودة بالفعل لهذا الطالب، فإن الرفع مرة أخرى سيؤدي إلى <1>تحديث</1> البيانات الجديدة.",
+  "grades.uploadSuccess": "تم رفع الدرجات",
+  "grades.uploadSuccessResult": "{{success}} تم الرفع، {{fail}} فشل.",
+  "grades.uploadFailed": "فشل الرفع",
+  "grades.ok": "موافق"
 }

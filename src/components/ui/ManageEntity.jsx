@@ -44,6 +44,7 @@ export default function ManageEntity({
   renderFilters,
   renderExtraDialogs,
   renderBeforeTable,
+  renderLoading,
   extraDeps = [],
   serverSidePagination = false,
   defaultPageSize = 10,
@@ -318,9 +319,11 @@ export default function ManageEntity({
 
 
       {isLoading ? (
-        <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
-          {t('entity.loading', { entity: entityNamePlural })}
-        </p>
+        renderLoading ? renderLoading() : (
+          <p className="text-center py-10 text-text-secondary-default-light dark:text-text-secondary-default-dark">
+            {t('entity.loading', { entity: entityNamePlural })}
+          </p>
+        )
       ) : (
         <Section className={isFetching ? "opacity-60 transition-opacity" : ""}>
           <div className="flex flex-col gap-4 mb-3">

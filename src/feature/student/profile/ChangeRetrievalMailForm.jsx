@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import InputItem from "../../../components/form/InputItem";
 import Button from "../../../components/ui/Button";
@@ -176,11 +176,11 @@ export default function ChangeRetrievalMailForm({ isOpen, onClose }) {
                         loading={sendingCode}
                         onClick={handleSendCode}
                     >
-                        {codeSent ? "Resend Verification Code" : "Send Verification Code"}
+                        {codeSent ? t('profile.resendCode') : t('profile.sendCode')}
                     </Button>
                     {codeSent && (
                         <p className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                            A 6-digit code was sent to <strong>{newEmail || "your new email"}</strong>.
+                            <Trans t={t} i18nKey="profile.codeSentTo" values={{ email: newEmail || t('profile.yourNewEmail') }} components={{ strong: <strong /> }} />
                         </p>
                     )}
                 </div>

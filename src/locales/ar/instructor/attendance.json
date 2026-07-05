@@ -93,5 +93,8 @@
   "attendance.csvStudentCode": "رقم الطالب",
   "attendance.csvStudentName": "اسم الطالب",
   "attendance.csvStatus": "الحالة",
-  "attendance.csvCheckinTime": "وقت تسجيل الدخول"
+  "attendance.csvCheckinTime": "وقت تسجيل الدخول",
+  "attendance.unknown": "غير معروف",
+  "attendance.unknownDate": "تاريخ غير معروف",
+  "attendance.selectedCourse": "المقرر المحدد"
 }

@@ -57,6 +57,13 @@
   "materials.noMaterials": "لا توجد مواد بعد",
   "materials.noMaterialsDesc": "قم برفع المحاضرات والشرائح والفيديو أو أي موارد لهذا الأسبوع.",
   "materials.dragDropPrompt": "اسحب وأفلت الملفات هنا",
+  "materials.dropFilesDrag": "أسقط الملفات هنا",
+  "materials.uploading": "جارٍ الرفع...",
+  "materials.uploadingWait": "يرجى الانتظار أثناء رفع الملفات",
+  "materials.uploadSuccess": "اكتمل الرفع",
+  "materials.reSyncToAi": "إعادة المزامنة للذكاء الاصطناعي",
+  "materials.aiReSynced": "تمت الفهرسة في الذكاء الاصطناعي",
+  "materials.aiReSyncFailed": "فشلت مزامنة الذكاء الاصطناعي",
   "materials.fileCount_zero": "{{count}} ملف",
   "materials.fileCount_one": "{{count}} ملف",
   "materials.fileCount_two": "{{count}} ملفان",
@@ -117,11 +124,13 @@
   "announcements.failedDelete": "فشل حذف الإعلان",
   "announcements.failedPin": "فشل تثبيت الإعلان",
   "announcements.failedUnpin": "فشل إلغاء تثبيت الإعلان",
+  "courses.search": "بحث عن مقررات...",
   "announcements.hideComments": "إخفاء التعليقات",
   "announcements.showComments": "عرض التعليقات",
   "announcements.addComment": "أضف تعليق",
   "announcements.viewComments": "عرض التعليقات ({{count}})",
   "announcements.user": "مستخدم",
   "announcements.unknown": "غير معروف",
-  "announcements.announcementActions": "إجراءات الإعلان"
+  "announcements.announcementActions": "إجراءات الإعلان",
+  "courseDetail.readOnly": "هذه المادة نهائية وللقراءة فقط. لا يمكن إجراء أي تغييرات."
 }

@@ -1,6 +1,8 @@
 import * as signalR from "@microsoft/signalr";
 import apiClient from "../../../api/apiClient";
 
+export const FAHIM_USER_ID = "-1";
+
 const CHAT_PARTNERS = {
   12: { userId: "2", fullName: "Dr. Ahmed Hassan", role: "Instructor" },
   2: { userId: "12", fullName: "Layla Ahmed", role: "Student" },

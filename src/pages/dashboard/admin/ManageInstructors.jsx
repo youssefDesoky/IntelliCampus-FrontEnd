@@ -13,6 +13,7 @@ import { fetchInstructors, createInstructor, updateInstructor, deleteInstructor 
 import { importInstructors } from "../../../feature/admin/services/adminImportsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 export default function ManageInstructors() {
   const { t, i18n } = useTranslation('admin');
@@ -155,6 +156,7 @@ export default function ManageInstructors() {
         }
         return <InstructorForm method="post" onClose={closeForm} onSubmit={handleCreate} />;
       }}
+      renderLoading={() => <ManageContentSkeleton />}
       renderExtraDialogs={({ loadItems }) => (
         <>
           {assignRoleTarget && (

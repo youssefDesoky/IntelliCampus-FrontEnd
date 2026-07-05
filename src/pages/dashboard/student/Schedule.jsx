@@ -201,7 +201,7 @@ function EventDetailModal({ event, onClose }) {
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">{t('labels.dateAndTime')}</p>
+                                <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">{t('schedule.dateTime')}</p>
                                 <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">
                                     {dayName} &bull; {localizeTime(event.startTime)} - {localizeTime(event.endTime)}
                                 </p>
@@ -219,7 +219,7 @@ function EventDetailModal({ event, onClose }) {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">{t('labels.location')}</p>
+                                    <p className="text-sm text-text-secondary-active-light dark:text-text-secondary-active-dark">{t('schedule.location')}</p>
                                     <p className="font-medium text-text-primary-active-light dark:text-text-primary-active-dark">{getLocalizedField(event, 'location', i18n.language)}</p>
                                 </div>
                             </div>

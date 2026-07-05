@@ -1,13 +1,39 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useRef, useEffect, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
-import SmartNoteEditor from "./SmartNoteEditor.jsx";
 import SelectBox from "../../../components/ui/SelectBox";
 import { ClockIcon, CalendarIcon, TrashIcon, FahimIcon, BookIcon, LinkIcon } from "../../../components/ui/icons";
-import { updateNoteLinkedLecture, deleteNote, fromBackendLinkedLecture } from "./notesApi";
+import { updateNoteLinkedLecture, deleteNote, fromBackendLinkedLecture, enhanceNote } from "./notesApi";
 import Dialog from "../../../components/ui/Dialog";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
 import useArabicDigits from '../../../hooks/useArabicDigits';
+
+function renderMarkdownToHtml(md = "") {
+    let html = md
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/__(.+?)__/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/_(.+?)_/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+        .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+    html = html.replace(/<li>(.*?)<\/li>/g, (m) => m.replace(/<br>/g, ''));
+    return '<p>' + html + '</p>';
+}
+
+function openSummaryWindow(summary, title) {
+    const content = renderMarkdownToHtml(summary);
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:780px;margin:0 auto;padding:2rem;line-height:1.7;color:#1a1a2e}h1,h2,h3{margin-top:1.5em;color:#111827}code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.875em}pre{background:#f8fafc;border:1px solid #e2e8f0;padding:1rem;border-radius:8px;overflow-x:auto}pre code{background:none;padding:0}ul,ol{padding-left:1.5em}blockquote{border-left:4px solid #cbd5e1;margin:0;padding-left:1em;color:#64748b}p{margin:0.5em 0}@media(prefers-color-scheme:dark){body{background:#0f172a;color:#e2e8f0}h1,h2,h3{color:#f1f5f9}code{background:#1e293b}pre{background:#1e293b;border-color:#334155}blockquote{border-color:#475569;color:#94a3b8}}</style></head><body>${content}</body></html>`);
+    win.document.close();
+}
 
 const defaultWeeklyLectureOptions = [
     {
@@ -71,11 +97,14 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
     };
     const cardRef = useRef(null);
     const [cardWidth, setCardWidth] = useState(0);
-    const [isEditing, setIsEditing] = useState(false);
     const [isPickerOpen, setIsPickerOpen] = useState(false);
     const [isLinkLoading, setIsLinkLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [aiSummary, setAiSummary] = useState(note?.aiSummary || null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(false);
+    const [aiErrorMessage, setAiErrorMessage] = useState("");
     const navigate = useNavigate();
     const normalizedLinkedLecture = fromBackendLinkedLecture(note.linkedLecture) ?? note.linkedLecture ?? null
     const lectureOptions = buildLectureOptions(courseFolders, courseId);
@@ -95,6 +124,12 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
         if (cardRef.current) ro.observe(cardRef.current);
         return () => ro.disconnect();
     }, []);
+
+    useEffect(() => {
+        setAiSummary(note?.aiSummary || null);
+        setAiError(false);
+        setAiErrorMessage("");
+    }, [note?.id, note?.aiSummary]);
 
     async function handleLectureSelect(option) {
         const nextLecture = option
@@ -130,17 +165,6 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
 
     return (
         <Fragment>
-            {isEditing && (
-                <SmartNoteEditor
-                    note={note}
-                    onClose={() => setIsEditing(false)}
-                    courseFolders={courseFolders}
-                    courseId={courseId}
-                    studentId={studentId}
-                    onSaveNote={onSaveNote}
-                />
-            )}
-
             <Dialog
                 isOpen={showDeleteConfirm}
                 variant="warning"
@@ -165,7 +189,7 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
 
             <div
                 ref={cardRef}
-                onClick={() => setIsEditing(true)}
+                onClick={() => navigate(`/smart-notes/${note.id}`, { state: { note, courseFolders, courseId, studentId } })}
                 className="group relative flex min-w-70 flex-col gap-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-4 md:p-5 shadow-sm shadow-shadow-light dark:shadow-shadow-dark transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
 
@@ -189,6 +213,35 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                     </h3>
                     <div className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark line-clamp-2 leading-relaxed [&_*]:m-0" dangerouslySetInnerHTML={{ __html: note.content }} />
                 </div>
+
+                {aiError && (
+                    <div className="flex flex-col gap-1.5 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50/60 dark:bg-red-950/30 p-2.5">
+                        <span className="text-xs text-red-600 dark:text-red-400 leading-relaxed">{aiErrorMessage || t('smartNotes.aiError')}</span>
+                        <button
+                            type="button"
+                            disabled={aiLoading}
+                            className="self-end text-xs font-semibold px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors disabled:opacity-50"
+                            onClick={async (e) => {
+                                e.stopPropagation();
+                                setAiLoading(true);
+                                setAiError(false);
+                                try {
+                                    const result = await enhanceNote(note.id);
+                                    setAiSummary(result.generatedText || result.aiSummary);
+                                    setAiError(false);
+                                    openSummaryWindow(result.generatedText || result.aiSummary, note.title);
+                                } catch (err) {
+                                    setAiError(true);
+                                    setAiErrorMessage(err?.detail || err?.message || '');
+                                } finally {
+                                    setAiLoading(false);
+                                }
+                            }}
+                        >
+                            {t('smartNotes.aiRetry')}
+                        </button>
+                    </div>
+                )}
 
                 {/* Lecture link */}
                 {!isPickerOpen ? (
@@ -321,11 +374,39 @@ export default function SmartNote({ note, courseFolders = [], courseId = null, s
                     </span>
                 </div>
                 <button
-                    onClick={(e) => { e.stopPropagation(); /* handle AI summarize */ }}
-                    className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-white bg-linear-to-r from-indigo-500 to-cyan-500 hover:opacity-90 transition-opacity rounded-lg px-3 py-1.5"
+                    disabled={aiLoading}
+                    onClick={async (e) => {
+                        e.stopPropagation();
+                        if (aiSummary) {
+                            openSummaryWindow(aiSummary, note.title);
+                            return;
+                        }
+                        setAiLoading(true);
+                        setAiError(false);
+                        try {
+                            const result = await enhanceNote(note.id);
+                            setAiSummary(result.generatedText || result.aiSummary);
+                            openSummaryWindow(result.generatedText || result.aiSummary, note.title);
+                        } catch (err) {
+                            setAiError(true);
+                            setAiErrorMessage(err?.detail || err?.message || '');
+                        } finally {
+                            setAiLoading(false);
+                        }
+                    }}
+                    className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-white bg-linear-to-r from-indigo-500 to-cyan-500 hover:opacity-90 transition-opacity rounded-lg px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                    <FahimIcon className="w-3.5 h-3.5" />
-                    {cardWidth >= 320 && <span>{t('smartNotes.aiEnhance')}</span>}
+                    {aiLoading ? (
+                        <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                    ) : (
+                        <FahimIcon className="w-3.5 h-3.5" />
+                    )}
+                    {cardWidth >= 320 && (
+                        <span>{aiLoading ? t('smartNotes.aiEnhancing') : aiSummary ? t('smartNotes.enhanced') : t('smartNotes.aiEnhance')}</span>
+                    )}
                 </button>
             </div>
             </div>

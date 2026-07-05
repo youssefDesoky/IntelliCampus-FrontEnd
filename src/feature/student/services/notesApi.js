@@ -77,6 +77,21 @@ export async function deleteNote(noteId) {
     return true;
 }
 
+export async function fetchNote(noteId) {
+  const data = await apiClient(`/api/notes/${noteId}`);
+  return {
+    ...data,
+    linkedLecture: fromBackendLinkedLecture(data.linkedLecture),
+  };
+}
+
+export async function enhanceNote(noteId) {
+  const data = await apiClient(`/api/notes/${noteId}/enhance`, {
+    method: "POST",
+  });
+  return data;
+}
+
 export async function updateNoteLinkedLecture(noteId, { lecture, courseFolders }) {
     const folderId = lecture?.id ?? lecture?.materialFolderId;
     const folder = courseFolders.find(

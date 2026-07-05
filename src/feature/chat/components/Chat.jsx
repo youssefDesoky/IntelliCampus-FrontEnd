@@ -23,6 +23,7 @@ import {
   createGroup,
   fetchMyGroups,
   deleteFriend,
+  FAHIM_USER_ID,
   leaveGroup,
   uploadFile,
   fetchGroupById,
@@ -464,6 +465,27 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     [chatPartner]
   );
 
+  const sendCourseQuestion = useCallback(
+    async (course, content) => {
+      if (isSendingRef.current) return;
+      isSendingRef.current = true;
+      const conn = connectionRef.current;
+      if (!conn || !chatPartner) {
+        isSendingRef.current = false;
+        return;
+      }
+
+      try {
+        await conn.invoke("SendCourseQuestion", chatPartner.userId, course.code, course.name, content);
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        isSendingRef.current = false;
+      }
+    },
+    [chatPartner]
+  );
+
   const deleteMessage = useCallback(async (messageId) => {
     const conn = connectionRef.current;
     if (!conn) return;
@@ -545,10 +567,13 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
         avatar: isOwn ? (currentUser?.avatar || null) : (chatPartner?.avatar || null),
         isOwnMessage: isOwn,
       },
-      message: msg.content,
+      message: (!isOwn && (String(chatPartner?.userId) === FAHIM_USER_ID || String(msg.senderId) === FAHIM_USER_ID))
+        ? msg.content.replace(/\s*##\s*Answer\s*/g, '\n\n').replace(/\s*##\s*Recommendation\s*/g, '\n\n').trim()
+        : msg.content,
       sendTime: formatTime(msg.timestamp),
       isEdited: msg.isEdited,
       isPinned: msg.isPinned,
+      isAi: !isOwn && (String(chatPartner?.userId) === FAHIM_USER_ID || String(msg.senderId) === FAHIM_USER_ID),
       isSystemMessage: msg.isSystemMessage,
     });
   }
@@ -688,6 +713,12 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   };
 
   const handleAttachFile = async (file, type) => {
+    console.log("[Chat] Attach file:", { name: file.name, type, size: file.size });
+    // TODO: wire up file upload / send as message
+  };
+
+  const handleDeleteFriend = async (friendId) => {
+    if (String(chatPartner?.userId) === FAHIM_USER_ID) return;
     try {
       const result = await uploadFile(file);
       const url = result.url;
@@ -856,6 +887,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
                     onBack={handleBackToUsers}
                     onAttachFile={handleAttachFile}
                     onDeleteFriend={handleDeleteFriend}
+                    onSendCourseQuestion={sendCourseQuestion}
                     onLeaveGroup={handleLeaveGroup}
                     groupMembers={groupMembers}
                     groupDetails={groupDetails}

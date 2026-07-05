@@ -76,7 +76,7 @@ export default function InstructorCourseComplaints() {
             setSelectedComplaint(null);
             setResponseText("");
         },
-        onError: (err) => showError(err.message || "Failed to update complaint"),
+        onError: (err) => showError(err.message || t('complaints.errorUpdate')),
     });
 
     const openDetail = (complaint) => {

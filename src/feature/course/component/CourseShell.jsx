@@ -82,9 +82,11 @@ export default function CourseShell() {
     const isLoading = materialsLoading || courseLoading;
 
     const refreshMaterials = useCallback(() => {
-        queryClient.invalidateQueries({ queryKey: ["courseMaterials", courseId] });
-        queryClient.invalidateQueries({ queryKey: ["courseById", courseId] });
-        queryClient.invalidateQueries({ queryKey: ["courseFolders", courseId] });
+        return Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["courseMaterials", courseId], refetchType: 'active' }),
+            queryClient.invalidateQueries({ queryKey: ["courseById", courseId], refetchType: 'active' }),
+            queryClient.invalidateQueries({ queryKey: ["courseFolders", courseId], refetchType: 'active' }),
+        ]);
     }, [queryClient, courseId]);
 
     const isInactive = courseData?.status === "Inactive";
@@ -92,6 +94,8 @@ export default function CourseShell() {
     const isReadOnly = isInactive || isEnrollmentComplete;
 
     // Build the course object for the header and child routes
+    // Use materialsData?.Folders (includes materials) as primary source,
+    // fall back to foldersData (metadata only) if materialsData isn't ready yet.
     const course = {
         id: courseId,
         title: getLocalizedField(courseData, 'courseName', i18n.language) || courseData?.title || materialsData?.courseName || `Course ${courseId}`,
@@ -99,7 +103,7 @@ export default function CourseShell() {
         professor: getLocalizedField(courseData, 'professorName', i18n.language) || getLocalizedField(courseData, 'instructorName', i18n.language) || "",
         room: getLocalizedField(courseData, 'room', i18n.language) || courseData?.roomAr || "",
         progress: materialsData?.progress ?? 0,
-        folders: foldersData || [],
+        folders: materialsData?.folders ?? foldersData ?? [],
         courseCode: getLocalizedField(courseData, 'courseCode', i18n.language) || courseData?.courseCode || `CS ${courseId}`,
         creditHours: courseData?.creditHours,
         status: courseData?.status,
@@ -194,7 +198,7 @@ export default function CourseShell() {
 
                 {isReadOnly && (
                     <div className="mb-4 px-4 py-3 rounded-lg bg-bg-surface-yellow-default-light dark:bg-bg-surface-yellow-default-dark border border-border-warning-default-light dark:border-border-warning-default-dark text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
-                        This course is finalized and read-only. No changes can be made.
+                        {t('courseDetail.readOnly')}
                     </div>
                 )}
                 <CourseNavBar links={visibleLinks} />

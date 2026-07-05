@@ -12,6 +12,8 @@
   "dashboard.editedTime": "عُدل {{time}}",
   "dashboard.postedTime": "نُشر {{time}}",
   "dashboard.posted": "تم النشر",
+  "dashboard.editedTime": "تم التعديل {{time}}",
+  "dashboard.postedTime": "تم النشر {{time}}",
   "dashboard.postedRecently": "تم النشر مؤخراً",
   "dashboard.viewAllReminders": "عرض كل التذكيرات",
   "dashboard.analytics": "التحليلات",

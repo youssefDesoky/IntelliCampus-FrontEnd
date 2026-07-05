@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
+import { FAHIM_USER_ID } from "../services/chatService";
 
 export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQuery, onSearchChange, isPhone, onBack, onDeleteFriend, onLeaveGroup, showMembers, onShowMembers }) {
     const { t, i18n } = useTranslation('chat');
@@ -30,8 +31,9 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
     role: rawRole,
     isOnline = false
   } = chatPartner;
-  const fullName = rawFullName || t('anonymous');
-  const role = rawRole || t('member');
+  const isAi = String(chatPartner?.userId) === FAHIM_USER_ID;
+  const fullName = isAi ? "Faheem" : (rawFullName || t('anonymous'));
+  const role = isAi ? t('aiAssistant') : (rawRole || t('member'));
 
   return (
     <div className={`flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700/80 bg-white dark:bg-gray-800 shrink-0 shadow-sm z-10 transition-colors duration-200 px-6`}>
@@ -123,7 +125,7 @@ export default function ChatPartnerHeader({ chatPartner, partnerTyping, searchQu
           </div>
         ) : (
           <>
-          {chatPartner?.type !== "group" && onDeleteFriend && (
+          {chatPartner?.type !== "group" && String(chatPartner?.userId) !== FAHIM_USER_ID && onDeleteFriend && (
             <button
               className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-gray-500 hover:text-red-500"
               aria-label="Remove friend"

@@ -102,7 +102,7 @@ export default function MeetingRoom() {
         }
         setActiveMeeting(null);
         if (!isInstructor) {
-            showToast({ type: "info", title: "Meeting ended", message: "The instructor has ended the meeting." });
+            showToast({ type: "info", title: t('meeting.endedTitle'), message: t('meeting.endedMessage') });
         }
     }, [isMeetingActive, activeMeeting, isInstructor]);
 
@@ -211,7 +211,7 @@ export default function MeetingRoom() {
                 queryClient.invalidateQueries({ queryKey: ["courseMeetings", courseId] });
             } catch (err) {
                 console.error("Failed to end meeting:", err);
-                showError(err?.message || "Failed to end meeting. Please try again.");
+                showError(err?.message || t('meeting.errorEnd'));
                 return; // stay in the meeting so the instructor can retry
             }
         }

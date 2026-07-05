@@ -21,6 +21,7 @@ import {
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { useToast } from '../../../contexts/ToastContext.jsx';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { TabTableSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -165,12 +166,7 @@ export default function StudentRegisteredTab({ student, studentId, courses, avai
     };
 
     if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light/50 dark:bg-bg-surface-secondary-default-dark/50">
-                <div className="w-8 h-8 mb-4 border-4 border-t-border-accent-active-light dark:border-t-border-accent-active-dark border-border-primary-default-light dark:border-border-primary-default-dark rounded-full animate-spin"></div>
-                <p className="text-sm font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('studentDetails.loadingRegistered')}</p>
-            </div>
-        );
+        return <TabTableSkeleton rows={5} />;
     }
 
     return (

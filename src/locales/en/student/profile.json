@@ -114,5 +114,9 @@
   "profile.openBylaw": "Open bylaw",
   "profile.levelFormat": "Level {{level}}",
   "profile.academicLevel": "Academic Level",
-  "profile.probation": "Probation"
+  "profile.probation": "Probation",
+  "profile.sendCode": "Send Verification Code",
+  "profile.resendCode": "Resend Verification Code",
+  "profile.codeSentTo": "A 6-digit code was sent to <1>{{email}}</1>.",
+  "profile.yourNewEmail": "your new email"
 }

@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 import MessageControls from "./MessageControls";
 import { EllipsisVerticalIcon } from "../../../components/ui/icons";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const isImageUrl = (str) =>
   /\.(jpe?g|png|gif|webp|bmp|svg)(\?.*)?$/i.test(str);
@@ -9,8 +11,8 @@ const isImageUrl = (str) =>
 const isFileUrl = (str) =>
   /\/uploads\//i.test(str) && !isImageUrl(str);
 
-export default function Message({ sender, message, sendTime, isGrouped, showSenderInfo, messageId, deleteMessage, editMessage, pinMessage, unpinMessage, isEdited, isPinned, isSystemMessage }) {
-    const { t, i18n } = useTranslation('chat');
+export default function Message({ sender, message, sendTime, isGrouped, showSenderInfo, messageId, deleteMessage, editMessage, pinMessage, unpinMessage, isEdited, isPinned, isSystemMessage, isAi }) {
+  const { t, i18n } = useTranslation('chat');
   const isRtl = i18n.dir() === 'rtl';
   const [showControls, setShowControls] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -186,7 +188,15 @@ export default function Message({ sender, message, sendTime, isGrouped, showSend
       </div>
             ) : (
               <div className="pe-5">
-                {message}
+                {isAi ? (
+                  <div className="prose prose-sm dark:prose-invert max-w-none [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_ul]:ps-4 [&_ol]:ps-4 [&_li]:my-0.5 [&_p]:my-1 [&_code]:bg-white/10 [&_code]:px-1 [&_code]:rounded [&_pre]:bg-black/30 [&_pre]:p-2 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_blockquote]:border-s-2 [&_blockquote]:ps-2 [&_blockquote]:opacity-80">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <span>{message}</span>
+                )}
                 {isEdited && (
                   <span className={`text-[10px] ms-1.5 ${isOwn ? "text-blue-200" : "text-gray-400"}`}>
                     {t('edited')}

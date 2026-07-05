@@ -70,5 +70,10 @@
   "instructors": "Instructors",
   "students": "Students",
   "groups": "Groups",
-  "group.photoAlt": "Group photo"
+  "group.photoAlt": "Group photo",
+  "mode.academicAdvisor": "Academic Advisor",
+  "mode.courseQa": "Course Q&A",
+  "mode.selectCourse": "Select a course...",
+  "mode.loadingCourses": "Loading courses...",
+  "mode.noCourses": "No courses available"
 }

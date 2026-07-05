@@ -7,8 +7,8 @@ import GroupMembersPanel from "./GroupMembersPanel";
 import { useRef, useEffect, useState } from "react";
 import TypingIndicator from "./TypingIndicator";
 
-export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping, chatPartner, deleteMessage, editMessage, pinMessage, unpinMessage, pinnedMessage, showSenderInfo, searchQuery, onSearchChange, isPhone, onBack, onAttachFile, onDeleteFriend, onLeaveGroup, groupMembers, groupDetails, onAddGroupMember, currentUser }) {
-    const { t } = useTranslation('chat');
+export default function Messaging({ messages, sendMessage, onInputChange, partnerTyping, chatPartner, deleteMessage, editMessage, pinMessage, unpinMessage, pinnedMessage, showSenderInfo, searchQuery, onSearchChange, isPhone, onBack, onAttachFile, onDeleteFriend, onLeaveGroup, groupMembers, groupDetails, onAddGroupMember, currentUser, onSendCourseQuestion }) {
+  const { t } = useTranslation('chat');
   const bottomRef = useRef(null);
   const [showMembers, setShowMembers] = useState(false);
 
@@ -62,7 +62,7 @@ export default function Messaging({ messages, sendMessage, onInputChange, partne
         <div ref={bottomRef} />
       </div>
 
-      <ChatControls sendMessage={sendMessage} onInputChange={onInputChange} onAttachFile={onAttachFile} />
+      <ChatControls sendMessage={sendMessage} onInputChange={onInputChange} onAttachFile={onAttachFile} chatPartner={chatPartner} onSendCourseQuestion={onSendCourseQuestion} />
     </div>
   );
 }

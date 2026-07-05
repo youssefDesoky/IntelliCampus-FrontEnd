@@ -8,6 +8,7 @@ import ModelOverlay from "../../../components/ui/ModelOverlay";
 import { PlusIcon, XIcon } from "../../../components/ui/icons";
 import { createFolder, createMaterial, deleteMaterial, deleteFolder, updateFolder } from "../../../feature/course/services/materialsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
+import { emitToast } from '../../../contexts/ToastContext';
 
 export default function InstructorCourseMaterials() {
     const { t } = useTranslation('instructor');
@@ -21,6 +22,7 @@ export default function InstructorCourseMaterials() {
 
     const handleUpload = async (folderId, files) => {
         const failedFiles = [];
+        const uploadedFiles = [];
         for (const file of files) {
             try {
                 const formData = new FormData();
@@ -32,16 +34,17 @@ export default function InstructorCourseMaterials() {
                 formData.append("CourseId", courseId);
 
                 await createMaterial(formData);
+                uploadedFiles.push(file.name);
             } catch (err) {
                 failedFiles.push({ name: file.name, error: err.message });
             }
         }
-        if (failedFiles.length > 0) {
-            showError(
-                `Failed to upload: ${failedFiles.map((f) => `${f.name} (${f.error})`).join(", ")}`
-            );
+        if (uploadedFiles.length > 0) {
+            emitToast({ type: 'success', title: t('materials.uploadSuccess'), message: uploadedFiles.length === 1 ? uploadedFiles[0] : `${uploadedFiles.length} files` });
         }
-        // Refresh from API to get the updated list
+        if (failedFiles.length > 0) {
+            showError(`Failed to upload: ${failedFiles.map((f) => `${f.name} (${f.error})`).join(", ")}`);
+        }
         await refreshMaterials();
     };
 
