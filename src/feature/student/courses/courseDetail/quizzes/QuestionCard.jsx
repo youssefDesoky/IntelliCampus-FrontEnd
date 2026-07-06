@@ -139,6 +139,7 @@ function QuestionControls({ question, questionType, answer, onAnswerChange, writ
 }
 
 export default function QuestionCard({ question, questionType, answer, onAnswerChange, writtenWordCount, children, scoreState, showCorrectAnswer, correctAnswer, feedback }) {
+	const { t } = useTranslation('student');
 	const { convert: ar } = useArabicDigits();
 	return (
 		<div className="rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5 sm:p-6 shadow-sm transition-all hover:shadow-md">
