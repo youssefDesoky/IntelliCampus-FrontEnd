@@ -451,7 +451,7 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  const { data: initialExams } = useQuery({
+  const { data: initialExams, isPending: examsPending } = useQuery({
     queryKey: ["scheduledExams"],
     queryFn: async () => {
       const exams = await fetchExams();
@@ -524,6 +524,9 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
     mutationFn: autoSchedule,
     onSuccess: (result, request) => {
       setScheduleOverride(result);
+      if (result?.scheduled) {
+        queryClient.setQueryData(["scheduledExams"], result.scheduled);
+      }
       const config = {
         scheduleFrom: request.scheduleFrom,
         scheduleTo: request.scheduleTo,
@@ -552,6 +555,7 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
       setLastAutoConfig(null);
       localStorage.removeItem(CONFIG_STORAGE_KEY);
       setEditing(null);
+      queryClient.setQueryData(["scheduledExams"], null);
       queryClient.invalidateQueries({ queryKey: ["scheduledExams"] });
     },
     onError: (err) => showError(err.message),
@@ -574,25 +578,28 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
       time: startTime,
       durationMinutes,
     });
+    const endTime = (() => {
+      const [h, m] = startTime.split(":");
+      const total = parseInt(h) * 60 + parseInt(m) + durationMinutes;
+      const endH = Math.floor(total / 60);
+      const endM = total % 60;
+      return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00`;
+    })();
     setScheduleOverride(prev => {
       const current = prev || (initialExams ? { success: true, scheduled: initialExams, unscheduledCourseIds: [] } : null);
       if (!current) return null;
       return {
         ...current,
         scheduled: current.scheduled.map(e =>
-          e.examId === examId
-            ? { ...e, date, startTime, endTime: (() => {
-                const [h, m] = startTime.split(":");
-                const total = parseInt(h) * 60 + parseInt(m) + durationMinutes;
-                const endH = Math.floor(total / 60);
-                const endM = total % 60;
-                return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00`;
-              })() }
-            : e
+          e.examId === examId ? { ...e, date, startTime, endTime } : e
         ),
       };
     });
-  }, [initialExams]);
+    queryClient.setQueryData(["scheduledExams"], (prev) => {
+      if (!prev) return prev;
+      return prev.map(e => e.examId === examId ? { ...e, date, startTime, endTime } : e);
+    });
+  }, [initialExams, queryClient]);
 
   useImperativeHandle(ref, () => ({
     handleAuto: handleAutoClick,
@@ -622,7 +629,14 @@ const ExamScheduler = forwardRef(function ExamScheduler({ onScheduleChange }, re
         </div>
       )}
 
-      {!loading && !ready && (
+      {!loading && !ready && examsPending && (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 text-text-secondary-default-light dark:text-text-secondary-default-dark">
+          <span className="text-5xl animate-pulse"><CalendarIcon size={64} /></span>
+          <p className="text-sm m-0">{t('examScheduler.generating')}</p>
+        </div>
+      )}
+
+      {!loading && !ready && !examsPending && (
         <div className="flex flex-col items-center justify-center py-24 gap-3 text-text-secondary-default-light dark:text-text-secondary-default-dark">
           <span className="text-5xl"><CalendarIcon size={64} /></span>
           <p className="text-sm m-0">{t('examScheduler.noSchedule')}</p>

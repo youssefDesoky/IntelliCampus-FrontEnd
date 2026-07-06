@@ -21,7 +21,7 @@ const tooltipStyle = {
     color: "var(--color-text-primary-default-light)",
 };
 
-const EMPTY = { assessmentPerformance: [], submissionRate: [], weeklyAttendance: [] };
+const EMPTY = { assessmentPerformance: [], submissionRate: [], weeklyAttendance: [], courseWorkBreakdown: {}, studentScoreHeatmap: [] };
 
 export default function InstructorCourseAnalytics() {
     const { t } = useTranslation('instructor');
@@ -46,7 +46,7 @@ export default function InstructorCourseAnalytics() {
 
     const downloadUrl = `${import.meta.env.VITE_API_URL ?? ""}/api/courses/${courseId}/analytics/export`;
 
-    const { submissionRate, weeklyAttendance, assessmentPerformance } = data;
+    const { submissionRate, weeklyAttendance, assessmentPerformance, courseWorkBreakdown, studentScoreHeatmap } = data;
     // backend supplies AssessmentPerformance; PerformanceOverTimeChart expects minScore (optional, defaults to 0)
     const performanceOverTime = (assessmentPerformance ?? []).map((d) => ({
         name: d.name,
@@ -81,7 +81,7 @@ export default function InstructorCourseAnalytics() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 h-full">
-                    <CourseWorkBreakdownChart data={{}} />
+                    <CourseWorkBreakdownChart data={courseWorkBreakdown ?? {}} downloadUrl={downloadUrl} />
                 </div>
 
                 <ChartCard title={t('chart.submissionRate')} icon={<CheckIcon size={20} />} downloadUrl={downloadUrl}
@@ -131,7 +131,7 @@ export default function InstructorCourseAnalytics() {
                 <PerformanceOverTimeChart data={performanceOverTime} />
             </div>
 
-            <StudentScoreHeatmap data={[]} />
+            <StudentScoreHeatmap data={studentScoreHeatmap ?? []} downloadUrl={downloadUrl} />
         </div>
     );
 }
