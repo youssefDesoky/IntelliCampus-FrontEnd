@@ -96,9 +96,9 @@ export default function ManageDepartments() {
       columnAlignments={["text-start", "text-start", "text-center", "text-start"]}
       buildRow={(item) => buildDepartmentRow(item)}
       rowActions={(item, { onEdit, onDelete }) => [
-        { label: t('manageDepartments.editAction'), onClick: () => onEdit(item) },
-        { label: t('manageDepartments.setSpecializations'), onClick: () => setSpecDepartment(item) },
-        { label: t('manageDepartments.delete'), onClick: () => onDelete(item) },
+        { label: t('manageDepartments.editAction'), tone: 'primary', onClick: () => onEdit(item) },
+        { label: t('manageDepartments.setSpecializations'), tone: 'accent', onClick: () => setSpecDepartment(item) },
+        { label: t('manageDepartments.delete'), tone: 'danger', onClick: () => onDelete(item) },
       ]}
       getDeleteMessage={(item) => (
         <Trans ns="admin" i18nKey="manageDepartments.deleteMessage" values={{ name: getLocalizedField(item, 'departmentName', i18n.language) }}>

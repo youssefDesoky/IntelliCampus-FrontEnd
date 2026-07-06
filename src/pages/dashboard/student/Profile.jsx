@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
 import IdentityCard from "../../../feature/student/profile/IdentityCard";
@@ -59,18 +60,20 @@ export default function Profile() {
         };
     };
 
-    const initialData = mapAuthToUserData(authUser);
-
-    const { data: userData = null, isLoading: detailedLoading, refetch, error } = useQuery({
+    const { data: rawStudent = null, isLoading: detailedLoading, refetch, error } = useQuery({
         queryKey: ["studentProfile"],
         queryFn: async () => {
             const student = await fetchStudentProfile(studentId);
-            return mapBackendToUserData(student);
+            return student;
         },
         staleTime: 10 * 60 * 1000,
         enabled: !!studentId,
-        placeholderData: initialData,
     });
+
+    const userData = useMemo(() => {
+        if (rawStudent) return mapBackendToUserData(rawStudent);
+        return mapAuthToUserData(authUser);
+    }, [rawStudent, authUser, i18n.language]);
 
     if (!userData && !studentId) {
         return (

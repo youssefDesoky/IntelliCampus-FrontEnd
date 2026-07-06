@@ -32,7 +32,7 @@ export default function CompetencyRadarChart({ className = "", data = [], downlo
         </div>
       ) : (
         <div className="flex items-center justify-center h-[280px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark text-sm">
-          No competency data available
+          {t('chart.noCompetencyData')}
         </div>
       )}
     </ChartCard>

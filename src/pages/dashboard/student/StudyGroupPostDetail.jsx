@@ -154,7 +154,7 @@ export default function StudyGroupPostDetail() {
                         aria-pressed={hasUpvoted}
                         className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm font-medium transition-colors duration-150 ${
                             hasUpvoted
-                                ? "text-text-accent-active-light dark:text-text-accent-active-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
+                                ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white shadow-sm"
                                 : "text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark"
                         }`}
                     >

@@ -21,7 +21,7 @@ export function ChatUserSkeleton() {
 
 export function ChatUsersSectionSkeleton() {
   return (
-    <div className="flex flex-col gap-1 bg-white/5 rounded-xl py-2">
+    <div className="flex flex-col gap-1 bg-[var(--surface-hover)] rounded-xl py-2">
       <div className="flex items-center gap-2 px-2 mb-1">
         <SkeletonBar className="w-4 h-4 rounded" />
         <SkeletonBar className="h-3 w-20" />
@@ -29,7 +29,7 @@ export function ChatUsersSectionSkeleton() {
           <SkeletonBar className="w-3 h-3" />
         </div>
       </div>
-      <div className="h-px bg-white/5 mx-2" />
+      <div className="h-px bg-[var(--border-subtle)] mx-2" />
       <div className="flex flex-col gap-0.5">
         <ChatUserSkeleton />
         <ChatUserSkeleton />
@@ -41,7 +41,7 @@ export function ChatUsersSectionSkeleton() {
 
 export function ChatUsersSkeleton() {
   return (
-    <div className="col-span-1 sm:border-e sm:border-white/8 sm:pe-4 flex flex-col min-h-0 h-full">
+    <div className="col-span-1 sm:border-e sm:border-[var(--border-subtle)] sm:pe-4 flex flex-col min-h-0 h-full">
       <div className="flex flex-col gap-4 mb-5">
         <div className="flex items-center justify-between">
           <SkeletonBar className="h-4 w-20" />

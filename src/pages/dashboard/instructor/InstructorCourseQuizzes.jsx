@@ -366,7 +366,7 @@ export default function InstructorCourseQuizzes() {
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {s.score !== undefined && s.score !== null && (
-                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap">
+                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark text-white whitespace-nowrap">
                                                             {ar(s.score)} / {ar(s.totalScore)}
                                                         </span>
                                                     )}
@@ -540,7 +540,7 @@ export default function InstructorCourseQuizzes() {
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder={t('quizzes.titlePlaceholder')}
-                            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+                            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
                         />
                     </div>
                     <div className="space-y-2">
@@ -552,7 +552,7 @@ export default function InstructorCourseQuizzes() {
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder={t('quizzes.descriptionPlaceholder')}
-                                className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+                                className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
                             />
                             <span className="absolute bottom-3 end-3 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 {description.length}/500

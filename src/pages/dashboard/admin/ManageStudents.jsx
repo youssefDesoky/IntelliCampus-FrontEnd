@@ -114,15 +114,15 @@ export default function ManageStudents() {
         const isTargetBachelor = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_bachelor';
         const isTargetSuperAdmin = item.roles?.some(r => r.toLowerCase() === 'superadmin');
         const items = [
-          { label: t('manageStudents.viewDetails'), onClick: () => navigate(`/admin/students/${item.userId || item._id}`) },
-          { label: t('manageStudents.editAction'), onClick: () => onEdit(item) },
-          { label: t('manageStudents.deleteAction'), className: 'text-text-danger-default-light dark:text-text-danger-default-dark', onClick: () => onDelete(item) },
+          { label: t('manageStudents.viewDetails'), tone: 'primary', onClick: () => navigate(`/admin/students/${item.userId || item._id}`) },
+          { label: t('manageStudents.editAction'), tone: 'primary', onClick: () => onEdit(item) },
+          { label: t('manageStudents.deleteAction'), tone: 'danger', onClick: () => onDelete(item) },
         ];
         const isTargetMasters = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_masters';
         const isTargetPhD = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_phd';
         const isTargetDiploma = item.roles?.length === 1 && item.roles[0]?.toLowerCase() === 'student_diploma';
         if (isSuperAdmin && !isTargetBachelor && !isTargetMasters && !isTargetPhD && !isTargetDiploma && !isTargetSuperAdmin) {
-          items.push({ label: t('manageStudents.assignRole'), onClick: () => setAssignRoleTarget(item) });
+          items.push({ label: t('manageStudents.assignRole'), tone: 'accent', onClick: () => setAssignRoleTarget(item) });
         }
         return items;
       }}

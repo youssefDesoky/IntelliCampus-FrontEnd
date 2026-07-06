@@ -142,7 +142,7 @@ export default function CourseRegistrationHeader({
                                 icon={ChartLineIcon}
                                 value={ar(maxCredits)}
                                 label={t('registration.maximum')}
-                                colorClass="bg-bg-fill-secondary-active-light dark:bg-bg-fill-secondary-active-dark"
+                                colorClass="bg-bg-fill-info-default-light dark:bg-bg-fill-info-default-dark"
                                 delay={200}
                             />
                         </div>

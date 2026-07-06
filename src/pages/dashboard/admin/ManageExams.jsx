@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from 'react-i18next';
 import PageHeader from "../../../components/ui/PageHeader";
 import Button from "../../../components/ui/Button";
@@ -37,11 +37,11 @@ export default function ManageExams() {
     const { showError } = useError();
     const schedulerRef = useRef(null);
 
-    const examTypeOptions = [
+    const examTypeOptions = useMemo(() => [
         { value: "", label: t('manageExams.fromFileColumn') },
         { value: "Midterm", label: t('manageExams.midterm') },
         { value: "Final", label: t('manageExams.final') },
-    ];
+    ], [t]);
     const [hasSchedule, setHasSchedule] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -49,6 +49,10 @@ export default function ManageExams() {
     const [result, setResult] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
     const [selectedExamType, setSelectedExamType] = useState(examTypeOptions[0]);
+
+    useEffect(() => {
+        setSelectedExamType((prev) => examTypeOptions.find((o) => o.value === prev?.value) || examTypeOptions[0]);
+    }, [examTypeOptions]);
 
     const handleImport = async (file) => {
         setIsUploading(true);

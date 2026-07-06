@@ -570,7 +570,7 @@ export default function InstructorCourseAttendance() {
                                                     onChange={(e) => setManualId(e.target.value)}
                                                     onKeyDown={(e) => e.key === "Enter" && submitManualAttendance()}
                                                     placeholder={t('attendance.studentIdPlaceholder')}
-                                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-primary-default-light px-4 py-3 text-sm text-text-primary-default-light placeholder-text-secondary-default-light transition-all focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-primary-default-dark dark:placeholder-text-secondary-default-dark dark:focus:border-border-accent-default-dark sm:flex-1"
+                                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-primary-default-light px-4 py-3 text-sm text-text-primary-default-light placeholder-text-secondary-default-light transition-all focus:border-border-accent-default-light focus:outline-none focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:text-text-primary-default-dark dark:placeholder-text-secondary-default-dark dark:focus:border-border-accent-default-dark sm:flex-1"
                                                     autoFocus
                                                 />
                                                 <Button
@@ -771,7 +771,7 @@ export default function InstructorCourseAttendance() {
                                 onClick={() => {
                                     navigate(`/instructor/courses/${courseId}/attendance/${s.sessionId}`, { replace: true });
                                 }}
-                                className="group relative overflow-hidden rounded-3xl border border-border-primary-default-light bg-bg-surface-primary-default-light text-start shadow-sm shadow-shadow-light transition-all duration-300 hover:-translate-y-1 hover:border-border-accent-default-light hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:shadow-shadow-dark dark:hover:border-border-accent-default-dark"
+                                className="group relative overflow-hidden rounded-3xl border border-border-primary-default-light bg-bg-surface-primary-default-light text-start shadow-sm shadow-shadow-light transition-all duration-300 hover:-translate-y-1 hover:border-border-accent-default-light hover:shadow-xl focus:outline-none focus-visible:outline-none focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-primary-default-dark dark:shadow-shadow-dark dark:hover:border-border-accent-default-dark"
                             >
                                 <div className={`absolute inset-x-0 top-0 h-1 bg-linear-to-r ${typeStyles.accent}`} />
                                 <div className="flex h-full flex-col p-5">
@@ -872,7 +872,7 @@ export default function InstructorCourseAttendance() {
                                     <select
                                         value={selectedClassId ?? ""}
                                         onChange={(e) => setSelectedClassId(Number(e.target.value))}
-                                        className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
+                                        className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
                                     >
                                         {classes.map((cls) => (
                                             <option key={cls.classId || cls.id} value={cls.classId || cls.id}>
@@ -889,7 +889,7 @@ export default function InstructorCourseAttendance() {
                                     value={newSession.topic}
                                     onChange={(e) => setNewSession((prev) => ({ ...prev, topic: e.target.value }))}
                                     placeholder={t('attendance.sessionTitlePlaceholder')}
-                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
+                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
                                 />
                             </div>
                             <div>
@@ -899,7 +899,7 @@ export default function InstructorCourseAttendance() {
                                     onChange={(e) => setNewSession((prev) => ({ ...prev, description: e.target.value }))}
                                     placeholder={t('attendance.sessionDescriptionPlaceholder')}
                                     rows={3}
-                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
+                                    className="w-full rounded-xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light focus:border-border-accent-default-light focus:outline-none focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:focus:border-border-accent-default-dark"
                                 />
                             </div>
                             <div className="flex justify-end gap-3 pt-2">

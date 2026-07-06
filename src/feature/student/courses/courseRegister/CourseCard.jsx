@@ -74,7 +74,7 @@ export default function CourseCard({
                                 <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                                     course.isElective
                                         ? 'bg-bg-fill-warning-default-light dark:bg-bg-fill-warning-default-dark text-white'
-                                        : 'bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark text-white'
+                                        : 'bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white'
                                 }`}>
                                     {course.isElective ? t('registration.elective', 'Elective') : t('registration.required', 'Required')}
                                 </span>

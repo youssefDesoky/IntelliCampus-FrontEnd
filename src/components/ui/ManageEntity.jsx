@@ -44,6 +44,7 @@ export default function ManageEntity({
   renderFilters,
   renderExtraDialogs,
   renderBeforeTable,
+  renderBulkActions,
   renderLoading,
   extraDeps = [],
   serverSidePagination = false,
@@ -358,6 +359,7 @@ export default function ManageEntity({
                     <span className="hidden sm:inline">{t('entity.deleteSelected', { count: selectedRowIds.length })}</span>
                   </Button>
                 )}
+                {renderBulkActions?.(filterHelpers)}
               </div>
             </div>
           </div>

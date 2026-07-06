@@ -261,7 +261,7 @@ export default function SpecializationPreference() {
             nameAr: s.nameAr,
             departmentName: getLocalizedField(s, 'departmentName', i18n.language),
         }));
-    }, [targetType, departmentsData, specializationsData]);
+    }, [targetType, departmentsData, specializationsData, i18n.language]);
 
     const rankedIds = useMemo(() => new Set(rankedItems.map((i) => i.id)), [rankedItems]);
 
@@ -276,7 +276,7 @@ export default function SpecializationPreference() {
                 i.nameAr?.toLowerCase().includes(q) ||
                 getLocalizedField(i, 'departmentName', i18n.language)?.toLowerCase().includes(q)
         );
-    }, [availableItems, searchQuery]);
+    }, [availableItems, searchQuery, i18n.language]);
 
     const canSave = rankedItems.length > 0;
 

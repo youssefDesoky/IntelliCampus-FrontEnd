@@ -165,7 +165,7 @@ export default function ManageQuizQuestions({ isOpen, onClose, courseId, quiz })
 
     if (!isOpen) return null;
 
-    const inputClass = "w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-3 text-sm text-text-primary-default-light dark:text-text-primary-default-dark outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:focus:border-border-accent-default-dark";
+    const inputClass = "w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-3 text-sm text-text-primary-default-light dark:text-text-primary-default-dark outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:focus:border-border-accent-default-dark";
 
     const allQuestions = [
         ...existingQuestions.map(q => ({ ...q, _existing: true })),

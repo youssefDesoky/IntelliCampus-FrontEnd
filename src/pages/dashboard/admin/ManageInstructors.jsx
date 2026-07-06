@@ -111,12 +111,12 @@ export default function ManageInstructors() {
       rowActions={(item, { onEdit, onDelete }) => {
         const isTargetSuperAdmin = item.roles?.some(r => r.toLowerCase() === 'superadmin');
         const items = [
-          { label: t('manageInstructors.viewDetails'), onClick: () => navigate(`/admin/instructors/${item.userId || item._id || item.instructorId}`) },
-          { label: t('manageInstructors.editAction'), onClick: () => onEdit(item) },
-          { label: t('manageInstructors.deleteAction'), className: 'text-text-danger-default-light dark:text-text-danger-default-dark', onClick: () => onDelete(item) },
+          { label: t('manageInstructors.viewDetails'), tone: 'primary', onClick: () => navigate(`/admin/instructors/${item.userId || item._id || item.instructorId}`) },
+          { label: t('manageInstructors.editAction'), tone: 'primary', onClick: () => onEdit(item) },
+          { label: t('manageInstructors.deleteAction'), tone: 'danger', onClick: () => onDelete(item) },
         ];
         if (isSuperAdmin && !isTargetSuperAdmin) {
-          items.push({ label: t('manageInstructors.assignRole'), onClick: () => setAssignRoleTarget(item) });
+          items.push({ label: t('manageInstructors.assignRole'), tone: 'accent', onClick: () => setAssignRoleTarget(item) });
         }
         return items;
       }}

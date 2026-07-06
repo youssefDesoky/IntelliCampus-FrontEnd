@@ -294,8 +294,8 @@ export default function InstructorCourseGrades() {
                     onClose={() => setIsUploadOpen(false)}
                     onImport={handleUpload}
                 >
-                    <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark bg-bg-surface-accent-default-light/30 dark:bg-bg-surface-accent-default-dark/20 rounded-lg px-4 py-2.5 border border-border-accent-default-light dark:border-border-accent-default-dark">
-                        <Trans t={t} i18nKey="grades.uploadNote" components={{ strong: <strong /> }} />
+                    <p className="text-sm text-text-info-default-light dark:text-text-info-default-dark bg-bg-surface-info-default-light/25 dark:bg-bg-surface-info-default-dark/15 rounded-lg px-4 py-2.5 border border-border-info-default-light dark:border-border-info-default-dark">
+                        <Trans t={t} i18nKey="grades.uploadNote" components={{ strong: <strong className="text-text-primary-default-light dark:text-text-primary-default-dark" /> }} />
                     </p>
                 </ImportDialog>
             )}

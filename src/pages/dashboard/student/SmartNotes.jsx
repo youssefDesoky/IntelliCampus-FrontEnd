@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useOutletContext, useRouteLoaderData } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import useDeviceType from "../../../hooks/useDeviceType";
 
@@ -12,6 +13,7 @@ import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 
 export default function SmartNotes() {
+    const { i18n } = useTranslation('student');
     const {isPhone, isTablet} = useDeviceType();
     const authUser = useRouteLoaderData("root");
     const outletCtx = useOutletContext();
@@ -24,7 +26,7 @@ export default function SmartNotes() {
     const studentId = authUser?.roles?.some(r => r.toLowerCase().startsWith("student")) ? authUser?.userId : null;
     const currentCourseId = outletCtx?.courseId || null;
 
-    const { data: notes = [], isLoading: loading, error } = useQuery({
+    const { data: rawNotes = [], isLoading: loading, error } = useQuery({
         queryKey: ["smartNotes"],
         queryFn: async () => {
             if (!studentId) return [];
@@ -35,7 +37,7 @@ export default function SmartNotes() {
             return courses.flatMap((course) =>
                 (course?.notes || []).map((note) => ({
                     ...note,
-                    course: course?.title || getLocalizedField(course, 'courseName', i18n.language) || "",
+                    _course: course,
                     linkedLecture: fromBackendLinkedLecture(note?.linkedLecture),
                 }))
             );
@@ -43,6 +45,13 @@ export default function SmartNotes() {
         staleTime: 5 * 60 * 1000,
         enabled: !!studentId,
     });
+
+    const notes = useMemo(() => rawNotes.map((note) => ({
+        ...note,
+        course: note?._course
+            ? (note._course.title || getLocalizedField(note._course, 'courseName', i18n.language) || "")
+            : (note?.course || ""),
+    })), [rawNotes, i18n.language]);
 
     function handleDeleteNote(deletedNoteId) {
         queryClient.setQueryData(["smartNotes"], (prevNotes) =>

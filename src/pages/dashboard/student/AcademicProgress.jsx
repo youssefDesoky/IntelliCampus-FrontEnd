@@ -15,11 +15,11 @@ function BucketCourseRow({ course }) {
     <div className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-bg-fill-secondary-default-light dark:hover:bg-bg-fill-secondary-default-dark transition-colors">
       <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
         course.isCompleted
-          ? "bg-bg-surface-success-default-light dark:bg-bg-surface-success-default-dark"
+          ? "bg-bg-surface-success-active-light dark:bg-bg-surface-success-active-dark"
           : "bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark"
       }`}>
         {course.isCompleted && (
-          <svg className="w-3 h-3 text-white dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
         )}
@@ -80,7 +80,7 @@ export default function AcademicProgress() {
                   </div>
                 </div>
               </div>
-              <div className="w-full h-3 bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark rounded-full overflow-hidden">
+              <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -113,7 +113,7 @@ export default function AcademicProgress() {
                             {ar(bucket.completedHours)} / {ar(bucket.requiredHours)} {t('academicProgress.hrs')}
                         </span>
                     </div>
-                    <div className="w-full h-1.5 bg-bg-fill-secondary-default-light dark:bg-bg-fill-secondary-default-dark rounded-full overflow-hidden mb-4">
+                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-4">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{

@@ -10,6 +10,7 @@ import { UserIcon, XIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
 import { fetchAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../feature/admin/services/adminAccountsApi";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { formatHireDate } from "../../../utils/formatDate";
 import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 function getAdminRoleDisplay(admin) {
@@ -81,7 +82,7 @@ export default function ManageAdmins() {
       </div>
     );
     if (isDesktop || isTablet) row.role = getAdminRoleDisplay(admin) || "—";
-    if (isDesktop) { row.phone = admin.phoneNumber || admin.phone || "—"; row.hireDate = admin.hireDate || "—"; }
+    if (isDesktop) { row.phone = admin.phoneNumber || admin.phone || "—"; row.hireDate = formatHireDate(admin.hireDate) || "—"; }
     return row;
   }, []);
 
@@ -106,12 +107,12 @@ export default function ManageAdmins() {
       rowActions={(item, { onEdit, onDelete }) => {
         const isTargetSuperAdmin = item.roles?.some(r => r.toLowerCase() === 'superadmin');
         const items = [
-          { label: t('manageAdmins.viewDetails'), onClick: () => setPreviewAdmin(item) },
-          { label: t('manageAdmins.editAction'), onClick: () => onEdit(item) },
-          { label: t('manageAdmins.deleteAction'), className: 'text-text-danger-default-light dark:text-text-danger-default-dark', onClick: () => onDelete(item) },
+          { label: t('manageAdmins.viewDetails'), tone: 'primary', onClick: () => setPreviewAdmin(item) },
+          { label: t('manageAdmins.editAction'), tone: 'primary', onClick: () => onEdit(item) },
+          { label: t('manageAdmins.deleteAction'), tone: 'danger', onClick: () => onDelete(item) },
         ];
         if (isSuperAdmin && !isTargetSuperAdmin) {
-          items.push({ label: t('manageAdmins.assignRole'), onClick: () => setAssignRoleTarget(item) });
+          items.push({ label: t('manageAdmins.assignRole'), tone: 'accent', onClick: () => setAssignRoleTarget(item) });
         }
         return items;
       }}
@@ -173,7 +174,7 @@ export default function ManageAdmins() {
                     </div>
                     <div className="p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark">
                       <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageAdmins.hireDate')}</span>
-                      <span className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.hireDate || "—"}</span>
+                      <span className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{formatHireDate(previewAdmin.hireDate) || "—"}</span>
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -187,7 +188,7 @@ export default function ManageAdmins() {
                     </div>
                     <div className="flex items-center gap-3 px-1">
                       <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark w-20">{t('manageAdmins.hireDate')}</span>
-                      <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{previewAdmin.hireDate || "—"}</span>
+                      <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{formatHireDate(previewAdmin.hireDate) || "—"}</span>
                     </div>
                     <div className="flex items-center gap-3 px-1">
                       <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark w-20">{t('manageAdmins.phone')}</span>

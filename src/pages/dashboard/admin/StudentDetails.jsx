@@ -166,9 +166,9 @@ export default function StudentDetails() {
                 <div className="flex items-center gap-4 min-w-0">
                     <button
                         onClick={() => navigate("/admin/students")}
-                        className="shrink-0 w-10 h-10 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors"
+                        className="shrink-0 w-10 h-10 rounded-xl bg-transparent flex items-center justify-center hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors"
                     >
-                        <ArrowRightIcon className="w-5 h-5 rotate-180 rtl:scale-x-[-1] text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+                        <ArrowRightIcon className="w-5 h-5 rotate-180 rtl:scale-x-[-1] text-text-secondary-active-light dark:text-text-secondary-active-dark" />
                     </button>
                     <div className="flex items-center gap-4 min-w-0">
                         <div className="hidden sm:block w-14 h-14 rounded-2xl overflow-hidden bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark ring-2 ring-bg-surface-primary-default-light dark:ring-bg-surface-primary-default-dark shrink-0">

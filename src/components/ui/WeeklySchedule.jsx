@@ -183,9 +183,9 @@ export default function WeeklySchedule({ schedule = [], variant, onEventClick, e
             {/* Legend */}
             {variant !== "exam" && (
                 <ScheduleLegend legendItems={[
-                    { color: "bg-bg-surface-blue-default-light dark:bg-bg-surface-blue-default-dark", label: t("schedule.typeLecture") },
-                    { color: "bg-bg-surface-purple-default-light dark:bg-bg-surface-purple-default-dark", label: t("schedule.typeSection") },
-                    { color: "bg-bg-surface-green-default-light dark:bg-bg-surface-green-default-dark", label: t("schedule.typeActivity") }
+                    { color: "bg-bg-fill-info-default-light dark:bg-bg-fill-info-default-dark", label: t("schedule.typeLecture") },
+                    { color: "bg-bg-fill-purple-default-light dark:bg-bg-fill-purple-default-dark", label: t("schedule.typeSection") },
+                    { color: "bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark", label: t("schedule.typeActivity") }
                 ]} />
             )}
         </div>

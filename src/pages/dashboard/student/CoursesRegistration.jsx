@@ -306,7 +306,7 @@ export default function CoursesRegistration() {
     const selectedCourses = useMemo(() => {
         const serverSelected = (registrationData?.registrations || []).map(mapRegistrationToCard);
         return [...serverSelected, ...locallyAddedCourses];
-    }, [registrationData, locallyAddedCourses]);
+    }, [registrationData, locallyAddedCourses, i18n.language]);
 
     const availableCourses = useMemo(() => {
         const registeredIds = new Set((registrationData?.registrations || []).map(r => r.courseId));
@@ -327,7 +327,7 @@ export default function CoursesRegistration() {
         }
 
         return filtered;
-    }, [registrationData, locallyAddedCourses, activeFilter]);
+    }, [registrationData, locallyAddedCourses, activeFilter, i18n.language]);
 
     const [selectedCoursesPage, setSelectedCoursesPage]   = useState(1);
     const [availableCoursesPage, setAvailableCoursesPage] = useState(1);

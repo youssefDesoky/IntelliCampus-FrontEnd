@@ -2,11 +2,11 @@ import { TableIcon } from "../ui/icons";
 import ChartCard from "./ChartCard";
 
 function getProbationColor(rate) {
-  if (rate === 0) return "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400";
-  if (rate < 10) return "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200";
-  if (rate < 25) return "bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200";
-  if (rate < 50) return "bg-red-200 dark:bg-red-900/50 text-red-800 dark:text-red-200";
-  return "bg-red-400 dark:bg-red-700/60 text-white dark:text-white";
+  if (rate === 0) return "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100";
+  if (rate < 10) return "bg-yellow-300 dark:bg-yellow-900/40 text-yellow-900 dark:text-yellow-200";
+  if (rate < 25) return "bg-orange-300 dark:bg-orange-900/40 text-orange-900 dark:text-orange-200";
+  if (rate < 50) return "bg-red-400 dark:bg-red-900/50 text-white dark:text-red-200";
+  return "bg-red-600 dark:bg-red-700/60 text-white dark:text-white";
 }
 
 export default function ProbationHeatmapChart({ className = "", data = [], t }) {
@@ -57,7 +57,7 @@ export default function ProbationHeatmapChart({ className = "", data = [], t }) 
                   return (
                     <td key={l} className={`text-center p-2 ${getProbationColor(rate)}`} title={`${dept} L${l}: ${count} (${rate.toFixed(1)}%)`}>
                       <span className="tabular-nums font-bold">{rate.toFixed(0)}%</span>
-                      <span className="block text-[10px] opacity-70">{count}</span>
+                      <span className="block text-[10px] font-medium">{count}</span>
                     </td>
                   );
                 })}
@@ -68,11 +68,11 @@ export default function ProbationHeatmapChart({ className = "", data = [], t }) 
       </div>
       <div className="flex items-center gap-3 mt-4 text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark flex-wrap">
         <span className="font-medium">{t('dashboard.legend')}:</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100 dark:bg-gray-800 inline-block" /> 0%</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/40 inline-block" /> &lt;10%</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-orange-100 dark:bg-orange-900/40 inline-block" /> &lt;25%</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-200 dark:bg-red-900/50 inline-block" /> &lt;50%</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-400 dark:bg-red-700/60 inline-block" /> ≥50%</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-200 dark:bg-gray-800 inline-block" /> 0%</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-300 dark:bg-yellow-900/40 inline-block" /> &lt;10%</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-orange-300 dark:bg-orange-900/40 inline-block" /> &lt;25%</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-400 dark:bg-red-900/50 inline-block" /> &lt;50%</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-600 dark:bg-red-700/60 inline-block" /> ≥50%</span>
       </div>
     </ChartCard>
   );
