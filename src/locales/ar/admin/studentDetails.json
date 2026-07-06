@@ -55,6 +55,7 @@
   "studentDetails.selectCourse": "-- اختر مقررًا للمتابعة --",
   "studentDetails.selectSection": "-- اختر شعبة --",
   "studentDetails.loadingSections": "جاري تحميل الشعب...",
+  "studentDetails.noSectionsAvailable": "لا توجد شعب متاحة لهذا المقرر. قم بإنشاء شعبة أولاً.",
   "studentDetails.cancel": "إلغاء",
   "studentDetails.register": "تسجيل",
   "studentDetails.registering": "جاري التسجيل...",

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { addDays, subDays, isSameDay, startOfDay, format } from "date-fns";
 import { useTranslation } from "react-i18next";
 
@@ -56,15 +56,19 @@ const MobileDateStrip = ({ selectedDate, onDateSelect }) => {
 export default function InstructorReminders() {
     const { t } = useTranslation('instructor');
     const { showError } = useError();
-    const categoryOptions = [
+    const categoryOptions = useMemo(() => [
         { value: "all", label: t('reminders.allCategories'), dotColor: "bg-blue-500", rowBg: "bg-blue-50" },
         { value: "classes", label: t('reminders.classes'), dotColor: "bg-blue-500", rowBg: "bg-blue-50" },
         { value: "personal", label: t('reminders.personal'), dotColor: "bg-purple-500", rowBg: "bg-purple-50" },
-    ];
+    ], [t]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(categoryOptions[0]);
     const [selectedDate, setSelectedDate] = useState(new Date());
+
+    useEffect(() => {
+        setSelectedCategory((prev) => categoryOptions.find((o) => o.value === prev?.value) || categoryOptions[0]);
+    }, [categoryOptions]);
     const [reminders, setReminders] = useState([]);
     const [hasLoaded, setHasLoaded] = useState(false);
 

@@ -20,6 +20,7 @@ export default function BaseFormComponent({
     submitLoading = false,
     submitVariant = "primary",
     cancelVariant = "secondary",
+    fullScreen = false,
 }) {
     const { t } = useTranslation('common');
     const displaySubmitText = submitText ?? t('submit', 'Submit');
@@ -32,12 +33,12 @@ export default function BaseFormComponent({
     };
 
     return (
-        <ModelOverlay onClose={onClose} maxWidth={maxWidth}>
+        <ModelOverlay onClose={onClose} maxWidth={maxWidth} fullScreen={fullScreen}>
             <form
-                className={`relative z-50 w-full rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)] flex flex-col ${maxHeight} ${className}`}
+                className={`relative z-50 w-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark flex flex-col ${fullScreen ? "h-full rounded-none border-0 shadow-none" : `rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark shadow-[0_32px_80px_-12px_rgba(0,0,0,0.28)] ${maxHeight}`} ${className}`}
                 onSubmit={handleSubmit}
             >
-                <div className="shrink-0 flex items-center justify-between gap-4 border-b border-border-primary-default-light px-3 sm:px-6 py-4 dark:border-border-primary-default-dark">
+                <div className={`shrink-0 flex items-center justify-between gap-4 border-b border-border-primary-default-light px-3 sm:px-6 py-4 dark:border-border-primary-default-dark ${fullScreen ? "px-6" : ""}`}>
                     <div className="min-w-0 truncate">
                         <h3 className="text-xl font-semibold truncate text-text-primary-default-light dark:text-text-primary-default-dark">{title}</h3>
                         {description ? (
@@ -57,16 +58,16 @@ export default function BaseFormComponent({
                     </button>
                 </div>
 
-                <div className={`flex-1 p-6 overflow-y-auto no-scrollbar flex flex-col justify-start ${contentClassName}`}>{children}</div>
+                <div className={`flex-1 overflow-y-auto no-scrollbar flex flex-col justify-start ${fullScreen ? "p-6" : "p-6"} ${contentClassName}`}>{children}</div>
 
-                <div className={`shrink-0 flex gap-3 border-t border-border-primary-default-light px-3 sm:px-6 py-4 sm:justify-end dark:border-border-primary-default-dark ${footerClassName}`}>
-                    <Button variant={cancelVariant} type="button" onClick={onClose} width="flex-1 sm:w-auto">
+                <div className={`shrink-0 flex gap-3 border-t border-border-primary-default-light px-3 sm:px-6 py-4 dark:border-border-primary-default-dark ${fullScreen ? "justify-end" : "sm:justify-end"} ${footerClassName}`}>
+                    <Button variant={cancelVariant} type="button" onClick={onClose} width={fullScreen ? "auto" : "flex-1 sm:w-auto"}>
                         {displayCancelText}
                     </Button>
                     <Button
                         variant={submitVariant}
                         type="submit"
-                        width="flex-1 sm:w-auto"
+                        width={fullScreen ? "auto" : "flex-1 sm:w-auto"}
                         disabled={submitDisabled}
                         loading={submitLoading}
                     >

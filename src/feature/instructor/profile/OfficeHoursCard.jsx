@@ -32,7 +32,7 @@ export default function OfficeHoursCard({ user = {} }) {
                         const Icon = item.icon;
                         return (
                             <div key={item.label} className="flex items-center gap-3 p-3.5 rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-active-light dark:text-text-accent-active-dark">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-default-light dark:text-text-accent-default-dark">
                                     <Icon size={15} />
                                 </div>
                                 <div className="min-w-0 flex-1">
@@ -48,7 +48,7 @@ export default function OfficeHoursCard({ user = {} }) {
                     })}
                 </div>
                 <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-active-light dark:text-text-accent-active-dark">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-default-light dark:text-text-accent-default-dark">
                         <ClockIcon size={15} />
                     </div>
                     <div className="min-w-0 flex-1">

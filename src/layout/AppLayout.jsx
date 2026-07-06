@@ -39,6 +39,8 @@ export default function AppLayout() {
     const navigate = useNavigate();
     const user = useRouteLoaderData("root");
     const [searchParams] = useSearchParams();
+    const primaryRole = resolvePrimaryRole(user?.roles);
+    const isStudent = primaryRole === 'student';
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [chatDefaultPanel, setChatDefaultPanel] = useState(null);
     const [chatDefaultPanelTrigger, setChatDefaultPanelTrigger] = useState(0);
@@ -148,19 +150,37 @@ export default function AppLayout() {
                             floatingAction: (
                                 <button
                                     onClick={() => setIsChatOpen(true)}
-                                    className="flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                                    className="relative w-24 h-24 rounded-full hover:scale-110 active:scale-95 transition-all duration-200"
                                     aria-label="Open chat"
                                 >
-                                    <CommentsIcon size={22} />
+                                    <img
+                                        src="/static/images/faheem-avatar.png"
+                                        alt="Open chat"
+                                        className="absolute inset-0 w-full h-full object-contain"
+                                    />
+                                    <img
+                                        src="/static/images/Fahim_Boarder.svg"
+                                        alt=""
+                                        className="absolute inset-0 w-full h-full dark:brightness-[1.8]"
+                                    />
                                 </button>
                             )
                         }) : (
                             <button
                                 onClick={() => setIsChatOpen(true)}
-                                className="fixed bottom-4 right-6 z-50 flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all duration-200"
+                                className="fixed bottom-6 right-8 z-50 w-24 h-24 rounded-full hover:scale-110 active:scale-95 transition-all duration-200"
                                 aria-label={t('openChat')}
                             >
-                                <CommentsIcon size={22} />
+                                <img
+                                    src="/static/images/faheem-avatar.png"
+                                    alt={t('openChat')}
+                                    className="absolute inset-0 w-full h-full object-contain"
+                                />
+                                <img
+                                    src="/static/images/Fahim_Boarder.svg"
+                                    alt=""
+                                    className="absolute inset-0 w-full h-full dark:brightness-[1.8]"
+                                />
                             </button>
                         )
                     )}

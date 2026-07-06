@@ -22,7 +22,7 @@ export default function RadioToggle({ name, options = [], value, onChange, class
                             className="hidden"
                         />
 
-                        <div className={`dot h-4 w-4 rounded-full flex items-center justify-center ${selected ? 'bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark' : 'bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark'}`}>
+                        <div className={`dot h-4 w-4 rounded-full flex items-center justify-center border ${selected ? 'bg-bg-surface-primary-default-light border-border-primary-default-light dark:bg-bg-surface-primary-default-dark dark:border-border-primary-default-dark' : 'bg-bg-surface-secondary-default-light border-border-primary-default-light dark:bg-bg-surface-secondary-default-dark dark:border-border-primary-default-dark'}`}>
                             {selected ? <div className="inner h-2 w-2 rounded-full bg-text-primary-default-light dark:bg-text-primary-default-dark" /> : null}
                         </div>
 

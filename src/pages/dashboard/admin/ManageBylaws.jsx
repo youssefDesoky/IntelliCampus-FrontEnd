@@ -2,7 +2,6 @@ import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation, Trans } from 'react-i18next';
 import ManageEntity from "../../../components/ui/ManageEntity";
-import Dialog from "../../../components/ui/Dialog";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import BylawForm from "../../../feature/admin/components/BylawForm";
 import MaterialPreview from "../../../components/ui/MaterialPreview";
@@ -17,17 +16,14 @@ import {
   createBylaw,
   updateBylaw,
   deleteBylaw,
-  toggleBylawActive,
   uploadBylawDocument,
 } from "../../../feature/admin/services/adminBylawsApi";
-import { useError } from '../../../contexts/ErrorContext.jsx';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
 import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
 
 export default function ManageBylaws() {
   const { t, i18n } = useTranslation('admin');
   const navigate = useNavigate();
-  const { showError } = useError();
 
   const tableHeaders = [t('manageBylaws.name'), t('manageBylaws.description'), t('manageBylaws.type'), t('manageBylaws.status'), t('manageBylaws.students'), t('manageBylaws.document')];
   const [uploadTarget, setUploadTarget] = useState(null);
@@ -97,24 +93,14 @@ export default function ManageBylaws() {
       tableHeaders={tableHeaders}
       columnAlignments={["text-start", "text-start", "text-center", "text-center", "text-center", "text-center"]}
       buildRow={(item) => buildBylawRow(item)}
-      rowActions={(item, { onEdit, onDelete, loadItems }) => [
-        { label: t('common:edit'), onClick: () => onEdit(item) },
+      rowActions={(item, { onEdit, onDelete }) => [
+        { label: t('common:edit'), tone: 'primary', onClick: () => onEdit(item) },
         {
           label: t('manageBylaws.manage'),
+          tone: 'primary',
           onClick: () => navigate(`/admin/bylaws/${item.bylawId}`),
         },
-        {
-          label: t('manageBylaws.toggleActive'),
-          onClick: async () => {
-            try {
-              await toggleBylawActive(item.bylawId);
-              await loadItems();
-            } catch (err) {
-              showError(err.message);
-            }
-          },
-        },
-        { label: t('common:delete'), onClick: () => onDelete(item) },
+        { label: t('common:delete'), tone: 'danger', onClick: () => onDelete(item) },
       ]}
       getDeleteMessage={(item) => {
         const name = item?.name;
@@ -157,7 +143,7 @@ export default function ManageBylaws() {
                       className="inline-flex items-center gap-2 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark px-3.5 py-2 text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark transition-colors"
                     >
                       <DownloadIcon size={14} />
-                      {t('common:labels.download')}
+                      {t('common:download')}
                     </a>
                     <button
                       type="button"
@@ -197,7 +183,7 @@ export default function ManageBylaws() {
                 return false;
               }}
               confirmText={t('manageBylaws.uploadConfirm')}
-              cancelText={t('common:labels.cancel')}
+              cancelText={t('common:cancel')}
               showCloseButton={true}
             >
               <div className="space-y-4">

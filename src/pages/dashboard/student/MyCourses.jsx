@@ -109,7 +109,7 @@ export default function MyCourses() {
             : null;
 
     const {
-        data: courses = [],
+        data: rawCourses = [],
         isLoading: loading,
         isFetching,
     } = useQuery({
@@ -117,11 +117,16 @@ export default function MyCourses() {
         queryFn: async () => {
             const result = await fetchMyStudentCourses(backendStatus, 1, 100, searchQuery);
             const raw = result?.data ?? (Array.isArray(result) ? result : []);
-            return raw.map(mapCourseToMyCourseProps);
+            return raw;
         },
         staleTime: 2 * 60 * 1000,
         placeholderData: keepPreviousData,
     });
+
+    const courses = useMemo(
+        () => (Array.isArray(rawCourses) ? rawCourses.map(mapCourseToMyCourseProps) : []),
+        [rawCourses, i18n.language]
+    );
 
     useEffect(() => {
         localStorage.setItem("myCoursesViewMode", viewMode);
@@ -176,7 +181,7 @@ export default function MyCourses() {
                 setFilterType={setFilterType}
                 searchQuery={searchInput}
                 setSearchQuery={setSearchInput}
-                hasCourses={courses.length > 0}
+                hasCourses={true}
             />
 
             <div className="flex flex-col flex-1">

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { addDays, subDays, isSameDay, startOfDay, format } from "date-fns";
 import { ar } from 'date-fns/locale';
@@ -63,18 +63,23 @@ const MobileDateStrip = ({ selectedDate, onDateSelect }) => {
     );
 };
 
-const categoryOptions = [
-    { value: "all", label: t ? t('reminders.allCategories') : "All Categories" },
-    { value: "classes", label: t ? t('reminders.categoryClasses') : "Classes" },
-    { value: "exams", label: t ? t('reminders.categoryExams') : "Exams" },
-    { value: "assignments", label: t ? t('reminders.categoryAssignments') : "Assignments" },
-    { value: "personal", label: t ? t('reminders.categoryPersonal') : "Personal" },
-];
+const categoryOptions = useMemo(() => [
+    { value: "all", label: t('reminders.allCategories') },
+    { value: "classes", label: t('reminders.categoryClasses') },
+    { value: "exams", label: t('reminders.categoryExams') },
+    { value: "assignments", label: t('reminders.categoryAssignments') },
+    { value: "personal", label: t('reminders.categoryPersonal') },
+], [t]);
+
     const queryClient = useQueryClient();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingReminder, setEditingReminder] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(categoryOptions[0]);
     const [selectedDate, setSelectedDate] = useState(new Date());
+
+    useEffect(() => {
+        setSelectedCategory((prev) => categoryOptions.find((o) => o.value === prev?.value) || categoryOptions[0]);
+    }, [categoryOptions]);
 
     const dateStr = format(selectedDate, "yyyy-MM-dd");
 

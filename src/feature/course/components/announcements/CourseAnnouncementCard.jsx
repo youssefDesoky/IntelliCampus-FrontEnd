@@ -243,7 +243,7 @@ export default function CourseAnnouncementCard({
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <img src={announcement.sender?.avatar || ""} alt={announcement.sender?.name || t('announcements.user')} className="w-10 h-10 rounded-full" />
+                        <img src={announcement.sender?.avatar || ""} alt={announcement.sender?.name || t('announcements.user')} className="w-10 h-10 rounded-full ring-2 ring-border-primary-active-light dark:ring-border-primary-active-dark" />
                         <div className="flex flex-col">
                             <h3 className="font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{getLocalizedField(announcement.sender, 'name', i18n.language) || announcement.sender?.name || t('announcements.unknown')}</h3>
                             <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">{formatAnnouncementDate(announcement.date, i18n, ar)}</p>

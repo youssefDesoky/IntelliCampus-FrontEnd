@@ -44,7 +44,7 @@ export default function CoursePrerequisitesCard({ course = {} }) {
                         </span>
                     </div>
                     <h3
-                        className="mt-1.5 text-base font-semibold leading-snug text-text-secondary-default-light line-clamp-2 transition-colors group-hover:text-text-accent-active-light dark:text-text-secondary-default-dark dark:group-hover:text-text-accent-active-dark"
+                        className="mt-1.5 text-base font-semibold leading-snug text-text-secondary-default-light line-clamp-2 transition-colors group-hover:text-text-accent-default-light dark:text-text-secondary-default-dark dark:group-hover:text-text-accent-default-dark"
                         title={title}
                     >
                         {title}
@@ -53,10 +53,10 @@ export default function CoursePrerequisitesCard({ course = {} }) {
 
                 {/* Credit stamp */}
                 <div
-                    className="grid h-14 w-14 shrink-0 -rotate-6 place-items-center rounded-full border-2 border-dashed border-text-accent-active-light/60 dark:border-text-accent-active-dark/60"
+                    className="grid h-14 w-14 shrink-0 -rotate-6 place-items-center rounded-full border-2 border-dashed border-text-accent-default-light/60 dark:border-text-accent-default-dark/60"
                     aria-hidden="true"
                 >
-                    <span className="text-center font-mono text-[10px] font-bold uppercase leading-tight text-text-accent-active-light dark:text-text-accent-active-dark">
+                    <span className="text-center font-mono text-[10px] font-bold uppercase leading-tight text-text-accent-default-light dark:text-text-accent-default-dark">
                         {creditHours}
                         <br />
                         {t('prerequisites.creditAbbr')}
@@ -69,7 +69,7 @@ export default function CoursePrerequisitesCard({ course = {} }) {
             {/* Body */}
             <div className="flex flex-1 flex-col gap-3 px-6 py-5">
                 <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                    <BookIcon size={14} aria-hidden="true" className="shrink-0 text-text-accent-active-light dark:text-text-accent-active-dark" />
+                    <BookIcon size={14} aria-hidden="true" className="shrink-0 text-text-accent-default-light dark:text-text-accent-default-dark" />
                     <span>{t('prerequisites.label')}</span>
                 </div>
 
@@ -86,8 +86,8 @@ export default function CoursePrerequisitesCard({ course = {} }) {
 
                             return (
                                 <div key={prereqId} className="flex items-center gap-2" role="listitem">
-                                    <div className="flex max-w-[9rem] flex-col rounded-lg border border-border-primary-default-light/70 bg-bg-surface-secondary-default-light px-3 py-2 transition-colors hover:border-text-accent-active-light/60 dark:border-border-primary-default-dark/70 dark:bg-bg-surface-secondary-default-dark dark:hover:border-text-accent-active-dark/60">
-                                        <span className="font-mono text-[10px] font-bold uppercase tracking-wide text-text-accent-active-light dark:text-text-accent-active-dark">
+                                        <div className="flex max-w-[9rem] flex-col rounded-lg border border-border-primary-default-light/70 bg-bg-surface-secondary-default-light px-3 py-2 transition-colors hover:border-text-accent-default-light/60 dark:border-border-primary-default-dark/70 dark:bg-bg-surface-secondary-default-dark dark:hover:border-text-accent-default-dark/60">
+                                        <span className="font-mono text-[10px] font-bold uppercase tracking-wide text-text-accent-default-light dark:text-text-accent-default-dark">
                                             {prereqId}
                                         </span>
                                         <span

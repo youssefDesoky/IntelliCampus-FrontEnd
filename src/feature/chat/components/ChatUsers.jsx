@@ -31,7 +31,8 @@ const mapGroup = (g) => ({
   const filterFn = (u) => !q || u.name.toLowerCase().includes(q);
 
   const aiAssistant = friends.find((f) => String(f.userId) === FAHIM_USER_ID);
-  const pinnedAi = aiAssistant ? { id: aiAssistant.userId, name: "Faheem", avatar: FAHEEM_AVATAR, status: "online", unread: unreadCounts[String(aiAssistant.userId)] || 0 } : null;
+  const isStudent = (currentUser?.roles || []).some((r) => r.toLowerCase() === "student");
+  const pinnedAi = (aiAssistant && isStudent) ? { id: aiAssistant.userId, name: "Faheem", avatar: FAHEEM_AVATAR, status: "online", unread: unreadCounts[String(aiAssistant.userId)] || 0 } : null;
   const pinnedAiVisible = !q || "faheem".includes(q);
 
   const instructors = friends.filter((f) => !pinnedAi?.id || f.userId !== pinnedAi.id).filter((f) => (f.roles || []).some(r => r.toLowerCase() === "instructor")).map(mapFriend).filter(filterFn);
@@ -42,7 +43,7 @@ const mapGroup = (g) => ({
   const hasAny = pinnedAiVisible || groupList.length > 0 || instructors.length > 0 || students.length > 0 || others.length > 0;
 
   return (
-    <div className="col-span-1 sm:border-e sm:border-white/8 sm:pe-4 flex flex-col min-h-0 h-full">
+    <div className="col-span-1 sm:border-e sm:border-[var(--border-subtle)] sm:pe-4 flex flex-col min-h-0 h-full">
       <ChatUsersHeader onAddFriend={onAddFriend} onCreateGroup={onCreateGroup} searchMembers={searchMembers} onSearchMembersChange={onSearchMembersChange} />
       <div className="flex flex-col gap-2 overflow-y-auto min-h-0 no-scrollbar pt-1">
         {pinnedAi && pinnedAiVisible && (

@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next";
 import PageHeader from "../../../../components/ui/PageHeader";
 import ToggleViewMode from "../../../../components/ui/ToggleViewMode";
+import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import SearchBar from "../../../../components/ui/SearchBar";
 import { Grid2ColIcon, ListIcon } from "../../../../components/ui/icons";
 
-export default function InstructorCoursesHeader({isMobile, viewMode, setViewMode, searchQuery, setSearchQuery, hasCourses}) {
+export default function InstructorCoursesHeader({isMobile, viewMode, setViewMode, searchQuery, setSearchQuery, filterType, setFilterType, hasCourses}) {
     const { t } = useTranslation('instructor');
     return (
         <PageHeader title={t('courses.title')} subtitle={t('courses.subtitle')} headerDir="col" className="sm:flex-row sm:items-center">
@@ -15,6 +16,17 @@ export default function InstructorCoursesHeader({isMobile, viewMode, setViewMode
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full sm:w-44 md:w-52"
+                />
+                <FilterDropdown
+                    label={t('courses.type')}
+                    className="flex-1 sm:flex-none sm:w-auto"
+                    dropdownAlign="left"
+                    options={[
+                        { value: "elective", label: t('courses.elective') },
+                        { value: "core", label: t('courses.core') },
+                    ]}
+                    selectedValues={filterType}
+                    onChange={setFilterType}
                 />
                 {!isMobile && (
                     <>

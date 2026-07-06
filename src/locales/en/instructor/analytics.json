@@ -33,6 +33,7 @@
   "chart.dotLegend": "Each dot represents a student",
   "chart.undeclared": "Undeclared",
   "chart.noCourseWorkData": "No course work data available",
+  "chart.noCompetencyData": "No competency data available",
   "chart.marksTooltip": "{{label}}: {{value}} marks ({{pct}}%)",
   "chart.min": "Min",
   "chart.median": "Median",

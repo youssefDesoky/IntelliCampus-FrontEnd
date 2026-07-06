@@ -3,8 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import ModelOverlay from "../../../components/ui/ModelOverlay";
 import Button from "../../../components/ui/Button";
-import NumberInput from "../../../components/form/NumberInput";
-import { PlusIcon, TrashIcon, XIcon } from "../../../components/ui/icons";
+import { PlusIcon, TrashIcon, TranslateIcon, UsersIcon, XIcon } from "../../../components/ui/icons";
 import { fetchSpecializations, createSpecialization, deleteSpecialization } from "../services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
@@ -101,32 +100,76 @@ export default function DepartmentSpecializationsForm({ department, onClose, onU
                     ) : (
                         <>
                             <div className="space-y-4 mb-6">
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <input
-                                        type="text"
-                                        value={newName}
-                                        onChange={(e) => setNewName(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder={t('deptSpecializationsForm.namePlaceholder')}
-                                        className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm"
-                                    />
-                                    <div dir="rtl">
-                                        <input
-                                            type="text"
-                                            value={newNameAr}
-                                            onChange={(e) => setNewNameAr(e.target.value)}
-                                            onKeyDown={handleKeyDown}
-                                            placeholder={t('deptSpecializationsForm.nameArPlaceholder')}
-                                            className="w-full px-3 py-2 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-md focus:outline-none focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm"
-                                        />
+                                <div className="rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-4 sm:p-5">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex flex-col gap-1.5">
+                                            <label
+                                                htmlFor="spec-name-en"
+                                                className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary-default-light dark:text-text-tertiary-default-dark"
+                                            >
+                                                {t('deptSpecializationsForm.nameLabel')}
+                                            </label>
+                                            <div className="relative">
+                                                <span className="absolute start-3 top-1/2 -translate-y-1/2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark pointer-events-none">
+                                                    <TranslateIcon size={14} />
+                                                </span>
+                                                <input
+                                                    id="spec-name-en"
+                                                    type="text"
+                                                    value={newName}
+                                                    onChange={(e) => setNewName(e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    placeholder={t('deptSpecializationsForm.namePlaceholder')}
+                                                    className="w-full ps-9 pe-3.5 py-2.5 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm transition-all duration-200 hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark focus:outline-none focus:ring-2 focus:ring-border-primary-active-light/30 dark:focus:ring-border-primary-active-dark/30 focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5" dir="rtl">
+                                            <label
+                                                htmlFor="spec-name-ar"
+                                                className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary-default-light dark:text-text-tertiary-default-dark"
+                                            >
+                                                {t('deptSpecializationsForm.nameArLabel')}
+                                            </label>
+                                            <div className="relative">
+                                                <span className="absolute start-3 top-1/2 -translate-y-1/2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark pointer-events-none">
+                                                    <TranslateIcon size={14} />
+                                                </span>
+                                                <input
+                                                    id="spec-name-ar"
+                                                    type="text"
+                                                    value={newNameAr}
+                                                    onChange={(e) => setNewNameAr(e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    placeholder={t('deptSpecializationsForm.nameArPlaceholder')}
+                                                    className="w-full ps-9 pe-3.5 py-2.5 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm transition-all duration-200 hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark focus:outline-none focus:ring-2 focus:ring-border-primary-active-light/30 dark:focus:ring-border-primary-active-dark/30 focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <label
+                                                htmlFor="spec-max-capacity"
+                                                className="text-[11px] font-bold uppercase tracking-wider text-text-tertiary-default-light dark:text-text-tertiary-default-dark"
+                                            >
+                                                {t('deptSpecializationsForm.maxCapacityLabel')}
+                                            </label>
+                                            <div className="relative">
+                                                <span className="absolute start-3 top-1/2 -translate-y-1/2 text-text-tertiary-default-light dark:text-text-tertiary-default-dark pointer-events-none">
+                                                    <UsersIcon size={14} />
+                                                </span>
+                                                <input
+                                                    id="spec-max-capacity"
+                                                    type="number"
+                                                    value={newMaxCapacity}
+                                                    onChange={(e) => setNewMaxCapacity(e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    placeholder={t('deptSpecializationsForm.maxCapacityPlaceholder')}
+                                                    min="0"
+                                                    className="w-full ps-9 pe-3.5 py-2.5 border border-border-primary-default-light dark:border-border-primary-default-dark rounded-xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark text-sm transition-all duration-200 hover:border-border-primary-hover-light dark:hover:border-border-primary-hover-dark focus:outline-none focus:ring-2 focus:ring-border-primary-active-light/30 dark:focus:ring-border-primary-active-dark/30 focus:border-border-primary-active-light dark:focus:border-border-primary-active-dark [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <NumberInput
-                                        value={newMaxCapacity}
-                                        onChange={(e) => setNewMaxCapacity(e.target.value)}
-                                        placeholder={t('deptSpecializationsForm.maxCapacityPlaceholder')}
-                                        min="0"
-                                        className="w-full"
-                                    />
                                 </div>
                                 <div className="flex justify-end">
                                     <Button

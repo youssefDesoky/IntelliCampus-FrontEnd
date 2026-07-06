@@ -58,7 +58,7 @@ export default function AddFriendPanel({
   const handleSelectUser = (user) => {
     setSelectedUser(user);
     setFriendId(String(user.userId));
-    setSearchQuery(`${user.fullName} (${user.email || user.nationalId || user.userId})`);
+    setSearchQuery(user.fullName);
     setShowDropdown(false);
   };
 
@@ -94,7 +94,7 @@ export default function AddFriendPanel({
       title={t('friends.addFriend')}
       onBack={onBack}
     >
-      <div className="flex flex-col gap-5 px-5 py-5 overflow-y-auto flex-1">
+      <div className="flex flex-col gap-5 px-5 py-5 overflow-y-auto flex-1 form-scrollbar">
         <div className="flex flex-col gap-2">
           <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">
             {t('friends.sendInvitation')}
@@ -140,7 +140,7 @@ onKeyDown={(e) => e.key === "Enter" && selectedUser && onInvite()}
                 </button>
               )}
               {showDropdown && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto form-scrollbar">
                   {searchResults.map((user) => (
                     <button
                       key={user.userId}
@@ -158,7 +158,9 @@ onKeyDown={(e) => e.key === "Enter" && selectedUser && onInvite()}
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-800 dark:text-gray-100 truncate">{user.fullName}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user.email || user.nationalId || `ID: ${user.userId}`}</p>
+                        {user.email && (
+                          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user.email}</p>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -205,14 +207,6 @@ onKeyDown={(e) => e.key === "Enter" && selectedUser && onInvite()}
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate leading-tight">
                         {getLocalizedField(req, 'name', i18n.language)}
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate leading-tight flex items-center gap-1">
-                        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 dark:text-gray-600">
-                          <rect x="1" y="4" width="14" height="10" rx="2" />
-                          <path d="M1 8h14" />
-                          <path d="M5 4V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                        </svg>
-                        {t('friends.idLabel', { id: req.recipientId })}
                       </p>
                     </div>
                   </div>
@@ -277,14 +271,6 @@ onKeyDown={(e) => e.key === "Enter" && selectedUser && onInvite()}
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate leading-tight">
                       {getLocalizedField(req, 'name', i18n.language)}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate leading-tight flex items-center gap-1">
-                      <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 dark:text-gray-600">
-                        <rect x="1" y="4" width="14" height="10" rx="2" />
-                        <path d="M1 8h14" />
-                        <path d="M5 4V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                      </svg>
-                      {t('friends.idLabel', { id: req.id })}
                     </p>
                   </div>
                 </div>

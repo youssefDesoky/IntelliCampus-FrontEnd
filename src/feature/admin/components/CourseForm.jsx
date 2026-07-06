@@ -139,7 +139,7 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputItem
-                        label="Credit Hours"
+                        label={t('courseForm.creditHours')}
                         type="number"
                         name="creditHours"
                         placeholder="e.g. 3"
@@ -148,23 +148,49 @@ export default function CourseForm({ onClose, method = "post", onSubmit, initial
                         required
                         min="1"
                     />
-                </div>
 
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <input
-                        type="checkbox"
-                        name="isProject"
-                        checked={formData.isProject}
-                        onChange={(e) => setFormData(prev => ({ ...prev, isProject: e.target.checked }))}
-                        className="w-4 h-4 rounded border-border-primary-default-light dark:border-border-primary-default-dark text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark focus:ring-bg-fill-accent-default-light dark:focus:ring-bg-fill-accent-default-dark"
-                    />
-                    <span className="text-sm font-semibold text-text-primary-active-light dark:text-text-primary-active-dark">
-                        Project Course
-                    </span>
-                    <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
-                        (hides section selection during registration)
-                    </span>
-                </label>
+                    <div className="flex flex-col">
+                        <span className="block mb-2 font-bold text-sm text-text-primary-default-light dark:text-text-primary-default-dark">
+                            {t('courseForm.projectCourse')}
+                        </span>
+                        <label
+                            className={`flex items-center gap-3 px-3 py-2 rounded-md border cursor-pointer select-none transition-colors ${
+                                formData.isProject
+                                    ? "border-border-accent-active-light dark:border-border-accent-active-dark bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark"
+                                    : "border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark"
+                            }`}
+                        >
+                            <input
+                                type="checkbox"
+                                name="isProject"
+                                checked={formData.isProject}
+                                onChange={(e) => setFormData(prev => ({ ...prev, isProject: e.target.checked }))}
+                                className="sr-only peer"
+                            />
+                            <span
+                                className={`flex items-center justify-center w-5 h-5 rounded border transition-colors shrink-0 ${
+                                    formData.isProject
+                                        ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark border-bg-fill-accent-default-light dark:border-bg-fill-accent-default-dark"
+                                        : "border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-fill-primary-default-light dark:bg-bg-fill-primary-default-dark peer-focus:ring-2 peer-focus:ring-bg-fill-accent-default-light/40 dark:peer-focus:ring-bg-fill-accent-default-dark/40"
+                                }`}
+                            >
+                                {formData.isProject && (
+                                    <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                )}
+                            </span>
+                            <div className="flex flex-col min-w-0">
+                                <span className={`text-sm font-semibold ${formData.isProject ? "text-text-accent-active-light dark:text-text-accent-active-dark" : "text-text-primary-active-light dark:text-text-primary-active-dark"}`}>
+                                    {t('courseForm.projectCourse')}
+                                </span>
+                                <span className="text-xs text-text-secondary-active-light dark:text-text-secondary-active-dark">
+                                    {t('courseForm.projectCourseHint')}
+                                </span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
 
                 <div>
                     <label className="block font-semibold text-sm text-text-primary-active-light dark:text-text-primary-active-dark mb-1">

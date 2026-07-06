@@ -55,8 +55,8 @@ export default function ManageRooms() {
       columnAlignments={columnAlignments}
       buildRow={(item, { isDesktop, isTablet }) => buildRoomRow(item, isDesktop, isTablet, i18n)}
       rowActions={(item, { onEdit, onDelete }) => [
-        { label: t('manageRooms.edit'), onClick: () => onEdit(item), className: "text-text-primary-default-light dark:text-text-primary-default-dark font-medium" },
-        { label: t('manageRooms.delete'), onClick: () => onDelete(item), className: "text-text-danger-default-light dark:text-text-danger-default-dark" },
+        { label: t('manageRooms.edit'), tone: 'primary', onClick: () => onEdit(item) },
+        { label: t('manageRooms.delete'), tone: 'danger', onClick: () => onDelete(item) },
       ]}
       getDeleteMessage={(item) => (
         <Trans ns="admin" i18nKey="manageRooms.deleteMessage" values={{ name: getLocalizedField(item, 'roomName', i18n.language) || getLocalizedField(item, 'name', i18n.language) }}>

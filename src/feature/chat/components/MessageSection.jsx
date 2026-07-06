@@ -31,11 +31,11 @@ export default function MessageSection({ date, messages, showSenderInfo, deleteM
     <div className="flex flex-col gap-1 mt-4">
       {/* Date divider */}
       <div className="flex items-center gap-3 px-2 my-2">
-        <span className="h-px bg-white/8 flex-1" />
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] px-2 py-1 rounded-full bg-white/4 border border-white/8">
+        <span className="h-px bg-[var(--border-subtle)] flex-1" />
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] px-2 py-1 rounded-full bg-[var(--surface-subtle)] border border-[var(--border-subtle)]">
           {label}
         </span>
-        <span className="h-px bg-white/8 flex-1" />
+        <span className="h-px bg-[var(--border-subtle)] flex-1" />
       </div>
 
       {messages.map((msg, idx) => {

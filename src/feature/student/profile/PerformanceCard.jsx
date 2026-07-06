@@ -122,7 +122,7 @@ export default function PerformanceCard({ user = {}, loading = false }) {
                 </div>
                 <button
                     onClick={() => navigate("/courses/transcript")}
-                    className="flex items-center gap-1 text-[11px] font-semibold text-text-accent-active-light dark:text-text-accent-active-dark hover:underline"
+                    className="flex items-center gap-1 text-[11px] font-semibold text-text-accent-default-light dark:text-text-accent-default-dark hover:underline"
                 >
                     {t("profile.fullTranscript")}
                     <OpenInNewTabIcon size={12} />

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -44,58 +44,70 @@ export default function InstructorCourses() {
 
     const PAGE_SIZE = 6;
     const [page, setPage] = useState(1);
+
+    const [viewMode, setViewMode] = useState(() => {
+        return isMobile ? "list" : localStorage.getItem("instructorCoursesViewMode") || "grid";
+    });
+    const [filterType, setFilterType] = useState([]);
+    const [searchInput, setSearchInput] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
 
     useEffect(() => {
-        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+        const timer = setTimeout(() => setSearchQuery(searchInput), 300);
         return () => clearTimeout(timer);
-    }, [searchQuery]);
+    }, [searchInput]);
 
-    const { data: courses = [], isLoading: loading, error } = useQuery({
-        queryKey: ["instructorCourses", debouncedSearch],
+    const { data: rawCourses = [], isLoading: loading } = useQuery({
+        queryKey: ["instructorCourses", searchQuery],
         queryFn: async () => {
             const params = { pageSize: 50 };
-            if (debouncedSearch) params.search = debouncedSearch;
+            if (searchQuery) params.search = searchQuery;
             const data = await fetchMyTeachingCourses(params);
-            return (Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []).map(mapCourseToCardProps);
+            return (Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []);
         },
         staleTime: 5 * 60 * 1000,
         placeholderData: keepPreviousData,
     });
 
-    const [viewMode, setViewMode] = useState(() => {
-        return isMobile ? "list" : localStorage.getItem("instructorCoursesViewMode") || "grid";
-    });
+    const courses = useMemo(
+        () => (Array.isArray(rawCourses) ? rawCourses.map(mapCourseToCardProps) : []),
+        [rawCourses, i18n.language]
+    );
 
     useEffect(() => {
         localStorage.setItem("instructorCoursesViewMode", viewMode);
     }, [viewMode]);
 
+    // Client-side filtering
+    const filteredCourses = useMemo(() => courses.filter(c => {
+        if (filterType.length > 0 && !filterType.includes(c.type)) return false;
+        return true;
+    }), [courses, filterType]);
+
     // Pagination
-    const totalPages = Math.max(1, Math.ceil(courses.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
     const from = (page - 1) * PAGE_SIZE + 1;
-    const to = Math.min(page * PAGE_SIZE, courses.length);
-    const paginatedCourses = courses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const to = Math.min(page * PAGE_SIZE, filteredCourses.length);
+    const paginatedCourses = filteredCourses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch]);
+    }, [filterType, searchQuery]);
 
     useEffect(() => {
         if (page > totalPages) setPage(1);
-    }, [courses.length, page, totalPages]);
+    }, [filteredCourses.length, page, totalPages]);
 
-    // Compute stats from real data
-    const totalHours = courses.reduce((sum, c) => sum + (c.creditHours || 0), 0);
-    const totalStudents = courses.reduce((sum, c) => sum + (c.totalStudents || 0), 0);
+    // Compute stats from filtered data
+    const totalHours = filteredCourses.reduce((sum, c) => sum + (c.creditHours || 0), 0);
+    const totalStudents = filteredCourses.reduce((sum, c) => sum + (c.totalStudents || 0), 0);
 
     const handleEnterClassroom = useCallback((courseId) => {
         navigate(`/instructor/courses/${courseId}`);
     }, [navigate]);
 
     const stats = [
-        { label: t('courses.assignedCourses'), value: courses.length },
+        { label: t('courses.assignedCourses'), value: filteredCourses.length },
         { label: t('courses.totalHours'), value: totalHours },
         { label: t('courses.totalStudents'), value: totalStudents },
     ];
@@ -106,13 +118,15 @@ export default function InstructorCourses() {
                 isMobile={isMobile}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                hasCourses={courses.length > 0}
+                searchQuery={searchInput}
+                setSearchQuery={setSearchInput}
+                filterType={filterType}
+                setFilterType={setFilterType}
+                hasCourses={true}
             />
 
             <div className="flex flex-col flex-1">
-                {courses.length > 0 && (
+                {filteredCourses.length > 0 && (
                     <Section className="hidden md:grid grid-cols-3 gap-6 mb-6">
                         <DataBanner
                             title={t('courses.statistics')}
@@ -123,20 +137,20 @@ export default function InstructorCourses() {
 
                 {loading && <InstructorCoursesSkeleton viewMode={viewMode} />}
 
-                {!loading && courses.length === 0 && (
+                {!loading && filteredCourses.length === 0 && (
                     <div className="flex flex-col items-center justify-center flex-1 text-center">
                         <BookIcon className="w-12 h-12 mb-4 opacity-40 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
                         <h3 className="text-lg font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                            {t('courses.empty')}
+                            {courses.length === 0 ? t('courses.empty') : t('courses.noMatch')}
                         </h3>
                         <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark max-w-md">
-                            {t('courses.emptyDesc')}
+                            {courses.length === 0 ? t('courses.emptyDesc') : t('courses.adjustFilters')}
                         </p>
                     </div>
                 )}
 
                 {!loading && paginatedCourses.length > 0 && (
-                    <Section className={`flex-1 ${viewMode === "grid" ? "flex flex-wrap justify-evenly gap-4 sm:grid sm:grid-cols-2" : "flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-evenly"}`}>
+                    <Section className={`flex-1 ${viewMode === "grid" ? "grid grid-cols-2 gap-4 content-start" : "flex flex-col gap-4"}`}>
                         {paginatedCourses.map((course) => (
                             <InstructorCourseCard key={course.courseId} {...course} onEnterClassroom={() => handleEnterClassroom(course.courseId)} />
                         ))}
@@ -149,7 +163,7 @@ export default function InstructorCourses() {
                             totalPages={totalPages}
                             currentPage={page}
                             setCurrentPage={setPage}
-                            {...(!isMobile ? { from, to, total: courses.length, label: "courses" } : {})}
+                            {...(!isMobile ? { from, to, total: filteredCourses.length, label: "courses" } : {})}
                         />
                     </Section>
                 )}

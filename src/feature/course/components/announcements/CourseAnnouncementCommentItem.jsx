@@ -20,7 +20,7 @@ export default function CourseAnnouncementCommentItem({ comment }) {
     const { convert: ar } = useArabicDigits();
     return (
         <div className="flex items-start gap-3">
-            <img src={comment.sender?.avatar} alt={getLocalizedField(comment.sender, 'name', i18n.language) || comment.sender?.name || ""} className="w-8 h-8 rounded-full" />
+            <img src={comment.sender?.avatar} alt={getLocalizedField(comment.sender, 'name', i18n.language) || comment.sender?.name || ""} className="w-8 h-8 rounded-full ring-2 ring-border-primary-active-light dark:ring-border-primary-active-dark" />
             <div className="min-w-0">
                 <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm text-text-primary-default-light dark:text-text-primary-default-dark">{getLocalizedField(comment.sender, 'name', i18n.language) || comment.sender?.name}</span>

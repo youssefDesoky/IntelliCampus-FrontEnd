@@ -39,8 +39,11 @@
   "departmentForm.descriptionAr": "الوصف",
   "departmentForm.descriptionArPlaceholder": "وصف مجال القسم ونطاقه",
 
+  "deptSpecializationsForm.nameLabel": "الاسم بالإنجليزية",
   "deptSpecializationsForm.namePlaceholder": "أدخل الاسم بالإنجليزية",
+  "deptSpecializationsForm.nameArLabel": "الاسم بالعربية",
   "deptSpecializationsForm.nameArPlaceholder": "اسم التخصص بالعربية",
+  "deptSpecializationsForm.maxCapacityLabel": "السعة القصوى",
   "deptSpecializationsForm.maxCapacityPlaceholder": "السعة القصوى (اختياري)",
   "deptSpecializationsForm.addSpecialization": "إضافة تخصص",
   "deptSpecializationsForm.noSpecializations": "لا توجد تخصصات بعد. أضف واحداً أعلاه.",

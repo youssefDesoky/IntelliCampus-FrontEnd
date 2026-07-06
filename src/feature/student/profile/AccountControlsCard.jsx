@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { KeyIcon, EnvelopIcon } from "../../../components/ui/icons";
 import ChangePasswordForm from "./ChangePasswordForm";
@@ -17,6 +17,8 @@ export default function AccountControlsCard({ className = "" }) {
     const [preferences, setPreferences] = useState(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(null);
+    const prefsRef = useRef(preferences);
+    useEffect(() => { prefsRef.current = preferences; }, [preferences]);
 
     useEffect(() => {
         let cancelled = false;
@@ -37,16 +39,18 @@ export default function AccountControlsCard({ className = "" }) {
         const field = FIELD_MAP[id];
         if (!field || updating) return;
 
-        const newValue = !preferences[field];
-        const updated = { ...preferences, [field]: newValue };
+        const current = prefsRef.current;
+        const newValue = !current[field];
+        const updated = { ...current, [field]: newValue };
 
         setUpdating(id);
         setPreferences(updated);
 
         try {
-            await updateNotificationPreferences(updated);
+            const result = await updateNotificationPreferences(updated);
+            if (result) setPreferences(result);
         } catch {
-            setPreferences(preferences);
+            setPreferences(prefsRef.current);
         } finally {
             setUpdating(null);
         }
@@ -76,16 +80,15 @@ export default function AccountControlsCard({ className = "" }) {
                                 <span className="text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
                                     {label}
                                 </span>
-                                <label htmlFor={id} className="relative inline-flex items-center">
+                                <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
-                                        id={id}
                                         className="peer sr-only"
                                         checked={preferences?.[FIELD_MAP[id]] ?? false}
                                         disabled={loading || updating === id}
                                         onChange={() => togglePreference(id)}
                                     />
-                                    <div className={`h-5 w-9 rounded-full bg-bg-fill-secondary-default-light transition-colors peer-checked:bg-bg-fill-accent-default-light peer-focus:outline-none dark:bg-bg-fill-secondary-default-dark dark:peer-checked:bg-bg-fill-accent-default-dark after:absolute after:top-0.5 after:start-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4 rtl:peer-checked:after:-translate-x-4 dark:after:bg-white ${loading ? 'opacity-50' : ''}`} />
+                                    <div className={`h-5 w-9 rounded-full bg-gray-300 transition-colors peer-checked:bg-bg-fill-accent-default-light peer-focus:outline-none dark:bg-gray-600 dark:peer-checked:bg-bg-fill-accent-default-dark after:absolute after:top-0.5 after:start-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4 rtl:peer-checked:after:-translate-x-4 dark:after:bg-white ${loading ? 'opacity-50' : ''}`} />
                                 </label>
                             </div>
                         ))}

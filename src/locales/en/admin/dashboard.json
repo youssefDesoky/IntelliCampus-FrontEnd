@@ -39,7 +39,7 @@
   "dashboard.chartCompleted": "Completed",
   "dashboard.chartUpcoming": "Upcoming",
   "dashboard.courseCatalogStatus": "Course Catalog Status",
-  "dashboard.courseCatalogStatusSubtitle": "Active, inactive, and archived courses",
+  "dashboard.courseCatalogStatusSubtitle": "Active and inactive courses",
   "dashboard.kpiSubtitle": "Key performance indicators — current semester",
   "dashboard.reflectsStudents": "Reflects {{students}} students across {{departments}} departments.",
   "dashboard.broadcastSubtitle": "Broadcast to all students and instructors",
