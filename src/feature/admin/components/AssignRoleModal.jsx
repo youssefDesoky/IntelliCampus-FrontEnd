@@ -15,7 +15,7 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
     const [isSaving, setIsSaving] = useState(false);
 
     const { data: availableRoles = [], isLoading: rolesLoading } = useQuery({
-        queryKey: ["assignableRoles"],
+        queryKey: ["assignableRolesV2"],
         queryFn: fetchAssignableRoles,
         staleTime: 2 * 60 * 1000,
     });

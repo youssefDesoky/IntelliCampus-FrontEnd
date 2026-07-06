@@ -53,15 +53,20 @@ export async function fetchUserRoles(userId) {
 
 export async function fetchAssignableRoles() {
     const data = await apiClient('/api/Roles');
-    return (data || []).map(r => {
-        const key = r.roleName?.toLowerCase();
-        const meta = ROLE_GROUP_MAP[key] || {};
-        return {
-            value: key,
-            label: meta.label || r.roleName,
-            group: meta.group || "",
-        };
-    });
+    return (data || [])
+        .filter(r => {
+            const key = r.roleName?.toLowerCase();
+            return key !== 'superadmin' && !key?.startsWith('admin_');
+        })
+        .map(r => {
+            const key = r.roleName?.toLowerCase();
+            const meta = ROLE_GROUP_MAP[key] || {};
+            return {
+                value: key,
+                label: meta.label || r.roleName,
+                group: meta.group || "",
+            };
+        });
 }
 
 export async function assignUserRole(userId, roleId) {
