@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import InputItem from "../../../components/form/InputItem";
 import SelectBox from "../../../components/ui/SelectBox";
@@ -6,6 +6,7 @@ import Button from "../../../components/ui/Button";
 import BaseFormComponent from "../../../components/ui/BaseFormComponent";
 import { XIcon } from "../../../components/ui/icons";
 import { fetchRoomTypes } from "../services/adminFacilitiesApi";
+import { fetchFaculties } from "../services/adminInstructorsApi";
 
 const capacityOptions = [
     { value: "20", label: "Up to 20" },
@@ -39,6 +40,36 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
         }
     }, [roomTypes, initialData.type]);
 
+    const [faculties, setFaculties] = useState([]);
+
+    useEffect(() => {
+        fetchFaculties()
+            .then(data => {
+                const list = Array.isArray(data) ? data : (data?.data ?? []);
+                setFaculties(list);
+            })
+            .catch(() => {});
+    }, []);
+
+    const facultyOptions = useMemo(() => {
+        return faculties.map(f => ({ value: f.facultyId ?? f.id, label: f.facultyName ?? f.name, labelAr: f.facultyNameAr ?? f.nameAr }));
+    }, [faculties]);
+
+    const [selectedFaculty, setSelectedFaculty] = useState(() => {
+        if (initialData.facultyId) {
+            return facultyOptions.find(f => f.value === initialData.facultyId) || facultyOptions[0];
+        }
+        return facultyOptions[0];
+    });
+
+    useEffect(() => {
+        if (faculties.length && initialData.facultyId) {
+            setSelectedFaculty(facultyOptions.find(f => f.value === initialData.facultyId) || facultyOptions[0]);
+        } else if (faculties.length && !initialData.facultyId) {
+            setSelectedFaculty(facultyOptions[0]);
+        }
+    }, [faculties, initialData.facultyId, facultyOptions]);
+
     const [selectedCapacity, setSelectedCapacity] = useState(() => {
         if (initialData.capacity) {
             return capacityOptions.find(c => c.value === String(initialData.capacity)) || capacityOptions[0];
@@ -59,6 +90,7 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
         formData.type = selectedType?.value || "";
         formData.capacity = parseInt(selectedCapacity.value);
         formData.isExamHall = isExamHall;
+        formData.facultyId = Number(selectedFaculty?.value);
         if (onSubmit) onSubmit(formData);
     };
 
@@ -68,6 +100,10 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
 
     const handleCapacityChange = (option) => {
         setSelectedCapacity(option);
+    };
+
+    const handleFacultyChange = (option) => {
+        setSelectedFaculty(option);
     };
 
     return (
@@ -145,6 +181,16 @@ export default function RoomForm({ onClose, onSubmit, initialData = {}, isLoadin
                         defaultValue={initialData.locationAr || initialData.roomLocationAr || ""}
                     />
                 </div>
+
+                <SelectBox
+                    className="w-full"
+                    label={t('roomForm.faculty')}
+                    name="facultyId"
+                    labelDirection="flex-col"
+                    options={facultyOptions}
+                    selectedOption={selectedFaculty}
+                    onChange={handleFacultyChange}
+                />
 
                 <label className="flex items-center gap-2 cursor-pointer">
                     <input

@@ -16,6 +16,7 @@
   "manageRooms.delete": "حذف",
   "manageRooms.entityName": "قاعة",
   "manageRooms.entityNamePlural": "قاعات",
+  "manageRooms.faculty": "الكلية",
   "manageRooms.deleteMessage": "هل أنت متأكد من حذف <1>{{name}}</1>؟",
 
   "roomForm.title.edit": "تعديل القاعة",
@@ -36,5 +37,8 @@
   "roomForm.locationPlaceholder": "مثال: المبنى أ، الطابق 2",
   "roomForm.locationAr": "الموقع",
   "roomForm.locationArPlaceholder": "المبنى أ، الطابق 2",
-  "roomForm.isExamHall": "استخدام كقاعة امتحانات"
+  "roomForm.isExamHall": "استخدام كقاعة امتحانات",
+  "roomForm.faculty": "الكلية",
+  "roomForm.facultyPlaceholder": "اختر الكلية",
+  "roomForm.sharedFaculty": "مشتركة / بدون كلية"
 }

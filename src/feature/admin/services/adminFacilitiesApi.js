@@ -26,6 +26,7 @@ function toRoomPayload(data) {
         location: data.location,
         locationAr: data.locationAr,
         isExamHall: data.isExamHall,
+        facultyId: data.facultyId,
     };
 }
 

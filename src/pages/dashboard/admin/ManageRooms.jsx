@@ -1,7 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { useRouteLoaderData } from "react-router-dom";
 import ManageEntity from "../../../components/ui/ManageEntity";
 import RoomForm from "../../../feature/admin/components/RoomForm";
+import Button from "../../../components/ui/Button";
+import { PlusIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
 import { fetchRooms, createRoom, updateRoom, deleteRoom } from "../../../feature/admin/services/adminFacilitiesApi";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
@@ -14,9 +17,10 @@ function buildRoomRow(room, isDesktop, isTablet, i18n) {
         <p className="font-medium">{getLocalizedField(room, 'roomName', i18n.language) || getLocalizedField(room, 'name', i18n.language) || "—"}</p>
       </div>
     ),
-        type: room.type || "—",
+    type: room.type || "—",
     capacity: room.capacity ?? "—",
     ...((isDesktop || isTablet) ? { location: getLocalizedField(room, 'location', i18n.language) || room.roomLocation || room.Location || room.RoomLocation || "—" } : {}),
+    ...((isDesktop || isTablet) ? { faculty: room.facultyName || room.faculty?.facultyName || "—" } : {}),
     id: room.id ?? room.roomId,
   };
 }
@@ -24,17 +28,27 @@ function buildRoomRow(room, isDesktop, isTablet, i18n) {
 export default function ManageRooms() {
   const { t, i18n } = useTranslation("admin");
   const { isDesktop, isTablet } = useDeviceType();
+  const user = useRouteLoaderData("root");
+  const isSuperAdmin = (user?.roles || []).some(r => r.toLowerCase() === 'superadmin');
 
   const tableHeaders = useMemo(() => {
-    if (isDesktop) return [t('manageRooms.roomName'), t('manageRooms.type'), t('manageRooms.capacity'), t('manageRooms.location')];
-    if (isTablet) return [t('manageRooms.roomName'), t('manageRooms.type'), t('manageRooms.capacity'), t('manageRooms.location')];
+    if (isDesktop) return [t('manageRooms.roomName'), t('manageRooms.type'), t('manageRooms.capacity'), t('manageRooms.location'), t('manageRooms.faculty')];
+    if (isTablet) return [t('manageRooms.roomName'), t('manageRooms.type'), t('manageRooms.capacity'), t('manageRooms.location'), t('manageRooms.faculty')];
     return [t('manageRooms.roomName'), t('manageRooms.type')];
   }, [isDesktop, isTablet, t]);
 
   const columnAlignments = useMemo(() => {
-    if (isDesktop || isTablet) return ["text-start", "text-center", "text-center", "text-center"];
+    if (isDesktop || isTablet) return ["text-start", "text-center", "text-center", "text-center", "text-center"];
     return ["text-start", "text-center"];
   }, [isDesktop, isTablet]);
+
+  const rowActions = useCallback((item, { onEdit, onDelete }) => {
+    if (!isSuperAdmin) return [];
+    return [
+      { label: t('manageRooms.edit'), onClick: () => onEdit(item), className: "text-text-primary-default-light dark:text-text-primary-default-dark font-medium" },
+      { label: t('manageRooms.delete'), onClick: () => onDelete(item), className: "text-text-danger-default-light dark:text-text-danger-default-dark" },
+    ];
+  }, [isSuperAdmin, t]);
 
   return (
     <ManageEntity
@@ -47,17 +61,21 @@ export default function ManageRooms() {
       deleteItem={deleteRoom}
       headerTitle={t('manageRooms.title')}
       headerSubtitle={t('manageRooms.subtitle')}
-      headerAddLabel={t('manageRooms.addRoom')}
+      renderHeaderActions={({ openForm }) =>
+        isSuperAdmin ? (
+          <Button variant="primary" onClick={() => openForm(null)}>
+            <PlusIcon size={24} />
+            {t('manageRooms.addRoom')}
+          </Button>
+        ) : null
+      }
       searchPlaceholder={t('manageRooms.search')}
       serverSidePagination={true}
       tableRole="room"
       tableHeaders={tableHeaders}
       columnAlignments={columnAlignments}
       buildRow={(item, { isDesktop, isTablet }) => buildRoomRow(item, isDesktop, isTablet, i18n)}
-      rowActions={(item, { onEdit, onDelete }) => [
-        { label: t('manageRooms.edit'), onClick: () => onEdit(item), className: "text-text-primary-default-light dark:text-text-primary-default-dark font-medium" },
-        { label: t('manageRooms.delete'), onClick: () => onDelete(item), className: "text-text-danger-default-light dark:text-text-danger-default-dark" },
-      ]}
+      rowActions={rowActions}
       getDeleteMessage={(item) => (
         <Trans ns="admin" i18nKey="manageRooms.deleteMessage" values={{ name: getLocalizedField(item, 'roomName', i18n.language) || getLocalizedField(item, 'name', i18n.language) }}>
           Are you sure you want to delete <strong>{{ name: getLocalizedField(item, 'roomName', i18n.language) || getLocalizedField(item, 'name', i18n.language) }}</strong>?
