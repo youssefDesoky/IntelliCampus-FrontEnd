@@ -9,10 +9,7 @@ import { BookIcon, ClipboardCheckIcon, ChartLineIcon, NewspaperIcon, NewspaperSl
 
 import StudyTimer from "../../../feature/student/dashboard/StudyTimer";
 import TodayReminders from "../../../feature/student/dashboard/TodayReminders";
-import {
-  AttendanceTrendChart,
-  GPATrendChart,
-} from "../../../feature/student/dashboard/charts";
+import { AttendanceTrendChart } from "../../../feature/student/dashboard/charts";
 import { DashboardSkeleton } from "../../../feature/student/dashboard/SkeletonLoader";
 import { fetchStudentDashboard } from "../../../api/dashboard";
 
@@ -135,8 +132,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <AttendanceTrendChart className="lg:col-span-6" data={dashboard.attendanceTrend ?? []} />
-          <GPATrendChart className="lg:col-span-6" data={dashboard.gpaTrend ?? []} />
+          <AttendanceTrendChart className="lg:col-span-12" data={dashboard.attendanceTrend ?? []} />
         </div>
       </Section>
     </>

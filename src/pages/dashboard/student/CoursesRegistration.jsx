@@ -77,6 +77,11 @@ export default function CoursesRegistration() {
         /* ── Time utilities ── */
         function parseTimeToMinutes(timeStr) {
             if (!timeStr) return 0;
+            if (typeof timeStr === 'object') {
+                const h = timeStr.hours ?? timeStr.hour ?? 0;
+                const m = timeStr.minutes ?? timeStr.minute ?? 0;
+                return h * 60 + m;
+            }
             const match12 = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
             if (match12) {
                 let h = parseInt(match12[1], 10);
@@ -207,13 +212,15 @@ export default function CoursesRegistration() {
 
     /* ── Detect conflicts within the existing schedule itself ── */
     const existingScheduleConflicts = useMemo(() => {
-        const events = existingScheduleEvents;
-        const result = [];
+        const events = existingScheduleEvents.filter(
+            (e) => !pendingRemovalIds.has(e.courseId)
+        );
+        const raw = [];
         for (let i = 0; i < events.length; i++) {
             for (let j = i + 1; j < events.length; j++) {
                 if (events[i].courseId && events[i].courseId === events[j].courseId) continue;
                 if (isOverlapping(events[i], events[j])) {
-                    result.push({
+                    raw.push({
                         type: events[i].type || 'Event',
                         courseTitle: events[i].title || events[i].courseName || 'Course',
                         courseId: events[i].courseId || `existing-${i}`,
@@ -224,8 +231,9 @@ export default function CoursesRegistration() {
                 }
             }
         }
-        return result;
-    }, [existingScheduleEvents]);
+        const keyOf = (c) => [c.courseTitle, c.conflictWith].sort().join('|') + '|' + (c.day ?? '') + '|' + (c.time ?? '') + '|' + (c.type ?? '');
+        return raw.filter((c, idx) => raw.findIndex((c2) => keyOf(c2) === keyOf(c)) === idx);
+    }, [existingScheduleEvents, pendingRemovalIds]);
 
     /* ── Detect time conflicts whenever selected section changes ── */
     useEffect(() => {

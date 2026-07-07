@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -74,27 +74,29 @@ export default function SmartNoteDetail() {
     const studentId = location.state?.studentId ?? null;
 
     const [note, setNote] = useState(location.state?.note || null);
-    const [loading, setLoading] = useState(!note);
+    const [loading, setLoading] = useState(true);
     const [aiSummary, setAiSummary] = useState(location.state?.note?.aiSummary || null);
     const [aiLoading, setAiLoading] = useState(false);
     const [aiError, setAiError] = useState(false);
     const [aiErrorMessage, setAiErrorMessage] = useState("");
     const [drawerOpen, setDrawerOpen] = useState(Boolean(location.state?.note?.aiSummary));
+    const autoEnhanceRef = useRef(location.state?.autoEnhance || false);
 
     useEffect(() => {
-        if (note) return;
         setLoading(true);
         fetchNote(noteId)
             .then((data) => {
                 setNote(data);
                 setAiSummary(data.aiSummary || null);
+                setDrawerOpen(Boolean(data.aiSummary));
             })
             .catch(() => navigate(-1))
             .finally(() => setLoading(false));
-    }, [noteId, note, navigate]);
+    }, [noteId, navigate]);
 
     useEffect(() => {
         if (note) setAiSummary(note.aiSummary || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [note?.aiSummary]);
 
     useEffect(() => {
@@ -117,6 +119,15 @@ export default function SmartNoteDetail() {
             setAiLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (!note || !autoEnhanceRef.current) return;
+        if (!note.aiSummary) {
+            handleEnhance();
+        }
+        autoEnhanceRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [note]);
 
     const hasContent = Boolean(aiLoading || aiSummary || aiError);
     const tone = aiError ? 'danger' : (aiLoading || aiSummary) ? 'accent' : 'neutral';
