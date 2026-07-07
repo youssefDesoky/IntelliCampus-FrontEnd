@@ -62,7 +62,7 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
                 </div>
 
                 <div className="relative -mt-14 px-6 z-10">
-                    <div className="flex items-end gap-4">
+                    <div className="flex items-center gap-4">
                         <div className="relative shrink-0">
                             <div
                                 onClick={handleAvatarClick}
@@ -94,14 +94,14 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
                                 className="hidden"
                             />
                         </div>
-                        <div className="pb-2 min-w-0 flex-1">
-                            <h2 className="text-xl font-extrabold tracking-tight truncate text-text-primary-default-light dark:text-text-primary-default-dark">
+                        <div className="min-w-0 flex-1">
+                            <h2 className="text-xl font-extrabold tracking-tight truncate text-white drop-shadow-md">
                                 {user.name}
                             </h2>
                             <div className="flex items-center gap-1.5 mt-1">
                                 <UserTieIcon size={12} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
                                 <p className="text-xs font-semibold truncate text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    {user.specialization || user.department || t('profile.instructor')}
+                                    {user.department || t('profile.instructor')}
                                 </p>
                             </div>
                         </div>

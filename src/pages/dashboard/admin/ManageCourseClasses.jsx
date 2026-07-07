@@ -31,7 +31,7 @@ import {
   updateCourse,
   fetchCourses,
   deactivateCourse,
-  reactivateCourse,
+  activateCourse,
 } from "../../../feature/admin/services/adminCoursesApi";
 import { importClasses } from "../../../feature/admin/services/adminImportsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
@@ -246,7 +246,14 @@ export default function ManageCourseClasses() {
                 fetchCourseById(courseId),
                 fetchCourseClasses(courseId),
             ]);
-            setCourse(courseData);
+            const course = courseData ? {
+                ...courseData,
+                isActive:
+                    courseData.statusName?.toLowerCase() === "active" ||
+                    (typeof courseData.status === "string" && courseData.status.toLowerCase() === "active") ||
+                    courseData.status === 0,
+            } : courseData;
+            setCourse(course);
             setClasses(Array.isArray(classesData) ? classesData : []);
         } catch (err) {
             showError(err.message);
@@ -341,7 +348,7 @@ export default function ManageCourseClasses() {
 
     const handleReactivate = async () => {
         try {
-            await reactivateCourse(courseId);
+            await activateCourse(courseId);
             await loadData();
         } catch (err) {
             showError(err.message);
@@ -362,17 +369,17 @@ export default function ManageCourseClasses() {
                 <div className="flex items-center gap-4 min-w-0">
                     <button
                         onClick={() => navigate("/admin/courses")}
-                        className="shrink-0 w-10 h-10 rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark flex items-center justify-center hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors"
+                        className="shrink-0 w-10 h-10 rounded-xl bg-transparent flex items-center justify-center hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark transition-colors"
                         title={t('manageCourseClasses.backToCourses')}
                     >
-                        <ArrowRightIcon className="w-5 h-5 rotate-180 rtl:scale-x-[-1] text-text-secondary-default-light dark:text-text-secondary-default-dark" />
+                        <ArrowRightIcon className="w-5 h-5 rotate-180 rtl:scale-x-[-1] text-text-secondary-active-light dark:text-text-secondary-active-dark" />
                     </button>
                     <div className="min-w-0">
                         <h1 className="text-xl md:text-2xl font-bold text-text-primary-active-light dark:text-text-primary-active-dark truncate">
                             {getLocalizedField(course, 'courseName', i18n.language) || t('manageCourseClasses.course')}
                         </h1>
                         <p className="text-text-secondary-active-light dark:text-text-secondary-active-dark text-xs md:text-sm truncate">
-                            {getLocalizedField(course, 'courseCode', i18n.language) || ""}{course?.courseCode && course?.departmentName ? t('manageCourseClasses.separator') : ""}{course?.departmentName || ""}{course?.creditHours ? `${t('manageCourseClasses.separator')} ${t('manageCourseClasses.creditHoursLabel', { hours: course.creditHours })}` : ""}
+                            {getLocalizedField(course, 'courseCode', i18n.language) || ""}{course?.courseCode && course?.departmentName ? ` ${t('manageCourseClasses.separator')} ` : ""}{course?.departmentName || ""}{course?.creditHours ? ` ${t('manageCourseClasses.separator')} ${t('manageCourseClasses.creditHoursLabel', { hours: course.creditHours })}` : ""}
                         </p>
                     </div>
                 </div>

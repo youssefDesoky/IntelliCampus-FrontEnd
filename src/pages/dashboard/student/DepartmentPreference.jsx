@@ -20,11 +20,10 @@ import {
     checkEligibility,
     fetchMyPreferences,
     fetchDepartments,
-    fetchSpecializations,
     savePreferences,
-} from "../../../feature/student/services/specializationApi";
+} from "../../../feature/student/services/departmentPreferenceApi";
 import { useError } from "../../../contexts/ErrorContext";
-import { SpecializationPreferenceSkeleton } from "../../../feature/student/specializationPreference/SkeletonLoader";
+import { DepartmentPreferenceSkeleton } from "../../../feature/student/departmentPreference/SkeletonLoader";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
 
 function GripIcon({ size = 14 }) {
@@ -47,7 +46,6 @@ function EligibilityCard({ eligibility }) {
     const progress = Math.min(100, (eligibility.passedHours / eligibility.minRequired) * 100);
     const eligible = eligibility.eligible;
     const remaining = Math.max(0, eligibility.minRequired - eligibility.passedHours);
-    const targetLabel = t(eligibility.targetType === "Department" ? "specializationPreference.targetLabel.departments" : "specializationPreference.targetLabel.specializations");
 
     useEffect(() => {
         const timer = setTimeout(() => setProgressWidth(progress), 100);
@@ -66,12 +64,12 @@ function EligibilityCard({ eligibility }) {
                 </div>
 
                 <h2 className="text-2xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark mb-2">
-                    {eligible ? t("specializationPreference.eligibility.eligible") : t("specializationPreference.eligibility.notEligible")}
+                    {eligible ? t("departmentPreference.eligibility.eligible") : t("departmentPreference.eligibility.notEligible")}
                 </h2>
                 <p className="text-text-secondary-default-light dark:text-text-secondary-default-dark text-sm mb-8 max-w-sm">
                     {eligible
-                        ? t("specializationPreference.eligibility.metRequirement", { targetLabel })
-                        : ar(t("specializationPreference.eligibility.needMoreHours", { count: remaining, remaining }))}
+                        ? t("departmentPreference.eligibility.metRequirement")
+                        : ar(t("departmentPreference.eligibility.needMoreHours", { count: remaining, remaining }))}
                 </p>
 
                 <div className="w-full space-y-3">
@@ -86,8 +84,8 @@ function EligibilityCard({ eligibility }) {
                         />
                     </div>
                     <div className="flex items-center justify-between text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                        <span className="font-medium">{ar(t("specializationPreference.eligibility.hrsCompleted", { hours: eligibility.passedHours }))}</span>
-                        <span className="font-medium">{ar(t("specializationPreference.eligibility.hrsRequired", { hours: eligibility.minRequired }))}</span>
+                        <span className="font-medium">{ar(t("departmentPreference.eligibility.hrsCompleted", { hours: eligibility.passedHours }))}</span>
+                        <span className="font-medium">{ar(t("departmentPreference.eligibility.hrsRequired", { hours: eligibility.minRequired }))}</span>
                     </div>
                 </div>
             </div>
@@ -114,10 +112,10 @@ function SuccessBanner({ show, onDismiss }) {
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-text-success-default-light dark:text-text-success-default-dark">
-                        {t("specializationPreference.saveSuccess.title")}
+                        {t("departmentPreference.saveSuccess.title")}
                     </p>
                     <p className="text-xs text-text-success-default-light/70 dark:text-text-success-default-dark/70">
-                        {t("specializationPreference.saveSuccess.description")}
+                        {t("departmentPreference.saveSuccess.description")}
                     </p>
                 </div>
                 <button
@@ -162,7 +160,7 @@ function SectionHeader({ icon, title, count, accent = false, onClearAll }) {
                     onClick={onClearAll}
                     className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark transition-colors hover:text-icon-accent-default-light dark:hover:text-icon-accent-default-dark"
                 >
-                    {t("specializationPreference.clearAll")}
+                    {t("departmentPreference.clearAll")}
                 </button>
             )}
         </div>
@@ -198,7 +196,7 @@ function SearchInput({ value, onChange, placeholder }) {
     );
 }
 
-export default function SpecializationPreference() {
+export default function DepartmentPreference() {
     const { t, i18n } = useTranslation("student");
     const { convert: ar } = useArabicDigits();
     const { showError } = useError();
@@ -211,57 +209,37 @@ export default function SpecializationPreference() {
     const [dragOverId, setDragOverId] = useState(null);
 
     const { data: eligibility, isLoading: eligibilityLoading } = useQuery({
-        queryKey: ["specializationEligibility"],
+        queryKey: ["departmentPreferenceEligibility"],
         queryFn: checkEligibility,
         staleTime: 5 * 60 * 1000,
     });
-
-    const targetType = eligibility?.targetType || "Specialization";
 
     const { data: departmentsData, isLoading: deptsLoading } = useQuery({
         queryKey: ["departments"],
         queryFn: fetchDepartments,
         staleTime: 10 * 60 * 1000,
-        enabled: targetType === "Department" && !!eligibility?.eligible,
-    });
-
-    const { data: specializationsData, isLoading: specsLoading } = useQuery({
-        queryKey: ["specializations"],
-        queryFn: fetchSpecializations,
-        staleTime: 10 * 60 * 1000,
-        enabled: targetType === "Specialization" && !!eligibility?.eligible,
+        enabled: !!eligibility?.eligible,
     });
 
     const { data: existingPreferences, isLoading: prefsLoading } = useQuery({
-        queryKey: ["specializationPreferences"],
+        queryKey: ["departmentPreferences"],
         queryFn: fetchMyPreferences,
         staleTime: 5 * 60 * 1000,
         enabled: !!eligibility?.eligible,
     });
 
-    const isLoading =
-        eligibilityLoading ||
-        ((eligibility?.eligible && (targetType === "Department" ? deptsLoading : specsLoading)) || prefsLoading);
+    const isLoading = eligibilityLoading || ((eligibility?.eligible && deptsLoading) || prefsLoading);
 
     const allItems = useMemo(() => {
-        if (targetType === "Department") {
-            const depts = departmentsData?.data || departmentsData || [];
-            return Array.isArray(depts)
-                ? depts.map((d) => ({
-                      id: d.departmentId,
-                      name: getLocalizedField(d, 'departmentName', i18n.language),
-                      nameAr: d.departmentNameAr,
-                  }))
-                : [];
-        }
-        const specs = Array.isArray(specializationsData) ? specializationsData : [];
-        return specs.map((s) => ({
-            id: s.specializationId,
-            name: getLocalizedField(s, 'name', i18n.language),
-            nameAr: s.nameAr,
-            departmentName: getLocalizedField(s, 'departmentName', i18n.language),
-        }));
-    }, [targetType, departmentsData, specializationsData]);
+        const depts = departmentsData?.data || departmentsData || [];
+        return Array.isArray(depts)
+            ? depts.map((d) => ({
+                  id: d.departmentId,
+                  name: getLocalizedField(d, 'departmentName', i18n.language),
+                  nameAr: d.departmentNameAr,
+              }))
+            : [];
+    }, [departmentsData, i18n.language]);
 
     const rankedIds = useMemo(() => new Set(rankedItems.map((i) => i.id)), [rankedItems]);
 
@@ -273,10 +251,9 @@ export default function SpecializationPreference() {
         return availableItems.filter(
             (i) =>
                 getLocalizedField(i, 'name', i18n.language)?.toLowerCase().includes(q) ||
-                i.nameAr?.toLowerCase().includes(q) ||
-                getLocalizedField(i, 'departmentName', i18n.language)?.toLowerCase().includes(q)
+                i.nameAr?.toLowerCase().includes(q)
         );
-    }, [availableItems, searchQuery]);
+    }, [availableItems, searchQuery, i18n.language]);
 
     const canSave = rankedItems.length > 0;
 
@@ -287,12 +264,11 @@ export default function SpecializationPreference() {
             existingPreferences.items
                 .sort((a, b) => a.rank - b.rank)
                 .map((item) => {
-                    const match = allItems.find((ai) => ai.id === item.targetId);
+                    const match = allItems.find((ai) => ai.id === item.departmentId);
                     return {
-                        id: item.targetId,
+                        id: item.departmentId,
                         name: getLocalizedField(item, 'name', i18n.language) || getLocalizedField(match, 'name', i18n.language) || "",
                         nameAr: match?.nameAr || "",
-                        departmentName: getLocalizedField(match, 'departmentName', i18n.language) || "",
                     };
                 })
                 .filter((item) => item.name)
@@ -302,15 +278,14 @@ export default function SpecializationPreference() {
     const saveMutation = useMutation({
         mutationFn: () =>
             savePreferences(
-                targetType,
                 rankedItems.map((item, idx) => ({
-                    targetId: item.id,
+                    departmentId: item.id,
                     rank: idx + 1,
                     name: item.name,
                 }))
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["specializationPreferences"] });
+            queryClient.invalidateQueries({ queryKey: ["departmentPreferences"] });
             setShowSuccess(true);
         },
         onError: (err) => showError(err.message),
@@ -375,13 +350,11 @@ export default function SpecializationPreference() {
         setDragOverId(null);
     }, []);
 
-    const isDept = targetType === "Department";
-
     if (eligibilityLoading) {
         return (
             <>
-                <PageHeader title={t("specializationPreference.title")} subtitle={t(isDept ? "specializationPreference.subtitle_departments" : "specializationPreference.subtitle_specializations")} />
-                <SpecializationPreferenceSkeleton />
+                <PageHeader title={t("departmentPreference.title")} subtitle={t("departmentPreference.subtitle")} />
+                <DepartmentPreferenceSkeleton />
             </>
         );
     }
@@ -389,8 +362,8 @@ export default function SpecializationPreference() {
     return (
         <div className="flex flex-col gap-4 lg:gap-6 lg:h-[calc(100vh-7rem)] lg:overflow-hidden">
             <PageHeader
-                title={t("specializationPreference.title")}
-                subtitle={t(isDept ? "specializationPreference.subtitle_departments" : "specializationPreference.subtitle_specializations")}
+                title={t("departmentPreference.title")}
+                subtitle={t("departmentPreference.subtitle")}
             />
 
             <SuccessBanner show={showSuccess} onDismiss={() => setShowSuccess(false)} />
@@ -398,7 +371,7 @@ export default function SpecializationPreference() {
             {!eligibility?.eligible ? (
                 <EligibilityCard eligibility={eligibility} />
             ) : isLoading ? (
-                <SpecializationPreferenceSkeleton />
+                <DepartmentPreferenceSkeleton />
             ) : (
                 <>
                     <div className="flex items-center justify-between gap-2 rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light/90 dark:bg-bg-surface-primary-default-dark/90 backdrop-blur-xl p-3 shadow-sm sm:gap-3 sm:p-5">
@@ -413,13 +386,13 @@ export default function SpecializationPreference() {
                             <div>
                                 <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
                                     {rankedItems.length === 0
-                                        ? t("specializationPreference.status.noPreferences")
-                                        : ar(t("specializationPreference.status.preferencesRanked", { count: rankedItems.length }))}
+                                        ? t("departmentPreference.status.noPreferences")
+                                        : ar(t("departmentPreference.status.preferencesRanked", { count: rankedItems.length }))}
                                 </p>
                                 <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                     {rankedItems.length === 0
-                                        ? t(isDept ? "specializationPreference.status.addToSave_department" : "specializationPreference.status.addToSave_specialization")
-                                        : t("specializationPreference.status.dragToReorder")}
+                                        ? t("departmentPreference.status.addToSave")
+                                        : t("departmentPreference.status.dragToReorder")}
                                 </p>
                             </div>
                         </div>
@@ -432,7 +405,7 @@ export default function SpecializationPreference() {
                             startIcon={<FloppyDiskIcon size={16} />}
                             className="shrink-0"
                         >
-                            <span className="hidden sm:inline">{t("specializationPreference.saveButton")}</span>
+                            <span className="hidden sm:inline">{t("departmentPreference.saveButton")}</span>
                         </Button>
                     </div>
 
@@ -441,14 +414,14 @@ export default function SpecializationPreference() {
                             <div className="flex h-full flex-col rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-4 lg:p-5 shadow-sm">
                                 <SectionHeader
                                     icon={<SearchIcon size={16} />}
-                                    title={t(isDept ? "specializationPreference.available.departments" : "specializationPreference.available.specializations")}
+                                    title={t("departmentPreference.available")}
                                     count={availableItems.length}
                                 />
 
                                 <SearchInput
                                     value={searchQuery}
                                     onChange={setSearchQuery}
-                                    placeholder={t(isDept ? "specializationPreference.search.departments" : "specializationPreference.search.specializations")}
+                                    placeholder={t("departmentPreference.search")}
                                 />
 
                                 {filteredAvailableItems.length === 0 ? (
@@ -458,11 +431,11 @@ export default function SpecializationPreference() {
                                         </div>
                                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1">
                                             {searchQuery
-                                                ? t("specializationPreference.empty.noMatches", { query: searchQuery })
-                                                : t(isDept ? "specializationPreference.empty.allAdded_departments" : "specializationPreference.empty.allAdded_specializations")}
+                                                ? t("departmentPreference.empty.noMatches", { query: searchQuery })
+                                                : t("departmentPreference.empty.allAdded")}
                                         </p>
                                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                            {searchQuery ? t("specializationPreference.empty.tryDifferentSearch") : t("specializationPreference.empty.addMoreItems")}
+                                            {searchQuery ? t("departmentPreference.empty.tryDifferentSearch") : t("departmentPreference.empty.addMoreItems")}
                                         </p>
                                     </div>
                                 ) : (
@@ -480,9 +453,9 @@ export default function SpecializationPreference() {
                                                     <p className="truncate text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
                                                         {item.name}
                                                     </p>
-                                                    {(item.nameAr || getLocalizedField(item, 'departmentName', i18n.language)) && (
+                                                    {item.nameAr && (
                                                         <p className="mt-0.5 truncate text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                            {[item.nameAr, getLocalizedField(item, 'departmentName', i18n.language)].filter(Boolean).join(" · ")}
+                                                            {item.nameAr}
                                                         </p>
                                                     )}
                                                 </div>
@@ -500,7 +473,7 @@ export default function SpecializationPreference() {
                             <div className="flex h-full flex-col rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark p-4 lg:p-5 shadow-sm">
                                 <SectionHeader
                                     icon={<StarIcon size={15} />}
-                                    title={t("specializationPreference.ranking.title")}
+                                    title={t("departmentPreference.ranking.title")}
                                     count={rankedItems.length}
                                     accent
                                     onClearAll={clearAll}
@@ -512,10 +485,10 @@ export default function SpecializationPreference() {
                                             <OrderedListIcon size={22} />
                                         </div>
                                         <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark mb-1">
-                                            {t("specializationPreference.ranking.empty.title")}
+                                            {t("departmentPreference.ranking.empty.title")}
                                         </p>
                                         <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                            {t(isDept ? "specializationPreference.ranking.empty.description_departments" : "specializationPreference.ranking.empty.description_specializations")}
+                                            {t("departmentPreference.ranking.empty.description")}
                                         </p>
                                     </div>
                                 ) : (
@@ -547,9 +520,9 @@ export default function SpecializationPreference() {
                                                         <p className="truncate text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">
                                                             {getLocalizedField(item, 'name', i18n.language)}
                                                         </p>
-                                                        {(item.nameAr || getLocalizedField(item, 'departmentName', i18n.language)) && (
+                                                        {item.nameAr && (
                                                             <p className="mt-0.5 truncate text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                                                {[item.nameAr, getLocalizedField(item, 'departmentName', i18n.language)].filter(Boolean).join(" · ")}
+                                                                {item.nameAr}
                                                             </p>
                                                         )}
                                                     </div>
@@ -558,7 +531,7 @@ export default function SpecializationPreference() {
                                                             type="button"
                                                             onClick={() => moveItemUp(item.id)}
                                                             disabled={idx === 0}
-                                                            title={t("specializationPreference.actions.moveUp")}
+                                                            title={t("departmentPreference.actions.moveUp")}
                                                             className="rounded-lg p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-surface-primary-default-light dark:hover:bg-bg-surface-primary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark disabled:cursor-not-allowed disabled:opacity-20"
                                                         >
                                                             <ArrowUpIcon size={15} />
@@ -567,7 +540,7 @@ export default function SpecializationPreference() {
                                                             type="button"
                                                             onClick={() => moveItemDown(item.id)}
                                                             disabled={idx === rankedItems.length - 1}
-                                                            title={t("specializationPreference.actions.moveDown")}
+                                                            title={t("departmentPreference.actions.moveDown")}
                                                             className="rounded-lg p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-surface-primary-default-light dark:hover:bg-bg-surface-primary-default-dark hover:text-text-primary-default-light dark:hover:text-text-primary-default-dark disabled:cursor-not-allowed disabled:opacity-20"
                                                         >
                                                             <ArrowDownIcon size={15} />
@@ -575,7 +548,7 @@ export default function SpecializationPreference() {
                                                         <button
                                                             type="button"
                                                             onClick={() => removeItem(item.id)}
-                                                            title={t("specializationPreference.actions.remove")}
+                                                            title={t("departmentPreference.actions.remove")}
                                                             className="rounded-lg p-1.5 text-icon-secondary-default-light dark:text-icon-secondary-default-dark transition-colors hover:bg-bg-surface-danger-default-light/10 dark:hover:bg-bg-surface-danger-default-dark/20 hover:text-icon-danger-default-light dark:hover:text-icon-danger-default-dark"
                                                         >
                                                             <XIcon size={15} />

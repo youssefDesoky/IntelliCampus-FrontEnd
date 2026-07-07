@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
 import IdentityCard from "../../../feature/student/profile/IdentityCard";
@@ -15,7 +16,6 @@ export default function Profile() {
     const mapBackendToUserData = (student) => ({
         name: getLocalizedField(student, 'fullName', i18n.language),
         avatar: student.profileImage || "",
-        specialization: getLocalizedField(student, 'specializationName', i18n.language) || "",
         department: getLocalizedField(student, 'departmentName', i18n.language) || "",
         faculty: getLocalizedField(student, 'facultyName', i18n.language) || "",
         studentSince: student.enrollmentDate || "",
@@ -42,7 +42,6 @@ export default function Profile() {
             email: auth.email || "",
             phone: auth.phoneNumber || auth.phone || "",
             address: auth.address || "",
-            specialization: getLocalizedField(auth, 'specializationName', i18n.language) || auth.specialization || "",
             department: getLocalizedField(auth, 'departmentName', i18n.language) || auth.department || "",
             faculty: getLocalizedField(auth, 'facultyName', i18n.language) || auth.facultyName || auth.faculty || "",
             studentSince: auth.enrollmentDate || "",
@@ -59,18 +58,20 @@ export default function Profile() {
         };
     };
 
-    const initialData = mapAuthToUserData(authUser);
-
-    const { data: userData = null, isLoading: detailedLoading, refetch, error } = useQuery({
+    const { data: rawStudent = null, isLoading: detailedLoading, refetch, error } = useQuery({
         queryKey: ["studentProfile"],
         queryFn: async () => {
             const student = await fetchStudentProfile(studentId);
-            return mapBackendToUserData(student);
+            return student;
         },
         staleTime: 10 * 60 * 1000,
         enabled: !!studentId,
-        placeholderData: initialData,
     });
+
+    const userData = useMemo(() => {
+        if (rawStudent) return mapBackendToUserData(rawStudent);
+        return mapAuthToUserData(authUser);
+    }, [rawStudent, authUser, i18n.language]);
 
     if (!userData && !studentId) {
         return (

@@ -37,7 +37,7 @@ export default function Messaging({ messages, sendMessage, onInputChange, partne
       <div className="flex-1 min-h-0 overflow-y-auto pe-1 no-scrollbar mt-2">
         {searchQuery && isEmpty ? (
           <div className="h-full flex flex-col items-center justify-center gap-2 text-center px-8">
-            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] flex items-center justify-center text-2xl">
               🔍
             </div>
             <p className="text-sm font-medium text-[var(--text-secondary)]">{t('noResults')}</p>
@@ -45,7 +45,7 @@ export default function Messaging({ messages, sendMessage, onInputChange, partne
           </div>
         ) : isEmpty ? (
           <div className="h-full flex flex-col items-center justify-center gap-2 text-center px-8">
-            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] flex items-center justify-center text-2xl">
               💬
             </div>
             <p className="text-sm font-medium text-[var(--text-secondary)]">{t('noMessages')}</p>

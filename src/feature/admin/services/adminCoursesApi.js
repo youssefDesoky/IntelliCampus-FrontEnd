@@ -15,12 +15,13 @@ export async function fetchCourses(params = {}) {
     return result?.data ?? result ?? [];
 }
 
-export async function fetchCoursesPaginated({ pageIndex, pageSize, searchQuery, departmentId } = {}) {
+export async function fetchCoursesPaginated({ pageIndex, pageSize, searchQuery, departmentId, filters = {} } = {}) {
     const query = new URLSearchParams();
     if (pageIndex) query.set('PageIndex', pageIndex);
     if (pageSize) query.set('PageSize', pageSize);
     if (searchQuery) query.set('search', searchQuery);
-    if (departmentId) query.set('departmentId', departmentId);
+    const deptId = departmentId || filters.departmentId;
+    if (deptId) query.set('departmentId', deptId);
     const qs = query.toString();
     const result = await apiClient(`/api/courses?${qs}`);
     return {

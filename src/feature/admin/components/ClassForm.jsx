@@ -277,7 +277,7 @@ export default function ClassForm({ onClose, onSubmit, initialData = null, isOpe
         >
             <div className="space-y-5 mb-6">
                 {/* Row 1: Instructor */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                     {instructorOptions.length > 0 ? (
                         <SelectBox
                             className="w-full"

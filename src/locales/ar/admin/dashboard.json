@@ -39,7 +39,7 @@
   "dashboard.chartCompleted": "مكتمل",
   "dashboard.chartUpcoming": "قادم",
   "dashboard.courseCatalogStatus": "حالة كتالوج المقررات",
-  "dashboard.courseCatalogStatusSubtitle": "المقررات النشطة وغير النشطة والمؤرشفة",
+  "dashboard.courseCatalogStatusSubtitle": "المقررات النشطة وغير النشطة",
   "dashboard.kpiSubtitle": "مؤشرات الأداء الرئيسية — الفصل الحالي",
   "dashboard.reflectsStudents": "يشمل {{students}} طالباً عبر {{departments}} قسم.",
   "dashboard.broadcastSubtitle": "بث إلى جميع الطلاب وأعضاء هيئة التدريس",

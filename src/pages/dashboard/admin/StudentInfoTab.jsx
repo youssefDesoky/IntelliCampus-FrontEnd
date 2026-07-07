@@ -84,8 +84,8 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                                 <span className="text-2xl font-extrabold text-emerald-500">{ar(student.gpa ?? "—")}</span>
                             </div>
                             <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
-                                <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{isBachelor ? t('studentDetails.program') : t('studentDetails.specialization')}</span>
-                                <span className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{isBachelor ? (student.program ?? "—") : (student.specializationName ?? "—")}</span>
+                                <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{isBachelor ? t('studentDetails.program') : t('studentDetails.department')}</span>
+                                <span className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{isBachelor ? (student.program ?? "—") : (student.departmentName ?? "—")}</span>
                             </div>
                         </div>
                     </div>
@@ -121,7 +121,7 @@ export default function StudentInfoTab({ student, completedCount, registeredCoun
                                 {isBachelor ? (
                                     <InfoField label={t('studentDetails.program')} value={student.program} />
                                 ) : (
-                                    <InfoField label={t('studentDetails.specialization')} value={student.specializationName} />
+                                    <InfoField label={t('studentDetails.department')} value={student.departmentName} />
                                 )}
                                 <InfoField label={t('studentDetails.department')} value={student.department ?? student.departmentName ?? student.faculty} />
                                 <InfoField label={t('studentDetails.bylaw')} value={student.bylawName ?? student.bylaw} />

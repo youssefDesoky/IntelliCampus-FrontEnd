@@ -82,7 +82,7 @@ export default function InstructorCourseAssignments() {
     const [gradeResult, setGradeResult] = useState(null);
     
     const {
-        data: assignments = [],
+        data: rawAssignments = [],
         isLoading,
         error,
     } = useQuery({
@@ -92,7 +92,9 @@ export default function InstructorCourseAssignments() {
             return (Array.isArray(data) ? data : []).map((item) => ({
                 id: item.id,
                 title: item.title,
-                description: getLocalizedField(item, 'description', i18n.language),
+                titleAr: item.titleAr,
+                description: item.description,
+                descriptionAr: item.descriptionAr,
                 fullInstructions: item.fullInstructions,
                 dueDate: item.dueDate,
                 totalPoints: item.totalPoints,
@@ -102,6 +104,17 @@ export default function InstructorCourseAssignments() {
         staleTime: 2 * 60 * 1000,
         enabled: !!courseId,
     });
+
+    const assignments = useMemo(() => rawAssignments.map((item) => ({
+        id: item.id,
+        title: item.title,
+        titleAr: item.titleAr,
+        description: getLocalizedField(item, 'description', i18n.language),
+        fullInstructions: item.fullInstructions,
+        dueDate: item.dueDate,
+        totalPoints: item.totalPoints,
+        attachments: item.attachments || [],
+    })), [rawAssignments, i18n.language]);
 
     useEffect(() => {
         if (error) showError(error.message || "Failed to load assignments.");
@@ -412,7 +425,7 @@ export default function InstructorCourseAssignments() {
         value={title}
         onChange={(event) => setTitle(event.target.value)}
         placeholder={t('assignments.titlePlaceholder')}
-        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
         />
         </div>
         
@@ -422,7 +435,7 @@ export default function InstructorCourseAssignments() {
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         placeholder={t('assignments.descriptionPlaceholder')}
-        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
         />
         </div>
         
@@ -432,7 +445,7 @@ export default function InstructorCourseAssignments() {
         value={instructions}
         onChange={(event) => setInstructions(event.target.value)}
         placeholder={t('assignments.instructionsPlaceholder')}
-        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
         />
         </div>
         
@@ -486,7 +499,7 @@ export default function InstructorCourseAssignments() {
                             {getLocalizedField(assignment, 'title', i18n.language)}
                         </h3>
                         {assignment.totalPoints && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark whitespace-nowrap shrink-0">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-fill-success-default-light dark:bg-bg-fill-success-default-dark text-white whitespace-nowrap shrink-0">
                             <ChartBarIcon size={14} />
                             {ar(t('assignments.points', { count: assignment.totalPoints }))}
                         </span>
@@ -722,7 +735,7 @@ export default function InstructorCourseAssignments() {
             value={gradeFeedback}
             onChange={(e) => setGradeFeedback(e.target.value)}
             placeholder={t('assignments.feedbackPlaceholder')}
-            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
             />
             </div>
 

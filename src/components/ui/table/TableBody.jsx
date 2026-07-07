@@ -1,21 +1,37 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslation } from 'react-i18next';
 import DropdownMenu from "../DropdownMenu";
-import { EllipsisVerticalIcon, EyeIcon, FilePenIcon, TrashIcon, UserPlusIcon } from "../icons";
+import { EllipsisVerticalIcon } from "../icons";
 import Dialog from "../Dialog";
 import AdminForm from "../../../feature/admin/components/AdminForm";
 import InstructorForm from "../../../feature/admin/components/InstructorForm";
 import StudentForm from "../../../feature/admin/components/StudentForm";
 
-const actionIcon = (label) => {
-    const map = {
-        'View Details': EyeIcon,
-        'Edit': FilePenIcon,
-        'Delete': TrashIcon,
-        'Assign Role': UserPlusIcon,
-    };
-    const Icon = map[label];
-    return Icon ? <Icon size={20} className="inline-block ms-2" /> : null;
+const actionToneClasses = {
+    primary: 'text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark',
+    danger: 'text-text-danger-default-light dark:text-text-danger-default-dark hover:text-text-danger-hover-light dark:hover:text-text-danger-hover-dark',
+    warning: 'text-text-warning-default-light dark:text-text-warning-default-dark hover:text-text-warning-hover-light dark:hover:text-text-warning-hover-dark',
+    success: 'text-text-success-default-light dark:text-text-success-default-dark hover:text-text-success-hover-light dark:hover:text-text-success-hover-dark',
+    accent: 'text-text-accent-default-light dark:text-text-accent-default-dark hover:text-text-accent-hover-light dark:hover:text-text-accent-hover-dark',
+    neutral: 'text-text-secondary-default-light dark:text-text-secondary-default-dark hover:text-text-secondary-hover-light dark:hover:text-text-secondary-hover-dark',
+};
+
+const actionToneByLabel = {
+    'View Details': 'primary',
+    'Edit': 'primary',
+    'Delete': 'danger',
+    'Assign Role': 'accent',
+    'Manage Bylaw': 'primary',
+    'Toggle Active': 'warning',
+    'Manage Course': 'primary',
+    'Set Specializations': 'accent',
+    'Deactivate': 'warning',
+    'Reactivate': 'success',
+};
+
+const actionToneClass = (action) => {
+    const tone = action.tone || actionToneByLabel[action.label];
+    return actionToneClasses[tone] || actionToneClasses.primary;
 };
 
 const buttonStyle = "w-full text-start px-3 py-2 rounded hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark ";
@@ -197,37 +213,33 @@ export default function TableBody({ role, rowData, columnCount, selectAll, setSe
 						actions(rowData[actionButtonClicked], actionButtonClicked).map((action, i) => (
 							<button
 								key={i}
-								className={`${buttonStyle} ${action.className || "text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark"}`}
+								className={`${buttonStyle} ${action.className || actionToneClass(action)}`}
 								onClick={() => {
 									action.onClick();
 									setActionButtonClicked(null);
 								}}
 							>
-								{actionIcon(action.label)}
 								{action.label}
 							</button>
 						))
 					) : (
 						<>
-							<button 
-								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
+							<button
+								className={`${buttonStyle} ${actionToneClasses.primary}`}
 								onClick={() => { onPreview?.(rowData[actionButtonClicked]?._raw ?? rowData[actionButtonClicked]); setActionButtonClicked(null); }}
 							>
-								<EyeIcon size={20} className="inline-block ms-2" />
 								{t('labels.viewDetails', 'View Details')}
 							</button>
-							<button 
-								className={`${buttonStyle} text-text-primary-default-light dark:text-text-primary-default-dark hover:text-text-primary-hover-light dark:hover:text-text-primary-hover-dark`}
+							<button
+								className={`${buttonStyle} ${actionToneClasses.primary}`}
 								onClick={() => handleEditClick(actionButtonClicked)}
 							>
-								<FilePenIcon size={20} className="inline-block ms-2" />
 								{t('edit')}
 							</button>
-							<button 
-								className={`${buttonStyle} text-text-danger-default-light dark:text-text-danger-default-dark hover:text-text-danger-hover-light dark:hover:text-text-danger-default-dark`}
+							<button
+								className={`${buttonStyle} ${actionToneClasses.danger}`}
 								onClick={() => handleDeleteClick(actionButtonClicked)}
 							>
-								<TrashIcon size={20} className="inline-block ms-2" />
 								{t('delete')}
 							</button>
 						</>

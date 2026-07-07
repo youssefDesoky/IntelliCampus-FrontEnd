@@ -2,7 +2,7 @@ import apiClient from "../../../api/apiClient";
 
 // ─── Rooms ──────────────────────────────────────────────────
 
-export async function fetchRooms({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) {
+export async function fetchRooms({ pageIndex = 1, pageSize = 50, searchQuery = '', filters = {} } = {}) {
     const params = new URLSearchParams({ PageIndex: pageIndex, PageSize: pageSize });
     if (searchQuery) params.set('Search', searchQuery);
     const result = await apiClient(`/api/rooms?${params}`);

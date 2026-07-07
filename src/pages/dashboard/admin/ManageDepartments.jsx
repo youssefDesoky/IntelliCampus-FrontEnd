@@ -3,7 +3,6 @@ import { Trans, useTranslation } from "react-i18next";
 import ManageEntity from "../../../components/ui/ManageEntity";
 import Button from "../../../components/ui/Button";
 import DepartmentForm from "../../../feature/admin/components/DepartmentForm";
-import DepartmentSpecializationsForm from "../../../feature/admin/components/DepartmentSpecializationsForm";
 import DepartmentRegistrationSettings from "../../../feature/admin/components/DepartmentRegistrationSettings";
 import { fetchDepartments, createDepartment, updateDepartment, deleteDepartment, updateDepartmentRegistrationSettings } from "../../../feature/admin/services/adminDepartmentsApi";
 import { fetchInstructors } from "../../../feature/admin/services/adminInstructorsApi";
@@ -16,7 +15,6 @@ export default function ManageDepartments() {
   const { t, i18n } = useTranslation("admin");
   const { showError } = useError();
   const [instructors, setInstructors] = useState([]);
-  const [specDepartment, setSpecDepartment] = useState(null);
   const [isRegSettingsOpen, setIsRegSettingsOpen] = useState(false);
 
   const instructorLookup = useMemo(() =>
@@ -27,10 +25,10 @@ export default function ManageDepartments() {
     [instructors]
   );
 
-  const fetchAll = useCallback(async ({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) => {
+  const fetchAll = useCallback(async ({ pageIndex = 1, pageSize = 50, searchQuery = '', filters = {} } = {}) => {
     const [departmentResult, instructorResult] = await Promise.all([
-      fetchDepartments({ pageIndex, pageSize, searchQuery }),
-      fetchInstructors(),
+      fetchDepartments({ pageIndex, pageSize, searchQuery, filters }),
+      fetchInstructors({ filters }),
     ]);
     const instructorData = Array.isArray(instructorResult) ? instructorResult : (instructorResult?.data ?? []);
     setInstructors(instructorData);
@@ -96,9 +94,8 @@ export default function ManageDepartments() {
       columnAlignments={["text-start", "text-start", "text-center", "text-start"]}
       buildRow={(item) => buildDepartmentRow(item)}
       rowActions={(item, { onEdit, onDelete }) => [
-        { label: t('manageDepartments.editAction'), onClick: () => onEdit(item) },
-        { label: t('manageDepartments.setSpecializations'), onClick: () => setSpecDepartment(item) },
-        { label: t('manageDepartments.delete'), onClick: () => onDelete(item) },
+        { label: t('manageDepartments.editAction'), tone: 'primary', onClick: () => onEdit(item) },
+        { label: t('manageDepartments.delete'), tone: 'danger', onClick: () => onDelete(item) },
       ]}
       getDeleteMessage={(item) => (
         <Trans ns="admin" i18nKey="manageDepartments.deleteMessage" values={{ name: getLocalizedField(item, 'departmentName', i18n.language) }}>
@@ -120,13 +117,6 @@ export default function ManageDepartments() {
       renderLoading={() => <ManageContentSkeleton />}
       renderExtraDialogs={({ loadItems }) => (
         <>
-          {specDepartment && (
-            <DepartmentSpecializationsForm
-              department={specDepartment}
-              onClose={() => setSpecDepartment(null)}
-              onUpdate={loadItems}
-            />
-          )}
           {isRegSettingsOpen && (
             <DepartmentRegistrationSettings
               onClose={() => setIsRegSettingsOpen(false)}

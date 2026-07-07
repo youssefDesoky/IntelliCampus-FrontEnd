@@ -17,7 +17,7 @@ export default function CommentInput({
     const resolvedPlaceholder = placeholder ?? t('labels.addComment', 'Add a comment...');
     return (
         <div className="flex items-center gap-3">
-            {avatar && <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover" />}
+            {avatar && <img src={avatar} alt="" className="w-8 h-8 rounded-full object-cover ring-2 ring-border-primary-hover-light dark:ring-border-primary-hover-dark" />}
             <div className="flex items-center gap-2 flex-1">
                 <input
                     ref={inputRef}
@@ -25,7 +25,7 @@ export default function CommentInput({
                     onChange={onChange}
                     onKeyDown={onKeyDown}
                     placeholder={resolvedPlaceholder}
-                    className="flex-1 rounded-full border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark px-4 py-2 text-sm text-text-primary-default-light dark:text-text-primary-default-dark outline-none transition-all focus:border-border-primary-hover-light dark:focus:border-border-primary-hover-dark focus:ring-2 focus:ring-bg-fill-accent-default-light/20 dark:focus:ring-bg-fill-accent-default-dark/30"
+                    className="flex-1 rounded-full border border-border-primary-hover-light dark:border-border-primary-hover-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark px-4 py-2 text-sm text-text-primary-default-light dark:text-text-primary-default-dark outline-none transition-all focus:border-border-accent-default-light dark:focus:border-border-accent-default-dark focus:ring-2 focus:ring-bg-fill-accent-default-light/20 dark:focus:ring-bg-fill-accent-default-dark/30"
                     dir={isRtl ? 'rtl' : 'ltr'}
                 />
                 <Button

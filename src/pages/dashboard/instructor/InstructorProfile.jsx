@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouteLoaderData } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,7 @@ import InstructorIdentityCard from "../../../feature/instructor/profile/Instruct
 import ProfessionalInfoCard from "../../../feature/instructor/profile/ProfessionalInfoCard";
 import OfficeHoursCard from "../../../feature/instructor/profile/OfficeHoursCard";
 import { getLocalizedField } from '../../../utils/getLocalizedField';
+import { formatHireDate } from "../../../utils/formatDate";
 import useArabicDigits from '../../../hooks/useArabicDigits.js';
 
 export default function InstructorProfile() {
@@ -15,23 +17,27 @@ export default function InstructorProfile() {
     const { convert: ar } = useArabicDigits();
     const authUser = useRouteLoaderData("root");
 
-    const mapProfileToUserData = (profile) => {
+    const { data: rawProfile, isLoading: profileLoading, refetch } = useQuery({
+        queryKey: ["instructorProfile"],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/api/auth/profile`, {
+                credentials: "include",
+            });
+            if (!res.ok) return null;
+            const profile = await res.json();
+            return profile;
+        },
+        staleTime: 10 * 60 * 1000,
+    });
+
+    const userData = useMemo(() => {
+        const profile = rawProfile ?? authUser;
         if (!profile) return null;
-        const hireDateStr = profile.hireDate || profile.HireDate || "";
-        let joinedDate = hireDateStr;
-        if (hireDateStr) {
-            const d = new Date(hireDateStr);
-            if (!isNaN(d.getTime())) {
-                joinedDate = d.toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US', {
-                    year: 'numeric', month: 'short', day: 'numeric'
-                });
-            }
-        }
+        const joinedDate = formatHireDate(profile.hireDate || profile.HireDate);
         return {
             name: getLocalizedField(profile, 'fullName', i18n.language) || "",
             fullName: getLocalizedField(profile, 'fullName', i18n.language) || "",
             avatar: profile.profileImage || "",
-            specialization: getLocalizedField(profile, 'specialization', i18n.language) || "",
             department: getLocalizedField(profile, 'departmentName', i18n.language) || "",
             faculty: getLocalizedField(profile, 'facultyName', i18n.language) || "",
             email: profile.email || "",
@@ -45,22 +51,7 @@ export default function InstructorProfile() {
             officeHoursRoom: getLocalizedField(profile, 'officeHoursRoomName', i18n.language) || "",
             officeHoursLocation: getLocalizedField(profile, 'officeHoursRoomLocation', i18n.language) || "",
         };
-    };
-
-    const initialData = mapProfileToUserData(authUser);
-
-    const { data: userData, isLoading: profileLoading, refetch } = useQuery({
-        queryKey: ["instructorProfile"],
-        queryFn: async () => {
-            const res = await fetch(`${API_URL}/api/auth/profile`, {
-                credentials: "include",
-            });
-            if (!res.ok) return initialData;
-            const profile = await res.json();
-            return mapProfileToUserData(profile);
-        },
-        staleTime: 10 * 60 * 1000,
-    });
+    }, [rawProfile, authUser, i18n.language]);
 
     if (profileLoading) {
         return <InstructorProfileSkeleton />;

@@ -33,6 +33,7 @@
   "chart.dotLegend": "كل نقطة تمثل طالباً",
   "chart.undeclared": "غير محدد",
   "chart.noCourseWorkData": "لا توجد بيانات أعمال مقرر متاحة",
+  "chart.noCompetencyData": "لا توجد بيانات كفاءات متاحة",
   "chart.marksTooltip": "{{label}}: {{value}} درجة ({{pct}}%)",
   "chart.min": "الحد الأدنى",
   "chart.median": "الوسيط",

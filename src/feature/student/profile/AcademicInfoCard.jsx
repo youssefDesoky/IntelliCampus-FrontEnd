@@ -15,7 +15,7 @@ import useArabicDigits from "../../../hooks/useArabicDigits";
 const bylawDocumentUrl = "/documents/san3aa_documentation.pdf";
 
 function formatLevel(level, t, arFn) {
-    if (!level) return "–";
+    if (level == null) return "–";
     return arFn(t("profile.levelFormat", { level }));
 }
 
@@ -39,14 +39,14 @@ export default function AcademicInfoCard({ user = {}, loading = false }) {
     const [isBylawOpen, setIsBylawOpen] = useState(false);
 
     const isPostGrad = ["Masters", "PhD", "Diploma"].includes(user.studentType);
-    const specialization = user.specialization || user.department || "–";
+    const department = user.department || "–";
     const academicYear = isPostGrad ? user.department : formatLevel(user.level, t, ar);
     const academicYearLabel = isPostGrad ? t("profile.departmentLabel") : t("profile.academicLevel");
 
     const academicInfo = [
         { name: "studentCode",    label: t("profile.studentId"),        value: ar(user.studentCode || "–"), icon: HashIcon },
         { name: "studentType",    label: t("profile.studentTypeLabel"), value: translateStudentType(user.studentType, t), icon: BookIcon },
-        { name: "specialization", label: specialization ? t("profile.specialization") : t("profile.departmentLabel"), value: specialization, icon: BookIcon },
+        { name: "department",     label: t("profile.departmentLabel"),  value: department,                  icon: BookIcon },
         { name: "year",           label: academicYearLabel,             value: academicYear         || "–", icon: CalendarDaysIcon },
         { name: "bylaw",          label: t("profile.bylaw"),            value: user.bylaw           || "–", icon: BookIcon },
     ];
@@ -63,9 +63,6 @@ export default function AcademicInfoCard({ user = {}, loading = false }) {
                             {t("profile.verifiedEnrollment")}
                         </p>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-400/10 text-green-500 border border-green-400/20">
-                        {t("profile.activeStatus")}
-                    </span>
                 </div>
 
                 <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -92,7 +89,7 @@ export default function AcademicInfoCard({ user = {}, loading = false }) {
                                     key={field.name}
                                     className={`flex items-center gap-3.5 p-3.5 rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-all group ${isBylaw ? "sm:col-span-2" : ""}`}
                                 >
-                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-active-light dark:text-text-accent-active-dark group-hover:scale-105 transition-transform">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-default-light dark:text-text-accent-default-dark group-hover:scale-105 transition-transform">
                                         <Icon size={15} />
                                     </div>
                                     <div className="min-w-0 flex-1">

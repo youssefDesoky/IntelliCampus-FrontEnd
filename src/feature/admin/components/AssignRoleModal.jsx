@@ -67,7 +67,7 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
                     </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto flex-1">
+                <div className="p-6 overflow-y-auto flex-1 form-scrollbar">
                     {isLoading ? (
                         <p className="text-center py-8 text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('assignRole.loadingRoles')}</p>
                     ) : (
@@ -79,7 +79,7 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
                                         key={role.value}
                                         className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                                             isSelected
-                                                ? 'border-border-accent-active-light dark:border-border-accent-active-dark bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark'
+                                                ? 'border-border-accent-active-light dark:border-border-accent-active-dark bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark'
                                                 : 'border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-fill-primary-hover-light dark:hover:bg-bg-fill-primary-hover-dark'
                                         }`}
                                     >
@@ -87,12 +87,16 @@ export default function AssignRoleModal({ userId, userName, onClose, onRolesUpda
                                             type="checkbox"
                                             checked={isSelected}
                                             onChange={() => toggleRole(role.value)}
-                                            className="rounded"
+                                            className="rounded accent-bg-fill-accent-default-light dark:accent-bg-fill-accent-default-dark"
                                         />
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{role.label}</span>
+                                            <span className={`text-sm font-medium ${isSelected ? 'text-text-accent-active-light dark:text-text-accent-active-dark' : 'text-text-primary-default-light dark:text-text-primary-default-dark'}`}>
+                                                {role.label}
+                                            </span>
                                             {role.group && (
-                                                <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark capitalize">{role.group}</span>
+                                                <span className={`text-xs capitalize ${isSelected ? 'text-text-accent-active-light/80 dark:text-text-accent-active-dark/80' : 'text-text-secondary-default-light dark:text-text-secondary-default-dark'}`}>
+                                                    {role.group}
+                                                </span>
                                             )}
                                         </div>
                                     </label>

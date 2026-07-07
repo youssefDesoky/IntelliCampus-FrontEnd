@@ -60,7 +60,11 @@ const statIconStyles = {
 };
 
 const GRADE_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#f97316", "#ef4444"];
-const COURSE_STATUS_COLORS = ["#22c55e", "#f59e0b"];
+const COURSE_STATUS_COLORS = {
+  Active: "#22c55e",
+  Inactive: "#f59e0b",
+  Archived: "#9ca3af",
+};
 
 // ─── Shared chart primitives ──────────────────────────────────────────────────
 
@@ -308,81 +312,53 @@ function CourseStatusChart({ data, t }) {
 }
 
 function CourseStatusBreakdownChart({ data, t }) {
-  const total = data.reduce((sum, d) => sum + d.value, 0);
-
-  const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-    if (percent < 0.06) return null;
-    const RAD = Math.PI / 180;
-    const r = innerRadius + (outerRadius - innerRadius) * 0.55;
-    const x = cx + r * Math.cos(-midAngle * RAD);
-    const y = cy + r * Math.sin(-midAngle * RAD);
-    return (
-      <text
-        x={x} y={y}
-        fill="white"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize={11}
-        fontWeight={700}
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
+  const filteredData = data.filter(
+    (d) => !/archived/i.test(d.name)
+  );
+  const total = filteredData.reduce((sum, d) => sum + d.value, 0);
 
   return (
     <ChartCard
       title={t('dashboard.courseCatalogStatus')}
       subtitle={t('dashboard.courseCatalogStatusSubtitle')}
-      chartType="pie" chartData={data} categoryField="name" series={[{ field: "value", name: t('dashboard.courses') }]}
     >
-      <div className="flex items-center gap-6">
-        <div dir="ltr">
-          <ResponsiveContainer width="55%" height={210}>
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%" cy="50%"
-                innerRadius={52}
-                outerRadius={84}
-                dataKey="value"
-                labelLine={false}
-                label={renderLabel}
-                strokeWidth={0}
-              >
-                {data.map((_, i) => (
-                  <Cell key={i} fill={COURSE_STATUS_COLORS[i] ?? "#9ca3af"} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="flex-1 space-y-2.5">
-          {data.map((entry, i) => (
-            <div key={entry.name} className="flex items-center gap-2.5">
-              <div
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: COURSE_STATUS_COLORS[i] ?? "#9ca3af" }}
-              />
-              <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark flex-1">
-                {entry.name}
-              </span>
-              <span className="text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark tabular-nums">
-                {entry.value.toLocaleString()}
-              </span>
+      <div className="space-y-3">
+        {filteredData.map((entry) => {
+          const percentage = total > 0 ? (entry.value / total) * 100 : 0;
+          const color = COURSE_STATUS_COLORS[entry.name] ?? "#9ca3af";
+          return (
+            <div key={entry.name}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
+                    {entry.name}
+                  </span>
+                </div>
+                <span className="text-xs font-semibold text-text-primary-default-light dark:text-text-primary-default-dark tabular-nums">
+                  {entry.value.toLocaleString()}
+                </span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${percentage}%`, backgroundColor: color }}
+                />
+              </div>
             </div>
-          ))}
-          <div className="pt-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                {t('dashboard.total')}
-              </span>
-              <span className="text-xs font-bold text-text-primary-active-light dark:text-text-primary-active-dark tabular-nums">
-                {total.toLocaleString()}
-              </span>
-            </div>
+          );
+        })}
+        <div className="pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
+              {t('dashboard.total')}
+            </span>
+            <span className="text-xs font-bold text-text-primary-active-light dark:text-text-primary-active-dark tabular-nums">
+              {total.toLocaleString()}
+            </span>
           </div>
         </div>
       </div>
@@ -471,7 +447,6 @@ export default function Dashboard() {
   const { data: dashboard, isLoading, error } = useQuery({
     queryKey: ["adminDashboard"],
     queryFn: fetchAdminDashboard,
-    staleTime: 5 * 60 * 1000,
   });
 
   const invalidateAllDashboards = () => {
@@ -482,24 +457,47 @@ export default function Dashboard() {
 
   const publishMutation = useMutation({
     mutationFn: publishNews,
-    onSuccess: () => {
+    onSuccess: (newItem) => {
       setNewsInput("");
+      queryClient.setQueryData(["adminDashboard"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          latestNews: [newItem, ...(old.latestNews ?? [])].slice(0, 5),
+        };
+      });
       invalidateAllDashboards();
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, title }) => updateNews(id, title),
-    onSuccess: () => {
+    onSuccess: (updatedItem) => {
       setEditingId(null);
       setEditText("");
+      queryClient.setQueryData(["adminDashboard"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          latestNews: (old.latestNews ?? []).map((it) =>
+            it.id === updatedItem.id ? { ...it, ...updatedItem } : it
+          ),
+        };
+      });
       invalidateAllDashboards();
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteNews,
-    onSuccess: () => {
+    onSuccess: (_data, deletedId) => {
+      queryClient.setQueryData(["adminDashboard"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          latestNews: (old.latestNews ?? []).filter((it) => it.id !== deletedId),
+        };
+      });
       invalidateAllDashboards();
     },
   });
@@ -561,7 +559,7 @@ export default function Dashboard() {
   const probationHeatmapData = dashboard?.charts?.probationHeatmap ?? [];
 
   const textAreaClasses =
-    "w-full px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark";
+    "px-4 py-2.5 rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark focus:ring-2 focus:ring-border-accent-active-light dark:focus:ring-border-accent-active-dark focus:border-border-accent-active-light outline-none transition-all placeholder:text-text-secondary-default-light dark:placeholder:text-text-secondary-default-dark";
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -607,27 +605,26 @@ export default function Dashboard() {
             <BullHornIcon className="w-5 h-5 text-text-tertiary-default-light dark:text-text-tertiary-default-dark" />
           </div>
 
-          <form onSubmit={handlePublish} className="mb-5">
+          <form onSubmit={handlePublish} className="mb-5 flex gap-2">
             <TextArea
-              minHeight={60}
+              minHeight={80}
               maxHeight={120}
-              className={textAreaClasses}
+              className={`${textAreaClasses} flex-1 min-w-0`}
               placeholder={t('dashboard.announcementPlaceholder')}
               value={newsInput}
               onChange={(e) => setNewsInput(e.target.value)}
             />
-            <div className="flex justify-end mt-2">
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                loading={publishMutation.isPending}
-                loadingText={t('dashboard.publishing')}
-                startIcon={<PaperPlaneIcon className="w-4 h-4" />}
-              >
-                {t('dashboard.publish')}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              className="h-full"
+              loading={publishMutation.isPending}
+              loadingText={t('dashboard.publishing')}
+              endIcon={<PaperPlaneIcon className="w-4 h-4" />}
+            >
+              {t('dashboard.publish')}
+            </Button>
           </form>
 
           <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 no-scrollbar">

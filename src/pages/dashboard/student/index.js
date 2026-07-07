@@ -8,7 +8,7 @@ export { default as SmartNotes } from "./SmartNotes";
 export { default as CourseMaterials } from "./CourseMaterials";
 export { default as CoursePrerequisites } from "./CoursePrerequisites";
 export { default as CoursesRegistration } from "./CoursesRegistration";
-export { default as SpecializationPreference } from "./SpecializationPreference";
+export { default as DepartmentPreference } from "./DepartmentPreference";
 export { default as StudyGroupPostDetail } from "./StudyGroupPostDetail";
 export { default as AcademicProgress } from "./AcademicProgress";
 export { default as Transcript } from "./TranscriptPage";

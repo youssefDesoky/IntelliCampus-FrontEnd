@@ -466,7 +466,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   );
 
   const sendCourseQuestion = useCallback(
-    async (course, content) => {
+    async (course, content, fileUrl) => {
       if (isSendingRef.current) return;
       isSendingRef.current = true;
       const conn = connectionRef.current;
@@ -476,7 +476,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       }
 
       try {
-        await conn.invoke("SendCourseQuestion", chatPartner.userId, course.code, course.name, content);
+        await conn.invoke("SendCourseQuestion", chatPartner.userId, course.code, course.name, content, fileUrl ?? null);
       } catch (err) {
         showError(err.message);
       } finally {
@@ -712,10 +712,9 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     setSearchQuery("");
   };
 
-  const handleAttachFile = async (file, type) => {
-    console.log("[Chat] Attach file:", { name: file.name, type, size: file.size });
-    // TODO: wire up file upload / send as message
-  };
+  // Attachments are handled inside ChatControls (upload → send URL as message
+  // in normal chat, or stash a pending attachment for Course Q&A send).
+  const handleAttachFile = (_file, _type) => {};
 
   const handleDeleteFriend = (friendId) => {
     // Prevent removing the AI assistant

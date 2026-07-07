@@ -62,6 +62,7 @@ export default function ManageCourses() {
   const [filterDepartment, setFilterDepartment] = useState([]);
   const [isRegSettingsOpen, setIsRegSettingsOpen] = useState(false);
   const [allDepartments, setAllDepartments] = useState([]);
+  const [bulkConfirm, setBulkConfirm] = useState(null);
 
   useEffect(() => {
     fetchDepartments().then(result => {
@@ -69,6 +70,16 @@ export default function ManageCourses() {
       setAllDepartments(depts);
     }).catch(() => {});
   }, []);
+
+  const departmentNameToId = useMemo(() => {
+    const map = {};
+    allDepartments.forEach(d => { map[d.departmentName] = d.departmentId; });
+    return map;
+  }, [allDepartments]);
+
+  const filters = useMemo(() => ({
+    departmentId: filterDepartment.length === 1 ? departmentNameToId[filterDepartment[0]] : undefined,
+  }), [filterDepartment, departmentNameToId]);
 
   const courseTableHeaders = useMemo(() => {
     if (isDesktop) return [t('manageCourses.courseCode'), t('manageCourses.course'), t('manageCourses.department'), t('manageCourses.creditHours'), t('manageCourses.status')];
@@ -82,14 +93,8 @@ export default function ManageCourses() {
     return ["text-start", "text-center"];
   }, [isDesktop, isTablet]);
 
-  const departmentNameToId = useMemo(() => {
-    const map = {};
-    allDepartments.forEach(d => { map[d.departmentName] = d.departmentId; });
-    return map;
-  }, [allDepartments]);
-
-  const fetchCoursesWrapped = useCallback(async ({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) => {
-    const departmentId = filterDepartment.length === 1 ? departmentNameToId[filterDepartment[0]] : undefined;
+  const fetchCoursesWrapped = useCallback(async ({ pageIndex = 1, pageSize = 50, searchQuery = '', filters: f = {} } = {}) => {
+    const departmentId = f.departmentId || undefined;
     const result = await fetchCoursesPaginated({ pageIndex, pageSize, searchQuery, departmentId });
     const mappedData = (result?.data ?? []).map((c) => ({
       ...c,
@@ -130,6 +135,7 @@ export default function ManageCourses() {
       onPreview={(course) => setViewingCourse(course)}
       searchPlaceholder={t('manageCourses.search')}
       serverSidePagination={true}
+      filters={filters}
       tableRole="course"
       tableRoleLabel="Courses"
       tableHeaders={courseTableHeaders}
@@ -154,24 +160,24 @@ export default function ManageCourses() {
       rowActions={(item, { onDelete, loadItems }) => [
         ...(item.isActive ? [{
           label: t('manageCourses.manageCourse'),
+          tone: 'primary',
           onClick: () => navigate(`/admin/courses/${item.courseId}`),
-          className: "text-text-secondary-default-light dark:text-text-accent-active-dark font-medium",
         }] : []),
         {
           label: t('manageCourses.edit'),
+          tone: 'primary',
           onClick: () => setEditingCourse(item),
-          className: "text-text-primary-default-light dark:text-text-primary-default-dark",
         },
         item.isActive
-          ? { label: t('manageCourses.deactivate'), onClick: async () => { await deactivateCourse(item.courseId); await loadItems(); setSuccessMessage(t('manageCourses.deactivateSuccess', { name: getLocalizedField(item, 'courseName', i18n.language) })); }, className: "text-text-warning-default-light dark:text-text-warning-default-dark" }
-          : { label: t('manageCourses.reactivate'), onClick: async () => { await reactivateCourse(item.courseId); await loadItems(); setSuccessMessage(t('manageCourses.reactivateSuccess', { name: getLocalizedField(item, 'courseName', i18n.language) })); }, className: "text-text-success-default-light dark:text-text-success-default-dark" },
+          ? { label: t('manageCourses.deactivate'), tone: 'warning', onClick: async () => { await deactivateCourse(item.courseId); await loadItems(); setSuccessMessage(t('manageCourses.deactivateSuccess', { name: getLocalizedField(item, 'courseName', i18n.language) })); } }
+          : { label: t('manageCourses.reactivate'), tone: 'success', onClick: async () => { await reactivateCourse(item.courseId); await loadItems(); setSuccessMessage(t('manageCourses.activateSuccess', { name: getLocalizedField(item, 'courseName', i18n.language) })); } },
         ...(item.isActive ? [{
           label: t('manageCourses.delete'),
+          tone: 'danger',
           onClick: () => onDelete(item),
-          className: "text-text-danger-default-light dark:text-text-danger-default-dark",
         }] : []),
       ]}
-      renderBeforeTable={({ selectedRowIds, rawItems, loadItems }) => {
+      renderBulkActions={({ selectedRowIds, rawItems, loadItems }) => {
         if (selectedRowIds.length === 0) return null;
         const selected = selectedRowIds.map(id => rawItems.find(c => c.courseId === id)).filter(Boolean);
         const allSelectedActive = selected.length > 0 && selected.every(c => c.isActive);
@@ -188,6 +194,8 @@ export default function ManageCourses() {
             await loadItems();
           } catch (err) {
             showError(err.message);
+          } finally {
+            setBulkConfirm(null);
           }
         };
         const handleDeactivateSelected = async () => {
@@ -202,18 +210,52 @@ export default function ManageCourses() {
             await loadItems();
           } catch (err) {
             showError(err.message);
+          } finally {
+            setBulkConfirm(null);
           }
         };
         return (
           <>
-            <div className="flex items-center gap-2 sm:hidden mb-3">
-              {allSelectedInactive && <Button variant="success" size="sm" onClick={handleActivateSelected}><CheckIcon size={18} /></Button>}
-              {allSelectedActive && <Button variant="warning" size="sm" onClick={handleDeactivateSelected}><XIcon size={18} /></Button>}
-            </div>
-            <div className="hidden sm:flex items-center gap-3 mb-3">
-              {allSelectedInactive && <Button variant="success" size="sm" onClick={handleActivateSelected}><CheckIcon size={20} /></Button>}
-              {allSelectedActive && <Button variant="warning" size="sm" onClick={handleDeactivateSelected}><XIcon size={20} /></Button>}
-            </div>
+            {allSelectedInactive && (
+              <Button variant="success" size="sm" onClick={() => setBulkConfirm({ type: 'activate' })} className="px-2 sm:px-4">
+                <CheckIcon size={18} />
+                <span className="hidden sm:inline">{t('manageCourses.activate')}</span>
+              </Button>
+            )}
+            {allSelectedActive && (
+              <Button variant="warning" size="sm" onClick={() => setBulkConfirm({ type: 'deactivate' })} className="px-2 sm:px-4">
+                <XIcon size={18} />
+                <span className="hidden sm:inline">{t('manageCourses.deactivate')}</span>
+              </Button>
+            )}
+            {bulkConfirm?.type === 'activate' && (
+              <Dialog
+                isOpen={true}
+                variant="success"
+                title={t('manageCourses.activateSelectedTitle')}
+                onClose={() => setBulkConfirm(null)}
+                onConfirm={() => { handleActivateSelected(); return true; }}
+                confirmText={t('manageCourses.activate')}
+                cancelText={t('entity.cancelAction')}
+                showCloseButton={true}
+              >
+                {t('manageCourses.bulkActivateConfirm', { count: selectedRowIds.length })}
+              </Dialog>
+            )}
+            {bulkConfirm?.type === 'deactivate' && (
+              <Dialog
+                isOpen={true}
+                variant="warning"
+                title={t('manageCourses.deactivateSelectedTitle')}
+                onClose={() => setBulkConfirm(null)}
+                onConfirm={() => { handleDeactivateSelected(); return true; }}
+                confirmText={t('manageCourses.deactivate')}
+                cancelText={t('entity.cancelAction')}
+                showCloseButton={true}
+              >
+                {t('manageCourses.bulkDeactivateConfirm', { count: selectedRowIds.length })}
+              </Dialog>
+            )}
           </>
         );
       }}

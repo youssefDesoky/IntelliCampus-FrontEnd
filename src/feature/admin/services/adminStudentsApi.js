@@ -1,8 +1,12 @@
 import apiClient from "../../../api/apiClient";
 
-export async function fetchStudents({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) {
+export async function fetchStudents({ pageIndex = 1, pageSize = 50, searchQuery = '', filters = {} } = {}) {
     const params = new URLSearchParams({ PageIndex: pageIndex, PageSize: pageSize });
     if (searchQuery) params.set('Search', searchQuery);
+    if (filters.status) params.set('Status', filters.status);
+    if (filters.departmentId) params.set('DepartmentId', filters.departmentId);
+    if (filters.probation === 'true' || filters.probation === true) params.set('IsOnProbation', 'true');
+    else if (filters.probation === 'false' || filters.probation === false) params.set('IsOnProbation', 'false');
     const result = await apiClient(`/api/students?${params}`);
     return { data: result?.data ?? result ?? [], totalCount: result?.totalCount ?? 0 };
 }

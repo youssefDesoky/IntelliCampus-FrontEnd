@@ -21,7 +21,7 @@ export default function ChatUsersSection({ type, users, onSelectUser }) {
   };
 
   return (
-    <div className="flex flex-col gap-1 bg-white/5 rounded-xl py-2">
+    <div className="flex flex-col gap-1 bg-[var(--surface-hover)] rounded-xl py-2">
       {/* Section header */}
       <div className="flex items-center gap-2 mb-1 px-2">
         <span className="text-base leading-none">
@@ -38,7 +38,7 @@ export default function ChatUsersSection({ type, users, onSelectUser }) {
       </div>
 
       {/* Divider */}
-      <div className="h-px bg-white/5 mx-2" />
+      <div className="h-px bg-[var(--border-subtle)] mx-2" />
 
       {/* Users list */}
       <div className="flex flex-col gap-0.5">

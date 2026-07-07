@@ -51,6 +51,7 @@
   "studentDetails.selectCourse": "-- Select a course to continue --",
   "studentDetails.selectSection": "-- Select a section --",
   "studentDetails.loadingSections": "Loading sections...",
+  "studentDetails.noSectionsAvailable": "No sections available for this course. Create a section first.",
   "studentDetails.cancel": "Cancel",
   "studentDetails.register": "Register",
   "studentDetails.registering": "Registering...",

@@ -17,7 +17,6 @@ export default function ProfessionalInfoCard({ user = {}, loading = false }) {
     const infoFields = [
         { label: t('profile.instructorCode'), value: user.instructorCode ? ar(user.instructorCode) : (user.instructorId ? ar(user.instructorId) : "–"), icon: HashIcon },
         { label: t('profile.department'), value: user.department || user.departmentName || "–", icon: BookIcon },
-        { label: t('profile.specialization'), value: user.specialization || user.specializationName || "–", icon: StarIcon },
         { label: t('profile.joined'), value: user.joinedDate || user.enrollmentDate || "–", icon: CalendarDaysIcon },
     ];
 
@@ -32,9 +31,6 @@ export default function ProfessionalInfoCard({ user = {}, loading = false }) {
                         {t('profile.professionalInfoSub')}
                     </p>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-400/10 text-green-500 border border-green-400/20">
-                    {t('profile.active')}
-                </span>
             </div>
 
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -58,7 +54,7 @@ export default function ProfessionalInfoCard({ user = {}, loading = false }) {
                                 key={field.label}
                                 className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark border border-border-primary-default-light dark:border-border-primary-default-dark hover:border-border-accent-default-light dark:hover:border-border-accent-default-dark transition-all group"
                             >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-active-light dark:text-text-accent-active-dark group-hover:scale-105 transition-transform">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-accent-default-light dark:text-text-accent-default-dark group-hover:scale-105 transition-transform">
                                     <Icon size={15} />
                                 </div>
                                 <div className="min-w-0 flex-1">

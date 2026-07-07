@@ -7,14 +7,16 @@ export const ROLE_GROUP_MAP = {
     student_diploma: { label: "Diploma Student", group: "student" },
     instructor: { label: "Instructor", group: "instructor" },
     admin_bachelor: { label: "Bachelor Admin", group: "admin" },
-    admin_postgrad: { label: "PostGrad Admin", group: "admin" },
+    admin_masters: { label: "Masters Admin", group: "admin" },
+    admin_phd: { label: "PhD Admin", group: "admin" },
+    admin_diploma: { label: "Diploma Admin", group: "admin" },
     admin_academicstaff: { label: "Academic Staff Admin", group: "admin" },
     superadmin: { label: "Super Admin", group: "admin" },
 };
 
 // ─── Admins ─────────────────────────────────────────────────
 
-export async function fetchAdmins({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) {
+export async function fetchAdmins({ pageIndex = 1, pageSize = 50, searchQuery = '', filters = {} } = {}) {
     const params = new URLSearchParams({ PageIndex: pageIndex, PageSize: pageSize });
     if (searchQuery) params.set('Search', searchQuery);
     const result = await apiClient(`/api/admins?${params}`);

@@ -127,8 +127,8 @@ import arStudentSmartNotes from '../locales/ar/student/smartNotes.json';
 import enStudentAcademicProgress from '../locales/en/student/academicProgress.json';
 import arStudentAcademicProgress from '../locales/ar/student/academicProgress.json';
 
-import enStudentSpecialization from '../locales/en/student/specialization.json';
-import arStudentSpecialization from '../locales/ar/student/specialization.json';
+import enStudentDepartmentPreference from '../locales/en/student/departmentPreference.json';
+import arStudentDepartmentPreference from '../locales/ar/student/departmentPreference.json';
 
 import enStudentProfile from '../locales/en/student/profile.json';
 import arStudentProfile from '../locales/ar/student/profile.json';
@@ -155,8 +155,8 @@ const arAdmin = Object.assign({}, arAdminAside, arAdminDashboard, arAdminCourses
 const enInstructor = Object.assign({}, enInstructorAside, enInstructorDashboard, enInstructorCourses, enInstructorAssignments, enInstructorAttendance, enInstructorQuizzes, enInstructorComplaints, enInstructorGrades, enInstructorMeeting, enInstructorProfile, enInstructorReminders, enInstructorAnalytics, enInstructorSchedule);
 const arInstructor = Object.assign({}, arInstructorAside, arInstructorDashboard, arInstructorCourses, arInstructorAssignments, arInstructorAttendance, arInstructorQuizzes, arInstructorComplaints, arInstructorGrades, arInstructorMeeting, arInstructorProfile, arInstructorReminders, arInstructorAnalytics, arInstructorSchedule);
 
-const enStudent = Object.assign({}, enStudentAside, enStudentDashboard, enStudentCourses, enStudentRegistration, enStudentSchedule, enStudentReminders, enStudentSmartNotes, enStudentAcademicProgress, enStudentSpecialization, enStudentProfile);
-const arStudent = Object.assign({}, arStudentAside, arStudentDashboard, arStudentCourses, arStudentRegistration, arStudentSchedule, arStudentReminders, arStudentSmartNotes, arStudentAcademicProgress, arStudentSpecialization, arStudentProfile);
+const enStudent = Object.assign({}, enStudentAside, enStudentDashboard, enStudentCourses, enStudentRegistration, enStudentSchedule, enStudentReminders, enStudentSmartNotes, enStudentAcademicProgress, enStudentDepartmentPreference, enStudentProfile);
+const arStudent = Object.assign({}, arStudentAside, arStudentDashboard, arStudentCourses, arStudentRegistration, arStudentSchedule, arStudentReminders, arStudentSmartNotes, arStudentAcademicProgress, arStudentDepartmentPreference, arStudentProfile);
 
 const enCommon = Object.assign({}, enCommonLabels, enCommonErrors);
 const arCommon = Object.assign({}, arCommonLabels, arCommonErrors);

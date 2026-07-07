@@ -176,7 +176,7 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 							<select
 								value={complaintType}
 								onChange={handleComplaintTypeChange}
-								className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+								className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
 							>
 								<option value="">{t('gradeComplaint.selectType')}</option>
 								{complaintTypes.map((type) => (
@@ -195,7 +195,7 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 								<select
 									value={assessmentId}
 									onChange={(event) => setAssessmentId(event.target.value)}
-									className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+									className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
 								>
 									<option value="">{t('gradeComplaint.chooseSpecific', { type: complaintType })}</option>
 									{complaintItemOptions.map((item) => (
@@ -221,7 +221,7 @@ export default function GradeComplaint({ className = "", items = [], compact = f
 							value={complaintReason}
 							onChange={(event) => setComplaintReason(event.target.value)}
 							placeholder={t('gradeComplaint.placeholder')}
-							className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors placeholder:text-text-secondary-default-light focus:border-border-accent-default-light focus:ring-4 focus:ring-accent-500/10 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-default-dark"
+							className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors placeholder:text-text-secondary-default-light focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-default-dark"
 						/>
 					</div>
 				</div>

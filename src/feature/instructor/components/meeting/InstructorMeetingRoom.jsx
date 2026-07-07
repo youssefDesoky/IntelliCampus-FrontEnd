@@ -365,7 +365,7 @@ export default function MeetingRoom() {
                                     disabled={!title || creating}
                                     loading={creating}
                                     loadingText={t('meeting.scheduling')}
-                                    startIcon={<CalendarCheckIcon size={18} />}
+                                    startIcon={<VideoIcon size={18} />}
                                     className="w-full sm:w-fit"
                                 >
                                     {t('meeting.scheduleStart')}

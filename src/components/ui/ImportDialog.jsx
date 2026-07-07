@@ -13,10 +13,10 @@ function formatFileSize(bytes) {
 }
 
 const EXT_COLORS = {
-    ".csv": { bg: "bg-emerald-500/10 dark:bg-emerald-400/10", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/20 dark:border-emerald-400/20" },
-    ".xlsx": { bg: "bg-blue-500/10 dark:bg-blue-400/10", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/20 dark:border-blue-400/20" },
-    ".xls": { bg: "bg-blue-500/10 dark:bg-blue-400/10", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/20 dark:border-blue-400/20" },
-    ".json": { bg: "bg-amber-500/10 dark:bg-amber-400/10", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/20 dark:border-amber-400/20" },
+    ".csv": { bg: "bg-emerald-500/15 dark:bg-emerald-400/15", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-500/25 dark:border-emerald-400/25" },
+    ".xlsx": { bg: "bg-blue-500/15 dark:bg-blue-400/15", text: "text-blue-700 dark:text-blue-300", border: "border-blue-500/25 dark:border-blue-400/25" },
+    ".xls": { bg: "bg-blue-500/15 dark:bg-blue-400/15", text: "text-blue-700 dark:text-blue-300", border: "border-blue-500/25 dark:border-blue-400/25" },
+    ".json": { bg: "bg-amber-500/15 dark:bg-amber-400/15", text: "text-amber-700 dark:text-amber-300", border: "border-amber-500/25 dark:border-amber-400/25" },
 };
 
 export default function ImportDialog({
@@ -85,7 +85,7 @@ export default function ImportDialog({
             maxWidth="max-w-4xl"
             contentClassName="py-2"
         >
-            <div className="ic-dialog-enter w-full overflow-hidden rounded-2xl bg-bg-surface-secondary-default-light shadow-2xl dark:bg-bg-surface-secondary-default-dark">
+            <div className="ic-dialog-enter w-full overflow-hidden rounded-2xl bg-bg-surface-primary-default-light shadow-2xl dark:bg-bg-surface-primary-default-dark">
                 {children && <div className="px-7 pt-5">{children}</div>}
                 <div className="p-7">
                     <div
@@ -95,12 +95,11 @@ export default function ImportDialog({
                         onClick={() => !file && fileInputRef.current?.click()}
                         className={[
                             "relative overflow-hidden rounded-xl border transition-all duration-200",
-                            !file ? "" : "",
                             isDragging
-                                ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-accent-default-light/30 dark:bg-bg-surface-accent-default-dark/20"
+                                ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-secondary-hover-light dark:bg-bg-surface-secondary-hover-dark"
                                 : file
-                                    ? "border-border-success-default-light dark:border-border-success-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark"
-                                    : "border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light hover:border-border-accent-default-light dark:bg-bg-surface-primary-default-dark dark:hover:border-border-accent-default-dark",
+                                    ? "border-border-success-default-light dark:border-border-success-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark"
+                                    : "border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light hover:border-border-accent-default-light hover:bg-bg-surface-secondary-hover-light dark:bg-bg-surface-secondary-default-dark dark:hover:border-border-accent-default-dark dark:hover:bg-bg-surface-secondary-hover-dark",
                         ].join(" ")}
                     >
                         {!file && (
@@ -122,15 +121,13 @@ export default function ImportDialog({
                             <div className="relative flex flex-col items-center justify-center gap-5 px-8 py-12">
                                 <div
                                     className={[
-                                        "relative flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-200",
-                                        isDragging
-                                            ? "scale-110 bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark"
-                                            : "bg-bg-surface-accent-default-light/60 dark:bg-bg-surface-accent-default-dark/60",
+                                        "relative flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-200 bg-bg-surface-info-default-light/40 dark:bg-bg-surface-info-default-dark/20",
+                                        isDragging ? "scale-110" : "",
                                     ].join(" ")}
                                 >
                                     <CloudUploadIcon
                                         size={26}
-                                        className={`transition-colors duration-200 ${isDragging ? "text-text-accent-active-light dark:text-text-accent-active-dark" : "text-text-accent-default-light dark:text-text-accent-default-dark"}`}
+                                        className="transition-colors duration-200 text-text-accent-default-light dark:text-text-accent-default-dark"
                                     />
                                 </div>
 
@@ -139,7 +136,7 @@ export default function ImportDialog({
                                         {isDragging ? t('fileUpload.dropToUpload', 'Drop to upload') : t('fileUpload.dropHere', 'Drop your file here')}
                                     </p>
                                     <p className="text-[13px] text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                                        <span className="font-medium text-text-accent-active-light underline underline-offset-2 transition-opacity hover:opacity-80 dark:text-text-accent-active-dark">{t('fileUpload.clickBrowse', 'or click to browse')}</span>
+                                        <span className="font-medium text-text-accent-default-light underline underline-offset-2 transition-opacity hover:opacity-80 dark:text-text-accent-default-dark">{t('fileUpload.clickBrowse', 'or click to browse')}</span>
                                     </p>
                                 </div>
 
@@ -158,7 +155,7 @@ export default function ImportDialog({
                                 </div>
                             </div>
                         ) : (
-                            <div className="ic-file-in flex items-center gap-4 p-5">
+                            <div className="ic-file-in flex items-center gap-4 rounded-xl bg-bg-surface-primary-default-light p-5 dark:bg-bg-surface-primary-default-dark">
                                 <div className={`shrink-0 flex h-13 w-11 flex-col items-center justify-center gap-0.5 rounded-lg border ${extStyle.bg} ${extStyle.border}`}>
                                     <FileIcon size={16} className={extStyle.text} />
                                     <span className={`text-[9px] font-black uppercase leading-none tracking-widest ${extStyle.text}`}>
