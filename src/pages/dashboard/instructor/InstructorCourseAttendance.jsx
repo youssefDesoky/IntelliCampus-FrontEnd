@@ -80,6 +80,7 @@ export default function InstructorCourseAttendance() {
     const authUser = useRouteLoaderData("root");
     const courseId = outlet.courseId || outlet.course?.id || params.courseId;
     const course = outlet.course || null;
+    const isInactive = course?.isInactive;
     const courseName = getLocalizedField(course, 'courseName', i18n.language) || course?.name || t('attendance.selectedCourse');
     const currentInstructorId = authUser?.userId || authUser?.id;
 
@@ -384,14 +385,16 @@ export default function InstructorCourseAttendance() {
                         <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{t('attendance.attendanceReport')}</h2>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => setIsAttendanceOpen(true)}
-                            startIcon={<QRCodeIcon size={16} />}
-                        >
-                                            <span className="hidden sm:inline">{t('attendance.takeAttendance')}</span>
-                        </Button>
+                        {!isInactive && (
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setIsAttendanceOpen(true)}
+                                startIcon={<QRCodeIcon size={16} />}
+                            >
+                                <span className="hidden sm:inline">{t('attendance.takeAttendance')}</span>
+                            </Button>
+                        )}
                         <Button type="button" variant="secondary" onClick={downloadReport} startIcon={<DownloadIcon size={18} />}><span className="hidden sm:inline">{t('attendance.downloadReport')}</span></Button>
                     </div>
                 </div>
@@ -695,9 +698,11 @@ export default function InstructorCourseAttendance() {
                     {t('attendance.title')}
                 </h2>
                 <div className="flex items-center gap-3">
-                    <Button type="button" variant="primary" onClick={() => setIsCreateSessionOpen(true)} startIcon={<PlusIcon size={18} />}>
-                        <span className="hidden sm:inline">{t('attendance.createSession')}</span>
-                    </Button>
+                    {!isInactive && (
+                        <Button type="button" variant="primary" onClick={() => setIsCreateSessionOpen(true)} startIcon={<PlusIcon size={18} />}>
+                            <span className="hidden sm:inline">{t('attendance.createSession')}</span>
+                        </Button>
+                    )}
                     <Button type="button" variant="secondary" onClick={() => navigate("excuses")} startIcon={<WarningIcon size={18} />}>
                         <span className="hidden sm:inline">{t('attendance.excuseRequests')}</span>
                     </Button>

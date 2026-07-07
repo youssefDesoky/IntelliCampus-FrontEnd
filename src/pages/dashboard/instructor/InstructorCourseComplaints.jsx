@@ -256,7 +256,7 @@ export default function InstructorCourseComplaints() {
                                     value={responseText}
                                     onChange={(event) => setResponseText(event.target.value)}
                                     placeholder={selectedComplaint.status === "pending" ? t('complaints.responsePlaceholder') : t('complaints.updateResponsePlaceholder')}
-                                    className="mt-1.5 w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors placeholder:text-text-secondary-default-light focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark dark:placeholder:text-text-secondary-default-dark"
+                                    className="mt-1.5 w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors placeholder:text-text-secondary-default-light focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark dark:placeholder:text-text-secondary-default-dark"
                                 />
                             </div>
                         </div>

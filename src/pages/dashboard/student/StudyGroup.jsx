@@ -16,6 +16,7 @@ import { getLocalizedField } from '../../../utils/getLocalizedField';
 export default function StudyGroup() {
     const { t, i18n } = useTranslation('student');
     const { course } = useOutletContext();
+    const isReadOnly = course?.isReadOnly;
     const courseId = course?.id;
     const [posts, setPosts] = useState([]);
     const [postDraft, setPostDraft] = useState("");
@@ -120,6 +121,7 @@ export default function StudyGroup() {
 
     return (
         <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
+                {!isReadOnly && (
                 <aside className="space-y-6 xl:order-2 xl:sticky xl:top-20 xl:self-start">
                     <div className="rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5 sm:p-6">
                         <div className="mb-4 flex items-center justify-between gap-3">
@@ -151,8 +153,9 @@ export default function StudyGroup() {
                         </div>
                     </div>
                 </aside>
+                )}
 
-                <div className="space-y-4 xl:order-1">
+                <div className={`space-y-4 xl:order-1 ${isReadOnly ? 'xl:col-span-full max-w-4xl mx-auto w-full' : ''}`}>
                     {posts.length > 0 ? (
                         posts.map((post) => (
                             <StudyGroupPost
@@ -162,6 +165,7 @@ export default function StudyGroup() {
                                 onUpvote={() => handleUpvote(post.id)}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
+                                isReadOnly={isReadOnly}
                             />
                         ))
                     ) : (

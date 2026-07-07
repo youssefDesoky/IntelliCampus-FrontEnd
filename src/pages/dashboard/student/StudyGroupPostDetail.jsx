@@ -19,6 +19,7 @@ export default function StudyGroupPostDetail() {
     const { convert: ar } = useArabicDigits();
     const { courseId, postId } = useParams();
     const { course } = useOutletContext();
+    const isReadOnly = course?.isReadOnly;
     const navigate = useNavigate();
     const { showError } = useError();
     const [post, setPost] = useState(null);
@@ -150,12 +151,12 @@ export default function StudyGroupPostDetail() {
 
                 <div className="flex items-center gap-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark pt-3 mt-4">
                     <button
-                        onClick={handleUpvote}
+                        onClick={isReadOnly ? undefined : handleUpvote}
                         aria-pressed={hasUpvoted}
                         className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm font-medium transition-colors duration-150 ${
                             hasUpvoted
                                 ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white shadow-sm"
-                                : "text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark"
+                                : `text-text-secondary-default-light dark:text-text-secondary-default-dark${isReadOnly ? '' : ' hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark'}`
                         }`}
                     >
                         <ArrowUpIcon className="w-4 h-4" />
@@ -224,6 +225,7 @@ export default function StudyGroupPostDetail() {
                     </p>
                 )}
 
+                {!isReadOnly && (
                 <CommentInput
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
@@ -232,6 +234,7 @@ export default function StudyGroupPostDetail() {
                     disabled={false}
                     placeholder={t('studyGroup.writeComment')}
                 />
+                )}
             </div>
         </div>
     );

@@ -227,10 +227,10 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
                                         navigate(`/courses/${courseId}/materials?folderId=${folderId}`)
                                     }
                                 }}
-                                className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                                className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors max-w-[180px] min-w-0"
                             >
-                                <BookIcon className="w-3 h-3" />
-                                {linkedLecture?.shortTitle ?? "Lecture"}
+                                <BookIcon className="w-3 h-3 shrink-0" />
+                                <span className="truncate">{linkedLecture?.shortTitle ?? "Lecture"}</span>
                             </button>
                         ) : (
                             <button

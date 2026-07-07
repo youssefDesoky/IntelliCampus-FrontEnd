@@ -18,7 +18,7 @@ const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 
 const CONTENT_PREVIEW_LENGTH = 240;
 
-export default function StudyGroupPost({ className = "", postData, courseId, courseTitle = null, onUpvote, onEdit, onDelete }) {
+export default function StudyGroupPost({ className = "", postData, courseId, courseTitle = null, onUpvote, onEdit, onDelete, isReadOnly = false }) {
     const { i18n, t } = useTranslation('common');
     const { convert: arDigits } = useArabicDigits();
     const [hasUpvoted, setHasUpvoted] = useState(postData.hasUpvoted || false);
@@ -310,12 +310,12 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                 className="flex items-center gap-2 border-t border-border-primary-default-light dark:border-border-primary-default-dark pt-2 -mb-1"
             >
                 <button
-                    onClick={handleUpvote}
+                    onClick={isReadOnly ? undefined : handleUpvote}
                     aria-pressed={hasUpvoted}
                     className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm font-medium transition-colors duration-150 ${
                         hasUpvoted
                             ? "bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white shadow-sm"
-                            : "text-text-secondary-default-light dark:text-text-secondary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark"
+                            : `text-text-secondary-default-light dark:text-text-secondary-default-dark${isReadOnly ? '' : ' hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark'}`
                     }`}
                 >
                     <ArrowUpIcon className="w-4 h-4" />
@@ -391,6 +391,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                 </p>
                             )}
 
+                            {!isReadOnly && (
                             <CommentInput
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
@@ -399,6 +400,7 @@ export default function StudyGroupPost({ className = "", postData, courseId, cou
                                 disabled={submitting}
                                 placeholder={t('labels.writeComment', 'Write a comment...')}
                             />
+                            )}
                         </>
                     )}
                 </div>

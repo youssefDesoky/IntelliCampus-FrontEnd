@@ -1,9 +1,11 @@
 import { useTranslation } from "react-i18next";
+import { useOutletContext } from "react-router-dom";
 import CircularProgress from "../../../../../components/ui/CircularProgress";
 import GradeComplaint from "./GradeComplaint";
 import useArabicDigits from "../../../../../hooks/useArabicDigits";
 
-export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", items = [], courseId }) {
+export default function CurrentGrade({ className = "", gradePercent = 0, letterGrade = "N/A", items = [], courseId }) {
+    const { course } = useOutletContext();
     const { t, i18n } = useTranslation('student');
     const { convert: ar } = useArabicDigits();
 
@@ -75,7 +77,7 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", it
     const theme = getTheme(gradePercent);
 
     return (
-        <div className={`relative overflow-hidden rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-linear-to-br ${theme.gradient} p-6 sm:p-8 transition-all duration-300`}>
+        <div className={`${className} relative overflow-hidden rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-linear-to-br ${theme.gradient} p-6 sm:p-8 transition-all duration-300`}>
             {/* Ambient Background Glows */}
             <div className={`absolute -top-20 -end-20 h-40 w-40 ${theme.glow} rounded-full blur-3xl pointer-events-none`} />
             <div className={`absolute -bottom-20 -start-20 h-40 w-40 bg-sky-200/20 dark:bg-sky-900/10 rounded-full blur-3xl pointer-events-none`} />
@@ -117,9 +119,11 @@ export default function CurrentGrade({ gradePercent = 0, letterGrade = "N/A", it
 				</div>
 			</div>
 
-		<div className="mt-4 block sm:hidden">
+		{!course?.isReadOnly && (
+			<div className="mt-4 block sm:hidden">
 				<GradeComplaint items={items} compact courseId={courseId} />
 			</div>
+		)}
         </div>
     );
 }

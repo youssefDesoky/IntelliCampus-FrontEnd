@@ -120,9 +120,10 @@ export default function CourseAssignments() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 flex flex-col min-w-0 gap-4">
                 {/* Upcoming Assignments */}
+                {!isReadOnly && (
                 <Section className="flex flex-col !mb-0">
                     <div className="flex items-center justify-between mb-5 shrink-0">
-                        <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
+                        <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                             {t('courseAssignments.upcomingTitle')}
                         </h2>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
@@ -163,14 +164,15 @@ export default function CourseAssignments() {
                         </div>
                     )}
                 </Section>
+                )}
 
                 {/* Past Submissions */}
-                <Section className="flex flex-col !mb-0">
+                <Section className={`flex flex-col !mb-0 ${isReadOnly ? 'flex-1' : ''}`}>
                     <div className="mb-5 shrink-0">
-                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">{t('courseAssignments.pastTitle')}</h3>
+                        <h3 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{t('courseAssignments.pastTitle')}</h3>
                     </div>
 
-                    <div className={`overflow-y-auto w-full min-w-0 max-h-[400px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${pastAssignments.length === 1 ? "" : "min-h-[320px]"}`}>
+                    <div className={`overflow-y-auto w-full min-w-0 ${isReadOnly ? 'flex-1' : 'max-h-[400px]'} [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${pastAssignments.length === 1 ? "" : "min-h-[320px]"}`}>
                         {pagedAssignments.length ? (
                             <div className="space-y-3">
                             {pagedAssignments.map((assignment) => (

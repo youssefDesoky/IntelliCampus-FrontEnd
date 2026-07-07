@@ -11,6 +11,7 @@ export default function CourseAnnouncements() {
     const user = useRouteLoaderData("root");
     const outletContext = useOutletContext();
     const courseId = outletContext?.courseId;
+    const isReadOnly = outletContext?.course?.isReadOnly;
     const { data: announcements = [], isLoading: loading } = useQuery({
         queryKey: ["courseAnnouncements", courseId],
         queryFn: () => fetchCourseAnnouncements(courseId),
@@ -54,6 +55,7 @@ export default function CourseAnnouncements() {
                     currentUser={user}
                     courseId={courseId}
                     userRole="student"
+                    isReadOnly={isReadOnly}
                 />
             ))}
         </div>

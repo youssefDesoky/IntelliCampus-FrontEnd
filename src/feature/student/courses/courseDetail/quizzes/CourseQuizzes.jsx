@@ -249,11 +249,12 @@ export default function CourseQuizzes() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 flex flex-col min-w-0 gap-4">
 
+                {!isReadOnly && (
                 <Section className="flex flex-col !mb-0">
                     <div className="flex items-center justify-between mb-5 shrink-0">
                         <div className="flex items-center gap-2">
                             <BrainIcon size={20} className="text-bg-fill-accent-default-light dark:text-bg-fill-accent-default-dark" />
-                            <h2 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
+                            <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                                 {t('quizzes.activeQuizzes')}
                             </h2>
                         </div>
@@ -285,13 +286,14 @@ export default function CourseQuizzes() {
                         </div>
                     )}
                 </Section>
+                )}
 
-                <Section className="flex flex-col !mb-0">
+                <Section className={`flex flex-col !mb-0 ${isReadOnly ? 'flex-1' : ''}`}>
                     <div className="mb-5 shrink-0">
-                        <h3 className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">{t('quizzes.quizHistory')}</h3>
+                        <h3 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{t('quizzes.quizHistory')}</h3>
                     </div>
 
-                    <div className={`overflow-y-auto w-full min-w-0 max-h-[400px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${historyQuizzes.length === 1 ? "" : "min-h-[320px]"}`}>
+                    <div className={`overflow-y-auto w-full min-w-0 ${isReadOnly ? 'flex-1' : 'max-h-[400px]'} [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${historyQuizzes.length === 1 ? "" : "min-h-[320px]"}`}>
                         {pagedQuizzes.length ? (
                             <div className="space-y-3">
                                 {pagedQuizzes.map((quiz) => (

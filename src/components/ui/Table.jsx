@@ -124,7 +124,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3" dir={isRTL ? 'rtl' : 'ltr'}>
-                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark" dir={isRTL ? 'rtl' : 'ltr'}>
+                        <div className="hidden sm:block text-center text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark" dir={isRTL ? 'rtl' : 'ltr'}>
                             {(hasPagingLimit && rawData.length > displayRowLimit)
                                                     ? (itemsLabel
                                                         ? `${t('pagination.showing')} ${toArabicDigits((currentPage - 1) * displayRowLimit + 1)}–${toArabicDigits(Math.min(currentPage * displayRowLimit, rawData.length))} ${t('pagination.of')} ${toArabicDigits(rawData.length)} ${itemsLabel}`
@@ -178,7 +178,7 @@ export default function Table({ role, headers, data, onDelete, onDeleteSelected,
 
                 {(showPagination || paginationSummary || (hasPagingLimit && rawData.length > displayRowLimit)) && (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-3 pt-3" dir={isRTL ? 'rtl' : 'ltr'}>
-                        <div className="hidden sm:block text-center text-sm text-text-secondary-light dark:text-text-secondary-dark" dir={isRTL ? 'rtl' : 'ltr'}>
+                        <div className="hidden sm:block text-center text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark" dir={isRTL ? 'rtl' : 'ltr'}>
                             {(hasPagingLimit && rawData.length > displayRowLimit)
                                                     ? (itemsLabel
                                                         ? `${t('pagination.showing')} ${toArabicDigits((currentPage - 1) * displayRowLimit + 1)}–${toArabicDigits(Math.min(currentPage * displayRowLimit, rawData.length))} ${t('pagination.of')} ${toArabicDigits(rawData.length)} ${itemsLabel}`

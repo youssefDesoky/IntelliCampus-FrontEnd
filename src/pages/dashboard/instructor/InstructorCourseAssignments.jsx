@@ -419,33 +419,33 @@ export default function InstructorCourseAssignments() {
         contentClassName="space-y-4"
         >
         <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">{t('assignments.titleLabel')}</label>
+        <label className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('assignments.titleLabel')}</label>
         <input
         type="text"
         value={title}
         onChange={(event) => setTitle(event.target.value)}
         placeholder={t('assignments.titlePlaceholder')}
-        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark"
         />
         </div>
         
         <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">{t('assignments.descriptionLabel')}</label>
+        <label className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('assignments.descriptionLabel')}</label>
         <TextArea
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         placeholder={t('assignments.descriptionPlaceholder')}
-        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark"
         />
         </div>
         
         <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">{t('assignments.instructionsLabel')}</label>
+        <label className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('assignments.instructionsLabel')}</label>
         <TextArea
         value={instructions}
         onChange={(event) => setInstructions(event.target.value)}
         placeholder={t('assignments.instructionsPlaceholder')}
-        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+        className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark"
         />
         </div>
         
@@ -456,7 +456,7 @@ export default function InstructorCourseAssignments() {
         </div>
 
         <div className="space-y-2">
-        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">{t('assignments.attachments')}</label>
+        <label className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('assignments.attachments')}</label>
         {(existingAttachments.length > 0 || assignmentFiles.length > 0) && (
             <div className="flex flex-wrap gap-2 mb-2">
             {existingAttachments.map((att, i) => (
@@ -735,7 +735,7 @@ export default function InstructorCourseAssignments() {
             value={gradeFeedback}
             onChange={(e) => setGradeFeedback(e.target.value)}
             placeholder={t('assignments.feedbackPlaceholder')}
-            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark"
             />
             </div>
 
