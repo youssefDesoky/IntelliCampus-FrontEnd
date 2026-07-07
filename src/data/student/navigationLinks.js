@@ -7,6 +7,6 @@ export const getNavigationLinks = (t, roles = []) => {
         { to: "/", icon: HouseIcon, label: t('dashboard') },
         { to: "/reminders", icon: BellIconDark, label: t('reminders') },
         { to: "/schedule", icon: CalendarDaysIcon, label: t('schedule') },
-        ...(isBachelor ? [{ to: "/specialization-preference", icon: OrderedListIcon, label: t('specializationPreference') }] : []),
+        ...(isBachelor ? [{ to: "/department-preference", icon: OrderedListIcon, label: t('departmentPreference') }] : []),
     ];
 };

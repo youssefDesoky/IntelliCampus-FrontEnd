@@ -62,7 +62,7 @@ export default function ManageCourses() {
   const [filterDepartment, setFilterDepartment] = useState([]);
   const [isRegSettingsOpen, setIsRegSettingsOpen] = useState(false);
   const [allDepartments, setAllDepartments] = useState([]);
-  const [bulkConfirm, setBulkConfirm] = useState(null); // { type: 'activate' | 'deactivate' }
+  const [bulkConfirm, setBulkConfirm] = useState(null);
 
   useEffect(() => {
     fetchDepartments().then(result => {
@@ -70,6 +70,16 @@ export default function ManageCourses() {
       setAllDepartments(depts);
     }).catch(() => {});
   }, []);
+
+  const departmentNameToId = useMemo(() => {
+    const map = {};
+    allDepartments.forEach(d => { map[d.departmentName] = d.departmentId; });
+    return map;
+  }, [allDepartments]);
+
+  const filters = useMemo(() => ({
+    departmentId: filterDepartment.length === 1 ? departmentNameToId[filterDepartment[0]] : undefined,
+  }), [filterDepartment, departmentNameToId]);
 
   const courseTableHeaders = useMemo(() => {
     if (isDesktop) return [t('manageCourses.courseCode'), t('manageCourses.course'), t('manageCourses.department'), t('manageCourses.creditHours'), t('manageCourses.status')];
@@ -83,14 +93,8 @@ export default function ManageCourses() {
     return ["text-start", "text-center"];
   }, [isDesktop, isTablet]);
 
-  const departmentNameToId = useMemo(() => {
-    const map = {};
-    allDepartments.forEach(d => { map[d.departmentName] = d.departmentId; });
-    return map;
-  }, [allDepartments]);
-
-  const fetchCoursesWrapped = useCallback(async ({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) => {
-    const departmentId = filterDepartment.length === 1 ? departmentNameToId[filterDepartment[0]] : undefined;
+  const fetchCoursesWrapped = useCallback(async ({ pageIndex = 1, pageSize = 50, searchQuery = '', filters: f = {} } = {}) => {
+    const departmentId = f.departmentId || undefined;
     const result = await fetchCoursesPaginated({ pageIndex, pageSize, searchQuery, departmentId });
     const mappedData = (result?.data ?? []).map((c) => ({
       ...c,
@@ -131,6 +135,7 @@ export default function ManageCourses() {
       onPreview={(course) => setViewingCourse(course)}
       searchPlaceholder={t('manageCourses.search')}
       serverSidePagination={true}
+      filters={filters}
       tableRole="course"
       tableRoleLabel="Courses"
       tableHeaders={courseTableHeaders}

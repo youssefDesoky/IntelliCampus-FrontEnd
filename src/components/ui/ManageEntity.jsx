@@ -49,6 +49,7 @@ export default function ManageEntity({
   extraDeps = [],
   serverSidePagination = false,
   defaultPageSize = 10,
+  filters = {},
 }) {
   const { isDesktop, isTablet, isPhone } = useDeviceType();
   const { t, i18n } = useTranslation('admin');
@@ -83,18 +84,18 @@ export default function ManageEntity({
   const pluralLower = entityNamePlural.toLowerCase();
   const queryKey = useMemo(() => {
     if (serverSidePagination) {
-      return [pluralLower, currentPage, itemsPerPage, debouncedSearch, ...extraDeps];
+      return [pluralLower, currentPage, itemsPerPage, debouncedSearch, filters, ...extraDeps];
     }
     return [pluralLower];
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverSidePagination, pluralLower, currentPage, itemsPerPage, debouncedSearch, ...extraDeps]);
+  }, [serverSidePagination, pluralLower, currentPage, itemsPerPage, debouncedSearch, filters, ...extraDeps]);
 
   const queryFn = useCallback(async () => {
     if (serverSidePagination) {
-      return fetchItems({ pageIndex: currentPage, pageSize: itemsPerPage, searchQuery: debouncedSearch });
+      return fetchItems({ pageIndex: currentPage, pageSize: itemsPerPage, searchQuery: debouncedSearch, filters });
     }
     return fetchItems();
-  }, [serverSidePagination, fetchItems, currentPage, itemsPerPage, debouncedSearch]);
+  }, [serverSidePagination, fetchItems, currentPage, itemsPerPage, debouncedSearch, filters]);
 
   const { data: fetchResult, isLoading, isFetching, error, refetch } = useQuery({
     queryKey,

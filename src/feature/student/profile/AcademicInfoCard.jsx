@@ -15,7 +15,7 @@ import useArabicDigits from "../../../hooks/useArabicDigits";
 const bylawDocumentUrl = "/documents/san3aa_documentation.pdf";
 
 function formatLevel(level, t, arFn) {
-    if (!level) return "–";
+    if (level == null) return "–";
     return arFn(t("profile.levelFormat", { level }));
 }
 
@@ -39,14 +39,14 @@ export default function AcademicInfoCard({ user = {}, loading = false }) {
     const [isBylawOpen, setIsBylawOpen] = useState(false);
 
     const isPostGrad = ["Masters", "PhD", "Diploma"].includes(user.studentType);
-    const specialization = user.specialization || user.department || "–";
+    const department = user.department || "–";
     const academicYear = isPostGrad ? user.department : formatLevel(user.level, t, ar);
     const academicYearLabel = isPostGrad ? t("profile.departmentLabel") : t("profile.academicLevel");
 
     const academicInfo = [
         { name: "studentCode",    label: t("profile.studentId"),        value: ar(user.studentCode || "–"), icon: HashIcon },
         { name: "studentType",    label: t("profile.studentTypeLabel"), value: translateStudentType(user.studentType, t), icon: BookIcon },
-        { name: "specialization", label: specialization ? t("profile.specialization") : t("profile.departmentLabel"), value: specialization, icon: BookIcon },
+        { name: "department",     label: t("profile.departmentLabel"),  value: department,                  icon: BookIcon },
         { name: "year",           label: academicYearLabel,             value: academicYear         || "–", icon: CalendarDaysIcon },
         { name: "bylaw",          label: t("profile.bylaw"),            value: user.bylaw           || "–", icon: BookIcon },
     ];

@@ -2,7 +2,7 @@ import apiClient from "../../../api/apiClient";
 
 // ─── Departments ────────────────────────────────────────────
 
-export async function fetchDepartments({ pageIndex = 1, pageSize = 50, searchQuery = '' } = {}) {
+export async function fetchDepartments({ pageIndex = 1, pageSize = 50, searchQuery = '', filters = {} } = {}) {
     const params = new URLSearchParams({ PageIndex: pageIndex, PageSize: pageSize });
     if (searchQuery) params.set('Search', searchQuery);
     const result = await apiClient(`/api/departments?${params}`);
@@ -37,40 +37,4 @@ export async function updateDepartmentRegistrationSettings(data) {
         method: "PUT",
         body: JSON.stringify(data),
     });
-}
-
-// ─── Department Specializations ────────────────────────────
-
-export async function fetchSpecializations(departmentId) {
-    return apiClient(`/api/Specialization/department/${departmentId}`);
-}
-
-export async function createSpecialization(departmentId, data) {
-    const payload = {
-        name: data.name,
-        nameAr: data.nameAr || null,
-        departmentId: parseInt(departmentId),
-        maxCapacity: data.maxCapacity ?? null,
-    };
-    return apiClient('/api/Specialization', {
-        method: "POST",
-        body: JSON.stringify(payload),
-    });
-}
-
-export async function deleteSpecialization(departmentId, specId) {
-    await apiClient(`/api/Specialization/${specId}`, { method: "DELETE" });
-    return true;
-}
-
-export async function fetchSpecializationPrerequisites(specId) {
-    return apiClient(`/api/Specialization/${specId}/prerequisites`);
-}
-
-export async function setSpecializationPrerequisites(specId, prerequisites) {
-    await apiClient(`/api/Specialization/${specId}/prerequisites`, {
-        method: "PUT",
-        body: JSON.stringify({ prerequisites }),
-    });
-    return true;
 }

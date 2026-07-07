@@ -101,7 +101,7 @@ export default function InstructorIdentityCard({ user = {}, className = "", onPr
                             <div className="flex items-center gap-1.5 mt-1">
                                 <UserTieIcon size={12} className="text-text-accent-default-light dark:text-text-accent-default-dark shrink-0" />
                                 <p className="text-xs font-semibold truncate text-text-accent-default-light dark:text-text-accent-default-dark">
-                                    {user.specialization || user.department || t('profile.instructor')}
+                                    {user.department || t('profile.instructor')}
                                 </p>
                             </div>
                         </div>

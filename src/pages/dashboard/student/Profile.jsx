@@ -16,7 +16,6 @@ export default function Profile() {
     const mapBackendToUserData = (student) => ({
         name: getLocalizedField(student, 'fullName', i18n.language),
         avatar: student.profileImage || "",
-        specialization: getLocalizedField(student, 'specializationName', i18n.language) || "",
         department: getLocalizedField(student, 'departmentName', i18n.language) || "",
         faculty: getLocalizedField(student, 'facultyName', i18n.language) || "",
         studentSince: student.enrollmentDate || "",
@@ -43,7 +42,6 @@ export default function Profile() {
             email: auth.email || "",
             phone: auth.phoneNumber || auth.phone || "",
             address: auth.address || "",
-            specialization: getLocalizedField(auth, 'specializationName', i18n.language) || auth.specialization || "",
             department: getLocalizedField(auth, 'departmentName', i18n.language) || auth.department || "",
             faculty: getLocalizedField(auth, 'facultyName', i18n.language) || auth.facultyName || auth.faculty || "",
             studentSince: auth.enrollmentDate || "",

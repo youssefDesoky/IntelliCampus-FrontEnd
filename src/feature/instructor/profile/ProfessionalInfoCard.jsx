@@ -17,7 +17,6 @@ export default function ProfessionalInfoCard({ user = {}, loading = false }) {
     const infoFields = [
         { label: t('profile.instructorCode'), value: user.instructorCode ? ar(user.instructorCode) : (user.instructorId ? ar(user.instructorId) : "–"), icon: HashIcon },
         { label: t('profile.department'), value: user.department || user.departmentName || "–", icon: BookIcon },
-        { label: t('profile.specialization'), value: user.specialization || user.specializationName || "–", icon: StarIcon },
         { label: t('profile.joined'), value: user.joinedDate || user.enrollmentDate || "–", icon: CalendarDaysIcon },
     ];
 

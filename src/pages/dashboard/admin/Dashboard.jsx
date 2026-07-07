@@ -447,7 +447,6 @@ export default function Dashboard() {
   const { data: dashboard, isLoading, error } = useQuery({
     queryKey: ["adminDashboard"],
     queryFn: fetchAdminDashboard,
-    staleTime: 5 * 60 * 1000,
   });
 
   const invalidateAllDashboards = () => {
@@ -458,24 +457,47 @@ export default function Dashboard() {
 
   const publishMutation = useMutation({
     mutationFn: publishNews,
-    onSuccess: () => {
+    onSuccess: (newItem) => {
       setNewsInput("");
+      queryClient.setQueryData(["adminDashboard"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          latestNews: [newItem, ...(old.latestNews ?? [])].slice(0, 5),
+        };
+      });
       invalidateAllDashboards();
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, title }) => updateNews(id, title),
-    onSuccess: () => {
+    onSuccess: (updatedItem) => {
       setEditingId(null);
       setEditText("");
+      queryClient.setQueryData(["adminDashboard"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          latestNews: (old.latestNews ?? []).map((it) =>
+            it.id === updatedItem.id ? { ...it, ...updatedItem } : it
+          ),
+        };
+      });
       invalidateAllDashboards();
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteNews,
-    onSuccess: () => {
+    onSuccess: (_data, deletedId) => {
+      queryClient.setQueryData(["adminDashboard"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          latestNews: (old.latestNews ?? []).filter((it) => it.id !== deletedId),
+        };
+      });
       invalidateAllDashboards();
     },
   });

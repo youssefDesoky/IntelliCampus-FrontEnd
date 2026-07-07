@@ -36,7 +36,7 @@ import {
     CourseMaterials as StudentCourseMaterials, 
     CoursePrerequisites as StudentCoursePrerequisites, 
     CoursesRegistration as StudentCoursesRegistration,
-    SpecializationPreference as StudentSpecializationPreference,
+    DepartmentPreference as StudentDepartmentPreference,
     AcademicProgress as StudentAcademicProgress,
     Transcript as StudentTranscript,
 } from "./pages/dashboard/student";
@@ -127,10 +127,10 @@ export default function App() {
                     { path: "smart-notes/:noteId", element: <StudentSmartNoteDetail /> },
                     { path: "schedule", element: <StudentSchedule /> },
                     {
-                        path: "specialization-preference",
+                        path: "department-preference",
                         element: <RoleGuard allow={["student_bachelor"]} />,
                         children: [
-                            { index: true, element: <StudentSpecializationPreference /> },
+                            { index: true, element: <StudentDepartmentPreference /> },
                         ],
                     },
                 ],
@@ -175,7 +175,7 @@ export default function App() {
                 children: [
                     // Dashboard — all admin roles
                     {
-                        element: <RoleGuard allow={["superadmin", "admin_bachelor", "admin_masters", "admin_postgrad", "admin_phd", "admin_diploma", "admin_academicstaff"]} />,
+                        element: <RoleGuard allow={["superadmin", "admin_bachelor", "admin_masters", "admin_phd", "admin_diploma", "admin_academicstaff"]} />,
                         children: [
                             { index: true, element: <AdminDashboard /> },
                         ],
@@ -189,7 +189,7 @@ export default function App() {
                     },
                     // Students — superadmin + student-type admins
                     {
-                        element: <RoleGuard allow={["superadmin", "admin_bachelor", "admin_masters", "admin_postgrad", "admin_phd", "admin_diploma"]} />,
+                        element: <RoleGuard allow={["superadmin", "admin_bachelor", "admin_masters", "admin_phd", "admin_diploma"]} />,
                         children: [
                             { path: "students", element: <ManageStudents /> },
                             { path: "students/:studentId", element: <StudentDetails /> },

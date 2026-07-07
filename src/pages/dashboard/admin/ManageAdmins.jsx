@@ -20,7 +20,7 @@ function getAdminRoleDisplay(admin) {
   const roleMap = {
     'admin_bachelor': 'Bachelor Admin',
     'admin_masters': 'Masters Admin',
-    'admin_postgrad': 'PostGrad Admin',
+
     'admin_phd': 'PhD Admin',
     'admin_diploma': 'Diploma Admin',
     'admin_academicstaff': 'Academic Staff Admin',

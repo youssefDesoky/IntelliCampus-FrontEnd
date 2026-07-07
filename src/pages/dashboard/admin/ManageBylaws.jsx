@@ -89,6 +89,7 @@ export default function ManageBylaws() {
       headerAddLabel={t('manageBylaws.create')}
       searchPlaceholder={t('manageBylaws.searchPlaceholder')}
       serverSidePagination={true}
+      filters={{}}
       tableRole="bylaw"
       tableHeaders={tableHeaders}
       columnAlignments={["text-start", "text-start", "text-center", "text-center", "text-center", "text-center"]}

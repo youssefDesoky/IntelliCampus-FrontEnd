@@ -2,9 +2,10 @@ import apiClient from "../../../api/apiClient";
 
 // ─── Bylaws ─────────────────────────────────────────────────
 
-export async function fetchBylaws({ pageIndex = 1, pageSize = 50, searchQuery = '', type } = {}) {
+export async function fetchBylaws({ pageIndex = 1, pageSize = 50, searchQuery = '', type, filters = {} } = {}) {
     const params = new URLSearchParams({ PageIndex: pageIndex, PageSize: pageSize });
-    if (type) params.set('Type', type);
+    const effectiveType = type || filters.type;
+    if (effectiveType) params.set('Type', effectiveType);
     if (searchQuery) params.set('Search', searchQuery);
     const result = await apiClient(`/api/Bylaw?${params}`);
     return { data: result?.data ?? result ?? [], totalCount: result?.totalCount ?? 0 };
@@ -63,13 +64,6 @@ export async function setBylawLevelScales(id, items) {
 
 export async function setBylawMinHoursDepartment(id, minHours) {
     return apiClient(`/api/Bylaw/${id}/min-hours-department`, {
-        method: "PUT",
-        body: JSON.stringify({ minHours }),
-    });
-}
-
-export async function setBylawMinHoursSpecialization(id, minHours) {
-    return apiClient(`/api/Bylaw/${id}/min-hours-specialization`, {
         method: "PUT",
         body: JSON.stringify({ minHours }),
     });

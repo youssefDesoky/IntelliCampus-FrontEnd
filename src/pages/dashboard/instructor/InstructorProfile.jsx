@@ -38,7 +38,6 @@ export default function InstructorProfile() {
             name: getLocalizedField(profile, 'fullName', i18n.language) || "",
             fullName: getLocalizedField(profile, 'fullName', i18n.language) || "",
             avatar: profile.profileImage || "",
-            specialization: getLocalizedField(profile, 'specialization', i18n.language) || "",
             department: getLocalizedField(profile, 'departmentName', i18n.language) || "",
             faculty: getLocalizedField(profile, 'facultyName', i18n.language) || "",
             email: profile.email || "",

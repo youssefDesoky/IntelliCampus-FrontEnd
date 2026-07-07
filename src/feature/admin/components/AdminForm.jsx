@@ -55,21 +55,23 @@ export default function AdminForm({ onClose, method = "post", onSubmit, initialD
                 const options = data.map(r => ({ value: r.value, label: r.label }));
                 setRoleOptions(options);
                 if (initialData.adminRole) {
-                    const match = options.find(o => o.value === initialData.adminRole);
+                    const match = options.find(o => o.value?.toLowerCase() === initialData.adminRole?.toLowerCase());
                     if (match) setSelectedRole(match);
                 } else if (initialData.roles) {
                     const adminRoleName = initialData.roles.find(r => r.toLowerCase().startsWith("admin_"));
                     if (adminRoleName) {
-                        const match = options.find(o => o.value === adminRoleName);
+                        const match = options.find(o => o.value?.toLowerCase() === adminRoleName?.toLowerCase());
                         if (match) setSelectedRole(match);
                     }
                 }
             })
             .catch(() => {
                 setRoleOptions([
-                    { value: "bachelor", label: "Bachelor Affairs Admin" },
-                    { value: "postgrad", label: "Post Grad Affairs Admin" },
-                    { value: "academicstaff", label: "Academic Staff Admin" },
+                    { value: "admin_bachelor", label: "Bachelor Admin" },
+                    { value: "admin_masters", label: "Masters Admin" },
+                    { value: "admin_phd", label: "PhD Admin" },
+                    { value: "admin_diploma", label: "Diploma Admin" },
+                    { value: "admin_academicstaff", label: "Academic Staff Admin" },
                 ]);
             });
     }, []);

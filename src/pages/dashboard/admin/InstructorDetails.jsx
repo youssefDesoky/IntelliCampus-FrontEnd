@@ -303,14 +303,10 @@ export default function InstructorDetails() {
                                 {instructor.instructorId}
                             </p>
                             <div className="w-full mt-auto pt-6">
-                                <div className="grid grid-cols-2 gap-3 w-full">
+                                <div className="grid grid-cols-1 gap-3 w-full">
                                     <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
                                         <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('instructorDetails.department')}</span>
                                         <span className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{instructor.departmentName || instructor.department || "—"}</span>
-                                    </div>
-                                    <div className="bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-3 rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark">
-                                        <span className="block text-[10px] uppercase font-bold tracking-wider text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('instructorDetails.specialization')}</span>
-                                        <span className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">{instructor.specialization || instructor.specializationName || "—"}</span>
                                     </div>
                                 </div>
                             </div>
@@ -326,7 +322,6 @@ export default function InstructorDetails() {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                                         <InfoField label={t('instructorDetails.department')} value={instructor.departmentName || instructor.department} />
                                         <InfoField label={t('instructorDetails.role')} value={instructor.instructorRole} />
-                                        <InfoField label={t('instructorDetails.specialization')} value={instructor.specialization || instructor.specializationName} />
                                         <InfoField label={t('instructorDetails.instructorCode')} value={instructor.instructorCode} />
                                         <InfoField label={t('instructorDetails.nationality')} value={instructor.nationality} />
                                         <InfoField label={t('instructorDetails.office')} value={instructor.officeHoursRoomName} />

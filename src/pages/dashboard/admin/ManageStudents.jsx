@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
-import { useNavigate, useRouteLoaderData } from "react-router-dom";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation, Trans } from 'react-i18next';
 import ManageEntity from "../../../components/ui/ManageEntity";
 import StudentForm from "../../../feature/admin/components/StudentForm";
@@ -7,24 +7,50 @@ import AssignRoleModal from "../../../feature/admin/components/AssignRoleModal";
 import FilterDropdown from "../../../components/ui/FilterDropdown";
 import { UserIcon } from "../../../components/ui/icons";
 import useDeviceType from "../../../hooks/useDeviceType";
+import useAdminScope from "../../../hooks/useAdminScope";
 import { fetchStudents, createStudent, updateStudent, deleteStudent } from "../../../feature/admin/services/adminStudentsApi";
+import { fetchDepartments } from "../../../feature/admin/services/adminDepartmentsApi";
 import useArabicDigits from "../../../hooks/useArabicDigits";
 import { ManageContentSkeleton } from "../../../feature/admin/shared/SkeletonLoader";
+
+const ALL_STUDENT_TYPES = ['Bachelor', 'Masters', 'PhD', 'Diploma'];
 
 export default function ManageStudents() {
   const { t } = useTranslation('admin');
   const { convert: ar } = useArabicDigits();
   const { isDesktop, isTablet } = useDeviceType();
   const navigate = useNavigate();
-  const user = useRouteLoaderData("root");
-  const isSuperAdmin = (user?.roles || []).some(r => r.toLowerCase() === 'superadmin');
-  const isPostgradAdmin = (user?.roles || []).some(r => r.toLowerCase() === 'admin_postgrad');
-  const defaultStudentType = isPostgradAdmin ? 'masters' : 'bachelor';
+  const { isSuperAdmin, studentType, defaultStudentType, canSwitchStudentType } = useAdminScope();
 
   const [assignRoleTarget, setAssignRoleTarget] = useState(null);
   const [filterDepartment, setFilterDepartment] = useState([]);
-  const [filterStudentType, setFilterStudentType] = useState([]);
+  const [filterStudentType, setFilterStudentType] = useState(() =>
+    canSwitchStudentType ? [] : (studentType ? [studentType] : [])
+  );
   const [filterProbation, setFilterProbation] = useState([]);
+  const [allDepartments, setAllDepartments] = useState([]);
+
+  useEffect(() => {
+    fetchDepartments().then(result => {
+      const depts = Array.isArray(result) ? result : (result?.data ?? []);
+      setAllDepartments(depts);
+    }).catch(() => {});
+  }, []);
+
+  const departmentNameToId = useMemo(() => {
+    const map = {};
+    allDepartments.forEach(d => {
+      const name = d.departmentName;
+      if (name) map[name] = d.departmentId ?? d.id;
+    });
+    return map;
+  }, [allDepartments]);
+
+  const filters = useMemo(() => ({
+    status: filterStudentType.length === 1 ? filterStudentType[0] : undefined,
+    departmentId: filterDepartment.length === 1 ? departmentNameToId[filterDepartment[0]] : undefined,
+    probation: filterProbation.length === 1 ? filterProbation[0] : undefined,
+  }), [filterDepartment, filterStudentType, filterProbation, departmentNameToId]);
 
   const studentTableHeaders = useMemo(() => {
     if (isDesktop) return [t('manageStudents.studentId'), t('manageStudents.student'), t('manageStudents.nationalId'), t('manageStudents.department'), t('manageStudents.bylaw'), t('manageStudents.gpa')];
@@ -37,27 +63,6 @@ export default function ManageStudents() {
     if (isTablet) return ['text-center', 'text-start', 'text-start'];
     return ['text-start'];
   }, [isDesktop, isTablet]);
-
-    const searchFilter = useCallback((student, q) => {
-    if (q) {
-      if (!(student.fullName?.toLowerCase().includes(q) ||
-          student.studentCode?.toLowerCase().includes(q) ||
-          student.email?.toLowerCase().includes(q) ||
-          student.faculty?.toLowerCase().includes(q) ||
-          student.departmentName?.toLowerCase().includes(q))) return false;
-    }
-    if (filterDepartment.length > 0 && !filterDepartment.includes(student.department || student.departmentName || student.faculty)) return false;
-    if (filterStudentType.length > 0 && !filterStudentType.includes(student.studentType)) return false;
-    if (filterProbation.length > 0) {
-      const isProbation = student.isOnProbation === true;
-      const wantProbation = filterProbation.includes("true");
-      const wantNonProbation = filterProbation.includes("false");
-      if (wantProbation && wantNonProbation) { /* both selected - show all */ }
-      else if (wantProbation && !isProbation) return false;
-      else if (wantNonProbation && isProbation) return false;
-    }
-    return true;
-  }, [filterDepartment, filterStudentType, filterProbation]);
 
   const buildStudentRow = useCallback((student, { isDesktop, isTablet }) => {
     const row = {};
@@ -83,7 +88,7 @@ export default function ManageStudents() {
     );
     if (isDesktop) row.nationalId = student.nationalId || "—";
     if (isDesktop || isTablet) {
-      row.specialization = student.department || student.departmentName || student.faculty || "—";
+      row.department = student.department || student.departmentName || student.faculty || "—";
     }
     if (isDesktop) {
       row.bylaw = student.bylawName ?? "—";
@@ -105,6 +110,7 @@ export default function ManageStudents() {
       headerRole="student"
       searchPlaceholder={t('manageStudents.search')}
       serverSidePagination={true}
+      filters={filters}
       tableRole="student"
       tableHeaders={studentTableHeaders}
       columnAlignments={studentColumnAlignments}
@@ -135,23 +141,25 @@ export default function ManageStudents() {
           </Trans>
         );
       }}
-      renderFilters={({ rawItems, setCurrentPage }) => {
-        const departments = [...new Set(rawItems.map(s => s.department || s.departmentName || s.faculty).filter(Boolean))].sort();
-        const studentTypes = [...new Set(rawItems.map(s => s.studentType).filter(Boolean))].sort();
+      renderFilters={({ setCurrentPage }) => {
+        const departments = allDepartments.map(d => d.departmentName).filter(Boolean).sort();
         return (
           <>
             <FilterDropdown
-              label={t('manageStudents.department')}
-              options={departments.map(d => ({ value: d, label: d }))}
-              selectedValues={filterDepartment}
-              onChange={(v) => { setFilterDepartment(v); setCurrentPage(1); }}
-            />
-            <FilterDropdown
               label={t('manageStudents.studentType')}
-              options={studentTypes.map(t => ({ value: t, label: t }))}
+              options={ALL_STUDENT_TYPES.map(st => ({ value: st, label: st }))}
               selectedValues={filterStudentType}
-              onChange={(v) => { setFilterStudentType(v); setCurrentPage(1); }}
+              onChange={canSwitchStudentType ? (v) => { setFilterStudentType(v); setCurrentPage(1); } : () => {}}
+              disabled={!canSwitchStudentType}
             />
+            {isSuperAdmin && (
+              <FilterDropdown
+                label={t('manageStudents.department')}
+                options={departments.map(d => ({ value: d, label: d }))}
+                selectedValues={filterDepartment}
+                onChange={(v) => { setFilterDepartment(v); setCurrentPage(1); }}
+              />
+            )}
             <FilterDropdown
               label={t('studentDetails.probation')}
               options={[

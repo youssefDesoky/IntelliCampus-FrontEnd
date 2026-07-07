@@ -7,7 +7,7 @@ import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
 import { fetchInstructorRoles } from "../services/adminAccountsApi";
-import { fetchDepartments, fetchSpecializations } from "../services/adminDepartmentsApi";
+import { fetchDepartments } from "../services/adminDepartmentsApi";
 import { fetchRooms } from "../services/adminFacilitiesApi";
 import { fetchInstructors, fetchFaculties, fetchProfessorsByFaculty } from "../services/adminInstructorsApi";
 import countryList from "react-select-country-list";
@@ -48,8 +48,6 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
 
     const [departments, setDepartments] = useState([]);
     const [selectedDepartment, setSelectedDepartment] = useState(null);
-    const [specializations, setSpecializations] = useState([]);
-    const [selectedSpecialization, setSelectedSpecialization] = useState(null);
     const [selectedLoanFaculty, setSelectedLoanFaculty] = useState(null);
     const [loanFacultyOptions, setLoanFacultyOptions] = useState([]);
     const [loanProfessorOptions, setLoanProfessorOptions] = useState([]);
@@ -125,27 +123,6 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
             })
             .catch(console.error);
     }, []);
-
-    useEffect(() => {
-        if (!selectedDepartment?.value) {
-            setSpecializations([]);
-            setSelectedSpecialization(null);
-            return;
-        }
-        fetchSpecializations(selectedDepartment.value)
-            .then(data => {
-                const options = (Array.isArray(data) ? data : []).map(s => ({
-                    value: s.id ?? s.specializationId,
-                    label: s.name,
-                }));
-                setSpecializations(options);
-                if (initialData.specializationId) {
-                    const match = options.find(o => o.value === initialData.specializationId);
-                    if (match) setSelectedSpecialization(match);
-                }
-            })
-            .catch(() => setSpecializations([]));
-    }, [selectedDepartment]);
 
     useEffect(() => {
         if (!selectedLoanFaculty?.value) {
@@ -253,7 +230,6 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
         formData.instructorRole = selectedRole?.value || formData.role;
         formData.nationality = selectedNationality?.value;
         formData.departmentName = selectedDepartment?.label;
-        formData.specializationId = selectedSpecialization?.value || null;
         formData.officeHoursRoomId = selectedRoom?.value || null;
         if (selectedLoanFaculty) {
             formData.loanFromFacultyId = selectedLoanFaculty.value;
@@ -409,15 +385,6 @@ export default function InstructorForm({ onClose, method = "post", onSubmit, ini
                                 options={departments}
                                 selectedOption={selectedDepartment}
                                 onChange={setSelectedDepartment}
-                            />
-                            <SelectBox
-                                className={`w-full ${isEdit ? 'sm:col-span-2' : ''}`}
-                                label={t('instructorForm.specialization')}
-                                name="specializationId"
-                                labelDirection="flex-col"
-                                options={specializations}
-                                selectedOption={selectedSpecialization}
-                                onChange={setSelectedSpecialization}
                             />
                             {selectedRole && (
                                 <SelectBox

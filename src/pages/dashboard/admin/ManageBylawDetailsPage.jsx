@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+﻿import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation, Trans } from 'react-i18next';
 import { useQueryClient } from "@tanstack/react-query";
@@ -38,9 +38,6 @@ import {
 import { fetchCourses } from "../../../feature/admin/services/adminCoursesApi";
 import {
   fetchDepartments,
-  fetchSpecializations,
-  fetchSpecializationPrerequisites,
-  setSpecializationPrerequisites,
 } from "../../../feature/admin/services/adminDepartmentsApi";
 import { useError } from '../../../contexts/ErrorContext.jsx';
 import { getLocalizedField } from '../../../utils/getLocalizedField';
@@ -267,19 +264,10 @@ export default function ManageBylawDetailsPage() {
   const [levelScales, setLevelScales] = useState([]);
   // ── Major Declaration Rules ──
   const [minHoursToChooseDepartment, setMinHoursToChooseDepartment] = useState("");
-  const [minHoursToChooseSpecialization, setMinHoursToChooseSpecialization] = useState("");
   const [minCreditHoursForGraduationProject, setMinCreditHoursForGraduationProject] = useState("");
 
-  // ── Major Declaration: Specializations table & prerequisites ──
+  // ── Major Declaration: Departments ──
   const [allDepartments, setAllDepartments] = useState([]);
-  const [deptSpecializations, setDeptSpecializations] = useState({});
-  const [deptSpecsLoading, setDeptSpecsLoading] = useState(false);
-  const [specPrerequisites, setSpecPrerequisites] = useState({});
-  const [specPrereqTarget, setSpecPrereqTarget] = useState(null);
-  const [specPrereqSelectedCourses, setSpecPrereqSelectedCourses] = useState([]);
-  const [specPrereqMinGrades, setSpecPrereqMinGrades] = useState({});
-  const [specPrereqSearchQuery, setSpecPrereqSearchQuery] = useState("");
-  const modifiedSpecPrereqIds = useRef(new Set());
 
   // ── Course Mapping ──
   const [allCourses, setAllCourses] = useState([]);
@@ -383,7 +371,6 @@ export default function ManageBylawDetailsPage() {
         : []);
 
       setMinHoursToChooseDepartment(data.minHoursToChooseDepartment ?? "");
-      setMinHoursToChooseSpecialization(data.minHoursToChooseSpecialization ?? "");
       setMinCreditHoursForGraduationProject(data.minCreditHoursForGraduationProject ?? "");
 
       // Parse BylawCourses into course arrays and prerequisites
@@ -397,7 +384,7 @@ export default function ManageBylawDetailsPage() {
         const type = bc.courseType?.toLowerCase() || "";
         if (type === "generaluniversity") uni.push(entry);
         else if (type === "faculty") college.push(entry);
-        else if (type === "department" || type === "specialization") major.push(entry);
+        else if (type === "department") major.push(entry);
         if (bc.prerequisites?.length) {
           prereqMap[bc.courseId] = bc.prerequisites.map(p => bcToCourse[p.prerequisiteBylawCourseId] || p.prerequisiteBylawCourseId);
         }
@@ -651,15 +638,7 @@ export default function ManageBylawDetailsPage() {
     try {
       await updateBylawMinHours(bylawId, {
         minHoursToChooseDepartment: parseInt(minHoursToChooseDepartment) || null,
-        minHoursToChooseSpecialization: parseInt(minHoursToChooseSpecialization) || null,
       });
-      // Save only specialization prerequisites that were actually modified
-      const modifiedSpecIds = [...modifiedSpecPrereqIds.current];
-      await Promise.all(modifiedSpecIds.map(async (specId) => {
-        const prereqs = specPrerequisites[specId] || [];
-        await setSpecializationPrerequisites(parseInt(specId), prereqs);
-      }));
-      modifiedSpecPrereqIds.current.clear();
       showSuccess(t('manageBylaws.successMajor'));
       await loadData();
       queryClient.invalidateQueries({ queryKey: ["bylaws"] });
@@ -668,22 +647,6 @@ export default function ManageBylawDetailsPage() {
     } finally {
       setSavingMinHours(false);
     }
-  };
-
-  // ── Handlers: Specialization Prerequisites ──
-
-  const confirmSpecPrereqSelection = () => {
-    if (!specPrereqTarget) return;
-    const prereqs = specPrereqSelectedCourses.map(courseId => ({
-      courseId,
-      minGrade: specPrereqMinGrades[courseId] || null,
-    }));
-    setSpecPrerequisites(prev => ({ ...prev, [specPrereqTarget.specId]: prereqs }));
-    modifiedSpecPrereqIds.current.add(specPrereqTarget.specId);
-    setSpecPrereqTarget(null);
-    setSpecPrereqSelectedCourses([]);
-    setSpecPrereqMinGrades({});
-    setSpecPrereqSearchQuery("");
   };
 
   // ── Handlers: Course Mapping ──
@@ -861,44 +824,16 @@ export default function ManageBylawDetailsPage() {
   useEffect(() => {
     if (activeTab !== "majorDeclaration") return;
     let cancelled = false;
-    setDeptSpecsLoading(true);
     if (allCourses.length === 0) {
       fetchCourses().then((data) => {
         if (!cancelled) setAllCourses(Array.isArray(data) ? data : []);
       }).catch(() => {});
     }
-    fetchDepartments().then(async (depts) => {
+    fetchDepartments().then((depts) => {
       if (cancelled) return;
       const deptList = Array.isArray(depts) ? depts : [];
       setAllDepartments(deptList);
-      const specsMap = {};
-      const prereqsMap = {};
-      await Promise.all(deptList.map(async (dept) => {
-        try {
-          const specs = await fetchSpecializations(dept.departmentId ?? dept.id);
-          const specList = Array.isArray(specs) ? specs : [];
-          specsMap[dept.departmentId ?? dept.id] = specList;
-          await Promise.all(specList.map(async (spec) => {
-            try {
-              const prereqs = await fetchSpecializationPrerequisites(spec.specializationId);
-              prereqsMap[spec.specializationId] = (prereqs || []).map(p => ({
-                courseId: p.courseId,
-                minGrade: p.minGrade,
-              }));
-            } catch { prereqsMap[spec.specializationId] = []; }
-          }));
-        } catch {
-          specsMap[dept.departmentId ?? dept.id] = [];
-        }
-      }));
-      if (!cancelled) {
-        setDeptSpecializations(specsMap);
-        setSpecPrerequisites(prereqsMap);
-        setDeptSpecsLoading(false);
-      }
-    }).catch(() => {
-      if (!cancelled) setDeptSpecsLoading(false);
-    });
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, [activeTab]);
 
@@ -1506,106 +1441,6 @@ export default function ManageBylawDetailsPage() {
               </div>
               <NumberInput min="0" value={minHoursToChooseDepartment} onChange={(e) => setMinHoursToChooseDepartment(e.target.value)} placeholder={t('manageBylaws.enterMinCredits')} className="w-full" />
             </div>
-
-            <div className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark shrink-0">
-                  <CheckIcon size={20} className="text-text-accent-active-light dark:text-text-accent-active-dark" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">{t('manageBylaws.specialization')}</h3>
-                  <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('manageBylaws.specializationDesc')}</p>
-                </div>
-              </div>
-              <NumberInput min="0" value={minHoursToChooseSpecialization} onChange={(e) => setMinHoursToChooseSpecialization(e.target.value)} placeholder={t('manageBylaws.enterMinCredits')} className="w-full" />
-            </div>
-          </div>
-
-          {/* Specializations Table per Department */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark mb-1">
-              {t('manageBylaws.specializationPrerequisites')}
-            </h3>
-            <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark mb-4">
-              {t('manageBylaws.specializationPrerequisitesDesc')}
-            </p>
-
-            {deptSpecsLoading ? (
-              <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-8 text-center">
-                {t('manageBylaws.loadingSpecializations')}
-              </p>
-            ) : allDepartments.length === 0 ? (
-              <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-8 text-center border border-dashed border-border-primary-default-light dark:border-border-primary-default-dark rounded-lg">
-                {t('manageBylaws.noDepartments')}
-              </p>
-            ) : (
-              <div className="space-y-6">
-                {allDepartments.map((dept) => {
-                  const deptId = dept.departmentId ?? dept.id;
-                  const specs = deptSpecializations[deptId] || [];
-                  if (specs.length === 0) return null;
-                  return (
-                    <div key={deptId} className="rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark overflow-hidden">
-                      <div className="flex items-center gap-3 px-4 py-2.5 bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-                        <span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark uppercase tracking-wider">
-                          {getLocalizedField(dept, 'departmentName', i18n.language) || dept.name || `${t('manageBylaws.department')} #${deptId}`}
-                        </span>
-                        <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                          ({specs.length} {t('manageBylaws.specialization')}{specs.length !== 1 ? "s" : ""})
-                        </span>
-                      </div>
-                      <div className="divide-y divide-border-primary-default-light dark:divide-border-primary-default-dark">
-                        {specs.map((spec) => {
-                          const specId = spec.specializationId ?? spec.id;
-                          const prereqs = specPrerequisites[specId] || [];
-                          const hasPrereqs = prereqs.length > 0;
-                          return (
-                            <div key={specId} className="flex items-center gap-4 px-4 py-3">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                                  {getLocalizedField(spec, 'name', i18n.language)}
-                                </p>
-                                
-                                {hasPrereqs && (
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {prereqs.map((pr, i) => {
-                                      const course = allCourses.find(c => c.courseId === pr.courseId);
-                                      return (
-                                        <span key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark text-text-accent-active-light dark:text-text-accent-active-dark">
-                                          {course?.courseCode || `#${pr.courseId}`}
-                                          {pr.minGrade != null && <span className="opacity-70">≥{pr.minGrade}</span>}
-                                        </span>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const existing = specPrerequisites[specId] || [];
-                                  setSpecPrereqTarget({ deptId, specId, specName: getLocalizedField(spec, 'name', i18n.language) });
-                                  setSpecPrereqSelectedCourses(existing.map(p => p.courseId));
-                                  setSpecPrereqMinGrades(existing.reduce((acc, p) => {
-                                    acc[p.courseId] = p.minGrade ?? "";
-                                    return acc;
-                                  }, {}));
-                                  setSpecPrereqSearchQuery("");
-                                }}
-                                className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-accent-default-light dark:hover:bg-bg-surface-accent-default-dark transition-colors"
-                              >
-                                <LinkIcon size={14} className="inline me-1" />
-                                {hasPrereqs ? t('manageBylaws.editPrerequisites') : t('manageBylaws.setPrerequisites')}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </Section>
       )}
@@ -2631,156 +2466,6 @@ export default function ManageBylawDetailsPage() {
         </ModelOverlay>
       )}
 
-      {/* Specialization Prerequisite Selection Overlay */}
-      {specPrereqTarget && (
-        <ModelOverlay onClose={() => { setSpecPrereqTarget(null); setSpecPrereqSelectedCourses([]); setSpecPrereqMinGrades({}); }} maxWidth="max-w-2xl">
-          <div className="w-full bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-lg shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border-primary-default-light dark:border-border-primary-default-dark">
-              <div className="min-w-0">
-                <h2 className="text-xl font-semibold text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                  {t('manageBylaws.setPrerequisites')}
-                </h2>
-                <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark truncate">
-                  {t('manageBylaws.specPrereqFor', { name: specPrereqTarget.specName })}
-                </p>
-              </div>
-              <button type="button" onClick={() => { setSpecPrereqTarget(null); setSpecPrereqSelectedCourses([]); setSpecPrereqMinGrades({}); }} className="ms-auto p-1 text-icon-secondary-default-light dark:text-icon-secondary-default-dark hover:text-icon-secondary-hover-light dark:hover:text-icon-secondary-hover-dark transition-colors shrink-0">
-                <XIcon size={20} />
-              </button>
-            </div>
-
-            <div className="px-5 py-3">
-              <input
-                type="text"
-                value={specPrereqSearchQuery}
-                onChange={(e) => setSpecPrereqSearchQuery(e.target.value)}
-                placeholder={t('manageBylaws.searchCourses')}
-                className={`w-full ${inputClass}`}
-              />
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-5 space-y-2 min-h-0 no-scrollbar">
-              {allCourses
-                .filter((c) =>
-                  !specPrereqSearchQuery ||
-                  c.courseName?.toLowerCase().includes(specPrereqSearchQuery.toLowerCase()) ||
-                  c.courseCode?.toLowerCase().includes(specPrereqSearchQuery.toLowerCase())
-                )
-                .map((course) => {
-                  const isSelected = specPrereqSelectedCourses.includes(course.courseId);
-                  const sortedGrades = [...gradeScales]
-                    .filter(g => g.gradeLetter.trim())
-                    .sort((a, b) => b.sortOrder - a.sortOrder);
-                  const gradeOptions = sortedGrades.map(g => ({
-                    value: g.gradeLetter,
-                    label: g.gradeLetter,
-                  }));
-                  const passingIndex = sortedGrades.findIndex(
-                    g => g.gradeLetter?.toLowerCase() === minPassingGradeLetter?.toLowerCase()
-                  );
-                  const minGradeLetter = passingIndex >= 0 ? sortedGrades[passingIndex].gradeLetter : (sortedGrades[sortedGrades.length - 1]?.gradeLetter || "");
-                  const selectedGrade = specPrereqMinGrades[course.courseId]
-                    ? gradeOptions.find(o => o.value === specPrereqMinGrades[course.courseId]) || null
-                    : null;
-                  return (
-                    <div
-                      key={course.courseId}
-                      className={`rounded-lg border transition-colors ${
-                        isSelected
-                          ? "border-border-accent-default-light dark:border-border-accent-default-dark bg-bg-surface-accent-default-light dark:bg-bg-surface-accent-default-dark"
-                          : "border-border-primary-default-light dark:border-border-primary-default-dark hover:bg-bg-surface-secondary-default-light dark:hover:bg-bg-surface-secondary-default-dark"
-                      }`}
-                    >
-                      <label className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {
-                            setSpecPrereqSelectedCourses(prev =>
-                              isSelected
-                                ? prev.filter(id => id !== course.courseId)
-                                : [...prev, course.courseId]
-                            );
-                            if (isSelected) {
-                              setSpecPrereqMinGrades(prev => {
-                                const next = { ...prev };
-                                delete next[course.courseId];
-                                return next;
-                              });
-                            } else {
-                              setSpecPrereqMinGrades(prev => ({
-                                ...prev,
-                                [course.courseId]: minGradeLetter,
-                              }));
-                            }
-                          }}
-                          className="rounded border-border-primary-default-light dark:border-border-primary-default-dark text-text-accent-active-light focus:ring-text-accent-active-light"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark truncate">
-                            {getLocalizedField(course, 'courseName', i18n.language)}
-                          </p>
-                          <p className="text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
-                            {getLocalizedField(course, 'courseCode', i18n.language)}
-                          </p>
-                        </div>
-                      </label>
-                      {isSelected && (
-                        <div className="px-3 pb-3 pt-0 border-t border-border-primary-default-light dark:border-border-primary-default-dark mx-3">
-                          <div className="flex items-center gap-3 mt-2">
-                            <label className="text-xs font-medium text-text-secondary-default-light dark:text-text-secondary-default-dark whitespace-nowrap">
-                              {t('manageBylaws.minGradeFor', { code: getLocalizedField(course, 'courseCode', i18n.language) || getLocalizedField(course, 'courseName', i18n.language) })}
-                            </label>
-                            <SelectBox
-                              options={gradeOptions}
-                              selectedOption={selectedGrade}
-                              onChange={(opt) => setSpecPrereqMinGrades(prev => ({
-                                ...prev,
-                                [course.courseId]: opt.value,
-                              }))}
-                              compact
-                              showLabel={false}
-                              className="w-24"
-                            />
-                            <span className="text-[10px] text-text-tertiary-default-light dark:text-text-tertiary-default-dark">
-                              {t('manageBylaws.passingIs', { grade: minGradeLetter })}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              {allCourses.filter((c) =>
-                !specPrereqSearchQuery ||
-                c.courseName?.toLowerCase().includes(specPrereqSearchQuery.toLowerCase()) ||
-                c.courseCode?.toLowerCase().includes(specPrereqSearchQuery.toLowerCase())
-              ).length === 0 && (
-                <p className="text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark py-4 text-center">
-                  {t('manageBylaws.noCoursesFound')}
-                </p>
-              )}
-            </div>
-
-            <div className="flex gap-3 px-5 py-4 border-t border-border-primary-default-light dark:border-border-primary-default-dark">
-              <button
-                type="button"
-                onClick={() => { setSpecPrereqTarget(null); setSpecPrereqSelectedCourses([]); setSpecPrereqMinGrades({}); }}
-                className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark text-text-primary-default-light dark:text-text-primary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors"
-              >
-                {t('common:cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={confirmSpecPrereqSelection}
-                className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white hover:bg-bg-fill-accent-hover-light dark:hover:bg-bg-fill-accent-hover-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('manageBylaws.saveCount', { count: specPrereqSelectedCourses.length })}
-              </button>
-            </div>
-          </div>
-        </ModelOverlay>
-      )}
 
       {/* Toggle Active Confirmation */}
       <Dialog

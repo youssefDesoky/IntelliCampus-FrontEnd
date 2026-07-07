@@ -9,7 +9,7 @@ import InputItem from "../../../components/form/InputItem";
 import DateInput from "../../../components/form/DateInput";
 import { UserIcon, CameraIcon } from "../../../components/ui/icons";
 import { fetchBylaws } from "../services/adminBylawsApi";
-import { fetchSpecializations, fetchDepartments } from "../services/adminDepartmentsApi";
+import { fetchDepartments } from "../services/adminDepartmentsApi";
 import { fetchStudentTypes } from "../services/adminStudentsApi";
 import {
   validateNationalIdOrPassport,
@@ -54,9 +54,6 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
 
     const [departments, setDepartments] = useState([]);
     const [selectedDepartment, setSelectedDepartment] = useState(null);
-
-    const [specializations, setSpecializations] = useState([]);
-    const [selectedSpecialization, setSelectedSpecialization] = useState(null);
 
     const [selectedBylaw, setSelectedBylaw] = useState(null);
 
@@ -134,27 +131,6 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
             .catch(console.error);
     }, [initialData.departmentId, initialData.departmentName]);
 
-    useEffect(() => {
-        if (!selectedDepartment?.value) {
-            setSpecializations([]);
-            setSelectedSpecialization(null);
-            return;
-        }
-        fetchSpecializations(selectedDepartment.value)
-            .then(data => {
-                const options = (Array.isArray(data) ? data : []).map(s => ({
-                    value: s.id ?? s.specializationId,
-                    label: s.name,
-                }));
-                setSpecializations(options);
-                if (initialData.specializationId) {
-                    const match = options.find(o => o.value === initialData.specializationId);
-                    if (match) setSelectedSpecialization(match);
-                }
-            })
-            .catch(() => setSpecializations([]));
-    }, [selectedDepartment]);
-
     const handlePhotoClick = () => {
         fileInputRef.current?.click();
     };
@@ -205,8 +181,6 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
             formData.studentType = selectedStudentType?.value || formData.studentType;
         }
         formData.departmentId = selectedDepartment?.value || null;
-        formData.specializationId = selectedSpecialization?.value || null;
-        delete formData.specialization;
         onSubmit?.(formData);
     };
 
@@ -406,15 +380,6 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
                                         options={departments}
                                         selectedOption={selectedDepartment}
                                         onChange={setSelectedDepartment}
-                                    />
-                                    <SelectBox
-                                        className="w-full"
-                                        label={t('studentForm.specialization')}
-                                        name="specializationId"
-                                        labelDirection="flex-col"
-                                        options={specializations}
-                                        selectedOption={selectedSpecialization}
-                                        onChange={setSelectedSpecialization}
                                     />
                                     {!isEdit && (
                                         <div className="flex flex-col">
