@@ -87,7 +87,7 @@ export default function GradeListItem({ item = {}, toPercent }) {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<h3 className="truncate text-base font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark sm:text-lg">
+					<h3 className="truncate text-base font-semibold tracking-tight text-text-primary-default-light dark:text-text-primary-default-dark sm:text-lg">
 						{item.title || t('gradeListItem.untitled')}
 					</h3>
 					<span className="ms-auto" />
@@ -111,7 +111,7 @@ export default function GradeListItem({ item = {}, toPercent }) {
                         <dt className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             {t('gradeListItem.score')}
                         </dt>
-                        <dd className="mt-1 truncate text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
+                        <dd className="mt-1 truncate text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
                             {isGraded && item.maxScore ? `${ar(item.score)}/${ar(item.maxScore)}` : t('gradeListItem.tbd')}
                         </dd>
                     </div>
@@ -129,7 +129,7 @@ export default function GradeListItem({ item = {}, toPercent }) {
                         <dt className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary-default-light dark:text-text-secondary-default-dark">
                             {t('gradeListItem.percentage')}
                         </dt>
-                        <dd className={`mt-1 truncate text-sm font-semibold ${isComplete ? "text-text-primary-light dark:text-text-primary-dark" : "text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}>
+                        <dd className={`mt-1 truncate text-sm font-semibold ${isComplete ? "text-text-primary-default-light dark:text-text-primary-default-dark" : "text-text-secondary-default-light dark:text-text-secondary-default-dark"}`}>
                             {calculatedPercentage !== null ? `${ar(calculatedPercentage)}%` : "—"}
                         </dd>
                     </div>

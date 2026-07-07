@@ -644,6 +644,15 @@ input[type="password"]::-ms-clear {
     color: var(--color-bg-surface-warning-disabled-light);
 }
 
+/* Editor text color */
+.ProseMirror {
+    color: var(--color-text-primary-default-light);
+}
+
+[data-theme="dark"] .ProseMirror {
+    color: var(--color-text-primary-default-dark);
+}
+
 /* Focus outline for editor */
 .ProseMirror:focus {
     outline: none;
@@ -661,3 +670,4 @@ input[type="password"]::-ms-clear {
 [data-theme="dark"] .ProseMirror p.is-editor-empty:first-child::before {
     color: var(--color-text-tertiary-default-dark);
 }
+

@@ -55,6 +55,7 @@ export default function MeetingRoom() {
     const user = useRouteLoaderData("root");
     const { course, courseId } = useOutletContext();
     const isInstructor = user?.roles?.some((r) => r === "Instructor");
+    const isInactive = course?.isInactive;
 
     const [title, setTitle] = useState("");
     const [creating, setCreating] = useState(false);
@@ -346,7 +347,7 @@ export default function MeetingRoom() {
         <Section>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[80vh]">
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                    {isInstructor && (
+                    {isInstructor && !isInactive && (
                         <BaseComponent title={t('meeting.scheduleNew')} contentClassName="space-y-4">
                             <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] items-end">
                                 <div>

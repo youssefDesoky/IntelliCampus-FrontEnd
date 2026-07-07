@@ -55,7 +55,7 @@ function getGradeTextColor(percent) {
 export default function InstructorCourseGrades() {
     const { t } = useTranslation('instructor');
     const { convert: ar } = useArabicDigits();
-    const { courseId } = useOutletContext();
+    const { courseId, course } = useOutletContext();
     const { showError } = useError();
     const navigate = useNavigate();
     const user = useRouteLoaderData("root");
@@ -75,6 +75,7 @@ export default function InstructorCourseGrades() {
     const isProfessor = classes?.some(
         c => c.classTypeName === "Lecture" && c.instructorId === user?.userId
     );
+    const isInactive = course?.isInactive;
 
     const {
         data: grades,
@@ -155,7 +156,7 @@ export default function InstructorCourseGrades() {
                     {t('grades.title')}
                 </h2>
                 <div className="flex items-center gap-2">
-                    {isProfessor && (
+                    {isProfessor && !isInactive && (
                         <>
                             <Button
                                 variant="secondary"

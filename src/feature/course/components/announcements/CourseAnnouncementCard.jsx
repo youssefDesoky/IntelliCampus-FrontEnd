@@ -35,7 +35,8 @@ export default function CourseAnnouncementCard({
     onEdit,
     onPin,
     onUnpin,
-    userRole = "student" // "student" or "instructor"
+    userRole = "student", // "student" or "instructor"
+    isReadOnly = false
 }) {
     const { t, i18n } = useTranslation('instructor');
     const { convert: ar } = useArabicDigits();
@@ -432,6 +433,7 @@ export default function CourseAnnouncementCard({
                         </div>
                     ) : null}
 
+                    {!isReadOnly && (
                     <div className={comments.length > 0 ? "mt-3 pt-3 border-t border-border-primary-default-light dark:border-border-primary-default-dark" : "mt-0 pt-0"}>
                         <CommentInput
                             inputRef={inputRef}
@@ -448,6 +450,7 @@ export default function CourseAnnouncementCard({
                             disabled={posting || !newComment.trim()}
                         />
                     </div>
+                    )}
                 </div>
             )}
 

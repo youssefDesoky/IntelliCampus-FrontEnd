@@ -7,7 +7,7 @@ export default function BaseComponent({
     className = "",
     contentClassName = "",
     titleClassName = "text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark",
-    descriptionClassName = "mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark",
+    descriptionClassName = "mt-1 text-sm text-text-secondary-default-light dark:text-text-secondary-default-dark",
 }) {
     const contentClasses = contentClassName
         ? `px-5 py-5 sm:px-6 ${contentClassName}`

@@ -23,10 +23,10 @@ export default function AttendanceExcuseCard({ onRequestExcuse }) {
                 </div>
 
                 <div>
-                    <p className="text-lg font-bold text-text-primary-light dark:text-text-primary-dark">
+                    <p className="text-lg font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                         {t('attendance.excuseQuestion')}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-text-secondary-light dark:text-text-secondary-dark">
+                    <p className="mt-2 text-sm leading-6 text-text-secondary-default-light dark:text-text-secondary-default-dark">
                         {t('attendance.excusePrompt')}
                     </p>
                 </div>

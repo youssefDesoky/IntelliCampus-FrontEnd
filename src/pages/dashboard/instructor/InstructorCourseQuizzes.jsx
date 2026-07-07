@@ -533,18 +533,18 @@ export default function InstructorCourseQuizzes() {
             >
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
+                        <label className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
                             {t('quizzes.titleLabel')} <span className="text-red-500">*</span>
                         </label>
                         <input
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder={t('quizzes.titlePlaceholder')}
-                            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+                            className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">
+                        <label className="text-sm font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
                             {t('quizzes.description')}
                         </label>
                         <div className="relative">
@@ -552,7 +552,7 @@ export default function InstructorCourseQuizzes() {
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder={t('quizzes.descriptionPlaceholder')}
-                                className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-dark"
+                                className="w-full rounded-2xl border border-border-primary-default-light bg-bg-surface-secondary-default-light px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors focus:border-border-accent-default-light focus:ring-2 focus:ring-border-accent-default-light/20 dark:focus:ring-border-accent-default-dark/20 dark:border-border-primary-default-dark dark:bg-bg-surface-secondary-default-dark dark:text-text-primary-default-dark"
                             />
                             <span className="absolute bottom-3 end-3 text-xs text-text-secondary-default-light dark:text-text-secondary-default-dark">
                                 {description.length}/500

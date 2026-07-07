@@ -60,7 +60,7 @@ export default function CourseGrade() {
 					</div>
 					<div className="flex flex-col gap-6 lg:h-full">
 						<CurrentGrade className="flex-1" gradePercent={overallGrade.percent} letterGrade={overallGrade.letter} gradedItems={gradedItems} />
-						<GradeComplaint className="flex-1" items={history} courseId={course.id} />
+						{!course?.isReadOnly && <GradeComplaint className="flex-1" items={history} courseId={course.id} />}
 					</div>
 				</div>
 			)}

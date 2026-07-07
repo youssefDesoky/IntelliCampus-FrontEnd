@@ -39,7 +39,7 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   const { t, i18n } = useTranslation('chat');
   const { showError } = useError();
   const { showToast } = useToast();
-  const { isPhone } = useSidebar();
+  const { isPhone, isMobile, width } = useSidebar();
   // "default" | "messaging" | "addFriend" | "createGroup"
   const [activePanel, setActivePanel] = useState(defaultPanel || "default");
   useEffect(() => {
@@ -93,6 +93,12 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
   const typingTimeoutRef = useRef(null);
   const pinnedMessageRef = useRef(null);
   const leavingGroupRef = useRef(null);
+  const chatRef = useRef(null);
+  const posRef = useRef(null);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const hasMovedRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const [position, setPosition] = useState(null);
 
   // Keep refs in sync with state so SignalR handlers always have latest value
   useEffect(() => { chatPartnerRef.current = chatPartner; }, [chatPartner]);
@@ -560,7 +566,9 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
       id: msg.messageId,
       sender: {
         name:
-          msg.senderName ||
+          (String(msg.senderId) === FAHIM_USER_ID
+            ? "Faheem"
+            : msg.senderName) ||
           (isOwn
             ? getLocalizedField(currentUser, 'fullName', i18n.language)
             : getLocalizedField(chatPartner, 'fullName', i18n.language) || "Unknown"),
@@ -786,13 +794,116 @@ export default function Chat({ isChatOpen, setIsChatOpen, currentUser, defaultPa
     });
   };
 
+  const handlePointerDown = useCallback((e) => {
+    if (isPhone) return;
+    if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('textarea')) return;
+
+    const chatEl = chatRef.current;
+    if (!chatEl) return;
+
+    const rect = chatEl.getBoundingClientRect();
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+    if (clientX == null) return;
+
+    dragOffsetRef.current = { x: clientX - rect.left, y: clientY - rect.top };
+
+    const initialPos = posRef.current || { top: rect.top, left: rect.left };
+    posRef.current = initialPos;
+    setPosition(initialPos);
+
+    isDraggingRef.current = true;
+    hasMovedRef.current = false;
+
+    const onMove = (ev) => {
+      if (!isDraggingRef.current) return;
+      const cx = ev.clientX ?? ev.touches?.[0]?.clientX;
+      const cy = ev.clientY ?? ev.touches?.[0]?.clientY;
+      if (cx == null) return;
+      ev.preventDefault();
+      hasMovedRef.current = true;
+      let newTop = cy - dragOffsetRef.current.y;
+      let newLeft = cx - dragOffsetRef.current.x;
+      const el = chatRef.current;
+        if (el) {
+        const r = el.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const headerH = isMobile ? 60 : 80;
+        const asideW = !isMobile ? (width / 100) * vw : 0;
+        const bottomH = 0;
+        const minTop = headerH + 4;
+        const maxTop = vh - bottomH - r.height - 4;
+        const isRtl = i18n.dir() === 'rtl';
+        const minLeft = isRtl ? 4 : asideW + 4;
+        const maxLeft = isRtl ? vw - asideW - r.width - 4 : vw - r.width - 4;
+        if (minTop <= maxTop) newTop = Math.max(minTop, Math.min(newTop, maxTop));
+        if (minLeft <= maxLeft) newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+      }
+      const newPos = { top: newTop, left: newLeft };
+      posRef.current = newPos;
+      setPosition(newPos);
+    };
+
+    const onEnd = () => {
+      isDraggingRef.current = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+      document.body.style.userSelect = '';
+
+      if (!hasMovedRef.current) return;
+
+      const currentPos = posRef.current;
+      const el = chatRef.current;
+      if (!currentPos || !el) return;
+
+      const r = el.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const headerH = isMobile ? 60 : 80;
+      const asideW = !isMobile ? (width / 100) * vw : 0;
+      const bottomH = 0;
+
+      let newTop = currentPos.top;
+      let newLeft = currentPos.left;
+
+      const minTop = headerH + 4;
+      const maxTop = vh - bottomH - r.height - 4;
+      const isRtl = i18n.dir() === 'rtl';
+      const minLeft = isRtl ? 4 : asideW + 4;
+      const maxLeft = isRtl ? vw - asideW - r.width - 4 : vw - r.width - 4;
+      if (minTop <= maxTop) newTop = Math.max(minTop, Math.min(newTop, maxTop));
+      if (minLeft <= maxLeft) newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+
+      if (newTop !== currentPos.top || newLeft !== currentPos.left) {
+        setPosition({ top: newTop, left: newLeft });
+      }
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+  }, [isPhone, isMobile, width]);
+
   return (
     <>
       {isChatOpen && (
-        <Section className={`fixed z-50 ${isPhone ? 'inset-0 rounded-none p-0 h-dvh' : 'bottom-4 end-6 w-full max-w-[750px]'} bg-bg-surface-default-light dark:bg-bg-surface-default-dark shadow-lg ${isPhone ? 'p-0' : 'p-4'}`}>
+        <Section
+          ref={chatRef}
+          className={`fixed z-50 ${isPhone ? 'inset-0 rounded-none p-0 h-dvh' : `w-full max-w-[750px] ${!position ? 'bottom-4 end-6' : ''}`} bg-bg-surface-default-light dark:bg-bg-surface-default-dark shadow-lg ${isPhone ? 'p-0' : 'p-4'}`}
+          style={!isPhone && position ? { top: position.top, left: position.left } : undefined}
+        >
           <div className={`bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col ${isPhone ? 'w-full h-full' : 'w-full max-w-[750px] h-[600px] min-h-[600px]'}`}>
             {/* Top bar with close button */}
-            <div className="flex items-center justify-end px-3 py-2 border-b border-gray-100 dark:border-gray-700 shrink-0 bg-white dark:bg-gray-800">
+            <div
+              className="flex items-center justify-end px-3 py-2 border-b border-gray-100 dark:border-gray-700 shrink-0 bg-white dark:bg-gray-800"
+              onMouseDown={!isPhone ? handlePointerDown : undefined}
+              onTouchStart={!isPhone ? handlePointerDown : undefined}
+              style={!isPhone ? { cursor: 'grab', touchAction: 'none' } : undefined}
+            >
               <button
                 onClick={() => setIsChatOpen(false)}
                 className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-red-400 transition-all active:scale-90"

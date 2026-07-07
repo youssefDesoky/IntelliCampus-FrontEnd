@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useRouteLoaderData, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSidebar, useDeviceType } from '../hooks';
@@ -31,7 +31,7 @@ function getAvailableViews(roles) {
 }
 
 export default function AppLayout() {
-    const { t } = useTranslation('common');
+    const { t, i18n } = useTranslation('common');
     const ASIDEHEIGHT = 80;
     const { width } = useSidebar();
     const { isMobile, isPhone } = useDeviceType();
@@ -46,6 +46,11 @@ export default function AppLayout() {
     const [chatDefaultPanelTrigger, setChatDefaultPanelTrigger] = useState(0);
     const [chatDefaultUserId, setChatDefaultUserId] = useState(null);
     const [chatDefaultGroupName, setChatDefaultGroupName] = useState(null);
+    const [chatPosition, setChatPosition] = useState(null);
+    const [btnDragging, setBtnDragging] = useState(false);
+    const chatBtnRef = useRef(null);
+    const btnDragOffset = useRef({ x: 0, y: 0 });
+    const btnHasMoved = useRef(false);
 
     const availableViews = getAvailableViews(user?.roles);
     const [activeView, setActiveView] = useState(() => {
@@ -54,6 +59,95 @@ export default function AppLayout() {
         if (availableViews.length > 0) return availableViews[0];
         return resolvePrimaryRole(user?.roles) || 'student';
     });
+
+    useEffect(() => {
+        if (!btnDragging) return;
+        const onMove = (e) => {
+            const mx = e.clientX ?? e.touches?.[0]?.clientX;
+            const my = e.clientY ?? e.touches?.[0]?.clientY;
+            if (mx == null) return;
+            e.preventDefault();
+            btnHasMoved.current = true;
+            let newTop = my - btnDragOffset.current.y;
+            let newLeft = mx - btnDragOffset.current.x;
+            const el = chatBtnRef.current;
+            if (el) {
+                const r = el.getBoundingClientRect();
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                const headerH = isPhone ? 60 : 80;
+                const asideW = isPhone ? 0 : (width / 100) * vw;
+                const bottomH = isPhone ? (barVisible ? 80 : 0) : 0;
+                const minTop = headerH + 4;
+                const maxTop = vh - bottomH - r.height - 4;
+                const isRtl = i18n.dir() === 'rtl';
+                const minLeft = isRtl ? 4 : asideW + 4;
+                const maxLeft = isRtl ? vw - asideW - r.width - 4 : vw - r.width - 4;
+                if (minTop <= maxTop) newTop = Math.max(minTop, Math.min(newTop, maxTop));
+                if (minLeft <= maxLeft) newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+            }
+            setChatPosition({ top: newTop, left: newLeft });
+        };
+        const onUp = () => {
+            setBtnDragging(false);
+            document.body.style.userSelect = '';
+            const el = chatBtnRef.current;
+            if (el) {
+                const r = el.getBoundingClientRect();
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                const headerH = isPhone ? 60 : 80;
+                const asideW = isPhone ? 0 : (width / 100) * vw;
+                const bottomH = isPhone ? (barVisible ? 80 : 0) : 0;
+                setChatPosition(prev => {
+                    if (!prev) return prev;
+                    let newTop = prev.top;
+                    let newLeft = prev.left;
+                    const minTop = headerH + 4;
+                    const maxTop = vh - bottomH - r.height - 4;
+                    const isRtl = i18n.dir() === 'rtl';
+                    const minLeft = isRtl ? 4 : asideW + 4;
+                    const maxLeft = isRtl ? vw - asideW - r.width - 4 : vw - r.width - 4;
+                    if (minTop <= maxTop) newTop = Math.max(minTop, Math.min(newTop, maxTop));
+                    if (minLeft <= maxLeft) newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+                    return (newTop !== prev.top || newLeft !== prev.left) ? { top: newTop, left: newLeft } : prev;
+                });
+            }
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
+        return () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
+        };
+    }, [btnDragging]);
+
+    const handleBtnPointerDown = (e) => {
+        if (btnDragging) return;
+        const btn = chatBtnRef.current;
+        if (!btn) return;
+        const rect = btn.getBoundingClientRect();
+        const cx = e.clientX ?? e.touches?.[0]?.clientX;
+        const cy = e.clientY ?? e.touches?.[0]?.clientY;
+        if (cx == null) return;
+        btnDragOffset.current = { x: cx - rect.left, y: cy - rect.top };
+        setChatPosition({ top: rect.top, left: rect.left });
+        btnHasMoved.current = false;
+        document.body.style.userSelect = 'none';
+        setBtnDragging(true);
+    };
+
+    const handleBtnClick = () => {
+        if (btnHasMoved.current) {
+            btnHasMoved.current = false;
+            return;
+        }
+        setIsChatOpen(true);
+    };
 
     const handleViewChange = (view) => {
         setActiveView(view);
@@ -145,44 +239,71 @@ export default function AppLayout() {
                     <Chat isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} currentUser={user} defaultPanel={chatDefaultPanel} defaultPanelTrigger={chatDefaultPanelTrigger} defaultUser={chatDefaultUserId} defaultGroupName={chatDefaultGroupName} />
 
                     {!isChatOpen && (
-                        isMobile ? getBottomBar(activeView, {
-                            visible: isPhone ? barVisible : true,
-                            floatingAction: (
+                        <>
+                            {isMobile && getBottomBar(activeView, {
+                                visible: isPhone ? barVisible : true,
+                                floatingAction: isPhone ? null : (
+                                    isStudent ? (
+                                        <button
+                                            onClick={() => setIsChatOpen(true)}
+                                            className="relative w-24 h-24 rounded-full hover:scale-110 active:scale-95 transition-all duration-200"
+                                            aria-label="Open chat"
+                                        >
+                                            <img
+                                                src="/static/images/faheem-avatar.png"
+                                                alt="Open chat"
+                                                className="absolute inset-0 w-full h-full object-contain"
+                                                draggable={false}
+                                            />
+                                            <img
+                                                src="/static/images/Fahim_Boarder.svg"
+                                                alt=""
+                                                className="absolute inset-0 w-full h-full dark:brightness-[1.8]"
+                                                draggable={false}
+                                            />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setIsChatOpen(true)}
+                                            className="w-14 h-14 rounded-full bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 shadow-lg"
+                                            aria-label="Open chat"
+                                        >
+                                            <CommentsIcon size={28} />
+                                        </button>
+                                    )
+                                )
+                            })}
+                            {(isPhone || !isMobile) && (
                                 <button
-                                    onClick={() => setIsChatOpen(true)}
-                                    className="relative w-24 h-24 rounded-full hover:scale-110 active:scale-95 transition-all duration-200"
-                                    aria-label="Open chat"
+                                    ref={chatBtnRef}
+                                    onClick={handleBtnClick}
+                                    onMouseDown={handleBtnPointerDown}
+                                    onTouchStart={handleBtnPointerDown}
+                                    className={`fixed z-50 rounded-full transition-transform duration-200 hover:scale-110 active:scale-95 ${(isPhone || isStudent) ? 'w-24 h-24' : 'w-14 h-14 bg-bg-fill-accent-default-light dark:bg-bg-fill-accent-default-dark text-white flex items-center justify-center shadow-lg'}`}
+                                    style={chatPosition ? { top: chatPosition.top, left: chatPosition.left, touchAction: 'none' } : isPhone ? (i18n.dir() === 'rtl' ? { bottom: '5.5rem', left: '1rem', touchAction: 'none' } : { bottom: '5.5rem', right: '1rem', touchAction: 'none' }) : (i18n.dir() === 'rtl' ? { bottom: '1.5rem', left: '2rem', touchAction: 'none' } : { bottom: '1.5rem', right: '2rem', touchAction: 'none' })}
+                                    aria-label={t('openChat')}
                                 >
-                                    <img
-                                        src="/static/images/faheem-avatar.png"
-                                        alt="Open chat"
-                                        className="absolute inset-0 w-full h-full object-contain"
-                                    />
-                                    <img
-                                        src="/static/images/Fahim_Boarder.svg"
-                                        alt=""
-                                        className="absolute inset-0 w-full h-full dark:brightness-[1.8]"
-                                    />
+                                    {(isPhone || isStudent) ? (
+                                        <>
+                                            <img
+                                                src="/static/images/faheem-avatar.png"
+                                                alt={t('openChat')}
+                                                className="absolute inset-0 w-full h-full object-contain"
+                                                draggable={false}
+                                            />
+                                            <img
+                                                src="/static/images/Fahim_Boarder.svg"
+                                                alt=""
+                                                className="absolute inset-0 w-full h-full dark:brightness-[1.8]"
+                                                draggable={false}
+                                            />
+                                        </>
+                                    ) : (
+                                        <CommentsIcon size={28} />
+                                    )}
                                 </button>
-                            )
-                        }) : (
-                            <button
-                                onClick={() => setIsChatOpen(true)}
-                                className="fixed bottom-6 right-8 z-50 w-24 h-24 rounded-full hover:scale-110 active:scale-95 transition-all duration-200"
-                                aria-label={t('openChat')}
-                            >
-                                <img
-                                    src="/static/images/faheem-avatar.png"
-                                    alt={t('openChat')}
-                                    className="absolute inset-0 w-full h-full object-contain"
-                                />
-                                <img
-                                    src="/static/images/Fahim_Boarder.svg"
-                                    alt=""
-                                    className="absolute inset-0 w-full h-full dark:brightness-[1.8]"
-                                />
-                            </button>
-                        )
+                            )}
+                        </>
                     )}
             </div>
         </div>

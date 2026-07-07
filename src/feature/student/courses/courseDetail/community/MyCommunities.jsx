@@ -20,6 +20,7 @@ import { getLocalizedField } from '../../../../../utils/getLocalizedField';
 export default function MyCommunities() {
     const { t, i18n } = useTranslation('student');
     const { course, courseId } = useOutletContext();
+    const isInactive = course?.isInactive;
     const [posts, setPosts] = useState([]);
     const [postDraft, setPostDraft] = useState("");
     const { showError } = useError();
@@ -135,39 +136,41 @@ export default function MyCommunities() {
 
     return (
         <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-            <aside className="space-y-6 xl:order-2 xl:sticky xl:top-20 xl:self-start">
-                <div className="rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5 sm:p-6">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                        <h2 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
-                            {t('studyGroup.startThread')}
-                        </h2>
-                        <PaperPlaneIcon className="h-4 w-4 text-text-accent-default-light dark:text-text-accent-default-dark" />
+            {!isInactive && (
+                <aside className="space-y-6 xl:order-2 xl:sticky xl:top-20 xl:self-start">
+                    <div className="rounded-2xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark p-5 sm:p-6">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <h2 className="text-base font-semibold text-text-primary-default-light dark:text-text-primary-default-dark">
+                                {t('studyGroup.startThread')}
+                            </h2>
+                            <PaperPlaneIcon className="h-4 w-4 text-text-accent-default-light dark:text-text-accent-default-dark" />
+                        </div>
+
+                        <TextArea
+                            value={postDraft}
+                            onChange={(event) => setPostDraft(event.target.value)}
+                            placeholder={t('studyGroup.writePost')}
+                            className="w-full rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors placeholder:text-text-tertiary-default-light focus:border-text-accent-default-light dark:text-text-primary-default-dark dark:placeholder:text-text-tertiary-default-dark dark:focus:border-text-accent-default-dark"
+                        />
+
+                        <div className="mt-4 flex items-center justify-between gap-3">
+                            <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{postDraft.length}/500</span>
+
+                            <button
+                                type="button"
+                                disabled={!postDraft.trim() || !courseId}
+                                onClick={handleCreatePost}
+                                className="inline-flex items-center gap-2 rounded-lg bg-text-accent-default-light px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-text-accent-hover-light disabled:opacity-50 dark:bg-text-accent-default-dark dark:hover:bg-text-accent-hover-dark rtl:flex-row-reverse"
+                            >
+                                <PaperPlaneIcon className="h-3.5 w-3.5" />
+                                {t('studyGroup.post')}
+                            </button>
+                        </div>
                     </div>
+                </aside>
+            )}
 
-                    <TextArea
-                        value={postDraft}
-                        onChange={(event) => setPostDraft(event.target.value)}
-                        placeholder={t('studyGroup.writePost')}
-                        className="w-full rounded-xl border border-border-primary-default-light dark:border-border-primary-default-dark bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark px-4 py-3 text-sm text-text-primary-default-light outline-none transition-colors placeholder:text-text-tertiary-default-light focus:border-text-accent-default-light dark:text-text-primary-default-dark dark:placeholder:text-text-tertiary-default-dark dark:focus:border-text-accent-default-dark"
-                    />
-
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                        <span className="text-xs text-text-tertiary-default-light dark:text-text-tertiary-default-dark">{postDraft.length}/500</span>
-
-                        <button
-                            type="button"
-                            disabled={!postDraft.trim() || !courseId}
-                            onClick={handleCreatePost}
-                            className="inline-flex items-center gap-2 rounded-lg bg-text-accent-default-light px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-text-accent-hover-light disabled:opacity-50 dark:bg-text-accent-default-dark dark:hover:bg-text-accent-hover-dark rtl:flex-row-reverse"
-                        >
-                            <PaperPlaneIcon className="h-3.5 w-3.5" />
-                            {t('studyGroup.post')}
-                        </button>
-                    </div>
-                </div>
-            </aside>
-
-            <div className="space-y-4 xl:order-1">
+            <div className={`space-y-4 xl:order-1 ${isInactive ? 'xl:col-span-full max-w-4xl mx-auto w-full' : ''}`}>
                 {posts.length > 0 ? (
                     posts.map((post) => (
                         <StudyGroupPost
@@ -177,6 +180,7 @@ export default function MyCommunities() {
                             onUpvote={() => handleUpvote(post.id)}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
+                            isReadOnly={isInactive}
                         />
                     ))
                 ) : (

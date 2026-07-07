@@ -37,7 +37,7 @@ export default function AssessmentBreakdown({ groups = [] }) {
 						<div key={group.category} className="flex items-centers gap-3 p-3 rounded-lg bg-bg-surface-secondary-default-light dark:bg-bg-surface-secondary-default-dark hover:bg-bg-surface-tertiary-default-light dark:hover:bg-bg-surface-tertiary-default-dark transition-colors">
 							<div className="flex-1">
 								<div className="flex items-center justify-between mb-2">
-									<p className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">{group.category}</p>
+									<p className="text-sm font-medium text-text-primary-default-light dark:text-text-primary-default-dark">{group.category}</p>
 									<span className="text-xs font-semibold text-text-secondary-default-light dark:text-text-secondary-default-dark">{t('assessmentBreakdown.weight', { weight: ar(group.totalWeight) })}</span>
 								</div>
 								<div className="h-1.5 bg-bg-surface-primary-default-light dark:bg-bg-surface-primary-default-dark rounded-full overflow-hidden">

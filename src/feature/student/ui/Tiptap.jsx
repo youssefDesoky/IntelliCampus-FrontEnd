@@ -93,7 +93,8 @@ export default function Tiptap({ content = '', onChange, className }) {
                     className="
                         flex-1 px-4 sm:px-8 py-3
                         prose prose-sm max-w-none
-                        prose-p:leading-relaxed prose-p:text-text-primary-default-light dark:prose-p:text-text-primary-default-dark
+                        text-text-primary-default-light dark:text-text-primary-default-dark
+                        prose-p:leading-relaxed
                         prose-strong:text-text-primary-active-light dark:prose-strong:text-text-primary-active-dark
                         prose-ul:list-disc prose-ul:ps-5
                         prose-ol:list-decimal prose-ol:ps-5

@@ -18,6 +18,7 @@ export default function InstructorCourseAnnouncements() {
     const user = useRouteLoaderData("root");
     const outletContext = useOutletContext();
     const courseId = outletContext?.courseId;
+    const isInactive = outletContext?.course?.isInactive;
     const { showError } = useError();
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [content, setContent] = useState("");
@@ -128,14 +129,16 @@ export default function InstructorCourseAnnouncements() {
                 <h2 className="text-xl font-bold text-text-primary-default-light dark:text-text-primary-default-dark">
                     {t('announcements.title')}
                 </h2>
-                <Button
-                    type="button"
-                    variant="primary"
-                    onClick={() => setShowCreateForm(true)}
-                    startIcon={<PlusIcon size={18} />}
-                >
-                    <span className="hidden sm:inline">{t('announcements.addNew')}</span>
-                </Button>
+                {!isInactive && (
+                    <Button
+                        type="button"
+                        variant="primary"
+                        onClick={() => setShowCreateForm(true)}
+                        startIcon={<PlusIcon size={18} />}
+                    >
+                        <span className="hidden sm:inline">{t('announcements.addNew')}</span>
+                    </Button>
+                )}
             </div>
 
             {/* Create/Edit Announcement Form Modal */}
@@ -241,6 +244,7 @@ export default function InstructorCourseAnnouncements() {
                             onPin={handlePinAnnouncement}
                             onUnpin={handleUnpinAnnouncement}
                             userRole="instructor"
+                            isReadOnly={isInactive}
                         />
                     ))}
                 </div>

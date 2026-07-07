@@ -85,7 +85,7 @@ export default function BottomBar({ links = [], leftLinks = [], rightLinks = [],
                                     {ActiveIcon && <ActiveIcon className="w-[26px] h-[26px] text-white" />}
                                 </div>
                             </div>
-                            <span className="mt-1 text-[10px] font-semibold leading-none truncate max-w-full text-center text-text-accent-active-light dark:text-text-accent-active-dark">
+                            <span className="mt-1 text-[10px] font-semibold leading-none truncate max-w-full text-center text-text-secondary-active-light dark:text-text-secondary-active-dark">
                                 {activeLink.label}
                             </span>
                         </div>
