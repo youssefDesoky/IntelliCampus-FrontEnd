@@ -191,7 +191,7 @@ export default function SmartNoteEditor({ note, onClose, courseFolders = [], cou
             }
 
             onSaveNote?.(savedNote)
-            handleClose()
+            if (isModal) handleClose()
         } catch {
             // apiClient already emits errors via ErrorContext
         } finally {
