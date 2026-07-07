@@ -32,7 +32,7 @@ export default function StudentForm({ onClose, method = "post", onSubmit, initia
     const [photoPreview, setPhotoPreview] = useState(initialData.profileImage || null);
     const [photoFile, setPhotoFile] = useState(null);
 
-    const defaultType = defaultStudentType || 'bachelor';
+    const defaultType = (defaultStudentType || 'bachelor').toLowerCase();
     const [studentTypes, setStudentTypes] = useState([]);
     const [selectedStudentType, setSelectedStudentType] = useState(
         studentTypes.find(t => t.value === defaultType) || studentTypes[0]
